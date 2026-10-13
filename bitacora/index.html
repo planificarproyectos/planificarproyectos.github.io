@@ -254,6 +254,32 @@ body .panel,body .datenav,body .authcard,body .consent{background:linear-gradien
 body .maintabs{background:transparent}
 body .maintabs button:not([aria-selected="true"]){background:var(--glass-seg);-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%)}
 body input,body select,body textarea{background:var(--field)}
+/* pomodoro */
+.pomo-cfg{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font-size:.85rem;color:var(--muted);margin-top:-4px}
+.pomo-cfg label{display:inline-flex;align-items:center;gap:6px}
+.pomo-cfg select{width:auto;padding:4px 8px;min-height:0}
+.pomo{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:14px;border-radius:14px;background:color-mix(in srgb,var(--accent) 8%,transparent);border:1px solid color-mix(in srgb,var(--accent) 25%,transparent)}
+.pomo.brk{background:color-mix(in srgb,var(--ok) 9%,transparent);border-color:color-mix(in srgb,var(--ok) 28%,transparent)}
+.pomo-ring{position:relative;width:132px;height:132px;flex:0 0 auto}
+.pomo-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.pomo-ring circle{fill:none;stroke-width:8}
+.pomo-ring .trk{stroke:var(--c-gap)}
+.pomo-ring .prg{stroke:var(--accent);stroke-linecap:round;stroke-dasharray:339.29;transition:stroke-dashoffset .9s linear}
+.pomo.brk .prg{stroke:var(--ok)}
+.pomo-txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.pomo-txt b{font-size:1.9rem;font-weight:300;font-variant-numeric:tabular-nums;line-height:1}
+.pomo-txt span{font-size:.72rem;color:var(--muted);margin-top:4px}
+.pomo-side{display:flex;flex-direction:column;gap:10px;min-width:0;flex:1 1 180px}
+.pomo-act{font-weight:500;overflow-wrap:anywhere}
+#pomoBtn{background:var(--tomato);color:#fff}
+#pomoBtn:hover{background:var(--tomato);opacity:.9}
+:root{--tomato:#e5372b}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--tomato:#f0473b}}
+:root[data-theme="dark"]{--tomato:#f0473b}
+button.off{opacity:.55}
+.need{animation:need .5s;border-color:var(--accent)!important}
+@keyframes need{20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+@media (prefers-reduced-motion:reduce){.need{animation:none}.pomo-ring .prg{transition:none}}
 /* hora en ceros mientras no se define */
 .tz{position:relative}
 .tz .zero{display:none;position:absolute;left:13px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--faint);font-variant-numeric:tabular-nums}
@@ -317,6 +343,22 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
           <div class="row">
             <span class="timer" id="timerView" hidden></span>
             <button id="timerBtn" class="primary">▶ Iniciar ahora</button>
+            <button id="pomoBtn" type="button">◷ Pomodoro</button>
+          </div>
+        </div>
+        <div class="pomo-cfg" id="pomoCfg">
+          <span class="label">Pomodoro</span>
+          <label>Enfoque <select id="pomoWork" aria-label="Minutos de enfoque"><option>15</option><option>20</option><option selected>25</option><option>30</option><option>45</option><option>50</option></select> min</label>
+          <label>Pausa <select id="pomoBreak" aria-label="Minutos de pausa"><option selected>5</option><option>10</option><option>15</option></select> min</label>
+        </div>
+        <div class="pomo" id="pomoView" hidden>
+          <div class="pomo-ring">
+            <svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="54" class="trk"/><circle cx="60" cy="60" r="54" class="prg" id="pomoPrg"/></svg>
+            <div class="pomo-txt"><b id="pomoTime">25:00</b><span id="pomoPhase">Enfoque · sesión 1</span></div>
+          </div>
+          <div class="pomo-side">
+            <span class="pomo-act" id="pomoAct"></span>
+            <div class="row"><button type="button" id="pomoPause">Pausar</button><button type="button" id="pomoStop" class="ghost danger">Detener</button></div>
           </div>
         </div>
         <form id="entryForm" class="form" autocomplete="off">
@@ -628,7 +670,7 @@ async function removeEntry(id){
 }
 const newId=()=>"e"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const nowHM=()=>{const d=new Date();return pad(d.getHours())+":"+pad(d.getMinutes())};
-function resetForm(){$("entryForm").reset();renderCatSelect();editing=null;$("cancelEdit").hidden=true;$("saveBtn").textContent="Guardar registro"}
+function resetForm(){$("entryForm").reset();renderCatSelect();editing=null;$("cancelEdit").hidden=true;$("saveBtn").textContent="Guardar registro";if(typeof gateBtns==="function")try{gateBtns()}catch(e){}}
 $("cancelEdit").onclick=resetForm;
 $("iniNow").onclick=()=>{$("fInicio").value=nowHM();$("formStatus").textContent="Inicio ajustado a la hora actual: "+hm12($("fInicio").value);};
 $("finNow").onclick=()=>{$("fFin").value=nowHM();if($("fInicio").value&&toMin($("fFin").value)<=toMin($("fInicio").value))$("formStatus").textContent="Fin ajustado a la hora actual: "+hm12($("fFin").value)+" Cruza la medianoche: se guardará en dos días.";else $("formStatus").textContent="Fin ajustado a la hora actual: "+hm12($("fFin").value);};
@@ -653,22 +695,88 @@ function tickTimer(){
   $("timerView").hidden=false;$("timerView").textContent=pad(Math.floor(s/3600))+":"+pad(Math.floor(s/60)%60)+":"+pad(s%60);
   $("timerBtn").textContent="■ Terminar";
 }
+function needAct(){const a=$("fAct");if(a.value.trim())return false;a.classList.remove("need");void a.offsetWidth;a.classList.add("need");a.focus();$("formStatus").textContent="Escribe primero qué vas a hacer.";return true}
+function gateBtns(){const e=!$("fAct").value.trim();$("timerBtn").classList.toggle("off",e&&!timerStart);$("pomoBtn").classList.toggle("off",e&&!pomo);$("pomoBtn").disabled=!!pomo||!!timerStart;$("timerBtn").disabled=!!pomo}
+$("fAct").addEventListener("input",gateBtns);
 $("timerBtn").onclick=()=>{
   const d=()=>new Date(timerStart);
+  if(!timerStart&&needAct())return;
   if(!timerStart){timerStart=Date.now();lsSet("bitacora_timer",timerStart);
     $("fInicio").value=pad(d().getHours())+":"+pad(d().getMinutes());$("fFin").value="";$("formStatus").textContent="Cronómetro en marcha. Puedes ir escribiendo qué haces.";}
   else{$("fInicio").value=pad(d().getHours())+":"+pad(d().getMinutes());$("fFin").value=nowHM();
     viaTimer=true;if(day!==ymd(new Date()))setDay(ymd(new Date()));
     timerStart=null;try{localStorage.removeItem("bitacora_timer")}catch(e){}
-    $("fAct").focus();$("formStatus").textContent="Completa qué hiciste y guarda.";}
-  tickTimer();
+    $("fAct").focus();$("formStatus").textContent="Revisa qué hiciste y guarda.";}
+  tickTimer();gateBtns();
+};
+// ---------- pomodoro ----------
+let pomo=lsGet("bitacora_pomo",null);
+const PCIRC=339.29;
+{const c=lsGet("bitacora_pomo_cfg",null);if(c){$("pomoWork").value=String(c.w);$("pomoBreak").value=String(c.b)}}
+const pomoCfgSave=()=>lsSet("bitacora_pomo_cfg",{w:+$("pomoWork").value,b:+$("pomoBreak").value});
+$("pomoWork").onchange=pomoCfgSave;$("pomoBreak").onchange=pomoCfgSave;
+const hmOf=t=>{const d=new Date(t);return pad(d.getHours())+":"+pad(d.getMinutes())};
+const pDur=()=>(pomo.phase==="work"?pomo.w:pomo.b)*60000;
+const pEnd=()=>pomo.start+pDur()+pomo.pausedTotal;
+function beep(){try{const A=window.AudioContext||window.webkitAudioContext;const a=new A();[0,.25,.5].forEach((t,i)=>{const o=a.createOscillator(),g=a.createGain();o.frequency.value=i===2?988:784;o.connect(g);g.connect(a.destination);g.gain.setValueAtTime(.0001,a.currentTime+t);g.gain.exponentialRampToValueAtTime(.25,a.currentTime+t+.02);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+t+.22);o.start(a.currentTime+t);o.stop(a.currentTime+t+.24)})}catch(e){}}
+function notify(msg){try{if(window.Notification&&Notification.permission==="granted")new Notification("Bitácora Mindfocus",{body:msg})}catch(e){}}
+async function pomoLog(kind,t0,t1){
+  if(t1-t0<60000)return;
+  const ini=hmOf(t0);let fin=hmOf(t1),fecha=ymd(new Date(t0));
+  const isW=kind==="enfoque",act=isW?pomo.act:"Pausa pomodoro",desc=isW?pomo.desc:"";
+  const cat=isW?(pomo.cat==="auto"?classify(pomo.act+" "+pomo.desc):pomo.cat):(catById("pausa_activa")&&cats.some(c=>c.id==="pausa_activa")?"pausa_activa":classify("pausa activa"));
+  if(fin==="00:00")fin="24:00";
+  if(toMin(fin)<=toMin(ini)){await saveEntry({id:newId(),fecha:addDays(fecha,1),inicio:"00:00",fin,actividad:act,descripcion:desc,categoria:cat,pomodoro:kind,creado:Date.now()});fin="24:00"}
+  if(toMin(fin)>toMin(ini))await saveEntry({id:newId(),fecha,inicio:ini,fin,actividad:act,descripcion:desc,categoria:cat,pomodoro:kind,creado:Date.now()});
+}
+function pomoSave(){if(pomo)lsSet("bitacora_pomo",pomo);else try{localStorage.removeItem("bitacora_pomo")}catch(e){}}
+let pomoBusy=false;
+async function tickPomo(){
+  const v=$("pomoView");
+  if(!pomo){v.hidden=true;$("pomoCfg").hidden=false;return}
+  v.hidden=false;$("pomoCfg").hidden=true;v.classList.toggle("brk",pomo.phase==="break");
+  const now=pomo.pausedAt||Date.now(),end=pEnd();
+  if(!pomo.pausedAt&&now>=end&&!pomoBusy&&(col||(!window.firebase&&performance.now()>6000))){
+    pomoBusy=true;const was=pomo.phase,st=pomo.start;
+    try{await pomoLog(was==="work"?"enfoque":"pausa",st,end)}catch(e){$("formStatus").textContent="No se pudo guardar el pomodoro: "+(e.message||e.code)}
+    if(was==="work")pomo.done=(pomo.done||0)+1;
+    pomo.phase=was==="work"?"break":"work";if(was==="break")pomo.n++;
+    pomo.start=end;pomo.pausedTotal=0;
+    if(Date.now()>=pEnd()){const n=pomo.done;pomo=null;pomoSave();pomoBusy=false;$("formStatus").textContent="Pomodoro detenido mientras la app estuvo cerrada. Sesiones registradas: "+n+".";gateBtns();tickPomo();return}
+    pomoSave();pomoBusy=false;beep();
+    const m=was==="work"?"¡Sesión "+pomo.done+" completada! Pausa de "+pomo.b+" min.":"Pausa terminada. Sesión "+pomo.n+": "+pomo.act;
+    notify(m);$("formStatus").textContent=m;
+  }
+  const left=Math.max(0,pEnd()-now),dur=pDur();
+  const s=Math.ceil(left/1000);$("pomoTime").textContent=pad(Math.floor(s/60))+":"+pad(s%60);
+  $("pomoPhase").textContent=(pomo.phase==="work"?"Enfoque · sesión "+pomo.n:"Pausa · "+pomo.b+" min")+(pomo.pausedAt?" · en pausa":"");
+  $("pomoPrg").style.strokeDashoffset=(PCIRC*(1-left/dur)).toFixed(2);
+  $("pomoAct").textContent=pomo.phase==="work"?pomo.act:"Descansa: levántate, estira, toma agua.";
+  $("pomoPause").textContent=pomo.pausedAt?"▶ Reanudar":"❚❚ Pausar";
+}
+$("pomoBtn").onclick=()=>{
+  if(pomo||timerStart)return;if(needAct())return;
+  pomo={act:$("fAct").value.trim(),desc:$("fDesc").value.trim(),cat:$("fCat").value,w:+$("pomoWork").value,b:+$("pomoBreak").value,phase:"work",n:1,done:0,start:Date.now(),pausedAt:null,pausedTotal:0};
+  pomoSave();pomoCfgSave();
+  try{if(window.Notification&&Notification.permission==="default")Notification.requestPermission()}catch(e){}
+  if(day!==ymd(new Date()))setDay(ymd(new Date()));
+  $("formStatus").textContent="Pomodoro en marcha: "+pomo.w+" min de enfoque. Cada sesión se registra sola.";
+  gateBtns();tickPomo();
+};
+$("pomoPause").onclick=()=>{if(!pomo)return;if(pomo.pausedAt){pomo.pausedTotal+=Date.now()-pomo.pausedAt;pomo.pausedAt=null}else pomo.pausedAt=Date.now();pomoSave();tickPomo()};
+$("pomoStop").onclick=async()=>{
+  if(!pomo)return;const p=pomo,now=p.pausedAt||Date.now();
+  if(p.phase==="work"){try{await pomoLog("enfoque",p.start,now)}catch(e){}}
+  const n=p.done+(p.phase==="work"&&now-p.start>=60000?1:0);
+  pomo=null;pomoSave();resetForm();gateBtns();tickPomo();
+  $("formStatus").textContent="Pomodoro detenido."+(p.phase==="work"&&now-p.start>=60000?" El tiempo de la sesión en curso quedó registrado.":"")+" Sesiones: "+n+".";
 };
 function tickClock(){
   const n=new Date();
   const h=n.getHours();$("clkTime").innerHTML=(h%12||12)+":"+pad(n.getMinutes())+"<span>:"+pad(n.getSeconds())+" "+(h<12?"a.m.":"p.m.")+"</span>";
   $("clkDate").textContent=n.toLocaleDateString("es-CO",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 }
-setInterval(()=>{tickTimer();tickClock()},1000);tickTimer();tickClock();
+setInterval(()=>{tickTimer();tickClock();tickPomo()},1000);tickTimer();tickClock();tickPomo();gateBtns();
 
 // ---------- métricas ----------
 let SC=new Map(),BYDATE=null;
@@ -768,6 +876,7 @@ function renderRegistro(){
 }
 
 // ---------- render análisis ----------
+function pomoCount(days){const S=new Set(days);return entries.filter(e=>e.pomodoro==="enfoque"&&S.has(e.fecha)).length}
 function renderKpis(){
   const days=periodDays();
   $("rangeLabel").textContent=periodLabel();
@@ -784,7 +893,8 @@ function renderKpis(){
     k("","Horas productivas",fmtH(S.prod),days.length>1?avg+" / día":"de "+fmtH(S.awake)+" despierto")+
     k(S.cov>=80?"good":S.cov>=50?"warn":"bad","Día registrado",S.cov+"%",fmtH(S.gap)+" sin registrar",dl(S.cov,P.cov,false," pts"))+
     k("txt","Categoría principal",top?esc(catById(top[0]).n):"—",top?fmtH(top[1]):"")+
-    k("","Racha",streak()+" días","con registros");
+    k("","Racha",streak()+" días","con registros")+
+    (n=>k("","Pomodoros",n,n===1?"sesión completada":"sesiones completadas"))(pomoCount(days));
   const rows=Object.entries(S.byCat).sort((a,b)=>b[1]-a[1]);const max=rows.length?rows[0][1]:1;
   $("catBars").innerHTML=rows.length?rows.map(([id,m])=>{const c=catById(id);return `<div class="bar"><span class="nm" title="${esc(c.n)}">${esc(c.n)}</span><div class="track"><div style="width:${m/max*100}%;background:${catColor(c)}"></div></div><span class="vv">${fmtH(m)}</span></div>`}).join(""):'<div class="empty">Sin registros en este periodo.</div>';
 }
