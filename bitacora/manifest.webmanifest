@@ -1,6 +1,6 @@
 {
-  "name": "Bitácora de Jornada",
-  "short_name": "Bitácora",
+  "name": "Bitácora Mindfocus",
+  "short_name": "Mindfocus",
   "description": "Registro diario de actividades y análisis de productividad.",
   "lang": "es",
   "start_url": "./",

@@ -1,4 +1,4 @@
-# Bitácora de Jornada
+# Bitácora Mindfocus
 
 Registro diario de actividades (7:00 a.m. – 9:00 p.m.) con cronómetro, categorías y análisis de productividad por día, semana, mes, trimestre, semestre, año o rango personalizado.
 
