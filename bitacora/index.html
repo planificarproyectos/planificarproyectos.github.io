@@ -20,7 +20,7 @@
   --accent:#3e6ae1; --accent-ink:#ffffff; --c-gap:#ececec; --seg:#e7e7e7;
   --ok:#3d8b63; --warn:#c08a22; --bad:#cc4b44; --neutral:#a3a5a8;
   --p0:#4a7c6b; --p1:#5b7fa6; --p2:#8a7aa8; --p3:#a3a5a8; --p4:#c4554d; --p5:#c09346;
-  --p6:#6f9a54; --p7:#b0708f; --p8:#4f9aa3; --p9:#a07856; --p10:#6c74b0; --p11:#9a9a5a; --p12:#3f6f8f; --p13:#c06a3e; --p14:#7d6b4f; --p15:#5f8f73; --p16:#9a5f9f; --p17:#3f8f8a; --p18:#b5803a; --p19:#6a7fa0; --p20:#8f9a3f; --p21:#a2505f; --p22:#4c6b5c; --p23:#7a6fc0;
+  --p6:#6f9a54; --p7:#b0708f; --p8:#4f9aa3; --p9:#a07856; --p10:#6c74b0; --p11:#9a9a5a; --p12:#3f6f8f; --p13:#c06a3e; --p14:#7d6b4f; --p15:#5f8f73; --p16:#9a5f9f; --p17:#3f8f8a; --p18:#b5803a; --p19:#6a7fa0; --p20:#8f9a3f; --p21:#a2505f; --p22:#4c6b5c; --p23:#7a6fc0; --p24:#34488a;
   --shadow:0 1px 2px rgba(0,0,0,.04),0 6px 24px rgba(0,0,0,.05);
   --f-body:"Manrope","Helvetica Neue",Helvetica,Arial,sans-serif;
   --f-num:"Manrope","Helvetica Neue",Helvetica,Arial,sans-serif;
@@ -30,14 +30,14 @@
   --accent:#4f7cf0; --accent-ink:#ffffff; --c-gap:#2a2a2d; --seg:#1b1b1d;
   --ok:#5bb585; --warn:#e0ac48; --bad:#e86a62; --neutral:#6e7075;
   --p0:#6fae97; --p1:#7fa3cc; --p2:#ab9bcc; --p3:#8a8c90; --p4:#e07a71; --p5:#dcb36a;
-  --p6:#94bf78; --p7:#d395b2; --p8:#73bcc4; --p9:#c49c7a; --p10:#9199d6; --p11:#c1c17e; --p12:#6f9fc2; --p13:#e3936a; --p14:#b39f80; --p15:#8cc0a0; --p16:#c48ac9; --p17:#6cc2bc; --p18:#dcab6a; --p19:#9cb0d0; --p20:#bcc66a; --p21:#d27f8e; --p22:#7fa290; --p23:#a89ef0;
+  --p6:#94bf78; --p7:#d395b2; --p8:#73bcc4; --p9:#c49c7a; --p10:#9199d6; --p11:#c1c17e; --p12:#6f9fc2; --p13:#e3936a; --p14:#b39f80; --p15:#8cc0a0; --p16:#c48ac9; --p17:#6cc2bc; --p18:#dcab6a; --p19:#9cb0d0; --p20:#bcc66a; --p21:#d27f8e; --p22:#7fa290; --p23:#a89ef0; --p24:#8296e0;
   --shadow:none; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0e0e0f; --surface:#1b1b1d; --surface2:#242427; --ink:#f2f2f2; --muted:#a1a3a7; --faint:#75777c; --line:#2b2b2e;
   --accent:#4f7cf0; --accent-ink:#ffffff; --c-gap:#2a2a2d; --seg:#1b1b1d;
   --ok:#5bb585; --warn:#e0ac48; --bad:#e86a62; --neutral:#6e7075;
   --p0:#6fae97; --p1:#7fa3cc; --p2:#ab9bcc; --p3:#8a8c90; --p4:#e07a71; --p5:#dcb36a;
-  --p6:#94bf78; --p7:#d395b2; --p8:#73bcc4; --p9:#c49c7a; --p10:#9199d6; --p11:#c1c17e; --p12:#6f9fc2; --p13:#e3936a; --p14:#b39f80; --p15:#8cc0a0; --p16:#c48ac9; --p17:#6cc2bc; --p18:#dcab6a; --p19:#9cb0d0; --p20:#bcc66a; --p21:#d27f8e; --p22:#7fa290; --p23:#a89ef0;
+  --p6:#94bf78; --p7:#d395b2; --p8:#73bcc4; --p9:#c49c7a; --p10:#9199d6; --p11:#c1c17e; --p12:#6f9fc2; --p13:#e3936a; --p14:#b39f80; --p15:#8cc0a0; --p16:#c48ac9; --p17:#6cc2bc; --p18:#dcab6a; --p19:#9cb0d0; --p20:#bcc66a; --p21:#d27f8e; --p22:#7fa290; --p23:#a89ef0; --p24:#8296e0;
   --shadow:none; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
@@ -166,6 +166,7 @@ input::placeholder{color:var(--faint)}
 .kpi .label{text-transform:none;letter-spacing:0;font-size:.8rem;font-weight:500;color:var(--muted)}
 .kpi .v{font-family:var(--f-num);font-size:2.1rem;font-weight:300;line-height:1.1;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;letter-spacing:-.02em}
 .kpi .v small{font-size:.85rem;color:var(--faint);font-weight:400;letter-spacing:0}
+.kpi .v .tm{font-size:.6em;white-space:nowrap}
 .kpi .v.txt{font-size:1.1rem;line-height:1.3;padding-top:6px;font-weight:500;letter-spacing:0}
 .bars{display:flex;flex-direction:column;gap:10px}
 .bar{display:grid;grid-template-columns:minmax(0,9rem) minmax(0,1fr) 4.5rem;gap:10px;align-items:center;font-size:.86rem}
@@ -181,9 +182,9 @@ input::placeholder{color:var(--faint)}
 .wcol .d{font-size:.68rem;color:var(--faint);text-transform:capitalize;font-variant-numeric:tabular-nums}
 .wcol .d.today{color:var(--accent);font-weight:600}
 /* horas fuertes */
-.heat{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:4px}
+.heat{display:grid;grid-template-columns:repeat(24,minmax(0,1fr));gap:2px}
 .heat div{aspect-ratio:1;border-radius:6px;background:var(--c-gap);max-width:100%}
-.heat-axis{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:4px;font-size:.62rem;color:var(--faint);text-align:center;margin-top:-8px}
+.heat-axis{display:grid;grid-template-columns:repeat(24,minmax(0,1fr));gap:2px;white-space:nowrap;font-size:.62rem;color:var(--faint);text-align:center;margin-top:-8px}
 .insights{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:.9rem;color:var(--muted)}
 .ai-out{white-space:pre-wrap;font-size:.92rem;line-height:1.6;max-width:65ch;color:var(--ink)}
 .ai-out:empty{display:none}
@@ -198,6 +199,25 @@ input::placeholder{color:var(--faint)}
 .authlinks{display:flex;justify-content:space-between;width:100%;gap:8px;flex-wrap:wrap}
 .authlinks .ghost{font-size:.85rem;color:var(--accent)}
 #aMsg:empty{display:none}
+#tabAna{border-radius:0 999px 999px 0;padding-right:38px}
+.maintabs.adm #tabAna{border-radius:0;padding-right:34px}
+#tabAdm{border-radius:0 999px 999px 0;padding-right:38px}
+#tabAdm .sm{display:none}
+@media (max-width:560px){.maintabs.adm button{padding-inline:10px;font-size:.85rem}#tabAdm .lg{display:none}#tabAdm .sm{display:inline}}
+.ulist{display:flex;flex-direction:column}
+.urow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;padding:12px 0;border-top:1px solid var(--line);align-items:center}
+.urow .em{font-weight:500;overflow-wrap:anywhere}
+.urow .meta{grid-column:1/-1;font-size:.8rem;color:var(--faint);display:flex;flex-wrap:wrap;gap:4px 14px;font-variant-numeric:tabular-nums}
+.urow .acts{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px}
+.urow .acts button{padding:6px 12px;font-size:.82rem}
+.pill{font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.pill.activo{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+.pill.pendiente{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.pill.revocado{background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)}
+.pill.admin{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}
+.btnlink{display:inline-flex;align-items:center;padding:9px 16px;border-radius:10px;background:var(--surface2);color:var(--ink);text-decoration:none;font-weight:500}
+.consent{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:20;max-width:560px;margin:0 auto;background:var(--surface);box-shadow:0 8px 30px rgba(0,0,0,.25);border-radius:16px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;font-size:.86rem;color:var(--muted)}
+.consent span{flex:1 1 240px}
 .banner{font-size:.85rem;padding:10px 14px;border-radius:12px;background:color-mix(in srgb,var(--warn) 12%,var(--surface));color:var(--ink);margin-bottom:16px}
 .confirm{display:flex;gap:6px;align-items:center;font-size:.82rem;flex-wrap:wrap}
 
@@ -221,6 +241,7 @@ input::placeholder{color:var(--faint)}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
 <script src="firebase-config.js"></script>
 </head>
 <body>
@@ -229,7 +250,7 @@ input::placeholder{color:var(--faint)}
 <div class="wrap" id="appView" hidden>
   <header class="top">
     <div class="brand"><svg class="logo" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 8c-3-3-9-3-11 1-4 0-7 4-6 8-3 2-3 7 0 9-1 4 2 8 6 8 2 4 8 5 11 2"/><path d="M24 8c3-3 9-3 11 1 4 0 7 4 6 8 3 2 3 7 0 9 1 4-2 8-6 8-2 4-8 5-11 2"/><path d="M24 8v7M24 29v7M13 17c2 0 4 1 5 3M35 17c-2 0-4 1-5 3M12 27c2-1 4-1 6 0M36 27c-2-1-4-1-6 0"/><circle cx="24" cy="22" r="7"/><path class="hands" d="M24 22v-4M24 22l3 2"/></svg>
-    <h1>Bitácora de Jornada<small>Registro diario · 7:00 a.m. – 9:00 p.m.</small></h1></div>
+    <h1>Bitácora de Jornada<small>Registro diario · 24 horas</small></h1></div>
     <div class="clock" aria-live="off" aria-label="Fecha y hora actual">
       <div class="clk-time" id="clkTime">--:--<span>:--</span></div>
       <div class="clk-date" id="clkDate"></div>
@@ -245,6 +266,7 @@ input::placeholder{color:var(--faint)}
   <nav class="maintabs" role="tablist" aria-label="Secciones">
     <button role="tab" id="tabReg" aria-selected="true" aria-controls="viewReg">Registro</button>
     <button role="tab" id="tabAna" aria-selected="false" aria-controls="viewAna">Análisis</button>
+    <button role="tab" id="tabAdm" aria-selected="false" aria-controls="viewAdm" hidden><span class="lg">Administración</span><span class="sm">Admin</span></button>
   </nav>
 
   <div class="acct" id="acctBar" hidden>
@@ -314,6 +336,47 @@ input::placeholder{color:var(--faint)}
     </div>
   </div>
 
+    <!-- PESTAÑA 3: ADMINISTRACIÓN (solo administrador) -->
+  <div id="viewAdm" role="tabpanel" aria-labelledby="tabAdm" class="grid" hidden>
+    <div class="col">
+      <section class="panel" aria-labelledby="admSumTitle">
+        <div class="phead"><h2 id="admSumTitle">Resumen de uso</h2><button class="ghost" id="admRefresh">Actualizar</button></div>
+        <div class="kpis" id="admKpis"></div>
+      </section>
+      <section class="panel" aria-labelledby="admInvTitle">
+        <h2 id="admInvTitle">Invitar a una persona</h2>
+        <form id="invForm" class="cat-add" autocomplete="off">
+          <input id="invEmail" type="email" placeholder="correo@ejemplo.com" aria-label="Correo de la persona" required>
+          <span></span>
+          <button type="submit" class="primary">Invitar</button>
+        </form>
+        <div id="invOut" hidden class="authform">
+          <span class="label">Mensaje para enviar</span>
+          <textarea id="invMsg" readonly rows="5"></textarea>
+          <div class="row"><button class="primary" id="invCopy" type="button">Copiar mensaje</button><a class="btnlink" id="invWa" target="_blank" rel="noopener">Enviar por WhatsApp</a></div>
+        </div>
+        <p class="status" id="invStatus"></p>
+      </section>
+      <section class="panel" aria-labelledby="admUsersTitle">
+        <div class="phead"><h2 id="admUsersTitle">Usuarios</h2><span class="label" id="admCount"></span></div>
+        <div id="admUsers" class="ulist"></div>
+        <p class="status">Para borrar por completo la cuenta de acceso de alguien, después de eliminarlo aquí ve a <a href="https://console.firebase.google.com/project/bitacora-jornada/authentication/users" target="_blank" rel="noopener">Firebase → Authentication → Users</a>.</p>
+      </section>
+      <section class="panel" aria-labelledby="admActTitle">
+        <h2 id="admActTitle">Usuarios activos por día</h2>
+        <p class="label" style="margin:0">Últimos 30 días</p>
+        <div class="week" id="admActive"></div>
+      </section>
+      <section class="panel" aria-labelledby="admFeatTitle">
+        <h2 id="admFeatTitle">Uso de funciones</h2>
+        <div class="bars" id="admFeat"></div>
+        <hr class="sep">
+        <span class="label">Registros por día de la semana</span>
+        <div class="bars" id="admDow"></div>
+      </section>
+    </div>
+  </div>
+
   <!-- PESTAÑA 2: ANÁLISIS -->
   <div id="viewAna" role="tabpanel" aria-labelledby="tabAna" class="grid" hidden>
     <div class="col">
@@ -345,6 +408,12 @@ input::placeholder{color:var(--faint)}
         <hr class="sep">
         <span class="label">Tiempo por categoría</span>
         <div class="bars" id="catBars"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="sleepTitle">
+        <h2 id="sleepTitle">Sueño</h2>
+        <div class="kpis" id="sleepKpis"></div>
+        <p class="status" id="sleepNote"></p>
       </section>
 
       <section class="panel" aria-labelledby="weekTitle">
@@ -399,17 +468,30 @@ input::placeholder{color:var(--faint)}
 <div class="auth" id="cfgView" hidden>
   <div class="authcard"><h1 class="authh">Falta configurar Firebase</h1><p class="status">Completa <code>firebase-config.js</code> con la configuración de tu proyecto de Firebase.</p></div>
 </div>
+
+<div class="auth" id="noAccessView" hidden>
+  <div class="authcard">
+    <h1 class="authh">Sin acceso</h1>
+    <p class="status" id="noAccessMsg">Tu cuenta no tiene una invitación activa. Pide al administrador que te invite con este correo.</p>
+    <button class="primary" id="noAccessOut" type="button">Cerrar sesión</button>
+  </div>
+</div>
+<div class="consent" id="consentBar" hidden role="dialog" aria-label="Analítica">
+  <span>Usamos Google Analytics para medir el uso de la app y mejorarla. No se comparte el contenido de tus registros.</span>
+  <div class="row"><button class="ghost" id="consentNo" type="button">Rechazar</button><button class="primary" id="consentYes" type="button">Aceptar</button></div>
+</div>
 <script>
 (function(){
-const START=7*60, END=21*60, SPAN=END-START; // jornada 07:00–21:00
-const NSLOTS=24;
+const START=0, END=24*60, SPAN=END-START; // día completo 12:00 a.m. – 12:00 a.m.
+const NSLOTS=25;
 const TIPOS={productiva:"Productiva",neutra:"Neutra",distraccion:"Distracción"};
-const DEFAULT_CATS=[{"id": "profundo", "n": "Trabajo profundo", "tipo": "productiva", "slot": 0, "kw": "presupuest|cantidades|apu|planos|modelo|c[aá]lculo|cronograma|an[aá]lisis|redact|document|estructur|especificaci"}, {"id": "coordinacion", "n": "Coordinación / reuniones", "tipo": "productiva", "slot": 1, "kw": "reuni[oó]n|comit[eé]|llamad|coordin|visita de obra|en obra|cliente|contratista|dise[nñ]ador|ingenier|equipo|seguimiento|interventor|proveedor"}, {"id": "admin", "n": "Administrativo", "tipo": "productiva", "slot": 2, "kw": "correo|email|mail|factura|cotiza|papeleo|archivo|orden de compra|pago|tr[aá]mite|informe"}, {"id": "formacion", "n": "Formación / estudio", "tipo": "productiva", "slot": 10, "kw": "curso|clase|estudi|ingl[eé]s|english|aprend|capacita|webinar|certifica|tutorial"}, {"id": "planificacion", "n": "Planificación", "tipo": "productiva", "slot": 8, "kw": "planific|organiz|agenda|prioriz|lista de tareas|plan del d[ií]a|plan semanal|revisi[oó]n semanal"}, {"id": "proyectos", "n": "Proyectos personales", "tipo": "productiva", "slot": 19, "kw": "proyecto personal|emprend|negocio propio|portafolio|side project"}, {"id": "pausa_activa", "n": "Pausa activa", "tipo": "neutra", "slot": 20, "kw": "pausa activa|estirami|estirar|respiraci[oó]n|caminar un rato"}, {"id": "pausa", "n": "Pausa / descanso", "tipo": "neutra", "slot": 3, "kw": "pausa|descans|break|caf[eé]|tinto|respiro"}, {"id": "ejercicio", "n": "Ejercicio", "tipo": "neutra", "slot": 15, "kw": "ejercicio|gimnasio|gym|correr|trotar|bicicleta|nadar|entren|yoga|crossfit|caminata"}, {"id": "cocinar", "n": "Cocinar", "tipo": "neutra", "slot": 13, "kw": "cocin|preparar (el |la )?(almuerzo|cena|desayuno|comida)|receta|hornear"}, {"id": "comer", "n": "Comer", "tipo": "neutra", "slot": 5, "kw": "almuerzo|almorc|desayun|cena|comida|merienda|onces|comer|com[ií] "}, {"id": "higiene", "n": "Higiene y arreglo personal", "tipo": "neutra", "slot": 17, "kw": "ba[nñ]o|ba[nñ]ar|ducha|vest|arregl|afeit|aseo personal|higiene"}, {"id": "hogar", "n": "Tareas del hogar", "tipo": "neutra", "slot": 14, "kw": "limpi|aseo de la casa|lavar|lavander|planchar|ordenar la casa|barrer|trapear|loza|platos|tender"}, {"id": "compras", "n": "Compras y diligencias", "tipo": "neutra", "slot": 18, "kw": "compras|mercado|supermercado|diligencia|banco|notar[ií]a|droguer[ií]a|farmacia"}, {"id": "desplazamiento", "n": "Desplazamiento", "tipo": "neutra", "slot": 22, "kw": "transporte|desplaz|tr[aá]fico|manej|conduc|transmilenio|taxi|uber|metro|traslado|viaje a|camino a"}, {"id": "familia", "n": "Familia y pareja", "tipo": "neutra", "slot": 7, "kw": "familia|pareja|esposa|esposo|novia|novio|hij[oa]|mam[aá]|pap[aá]|padres|herman"}, {"id": "social", "n": "Vida social", "tipo": "neutra", "slot": 16, "kw": "amig|social|fiesta|cerveza|tomar algo|reuni[oó]n social"}, {"id": "lectura", "n": "Lectura personal", "tipo": "neutra", "slot": 12, "kw": "lectura|libro|novela|le[ií] (un|el|la)"}, {"id": "meditacion", "n": "Meditación / bienestar", "tipo": "neutra", "slot": 23, "kw": "medit|mindful|oraci[oó]n|rezar|journaling|diario personal|terapia|bienestar"}, {"id": "siesta", "n": "Siesta / descanso largo", "tipo": "neutra", "slot": 11, "kw": "siesta|dormir|dorm[ií]|acostar"}, {"id": "distraccion", "n": "Distracción / procrastinación", "tipo": "distraccion", "slot": 4, "kw": "distra|procrastin|perd[ií] (el )?tiempo|navegando|noticias|chisme|scroll"}, {"id": "redes", "n": "Redes sociales", "tipo": "distraccion", "slot": 21, "kw": "redes|instagram|tiktok|facebook|twitter|whats?app personal|celular"}, {"id": "entretenimiento", "n": "Entretenimiento", "tipo": "distraccion", "slot": 9, "kw": "netflix|serie|pel[ií]cula|youtube|videojuego|jugar|televis|f[uú]tbol|partido"}];
+const SUENO={"id": "sueno", "n": "Sueño", "tipo": "neutra", "slot": 24, "kw": "dorm|sue[nñ]o|noche|acost|despert|desvel"};
+const DEFAULT_CATS=[SUENO,{"id": "profundo", "n": "Trabajo profundo", "tipo": "productiva", "slot": 0, "kw": "presupuest|cantidades|apu|planos|modelo|c[aá]lculo|cronograma|an[aá]lisis|redact|document|estructur|especificaci"}, {"id": "coordinacion", "n": "Coordinación / reuniones", "tipo": "productiva", "slot": 1, "kw": "reuni[oó]n|comit[eé]|llamad|coordin|visita de obra|en obra|cliente|contratista|dise[nñ]ador|ingenier|equipo|seguimiento|interventor|proveedor"}, {"id": "admin", "n": "Administrativo", "tipo": "productiva", "slot": 2, "kw": "correo|email|mail|factura|cotiza|papeleo|archivo|orden de compra|pago|tr[aá]mite|informe"}, {"id": "formacion", "n": "Formación / estudio", "tipo": "productiva", "slot": 10, "kw": "curso|clase|estudi|ingl[eé]s|english|aprend|capacita|webinar|certifica|tutorial"}, {"id": "planificacion", "n": "Planificación", "tipo": "productiva", "slot": 8, "kw": "planific|organiz|agenda|prioriz|lista de tareas|plan del d[ií]a|plan semanal|revisi[oó]n semanal"}, {"id": "proyectos", "n": "Proyectos personales", "tipo": "productiva", "slot": 19, "kw": "proyecto personal|emprend|negocio propio|portafolio|side project"}, {"id": "pausa_activa", "n": "Pausa activa", "tipo": "neutra", "slot": 20, "kw": "pausa activa|estirami|estirar|respiraci[oó]n|caminar un rato"}, {"id": "pausa", "n": "Pausa / descanso", "tipo": "neutra", "slot": 3, "kw": "pausa|descans|break|caf[eé]|tinto|respiro"}, {"id": "ejercicio", "n": "Ejercicio", "tipo": "neutra", "slot": 15, "kw": "ejercicio|gimnasio|gym|correr|trotar|bicicleta|nadar|entren|yoga|crossfit|caminata"}, {"id": "cocinar", "n": "Cocinar", "tipo": "neutra", "slot": 13, "kw": "cocin|preparar (el |la )?(almuerzo|cena|desayuno|comida)|receta|hornear"}, {"id": "comer", "n": "Comer", "tipo": "neutra", "slot": 5, "kw": "almuerzo|almorc|desayun|cena|comida|merienda|onces|comer|com[ií] "}, {"id": "higiene", "n": "Higiene y arreglo personal", "tipo": "neutra", "slot": 17, "kw": "ba[nñ]o|ba[nñ]ar|ducha|vest|arregl|afeit|aseo personal|higiene"}, {"id": "hogar", "n": "Tareas del hogar", "tipo": "neutra", "slot": 14, "kw": "limpi|aseo de la casa|lavar|lavander|planchar|ordenar la casa|barrer|trapear|loza|platos|tender"}, {"id": "compras", "n": "Compras y diligencias", "tipo": "neutra", "slot": 18, "kw": "compras|mercado|supermercado|diligencia|banco|notar[ií]a|droguer[ií]a|farmacia"}, {"id": "desplazamiento", "n": "Desplazamiento", "tipo": "neutra", "slot": 22, "kw": "transporte|desplaz|tr[aá]fico|manej|conduc|transmilenio|taxi|uber|metro|traslado|viaje a|camino a"}, {"id": "familia", "n": "Familia y pareja", "tipo": "neutra", "slot": 7, "kw": "familia|pareja|esposa|esposo|novia|novio|hij[oa]|mam[aá]|pap[aá]|padres|herman"}, {"id": "social", "n": "Vida social", "tipo": "neutra", "slot": 16, "kw": "amig|social|fiesta|cerveza|tomar algo|reuni[oó]n social"}, {"id": "lectura", "n": "Lectura personal", "tipo": "neutra", "slot": 12, "kw": "lectura|libro|novela|le[ií] (un|el|la)"}, {"id": "meditacion", "n": "Meditación / bienestar", "tipo": "neutra", "slot": 23, "kw": "medit|mindful|oraci[oó]n|rezar|journaling|diario personal|terapia|bienestar"}, {"id": "siesta", "n": "Siesta / descanso largo", "tipo": "neutra", "slot": 11, "kw": "siesta|dormir|dorm[ií]|acostar"}, {"id": "distraccion", "n": "Distracción / procrastinación", "tipo": "distraccion", "slot": 4, "kw": "distra|procrastin|perd[ií] (el )?tiempo|navegando|noticias|chisme|scroll"}, {"id": "redes", "n": "Redes sociales", "tipo": "distraccion", "slot": 21, "kw": "redes|instagram|tiktok|facebook|twitter|whats?app personal|celular"}, {"id": "entretenimiento", "n": "Entretenimiento", "tipo": "distraccion", "slot": 9, "kw": "netflix|serie|pel[ií]cula|youtube|videojuego|jugar|televis|f[uú]tbol|partido"}];
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,"0");
 const toMin=s=>{if(!s)return null;const [h,m]=s.split(":").map(Number);return h*60+(m||0)};
-const ap=h=>(h%12||12)+(h<12?" a.m.":" p.m.");
-const hm12=s=>{if(!s)return "";const [h,m]=s.split(":").map(Number);return (h%12||12)+":"+pad(m)+(h<12?" a.m.":" p.m.")};
+const ap=h=>{h%=24;return (h%12||12)+(h<12?" a.m.":" p.m.")};
+const hm12=s=>{if(!s)return "";let [h,m]=s.split(":").map(Number);h%=24;return (h%12||12)+":"+pad(m)+(h<12?" a.m.":" p.m.")};
 const toHM=m=>pad(Math.floor(m/60))+":"+pad(m%60);
 const fmtH=m=>{m=Math.round(m);const h=Math.floor(m/60),mm=m%60;return h?h+"h"+(mm?" "+pad(mm):""):mm+" min"};
 const ymd=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
@@ -418,7 +500,7 @@ const DIAS=["dom","lun","mar","mié","jue","vie","sáb"];
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 let entries=[], cats=DEFAULT_CATS.map(c=>({...c}));
-let day=ymd(new Date()), range="day", view="reg", pAnchor=ymd(new Date()), cFrom=null, cTo=null;
+let viaTimer=false;let day=ymd(new Date()), range="day", view="reg", pAnchor=ymd(new Date()), cFrom=null, cTo=null;
 let db=null, col=null, cfgDoc=null, editing=null, unsubs=[];
 
 // ---------- categorías ----------
@@ -519,16 +601,18 @@ const nowHM=()=>{const d=new Date();return pad(d.getHours())+":"+pad(d.getMinute
 function resetForm(){$("entryForm").reset();renderCatSelect();editing=null;$("cancelEdit").hidden=true;$("saveBtn").textContent="Guardar registro"}
 $("cancelEdit").onclick=resetForm;
 $("iniNow").onclick=()=>{$("fInicio").value=nowHM();$("formStatus").textContent="Inicio ajustado a la hora actual: "+hm12($("fInicio").value)+".";};
-$("finNow").onclick=()=>{$("fFin").value=nowHM();if($("fInicio").value&&toMin($("fFin").value)<=toMin($("fInicio").value))$("formStatus").textContent="La hora actual es anterior al inicio; revisa las horas.";else $("formStatus").textContent="Fin ajustado a la hora actual: "+hm12($("fFin").value)+".";};
+$("finNow").onclick=()=>{$("fFin").value=nowHM();if($("fInicio").value&&toMin($("fFin").value)<=toMin($("fInicio").value))$("formStatus").textContent="Fin ajustado a la hora actual: "+hm12($("fFin").value)+". Cruza la medianoche: se guardará en dos días.";else $("formStatus").textContent="Fin ajustado a la hora actual: "+hm12($("fFin").value)+".";};
 $("entryForm").addEventListener("submit",async ev=>{
   ev.preventDefault();
-  const ini=$("fInicio").value,fin=$("fFin").value,st=$("formStatus");
-  if(toMin(fin)<=toMin(ini)){st.textContent="La hora de fin debe ser posterior al inicio.";$("fFin").focus();return}
+  const ini=$("fInicio").value,fin0=$("fFin").value,st=$("formStatus");
+  let fin=fin0==="00:00"?"24:00":fin0,finNext=null;
+  if(toMin(fin)===toMin(ini)){st.textContent="La hora de fin debe ser distinta del inicio.";$("fFin").focus();return}
+  if(toMin(fin)<toMin(ini)){finNext=fin;fin="24:00"} // cruza la medianoche: se guarda en dos días
   const act=$("fAct").value.trim(),desc=$("fDesc").value.trim();
   const cat=$("fCat").value==="auto"?classify(act+" "+desc):$("fCat").value;
   const prev=editing?entries.find(x=>x.id===editing):null;
   const e={id:editing||newId(),fecha:prev?prev.fecha:day,inicio:ini,fin,actividad:act,descripcion:desc,categoria:cat,creado:prev?prev.creado:Date.now()};
-  try{await saveEntry(e);resetForm();st.textContent="Registro guardado en «"+catById(cat).n+"»."}catch(err){st.textContent="No se pudo guardar: "+(err.message||err.code)}
+  try{if(finNext)await saveEntry({id:newId(),fecha:addDays(e.fecha,1),inicio:"00:00",fin:finNext,actividad:act,descripcion:desc,categoria:cat,creado:Date.now()});await saveEntry(e);if(!prev){track("registro",viaTimer?"cronometro":"manual",e.fecha)}viaTimer=false;resetForm();st.textContent="Registro guardado en «"+catById(cat).n+"»."+(finNext?" Cruzó la medianoche: quedó dividido en dos días.":"")}catch(err){st.textContent="No se pudo guardar: "+(err.message||err.code)}
 });
 
 // cronómetro
@@ -544,7 +628,7 @@ $("timerBtn").onclick=()=>{
   if(!timerStart){timerStart=Date.now();lsSet("bitacora_timer",timerStart);
     $("fInicio").value=pad(d().getHours())+":"+pad(d().getMinutes());$("fFin").value="";$("formStatus").textContent="Cronómetro en marcha. Puedes ir escribiendo qué haces.";}
   else{$("fInicio").value=pad(d().getHours())+":"+pad(d().getMinutes());$("fFin").value=nowHM();
-    if(day!==ymd(new Date()))setDay(ymd(new Date()));
+    viaTimer=true;if(day!==ymd(new Date()))setDay(ymd(new Date()));
     timerStart=null;try{localStorage.removeItem("bitacora_timer")}catch(e){}
     $("fAct").focus();$("formStatus").textContent="Completa qué hiciste y guarda.";}
   tickTimer();
@@ -567,7 +651,7 @@ function dayStats(d){
   for(const e of [...es].sort((a,b)=>(a.creado||0)-(b.creado||0))){const a=Math.max(START,toMin(e.inicio)),b=Math.min(END,toMin(e.fin));for(let m=a;m<b;m++)slots[m-START]=e.categoria}
   const byCat={},byType={productiva:0,neutra:0,distraccion:0};let reg=0;
   for(const s of slots)if(s){reg++;byCat[s]=(byCat[s]||0)+1;byType[catById(s).tipo]++}
-  const r={es,byCat,byType,reg,gap:SPAN-reg,slots};SC.set(d,r);return r;
+  const r={es,byCat,byType,reg,gap:SPAN-reg,slots,sleep:byCat.sueno||0};SC.set(d,r);return r;
 }
 const MESES=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
 const D=s=>new Date(s+"T12:00:00");
@@ -613,10 +697,11 @@ function periodLabel(){
   return fmtD(f,{day:"numeric",month:"short",year:"numeric"})+" – "+fmtD(t,{day:"numeric",month:"short",year:"numeric"});
 }
 function sumStats(days){
-  let reg=0,prod=0,dist=0,neu=0,gap=0;const byCat={};
-  for(const d of days){const s=dayStats(d);reg+=s.reg;prod+=s.byType.productiva;dist+=s.byType.distraccion;neu+=s.byType.neutra;gap+=s.gap;for(const k in s.byCat)byCat[k]=(byCat[k]||0)+s.byCat[k]}
+  let reg=0,prod=0,dist=0,neu=0,gap=0,sleep=0;const byCat={};
+  for(const d of days){const s=dayStats(d);reg+=s.reg;sleep+=s.sleep;prod+=s.byType.productiva;dist+=s.byType.distraccion;neu+=s.byType.neutra;gap+=s.gap;for(const k in s.byCat)byCat[k]=(byCat[k]||0)+s.byCat[k]}
   const total=SPAN*days.length;
-  return {reg,prod,dist,neu,gap,byCat,total,idx:total?Math.round(prod/total*100):0,proc:reg?Math.round(dist/reg*100):0,cov:total?Math.round(reg/total*100):0};
+  const awake=total-sleep;
+  return {reg,prod,dist,neu,gap,byCat,total,sleep,awake,idx:awake>0?Math.round(prod/awake*100):0,proc:reg?Math.round(dist/reg*100):0,cov:total?Math.round(reg/total*100):0};
 }
 function streak(){let n=0,d=ymd(new Date());const has=new Set(entries.map(e=>e.fecha));if(!has.has(d))d=addDays(d,-1);while(has.has(d)){n++;d=addDays(d,-1)}return n}
 
@@ -626,7 +711,7 @@ function renderTimeline(st){
   for(const e of st.es){const a=Math.max(START,toMin(e.inicio)),b=Math.min(END,toMin(e.fin));if(b<=a)continue;
     const c=catById(e.categoria),d=document.createElement("div");d.className="blk";d.style.left=((a-START)/SPAN*100)+"%";d.style.width=((b-a)/SPAN*100)+"%";d.style.background=catColor(c);d.title=hm12(e.inicio)+" – "+hm12(e.fin)+" · "+e.actividad+" ("+c.n+")";tl.appendChild(d)}
   const ax=$("tlAxis");ax.innerHTML="";
-  const hs=($("timeline").clientWidth||innerWidth)<480?[7,11,15,21]:[7,9,11,13,15,17,19,21];
+  const hs=($("timeline").clientWidth||innerWidth)<480?[0,6,12,18,24]:[0,3,6,9,12,15,18,21,24];
   for(const h of hs){const s=document.createElement("span");s.style.left=((h*60-START)/SPAN*100)+"%";s.textContent=ap(h);ax.appendChild(s)}
 }
 function renderEntries(st){
@@ -641,7 +726,7 @@ function renderEntries(st){
       <div class="body"><span class="chip">${esc(c.n)}</span><h3>${esc(e.actividad)}</h3><p>${esc(e.descripcion||"")}</p></div>
       <div class="acts"><button data-a="edit">Editar</button><button data-a="del">Borrar</button></div>`;
     const acts=row.querySelector(".acts");
-    acts.querySelector('[data-a="edit"]').onclick=()=>{editing=e.id;$("fInicio").value=e.inicio;$("fFin").value=e.fin;$("fAct").value=e.actividad;$("fDesc").value=e.descripcion||"";$("fCat").value=cats.some(x=>x.id===e.categoria)?e.categoria:"auto";$("cancelEdit").hidden=false;$("saveBtn").textContent="Actualizar registro";$("fAct").focus();$("entryForm").scrollIntoView({behavior:"smooth",block:"center"})};
+    acts.querySelector('[data-a="edit"]').onclick=()=>{editing=e.id;$("fInicio").value=e.inicio;$("fFin").value=e.fin==="24:00"?"00:00":e.fin;$("fAct").value=e.actividad;$("fDesc").value=e.descripcion||"";$("fCat").value=cats.some(x=>x.id===e.categoria)?e.categoria:"auto";$("cancelEdit").hidden=false;$("saveBtn").textContent="Actualizar registro";$("fAct").focus();$("entryForm").scrollIntoView({behavior:"smooth",block:"center"})};
     acts.querySelector('[data-a="del"]').onclick=()=>{acts.innerHTML='<span class="confirm">¿Borrar? <button data-y>Sí</button><button data-n>No</button></span>';acts.querySelector("[data-y]").onclick=()=>removeEntry(e.id);acts.querySelector("[data-n]").onclick=renderRegistro};
     box.appendChild(row);
   }
@@ -664,10 +749,10 @@ function renderKpis(){
   const avg=fmtH(S.prod/days.length);
   const k=(cls,label,val,sub,extra)=>`<div class="kpi ${cls.replace("txt","")}"><div class="label">${label}</div><div class="v${cls.includes("txt")?" txt":""}">${val}${sub?` <small>${sub}</small>`:""}</div>${extra||""}</div>`;
   $("kpis").innerHTML=
-    k(S.idx>=55?"good":S.idx>=35?"warn":"bad","Índice de productividad",S.idx+"%","de la jornada",dl(S.idx,P.idx,false," pts"))+
+    k(S.idx>=55?"good":S.idx>=35?"warn":"bad","Índice de productividad",S.idx+"%","del tiempo despierto",dl(S.idx,P.idx,false," pts"))+
     k(S.proc<=10?"good":S.proc<=20?"warn":"bad","Procrastinación",S.proc+"%",fmtH(S.dist),dl(S.proc,P.proc,true," pts"))+
-    k("","Horas productivas",fmtH(S.prod),days.length>1?avg+" / día":"de "+fmtH(S.total))+
-    k(S.cov>=80?"good":S.cov>=50?"warn":"bad","Jornada registrada",S.cov+"%",fmtH(S.gap)+" sin registrar",dl(S.cov,P.cov,false," pts"))+
+    k("","Horas productivas",fmtH(S.prod),days.length>1?avg+" / día":"de "+fmtH(S.awake)+" despierto")+
+    k(S.cov>=80?"good":S.cov>=50?"warn":"bad","Día registrado",S.cov+"%",fmtH(S.gap)+" sin registrar",dl(S.cov,P.cov,false," pts"))+
     k("txt","Categoría principal",top?esc(catById(top[0]).n):"—",top?fmtH(top[1]):"")+
     k("","Racha",streak()+" días","con registros");
   const rows=Object.entries(S.byCat).sort((a,b)=>b[1]-a[1]);const max=rows.length?rows[0][1]:1;
@@ -692,17 +777,17 @@ function renderWeek(){
     box.appendChild(c)});
 }
 function hourProfile(){
-  const sum=new Array(14).fill(0),cnt=new Array(14).fill(0),dist=new Array(14).fill(0);
+  const sum=new Array(24).fill(0),cnt=new Array(24).fill(0),dist=new Array(24).fill(0);
   for(const dd of periodDays()){const s=dayStats(dd);if(!s.reg)continue;
-    for(let h=0;h<14;h++){let p=0,r=0,x=0;for(let m=h*60;m<h*60+60;m++){const c=s.slots[m];if(c){r++;const t=catById(c).tipo;if(t==="productiva")p++;if(t==="distraccion")x++}}if(r){sum[h]+=p/60;cnt[h]++;dist[h]+=x/60}}}
-  return sum.map((v,h)=>({h:h+7,p:cnt[h]?v/cnt[h]:null,d:cnt[h]?dist[h]/cnt[h]:0}));
+    for(let h=0;h<24;h++){let p=0,r=0,x=0;for(let m=h*60;m<h*60+60;m++){const c=s.slots[m];if(c&&c!=="sueno"){r++;const t=catById(c).tipo;if(t==="productiva")p++;if(t==="distraccion")x++}}if(r){sum[h]+=p/60;cnt[h]++;dist[h]+=x/60}}}
+  return sum.map((v,h)=>({h,p:cnt[h]?v/cnt[h]:null,d:cnt[h]?dist[h]/cnt[h]:0}));
 }
 function renderHeat(){
   const prof=hourProfile(),heat=$("heat"),ax=$("heatAxis");heat.innerHTML="";ax.innerHTML="";
   for(const x of prof){const c=document.createElement("div");
     if(x.p!==null)c.style.background=x.d>.3?`color-mix(in srgb, var(--bad) ${Math.round(30+x.d*70)}%, var(--c-gap))`:`color-mix(in srgb, var(--ok) ${Math.round(15+x.p*85)}%, var(--c-gap))`;
     c.title=ap(x.h)+" · "+(x.p===null?"sin datos":Math.round(x.p*100)+"% productivo");heat.appendChild(c);
-    const s=document.createElement("span");s.textContent=(x.h%12||12)+(x.h<12?"a":"p");ax.appendChild(s)}
+    const s=document.createElement("span");s.textContent=x.h%3===0?(x.h%12||12)+(x.h<12?"a":"p"):"";ax.appendChild(s)}
   const ins=[],withData=prof.filter(x=>x.p!==null);
   if(withData.length>=3){
     const best=[...withData].sort((a,b)=>b.p-a.p).slice(0,2),worst=[...withData].sort((a,b)=>b.d-a.d)[0];
@@ -715,9 +800,39 @@ function renderHeat(){
   if(!ins.length)ins.push(reg?"Sigue registrando unos días más para detectar patrones fiables.":"Aún no hay datos. Tras 3 a 5 días de registros aparecerán tus patrones aquí.");
   $("insights").innerHTML=ins.map(t=>`<li>${esc(t)}</li>`).join("");
 }
-function renderAnalisis(){clearStats();renderKpis();renderWeek();renderHeat()}
+
+function sleepNights(){
+  // Cada noche se asigna al día en que te despiertas: sueño desde las 6:00 p.m. del día anterior hasta las 12:00 p.m.
+  const out=[];
+  for(const d of periodDays()){
+    const prev=addDays(d,-1);
+    const ev=(BYDATE&&BYDATE.get(prev)||entries.filter(e=>e.fecha===prev)).filter(e=>e.categoria==="sueno"&&toMin(e.fin)>18*60);
+    const mo=(BYDATE&&BYDATE.get(d)||entries.filter(e=>e.fecha===d)).filter(e=>e.categoria==="sueno"&&toMin(e.inicio)<12*60);
+    let dur=0;for(const e of ev)dur+=toMin(e.fin)-Math.max(18*60,toMin(e.inicio));for(const e of mo)dur+=Math.min(12*60,toMin(e.fin))-toMin(e.inicio);
+    if(dur<=0)continue;
+    const bedAbs=ev.length?Math.min(...ev.map(e=>Math.max(18*60,toMin(e.inicio))))-24*60:Math.min(...mo.map(e=>toMin(e.inicio)));
+    const wake=mo.length?Math.max(...mo.map(e=>Math.min(12*60,toMin(e.fin)))):null;
+    out.push({d,dur,bed:bedAbs,wake});
+  }
+  return out;
+}
+function renderSleep(){
+  const n=sleepNights(),k=(cls,label,val,sub)=>`<div class="kpi ${cls}"><div class="label">${label}</div><div class="v">${val}${sub?` <small>${sub}</small>`:""}</div></div>`;
+  if(!n.length){$("sleepKpis").innerHTML='<div class="empty" style="grid-column:1/-1">Sin sueño registrado en este periodo. Registra, por ejemplo, «Sueño» de 10:00 p.m. a 6:00 a.m.</div>';$("sleepNote").textContent="";return}
+  const avg=n.reduce((s,x)=>s+x.dur,0)/n.length,best=n.reduce((a,b)=>b.dur>a.dur?b:a),worst=n.reduce((a,b)=>b.dur<a.dur?b:a);
+  const t=m=>{m=Math.round(((m%1440)+1440)%1440);return '<span class="tm">'+hm12(pad(Math.floor(m/60))+":"+pad(m%60))+"</span>"};
+  const bed=n.reduce((s,x)=>s+x.bed,0)/n.length,wk=n.filter(x=>x.wake!=null),wake=wk.length?wk.reduce((s,x)=>s+x.wake,0)/wk.length:null;
+  const fd=d=>D(d).toLocaleDateString("es-CO",{weekday:"short",day:"numeric",month:"short"});
+  $("sleepKpis").innerHTML=k(avg>=7*60?"good":avg>=6*60?"warn":"bad","Promedio por noche",fmtH(avg),n.length+" noche"+(n.length>1?"s":""))
+    +k("","Hora de acostarse",t(bed),"promedio")+k("","Hora de despertar",wake!=null?t(wake):"—","promedio")
+    +k("good","Mejor noche",fmtH(best.dur),fd(best.d))+k(worst.dur<6*60?"bad":"","Peor noche",fmtH(worst.dur),fd(worst.d))
+    +k("","Noches con menos de 7 h",n.filter(x=>x.dur<7*60).length,"de "+n.length);
+  $("sleepNote").textContent=avg<7*60?"Duermes en promedio "+fmtH(avg)+". Para adultos se recomiendan de 7 a 9 horas por noche; dormir menos reduce la concentración del día siguiente.":"Tu promedio está dentro de lo recomendado para adultos (7 a 9 horas).";
+}
+function renderAnalisis(){clearStats();renderKpis();renderSleep();renderWeek();renderHeat()}
 function renderCats(){renderCatSelect();renderCatLegend();if(!$("catBody").hidden&&!document.querySelector(".del-box")&&!$("catList").contains(document.activeElement))renderCatList();else if($("catList").children.length===0)renderCatList()}
-function renderAll(){clearStats();renderCats();renderRegistro();if(view==="ana")renderAnalisis()}
+function ensureSleepCat(){if(cats.some(c=>c.id==="sueno"))return false;cats=[{...SUENO},...cats];return true}
+function renderAll(){if(ensureSleepCat()&&cfgDoc)Promise.resolve().then(saveCats).catch(()=>{});clearStats();renderCats();renderRegistro();if(view==="ana")renderAnalisis()}
 
 // ---------- navegación ----------
 function setDay(d){day=d;pAnchor=d;$("dayPick").value=d;renderRegistro();if(view==="ana")renderAnalisis()}
@@ -725,9 +840,11 @@ $("dayPick").onchange=e=>e.target.value&&setDay(e.target.value);
 $("prevDay").onclick=()=>setDay(addDays(day,-1));
 $("nextDay").onclick=()=>setDay(addDays(day,1));
 $("todayBtn").onclick=()=>setDay(ymd(new Date()));
-function setView(v){view=v;const reg=v==="reg";
-  $("viewReg").hidden=!reg;$("viewAna").hidden=reg;$("tabReg").setAttribute("aria-selected",reg);$("tabAna").setAttribute("aria-selected",!reg);
-  if(reg)renderRegistro();else renderAnalisis();}
+function setView(v){view=v;
+  $("viewReg").hidden=v!=="reg";$("viewAna").hidden=v!=="ana";$("viewAdm").hidden=v!=="adm";
+  $("tabReg").setAttribute("aria-selected",v==="reg");$("tabAna").setAttribute("aria-selected",v==="ana");$("tabAdm").setAttribute("aria-selected",v==="adm");
+  if(v==="reg")renderRegistro();else if(v==="ana"){renderAnalisis();track("analisis")}else renderAdmin();}
+$("tabAdm").onclick=()=>setView("adm");
 $("tabReg").onclick=()=>setView("reg");
 $("tabAna").onclick=()=>setView("ana");
 document.querySelectorAll(".ptabs button").forEach(b=>b.onclick=()=>{
@@ -800,6 +917,125 @@ $("pwdBtn").onclick=async()=>{const u=auth.currentUser;if(!u)return;
   try{await auth.sendPasswordResetEmail(u.email);$("storeBanner").hidden=false;$("storeBanner").textContent="Te enviamos un correo a "+u.email+" para cambiar la contraseña."}catch(e){$("storeBanner").hidden=false;$("storeBanner").textContent=errTxt(e)}};
 
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+
+// ---------- métricas de uso ----------
+const ADMIN_UID="AQaEMcKNYfWEhcHVdc8N0ghxeZk1",SITE_URL="https://www.planificarproyectos.com/bitacora/";
+let me=null,isAdmin=false,ga=null;
+const FV=()=>firebase.firestore.FieldValue;
+function track(ev,metodo,fecha){
+  if(ga){try{ga.logEvent(ev==="registro"?"registro_guardado":ev==="analisis"?"analisis_abierto":ev==="csv"?"csv_exportado":ev,metodo?{metodo}:{})}catch(e){}}
+  if(!me||!db)return;
+  const inc=FV().increment(1),d={};
+  if(ev==="registro"){d.registros=inc;d[metodo==="cronometro"?"cronometro":"manual"]=inc;d.registrosDia={[fecha||ymd(new Date())]:inc}}
+  else if(ev==="analisis")d.analisis=inc;else if(ev==="csv")d.csv=inc;else return;
+  db.collection("stats").doc(me.uid).set(d,{merge:true}).catch(()=>{});
+}
+function trackSession(user){
+  const today=ymd(new Date());
+  db.collection("stats").doc(user.uid).set({email:user.email.toLowerCase(),ultimoUso:Date.now(),sesiones:FV().increment(1),dias:{[today]:FV().increment(1)}},{merge:true}).catch(()=>{});
+}
+$("csvBtn").addEventListener("click",()=>track("csv"));
+
+// ---------- consentimiento de analítica ----------
+function startAnalytics(){try{if(firebase.analytics&&(window.FIREBASE_CONFIG||{}).measurementId){ga=firebase.analytics()}}catch(e){}}
+(()=>{let c=null;try{c=localStorage.getItem("bitacora_analitica")}catch(e){}
+  if(c==="si")startAnalytics();else if(c!=="no")$("consentBar").hidden=false;
+  $("consentYes").onclick=()=>{try{localStorage.setItem("bitacora_analitica","si")}catch(e){}$("consentBar").hidden=true;startAnalytics()};
+  $("consentNo").onclick=()=>{try{localStorage.setItem("bitacora_analitica","no")}catch(e){}$("consentBar").hidden=true};})();
+
+// ---------- control de acceso ----------
+async function checkAccess(user){
+  if(user.uid===ADMIN_UID){
+    const ref=db.collection("invitaciones").doc(user.email.toLowerCase());
+    ref.set({email:user.email.toLowerCase(),estado:"activo",uid:user.uid,admin:true,ultimoUso:Date.now()},{merge:true}).catch(()=>{});
+    return true;
+  }
+  const ref=db.collection("invitaciones").doc(user.email.toLowerCase());
+  let snap;try{snap=await ref.get()}catch(e){return false}
+  if(!snap.exists)return false;const inv=snap.data();
+  if(inv.estado==="revocado")return false;
+  const upd={estado:"activo",uid:user.uid,ultimoUso:Date.now()};if(!inv.activado)upd.activado=Date.now();
+  try{await ref.update(upd)}catch(e){}
+  return true;
+}
+$("noAccessOut").onclick=()=>auth.signOut();
+
+// ---------- panel de administración ----------
+let admInv=[],admStats={};
+const fmtF=t=>t?new Date(t).toLocaleDateString("es-CO",{day:"numeric",month:"short",year:"numeric"}):"—";
+function hace(t){if(!t)return "nunca";const d=Math.floor((Date.now()-t)/864e5);return d<=0?"hoy":d===1?"ayer":"hace "+d+" días"}
+function invMessage(email){return `Hola, te invito a usar Bitácora de Jornada para registrar tu día y medir tu productividad.\n\n1. Entra a ${SITE_URL}\n2. Pulsa «Crear cuenta» y usa este correo: ${email}\n3. Elige tu contraseña y listo.`}
+function showInvite(email){$("invMsg").value=invMessage(email);$("invWa").href="https://wa.me/?text="+encodeURIComponent(invMessage(email));$("invOut").hidden=false;$("invCopy").textContent="Copiar mensaje"}
+$("invCopy").onclick=async()=>{try{await navigator.clipboard.writeText($("invMsg").value);$("invCopy").textContent="Copiado"}catch(e){$("invMsg").select();$("invCopy").textContent="Selecciona y copia"}};
+$("invForm").addEventListener("submit",async ev=>{
+  ev.preventDefault();const em=$("invEmail").value.trim().toLowerCase(),st=$("invStatus");
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){st.textContent="Escribe un correo válido.";return}
+  const ex=admInv.find(i=>i.id===em);
+  try{
+    if(ex&&ex.estado!=="revocado"){st.textContent="Esa persona ya está invitada.";showInvite(em);return}
+    await db.collection("invitaciones").doc(em).set(ex?{estado:"pendiente",invitado:Date.now()}:{email:em,estado:"pendiente",invitado:Date.now()},{merge:true});
+    st.textContent="Invitación creada para "+em+". Envíale el mensaje.";$("invEmail").value="";showInvite(em);await loadAdmin();
+  }catch(e){st.textContent="No se pudo invitar: "+(e.message||e.code)}
+});
+$("admRefresh").onclick=()=>loadAdmin();
+async function loadAdmin(){
+  if(!isAdmin)return;
+  try{
+    const [inv,st]=await Promise.all([db.collection("invitaciones").get(),db.collection("stats").get()]);
+    admInv=inv.docs.map(d=>({id:d.id,...d.data()}));admStats={};st.docs.forEach(d=>admStats[d.id]=d.data());
+  }catch(e){$("invStatus").textContent="No se pudieron cargar los usuarios: "+(e.message||e.code)}
+  renderAdmin();
+}
+async function deleteUserData(uid){
+  const base=db.collection("users").doc(uid);
+  for(const sub of ["entradas","config"]){const snap=await base.collection(sub).get();for(const d of snap.docs)await d.ref.delete()}
+  await db.collection("stats").doc(uid).delete().catch(()=>{});
+}
+function renderAdmin(){
+  if(!isAdmin)return;
+  const now=Date.now(),D=864e5,users=admInv.slice().sort((a,b)=>(b.admin?1:0)-(a.admin?1:0)||(b.ultimoUso||b.invitado||0)-(a.ultimoUso||a.invitado||0));
+  const statOf=u=>u.uid&&admStats[u.uid]||{};
+  const act=users.filter(u=>u.estado==="activo");
+  const a7=users.filter(u=>statOf(u).ultimoUso>now-7*D).length,a30=users.filter(u=>statOf(u).ultimoUso>now-30*D).length;
+  const tot=k=>Object.values(admStats).reduce((s,x)=>s+(x[k]||0),0);
+  const k=(cls,label,val,sub)=>`<div class="kpi ${cls}"><div class="label">${label}</div><div class="v">${val}${sub?` <small>${sub}</small>`:""}</div></div>`;
+  $("admKpis").innerHTML=k("","Invitados",users.length,"")+k("good","Cuentas activas",act.length,"")+k(a7?"good":"warn","Activos 7 días",a7,"")+k("","Activos 30 días",a30,"")+k("","Registros",tot("registros"),"desde hoy")+k("","Sesiones",tot("sesiones"),"");
+  $("admCount").textContent=users.length+" en total";
+  const box=$("admUsers");box.innerHTML="";
+  if(!users.length)box.innerHTML='<div class="empty">Aún no hay invitaciones. Invita a la primera persona arriba.</div>';
+  for(const u of users){
+    const s=statOf(u),dias30=Object.keys(s.dias||{}).filter(d=>d>=ymd(new Date(now-30*D))).length;
+    const row=document.createElement("div");row.className="urow";
+    const pill=u.admin?'<span class="pill admin">Administrador</span>':`<span class="pill ${esc(u.estado)}">${{activo:"Activo",pendiente:"Pendiente",revocado:"Revocado"}[u.estado]||esc(u.estado)}</span>`;
+    row.innerHTML=`<span class="em">${esc(u.id)}</span>${pill}
+      <div class="meta"><span>Invitado: ${fmtF(u.invitado||u.activado)}</span><span>Último uso: ${hace(s.ultimoUso)}</span><span>Sesiones: ${s.sesiones||0}</span><span>Días activos (30 d): ${dias30}</span><span>Registros: ${s.registros||0}</span><span>Cronómetro/Manual: ${s.cronometro||0}/${s.manual||0}</span></div>
+      <div class="acts"></div>`;
+    const acts=row.querySelector(".acts");
+    const btn=(t,cls,fn)=>{const b=document.createElement("button");b.textContent=t;if(cls)b.className=cls;b.onclick=fn;acts.appendChild(b);return b};
+    const ref=db.collection("invitaciones").doc(u.id);
+    const confirmBox=(txt,yes,fn)=>{acts.innerHTML=`<span class="confirm">${txt} <button class="primary" data-y>${yes}</button><button data-n>Cancelar</button></span>`;acts.querySelector("[data-n]").onclick=renderAdmin;acts.querySelector("[data-y]").onclick=async()=>{acts.querySelectorAll("button").forEach(x=>x.disabled=true);try{await fn()}catch(e){$("invStatus").textContent="No se pudo completar: "+(e.message||e.code)}await loadAdmin()}};
+    if(!u.admin){
+      if(u.estado==="pendiente")btn("Copiar invitación","",()=>{showInvite(u.id);$("invForm").scrollIntoView({behavior:"smooth",block:"center"})});
+      if(u.estado!=="revocado")btn("Revocar acceso","",()=>confirmBox("¿Quitar el acceso a "+esc(u.id)+"?","Revocar",()=>ref.update({estado:"revocado",revocado:Date.now()})));
+      else btn("Reactivar","",()=>ref.update({estado:u.uid?"activo":"pendiente"}).then(loadAdmin));
+      btn("Eliminar","danger",()=>confirmBox("¿Eliminar a "+esc(u.id)+(u.uid?" y borrar todos sus registros?":"?")+" No se puede deshacer.","Eliminar",async()=>{await ref.update({estado:"revocado"}).catch(()=>{});if(u.uid)await deleteUserData(u.uid);await ref.delete()}));
+    }
+    box.appendChild(row);
+  }
+  // activos por día (30 días)
+  const days=[];for(let i=29;i>=0;i--)days.push(ymd(new Date(now-i*D)));
+  const counts=days.map(d=>Object.values(admStats).filter(x=>x.dias&&x.dias[d]).length),mx=Math.max(1,...counts);
+  const ch=$("admActive");ch.style.gridTemplateColumns=`repeat(30,minmax(0,1fr))`;
+  ch.innerHTML=days.map((d,i)=>`<div class="wcol"><div class="wstack" title="${d}: ${counts[i]} usuario(s)"><div style="height:${counts[i]/mx*100}%;background:var(--accent)"></div></div><span class="d">${i%5===0||i===29?d.slice(8):"&nbsp;"}</span></div>`).join("");
+  // funciones
+  const feats=[["Registros con cronómetro",tot("cronometro")],["Registros manuales",tot("manual")],["Análisis abierto",tot("analisis")],["CSV exportados",tot("csv")]];
+  const fm=Math.max(1,...feats.map(f=>f[1]));
+  $("admFeat").innerHTML=feats.map(([n,v])=>`<div class="bar"><span class="nm">${n}</span><div class="track"><div style="width:${v/fm*100}%;background:var(--accent)"></div></div><span class="vv">${v}</span></div>`).join("");
+  const dow=[0,0,0,0,0,0,0];for(const x of Object.values(admStats))for(const [d,n] of Object.entries(x.registrosDia||{}))dow[(new Date(d+"T12:00:00").getDay()+6)%7]+=n;
+  const dm=Math.max(1,...dow),DN=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+  $("admDow").innerHTML=dow.map((v,i)=>`<div class="bar"><span class="nm">${DN[i]}</span><div class="track"><div style="width:${v/dm*100}%;background:var(--p1)"></div></div><span class="vv">${v}</span></div>`).join("");
+}
+
 // ---------- arranque ----------
 $("dayPick").value=day;
 const CFG=window.FIREBASE_CONFIG||{};
@@ -807,10 +1043,16 @@ let auth=null;
 if(!CFG.apiKey||!window.firebase){$("cfgView").hidden=false}
 else{
   firebase.initializeApp(CFG);auth=firebase.auth();db=firebase.firestore();
-  auth.onAuthStateChanged(user=>{
-    unsubs.forEach(u=>u());unsubs=[];entries=[];cats=DEFAULT_CATS.map(c=>({...c}));
-    if(!user){$("appView").hidden=true;$("authView").hidden=false;$("acctBar").hidden=true;return}
-    $("authView").hidden=true;$("appView").hidden=false;$("acctBar").hidden=false;$("acctEmail").textContent=user.email;
+  auth.onAuthStateChanged(async user=>{
+    unsubs.forEach(u=>u());unsubs=[];entries=[];cats=DEFAULT_CATS.map(c=>({...c}));me=null;isAdmin=false;
+    $("noAccessView").hidden=true;
+    if(!user){$("appView").hidden=true;$("authView").hidden=false;$("acctBar").hidden=true;$("tabAdm").hidden=true;return}
+    $("authView").hidden=true;
+    if(!(await checkAccess(user))){$("appView").hidden=true;$("acctBar").hidden=true;$("noAccessView").hidden=false;$("noAccessMsg").textContent="La cuenta "+user.email+" no tiene una invitación activa. Pide al administrador que te invite con este correo.";return}
+    me=user;isAdmin=user.uid===ADMIN_UID;$("tabAdm").hidden=!isAdmin;document.querySelector(".maintabs").classList.toggle("adm",isAdmin);
+    if(!isAdmin&&view==="adm")setView("reg");
+    trackSession(user);if(isAdmin)loadAdmin();
+    $("appView").hidden=false;$("acctBar").hidden=false;$("acctEmail").textContent=user.email;
     const base=db.collection("users").doc(user.uid);
     col=base.collection("entradas");cfgDoc=base.collection("config").doc("categorias");
     renderAll();
