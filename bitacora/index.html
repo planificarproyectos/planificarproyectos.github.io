@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="Registro diario de actividades y análisis de productividad.">
 <meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0e0e0f">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Bitácora de Jornada</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2048%2048%22%20fill%3D%22none%22%20stroke%3D%22%23171a20%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20width%3D%2248%22%20height%3D%2248%22%20rx%3D%2211%22%20fill%3D%22%23f4f4f4%22%20stroke%3D%22none%22/%3E%3Cpath%20d%3D%22M24%208c-3-3-9-3-11%201-4%200-7%204-6%208-3%202-3%207%200%209-1%204%202%208%206%208%202%204%208%205%2011%202%22/%3E%3Cpath%20d%3D%22M24%208c3-3%209-3%2011%201%204%200%207%204%206%208%203%202%203%207%200%209%201%204-2%208-6%208-2%204-8%205-11%202%22/%3E%3Cpath%20d%3D%22M24%208v7M24%2029v7M13%2017c2%200%204%201%205%203M35%2017c-2%200-4%201-5%203M12%2027c2-1%204-1%206%200M36%2027c-2-1-4-1-6%200%22/%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2222%22%20r%3D%227%22/%3E%3Cpath%20d%3D%22M24%2022v-4M24%2022l3%202%22%20stroke%3D%22%233e6ae1%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -795,6 +799,7 @@ $("logoutBtn").onclick=()=>auth.signOut();
 $("pwdBtn").onclick=async()=>{const u=auth.currentUser;if(!u)return;
   try{await auth.sendPasswordResetEmail(u.email);$("storeBanner").hidden=false;$("storeBanner").textContent="Te enviamos un correo a "+u.email+" para cambiar la contraseña."}catch(e){$("storeBanner").hidden=false;$("storeBanner").textContent=errTxt(e)}};
 
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 // ---------- arranque ----------
 $("dayPick").value=day;
 const CFG=window.FIREBASE_CONFIG||{};
