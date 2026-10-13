@@ -193,11 +193,6 @@ input::placeholder{color:var(--faint)}
 .authform .primary{justify-content:center;margin-top:4px;min-height:46px}
 .authlinks{display:flex;justify-content:space-between;width:100%;gap:8px;flex-wrap:wrap}
 .authlinks .ghost{font-size:.85rem;color:var(--accent)}
-.authcard.wide{max-width:460px}
-.check{display:flex;gap:8px;align-items:center;font-size:.85rem;color:var(--muted)}
-.check input{width:auto;min-height:0!important}
-textarea{font:inherit;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.72rem;color:var(--ink);background:var(--surface2);border:0;border-radius:10px;padding:10px;width:100%;resize:vertical;word-break:break-all}
-.sync{font-size:.78rem;color:var(--faint)}
 #aMsg:empty{display:none}
 .banner{font-size:.85rem;padding:10px 14px;border-radius:12px;background:color-mix(in srgb,var(--warn) 12%,var(--surface));color:var(--ink);margin-bottom:16px}
 .confirm{display:flex;gap:6px;align-items:center;font-size:.82rem;flex-wrap:wrap}
@@ -219,6 +214,10 @@ textarea{font:inherit;font-family:ui-monospace,Menlo,Consolas,monospace;font-siz
 @media (prefers-reduced-motion:reduce){button{transition:none}}
 </style>
 <style>:root{padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
 </head>
 <body>
 
@@ -245,7 +244,7 @@ textarea{font:inherit;font-family:ui-monospace,Menlo,Consolas,monospace;font-siz
   </nav>
 
   <div class="acct" id="acctBar" hidden>
-    <span><span id="acctEmail"></span> · <span class="sync" id="syncState"></span></span>
+    <span id="acctEmail"></span>
     <div class="row">
       <button class="ghost" id="pwdBtn">Cambiar contraseña</button>
       <button class="ghost" id="logoutBtn">Cerrar sesión</button>
@@ -379,39 +378,22 @@ textarea{font:inherit;font-family:ui-monospace,Menlo,Consolas,monospace;font-siz
   <div class="authcard">
     <svg class="logo" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 8c-3-3-9-3-11 1-4 0-7 4-6 8-3 2-3 7 0 9-1 4 2 8 6 8 2 4 8 5 11 2"/><path d="M24 8c3-3 9-3 11 1 4 0 7 4 6 8 3 2 3 7 0 9 1 4-2 8-6 8-2 4-8 5-11 2"/><path d="M24 8v7M24 29v7M13 17c2 0 4 1 5 3M35 17c-2 0-4 1-5 3M12 27c2-1 4-1 6 0M36 27c-2-1-4-1-6 0"/><circle cx="24" cy="22" r="7"/><path class="hands" d="M24 22v-4M24 22l3 2"/></svg>
     <h1 class="authh">Bitácora de Jornada</h1>
-    <p class="status">Inicia sesión para ver tus registros.</p>
+    <p class="status" id="authSub">Inicia sesión para ver tus registros.</p>
     <form id="authForm" class="authform" autocomplete="on">
       <label class="field"><span class="label">Correo</span><input id="aEmail" type="email" autocomplete="username" required></label>
-      <label class="field"><span class="label">Contraseña</span><input id="aPass" type="password" autocomplete="current-password" required></label>
-      <label class="check"><input type="checkbox" id="aKeep" checked> Mantener la sesión en este dispositivo</label>
+      <label class="field"><span class="label">Contraseña</span><input id="aPass" type="password" autocomplete="current-password" minlength="6" required></label>
+      <label class="field" id="aPass2Wrap" hidden><span class="label">Repite la contraseña</span><input id="aPass2" type="password" autocomplete="new-password" minlength="6"></label>
       <button type="submit" class="primary" id="aSubmit">Entrar</button>
       <p class="status" id="aMsg" role="alert"></p>
     </form>
-    <div class="authlinks"><button class="ghost" id="aSetup" type="button">Configurar acceso por primera vez</button></div>
+    <div class="authlinks">
+      <button class="ghost" id="aToggle" type="button">Crear cuenta</button>
+      <button class="ghost" id="aForgot" type="button">Olvidé mi contraseña</button>
+    </div>
   </div>
 </div>
-<div class="auth" id="setupView" hidden>
-  <div class="authcard wide">
-    <h1 class="authh">Configurar acceso</h1>
-    <p class="status">Se hace una sola vez. Tu token de GitHub se guarda cifrado con tu contraseña y nunca en texto plano.</p>
-    <form id="setupForm" class="authform" autocomplete="off">
-      <label class="field"><span class="label">Correo</span><input id="sEmail" type="email" autocomplete="username" required></label>
-      <label class="field"><span class="label">Repositorio de datos (privado)</span><input id="sRepo" value="planificarproyectos/bitacora-datos" required></label>
-      <label class="field"><span class="label">Token de GitHub</span><input id="sToken" type="password" autocomplete="off" placeholder="github_pat_…" required></label>
-      <label class="field"><span class="label">Contraseña (mínimo 12 caracteres)</span><input id="sPass" type="password" autocomplete="new-password" minlength="12" required></label>
-      <label class="field"><span class="label">Repite la contraseña</span><input id="sPass2" type="password" autocomplete="new-password" minlength="12" required></label>
-      <button type="submit" class="primary" id="sSubmit">Verificar y generar código de acceso</button>
-      <p class="status" id="sMsg" role="alert"></p>
-    </form>
-    <div id="sOut" hidden class="authform">
-      <span class="label">Código de acceso cifrado</span>
-      <textarea id="sBlob" readonly rows="6"></textarea>
-      <button class="primary" id="sCopy" type="button">Copiar código</button>
-      <p class="status">Envíaselo a Claude en el chat (o pégalo en el archivo <code>bitacora/auth.json</code> de tu sitio). Es seguro compartirlo: sin tu contraseña no sirve. Mientras tanto ya puedes usar la app en este dispositivo.</p>
-      <button id="sGo" type="button">Entrar a la app</button>
-    </div>
-    <div class="authlinks"><button class="ghost" id="sBack" type="button">Volver al inicio de sesión</button></div>
-  </div>
+<div class="auth" id="cfgView" hidden>
+  <div class="authcard"><h1 class="authh">Falta configurar Firebase</h1><p class="status">Completa <code>firebase-config.js</code> con la configuración de tu proyecto de Firebase.</p></div>
 </div>
 <script>
 (function(){
@@ -773,118 +755,6 @@ $("csvBtn").onclick=async()=>{
 function saveFile(name,data,type){
   const url=URL.createObjectURL(new Blob([data],{type}));const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
-
-// ---------- utilidades de cifrado ----------
-const enc=new TextEncoder(),dec=new TextDecoder();
-const b64=buf=>{let s="";const b=new Uint8Array(buf);for(let i=0;i<b.length;i+=0x8000)s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(s)};
-const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
-const utf8b64=str=>b64(enc.encode(str));
-const b64utf8=s=>dec.decode(unb64(s.replace(/\s/g,"")));
-async function sha256hex(t){const h=await crypto.subtle.digest("SHA-256",enc.encode(t));return [...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,"0")).join("")}
-async function deriveKey(pass,salt,iter){
-  const base=await crypto.subtle.importKey("raw",enc.encode(pass),"PBKDF2",false,["deriveKey"]);
-  return crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:iter,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);
-}
-async function sealSecret(obj,pass){
-  const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12)),iter=600000;
-  const key=await deriveKey(pass,salt,iter);
-  const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,enc.encode(JSON.stringify(obj)));
-  return {v:1,kdf:"PBKDF2-SHA256",iter,salt:b64(salt),iv:b64(iv),ct:b64(ct)};
-}
-async function openSecret(rec,pass){
-  const key=await deriveKey(pass,unb64(rec.salt),rec.iter);
-  const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:unb64(rec.iv)},key,unb64(rec.ct));
-  return JSON.parse(dec.decode(pt));
-}
-
-// ---------- GitHub ----------
-let GH=null; // {token, repo}
-async function gh(path,opts={}){
-  const r=await fetch("https://api.github.com/repos/"+GH.repo+path,{cache:"no-store",...opts,headers:{"Accept":"application/vnd.github+json","Authorization":"Bearer "+GH.token,"X-GitHub-Api-Version":"2022-11-28",...(opts.headers||{})}});
-  if(r.status===404)return null;
-  if(!r.ok){const e=new Error("GitHub "+r.status);e.status=r.status;throw e}
-  return r.status===204?{}:r.json();
-}
-const FILES={}; // path -> {sha, data}
-async function readFile(path){const j=await gh("/contents/"+path);if(!j){FILES[path]={sha:null,data:null};return null}const data=JSON.parse(b64utf8(j.content));FILES[path]={sha:j.sha,data};return data}
-async function writeFile(path,data,msg){
-  const body={message:msg,content:utf8b64(JSON.stringify(data,null,1)),...(FILES[path]&&FILES[path].sha?{sha:FILES[path].sha}:{})};
-  const j=await gh("/contents/"+path,{method:"PUT",body:JSON.stringify(body)});
-  FILES[path]={sha:j.content.sha,data};
-}
-const monthPath=fecha=>"data/"+fecha.slice(0,7)+".json";
-const CATS_PATH="data/categorias.json";
-
-async function loadAll(){
-  setSync("Cargando…");
-  const list=await gh("/contents/data");
-  const all=[];
-  if(list&&Array.isArray(list)){
-    const months=list.filter(f=>/^\d{4}-\d{2}\.json$/.test(f.name));
-    const res=await Promise.all(months.map(f=>readFile("data/"+f.name)));
-    for(const d of res)if(d&&Array.isArray(d.entradas))all.push(...d.entradas);
-    if(list.some(f=>f.name==="categorias.json")){const c=await readFile(CATS_PATH);if(c&&Array.isArray(c.lista)&&c.lista.length)cats=c.lista.map(x=>({...x}))}
-  }
-  entries=all.filter(e=>e&&e.id&&e.fecha&&e.inicio&&e.fin);
-  renderAll();setSync("Sincronizado");
-}
-
-// cola de cambios: se aplican sobre la versión más reciente del archivo para no pisar cambios de otro dispositivo
-let pending=[],flushing=false,flushT=null;
-function queue(op){pending.push(op);setSync("Guardando…");clearTimeout(flushT);flushT=setTimeout(flush,700)}
-function applyOps(path,data,ops){
-  if(path===CATS_PATH){const last=ops.filter(o=>o.t==="cats").pop();return {lista:last.lista}}
-  const list=data&&Array.isArray(data.entradas)?data.entradas.slice():[];
-  for(const o of ops){
-    const i=list.findIndex(x=>x.id===o.id);
-    if(o.t==="del"){if(i>=0)list.splice(i,1)}
-    else{if(i>=0)list[i]=o.e;else list.push(o.e)}
-  }
-  list.sort((a,b)=>(a.fecha+a.inicio).localeCompare(b.fecha+b.inicio));
-  return {entradas:list};
-}
-async function flush(){
-  if(flushing||!pending.length)return;flushing=true;
-  const ops=pending;pending=[];
-  const byPath={};for(const o of ops)(byPath[o.path]=byPath[o.path]||[]).push(o);
-  try{
-    for(const [path,list] of Object.entries(byPath)){
-      for(let attempt=0;;attempt++){
-        try{
-          const fresh=FILES[path]&&attempt===0?FILES[path].data:await readFile(path);
-          await writeFile(path,applyOps(path,fresh,list),"Bitácora: actualizar "+path);
-          break;
-        }catch(e){if((e.status===409||e.status===422)&&attempt<3){await readFile(path);continue}throw e}
-      }
-    }
-    setSync("Sincronizado");
-  }catch(e){
-    pending=ops.concat(pending);
-    setSync(e.status===401||e.status===403?"Sin permiso para guardar: revisa el token":"Sin conexión: se reintentará");
-    clearTimeout(flushT);flushT=setTimeout(flush,15000);
-  }
-  flushing=false;
-  if(pending.length){clearTimeout(flushT);flushT=setTimeout(flush,300)}
-}
-function setSync(t){const el=$("syncState");if(el)el.textContent=t}
-addEventListener("beforeunload",e=>{if(pending.length||flushing){e.preventDefault();e.returnValue=""}});
-
-// adaptadores que usa el resto de la app
-function makeStore(){
-  col={doc:id=>({
-    set:async data=>{const e={id,...data};const i=entries.findIndex(x=>x.id===id);const old=i>=0?entries[i]:null;
-      if(i>=0)entries[i]=e;else entries.push(e);
-      if(old&&old.fecha!==e.fecha)queue({t:"del",id,path:monthPath(old.fecha)});
-      queue({t:"set",id,e,path:monthPath(e.fecha)});renderAll()},
-    delete:async()=>{const old=entries.find(x=>x.id===id);entries=entries.filter(x=>x.id!==id);if(old)queue({t:"del",id,path:monthPath(old.fecha)});renderAll()}
-  })};
-  cfgDoc={set:async d=>{cats=d.lista.map(x=>({...x}));queue({t:"cats",lista:cats.map(x=>({...x})),path:CATS_PATH});renderAll()}};
-}
-
-// refrescar al volver a la app (cambios hechos desde otro dispositivo)
-let lastLoad=0;
-document.addEventListener("visibilitychange",()=>{if(!document.hidden&&GH&&!pending.length&&!flushing&&Date.now()-lastLoad>30000){lastLoad=Date.now();loadAll().catch(()=>{})}});
-
 // ---------- respaldo ----------
 $("bkExport").onclick=()=>{
   const data={app:"bitacora-jornada",version:1,exportado:ymd(new Date()),entradas:entries,categorias:cats};
@@ -897,75 +767,53 @@ $("bkFile").onchange=async ev=>{
   const ents=Array.isArray(data.entradas)?data.entradas.filter(e=>e&&e.id&&e.fecha&&e.inicio&&e.fin):[];
   const cs=Array.isArray(data.categorias)?data.categorias.filter(c=>c&&c.id&&c.n):[];
   if(!ents.length&&!cs.length){st.textContent="El respaldo no tiene registros ni categorías.";return}
-  if(cs.length){const map=new Map(cats.map(c=>[c.id,c]));for(const c of cs)map.set(c.id,{...c});await cfgDoc.set({lista:[...map.values()]})}
-  for(const e of ents){const {id,...d}=e;await col.doc(String(id)).set(d)}
-  st.textContent=`Importados ${ents.length} registros y ${cs.length} categorías.`;
+  st.textContent="Importando…";
+  try{
+    if(cs.length){cats=cs.map(c=>({...c}));await saveCats()}
+    for(let k=0;k<ents.length;k+=400){const b=db.batch();for(const e of ents.slice(k,k+400)){const {id,...d}=e;b.set(col.doc(String(id)),d)}await b.commit()}
+    st.textContent=`Importados ${ents.length} registros y ${cs.length} categorías.`;
+  }catch(e){st.textContent="No se pudo importar: "+(e.message||e.code)}
 };
 
-// ---------- acceso ----------
-const SESSION_KEY="bitacora_sesion";
+// ---------- cuenta ----------
+let signup=false;
 function authMsg(t){$("aMsg").textContent=t}
-async function loadAuthFile(){try{const r=await fetch("auth.json",{cache:"no-store"});return r.ok?await r.json():{usuarios:{}}}catch(e){return {usuarios:{}}}}
-function show(v){for(const id of ["authView","setupView","appView"])$(id).hidden=id!==v;$("acctBar").hidden=v!=="appView"}
-async function startApp(sess,email){
-  GH=sess;makeStore();show("appView");$("acctEmail").textContent=email;
-  try{await loadAll();lastLoad=Date.now()}
-  catch(e){$("storeBanner").hidden=false;$("storeBanner").textContent=e.status===401?"El token ya no es válido. Cierra sesión y configura el acceso de nuevo.":"No se pudieron cargar los datos. Revisa tu conexión y recarga.";setSync("Error")}
-}
+const AUTH_ERR={"auth/invalid-credential":"Correo o contraseña incorrectos.","auth/wrong-password":"Correo o contraseña incorrectos.","auth/user-not-found":"No existe una cuenta con ese correo.","auth/email-already-in-use":"Ya existe una cuenta con ese correo. Inicia sesión.","auth/weak-password":"La contraseña debe tener al menos 6 caracteres.","auth/invalid-email":"El correo no es válido.","auth/too-many-requests":"Demasiados intentos. Espera unos minutos.","auth/network-request-failed":"Sin conexión. Revisa tu internet.","auth/requires-recent-login":"Por seguridad, cierra sesión y vuelve a entrar antes de cambiar la contraseña."};
+const errTxt=e=>AUTH_ERR[e.code]||("Error: "+(e.message||e.code));
+$("aToggle").onclick=()=>{signup=!signup;$("aPass2Wrap").hidden=!signup;$("aPass2").required=signup;$("aSubmit").textContent=signup?"Crear cuenta":"Entrar";$("aToggle").textContent=signup?"Ya tengo cuenta":"Crear cuenta";$("aPass").autocomplete=signup?"new-password":"current-password";$("authSub").textContent=signup?"Crea tu cuenta con tu correo y una contraseña.":"Inicia sesión para ver tus registros.";authMsg("")};
 $("authForm").addEventListener("submit",async ev=>{
-  ev.preventDefault();authMsg("");$("aSubmit").disabled=true;$("aSubmit").textContent="Verificando…";
-  try{
-    const em=$("aEmail").value.trim().toLowerCase(),pw=$("aPass").value;
-    const af=await loadAuthFile();const rec=(af.usuarios||{})[await sha256hex(em)];
-    if(!rec){authMsg("No hay acceso configurado para este correo. Usa «Configurar acceso por primera vez».")}
-    else{
-      let sess;try{sess=await openSecret(rec,pw)}catch(e){authMsg("Correo o contraseña incorrectos.")}
-      if(sess){if($("aKeep").checked){try{localStorage.setItem(SESSION_KEY,JSON.stringify({...sess,email:em}))}catch(e){}}await startApp(sess,em)}
-    }
-  }catch(e){authMsg("No se pudo iniciar sesión: "+e.message)}
-  $("aSubmit").disabled=false;$("aSubmit").textContent="Entrar";
+  ev.preventDefault();const em=$("aEmail").value.trim(),pw=$("aPass").value;authMsg("");
+  if(signup&&pw!==$("aPass2").value){authMsg("Las contraseñas no coinciden.");return}
+  $("aSubmit").disabled=true;
+  try{signup?await auth.createUserWithEmailAndPassword(em,pw):await auth.signInWithEmailAndPassword(em,pw)}
+  catch(e){authMsg(errTxt(e))}
+  $("aSubmit").disabled=false;
 });
-$("logoutBtn").onclick=async()=>{
-  if(pending.length){setSync("Guardando antes de salir…");await flush()}
-  try{localStorage.removeItem(SESSION_KEY)}catch(e){}
-  GH=null;entries=[];cats=DEFAULT_CATS.map(c=>({...c}));$("aPass").value="";show("authView");
-};
-$("pwdBtn").onclick=()=>{show("setupView");$("sEmail").value=$("acctEmail").textContent;if(GH){$("sRepo").value=GH.repo;$("sToken").value=GH.token}$("sPass").focus()};
-$("aSetup").onclick=()=>{show("setupView");$("sEmail").value=$("aEmail").value};
-$("sBack").onclick=()=>{$("sOut").hidden=true;$("setupForm").hidden=false;GH?show("appView"):show("authView")};
-let setupSess=null,setupEmail="";
-$("setupForm").addEventListener("submit",async ev=>{
-  ev.preventDefault();const m=$("sMsg");m.textContent="";
-  const em=$("sEmail").value.trim().toLowerCase(),repo=$("sRepo").value.trim().replace(/^https?:\/\/github\.com\//,"").replace(/\/$/,""),token=$("sToken").value.trim(),pw=$("sPass").value;
-  if(pw!==$("sPass2").value){m.textContent="Las contraseñas no coinciden.";return}
-  if(pw.length<12){m.textContent="Usa al menos 12 caracteres.";return}
-  if(!/^[\w.-]+\/[\w.-]+$/.test(repo)){m.textContent="Escribe el repositorio como usuario/nombre.";return}
-  $("sSubmit").disabled=true;$("sSubmit").textContent="Verificando token…";
-  try{
-    const r=await fetch("https://api.github.com/repos/"+repo,{cache:"no-store",headers:{"Accept":"application/vnd.github+json","Authorization":"Bearer "+token}});
-    if(r.status===401){m.textContent="El token no es válido.";throw 0}
-    if(r.status===404){m.textContent="El token no tiene acceso a "+repo+", o el repositorio no existe.";throw 0}
-    const info=await r.json();
-    if(!info.private){m.textContent="El repositorio de datos debe ser privado.";throw 0}
-    if(info.permissions&&!info.permissions.push){m.textContent="El token no tiene permiso de escritura (Contents: Read and write).";throw 0}
-    $("sSubmit").textContent="Cifrando…";
-    const rec=await sealSecret({token,repo},pw);const key=await sha256hex(em);
-    const af=await loadAuthFile();af.usuarios=af.usuarios||{};af.usuarios[key]=rec;
-    $("sBlob").value=JSON.stringify(af,null,1);$("setupForm").hidden=true;$("sOut").hidden=false;
-    setupSess={token,repo};setupEmail=em;$("sToken").value="";$("sPass").value="";$("sPass2").value="";
-  }catch(e){if(e!==0)m.textContent="No se pudo verificar: "+(e.message||e)}
-  $("sSubmit").disabled=false;$("sSubmit").textContent="Verificar y generar código de acceso";
-});
-$("sCopy").onclick=async()=>{try{await navigator.clipboard.writeText($("sBlob").value);$("sCopy").textContent="Copiado"}catch(e){$("sBlob").select();$("sCopy").textContent="Selecciona y copia el texto"}};
-$("sGo").onclick=async()=>{try{localStorage.setItem(SESSION_KEY,JSON.stringify({...setupSess,email:setupEmail}))}catch(e){}$("sOut").hidden=true;$("setupForm").hidden=false;await startApp(setupSess,setupEmail)};
+$("aForgot").onclick=async()=>{const em=$("aEmail").value.trim();if(!em){authMsg("Escribe tu correo y vuelve a pulsar «Olvidé mi contraseña».");$("aEmail").focus();return}
+  try{await auth.sendPasswordResetEmail(em);authMsg("Te enviamos un correo para restablecer la contraseña.")}catch(e){authMsg(errTxt(e))}};
+$("logoutBtn").onclick=()=>auth.signOut();
+$("pwdBtn").onclick=async()=>{const u=auth.currentUser;if(!u)return;
+  try{await auth.sendPasswordResetEmail(u.email);$("storeBanner").hidden=false;$("storeBanner").textContent="Te enviamos un correo a "+u.email+" para cambiar la contraseña."}catch(e){$("storeBanner").hidden=false;$("storeBanner").textContent=errTxt(e)}};
 
 // ---------- arranque ----------
 $("dayPick").value=day;
-(async()=>{
-  let saved=null;try{saved=JSON.parse(localStorage.getItem(SESSION_KEY)||"null")}catch(e){}
-  if(saved&&saved.token&&saved.repo){await startApp({token:saved.token,repo:saved.repo},saved.email||"")}
-  else show("authView");
-})();
+const CFG=window.FIREBASE_CONFIG||{};
+let auth=null;
+if(!CFG.apiKey||!window.firebase){$("cfgView").hidden=false}
+else{
+  firebase.initializeApp(CFG);auth=firebase.auth();db=firebase.firestore();
+  auth.onAuthStateChanged(user=>{
+    unsubs.forEach(u=>u());unsubs=[];entries=[];cats=DEFAULT_CATS.map(c=>({...c}));
+    if(!user){$("appView").hidden=true;$("authView").hidden=false;$("acctBar").hidden=true;return}
+    $("authView").hidden=true;$("appView").hidden=false;$("acctBar").hidden=false;$("acctEmail").textContent=user.email;
+    const base=db.collection("users").doc(user.uid);
+    col=base.collection("entradas");cfgDoc=base.collection("config").doc("categorias");
+    renderAll();
+    unsubs.push(cfgDoc.onSnapshot(snap=>{const d=snap.exists&&snap.data();if(d&&Array.isArray(d.lista)&&d.lista.length)cats=JSON.parse(JSON.stringify(d.lista));renderAll()},()=>{}));
+    unsubs.push(col.onSnapshot(snap=>{entries=snap.docs.map(d=>({id:d.id,...d.data()})).filter(e=>e.fecha&&e.inicio&&e.fin);$("storeBanner").hidden=true;renderAll()},
+      err=>{$("storeBanner").hidden=false;$("storeBanner").textContent="No se pudo conectar con la base de datos ("+err.code+"). Recarga la página."}));
+  });
+}
 })();
 </script>
 
