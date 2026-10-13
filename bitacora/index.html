@@ -271,6 +271,11 @@ body input,body select,body textarea{background:var(--field)}
 .pomo-txt span{font-size:.72rem;color:var(--muted);margin-top:4px}
 .pomo-side{display:flex;flex-direction:column;gap:10px;min-width:0;flex:1 1 180px}
 .pomo-act{font-weight:500;overflow-wrap:anywhere}
+#saveBtn{background:var(--go);color:#fff}
+#saveBtn:hover{background:var(--go);opacity:.9}
+:root{--go:#1f9d55}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--go:#22a95c}}
+:root[data-theme="dark"]{--go:#22a95c}
 #pomoBtn{background:var(--tomato);color:#fff}
 #pomoBtn:hover{background:var(--tomato);opacity:.9}
 :root{--tomato:#e5372b}
