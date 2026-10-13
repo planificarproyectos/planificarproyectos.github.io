@@ -276,7 +276,8 @@ body input,body select,body textarea{background:var(--field)}
 :root{--tomato:#e5372b}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--tomato:#f0473b}}
 :root[data-theme="dark"]{--tomato:#f0473b}
-button.off{opacity:.55}
+button.off{opacity:1}
+@media (max-width:560px){#regTitle{flex:1 1 100%}.actbtns{flex:1 1 100%;flex-wrap:wrap}.actbtns button{flex:1 1 0;justify-content:center;min-width:0;white-space:nowrap}.actbtns .timer{flex:1 1 100%;text-align:center}}
 .need{animation:need .5s;border-color:var(--accent)!important}
 @keyframes need{20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
 @media (prefers-reduced-motion:reduce){.need{animation:none}.pomo-ring .prg{transition:none}}
@@ -340,7 +341,7 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
       <section class="panel" aria-labelledby="regTitle">
         <div class="phead">
           <h2 id="regTitle">Registrar actividad</h2>
-          <div class="row">
+          <div class="row actbtns">
             <span class="timer" id="timerView" hidden></span>
             <button id="timerBtn" class="primary">▶ Iniciar ahora</button>
             <button id="pomoBtn" type="button">◷ Pomodoro</button>
@@ -696,7 +697,7 @@ function tickTimer(){
   $("timerBtn").textContent="■ Terminar";
 }
 function needAct(){const a=$("fAct");if(a.value.trim())return false;a.classList.remove("need");void a.offsetWidth;a.classList.add("need");a.focus();$("formStatus").textContent="Escribe primero qué vas a hacer.";return true}
-function gateBtns(){const e=!$("fAct").value.trim();$("timerBtn").classList.toggle("off",e&&!timerStart);$("pomoBtn").classList.toggle("off",e&&!pomo);$("pomoBtn").disabled=!!pomo||!!timerStart;$("timerBtn").disabled=!!pomo}
+function gateBtns(){const e=!$("fAct").value.trim();$("timerBtn").classList.toggle("off",e&&!timerStart);$("pomoBtn").classList.toggle("off",e&&!pomo);$("pomoBtn").hidden=!!timerStart;$("timerBtn").hidden=!!pomo;$("pomoBtn").disabled=!!pomo}
 $("fAct").addEventListener("input",gateBtns);
 $("timerBtn").onclick=()=>{
   const d=()=>new Date(timerStart);
@@ -733,7 +734,7 @@ function pomoSave(){if(pomo)lsSet("bitacora_pomo",pomo);else try{localStorage.re
 let pomoBusy=false;
 async function tickPomo(){
   const v=$("pomoView");
-  if(!pomo){v.hidden=true;$("pomoCfg").hidden=false;return}
+  if(!pomo){v.hidden=true;$("pomoCfg").hidden=!!timerStart;return}
   v.hidden=false;$("pomoCfg").hidden=true;v.classList.toggle("brk",pomo.phase==="break");
   const now=pomo.pausedAt||Date.now(),end=pEnd();
   if(!pomo.pausedAt&&now>=end&&!pomoBusy&&(col||(!window.firebase&&performance.now()>6000))){
