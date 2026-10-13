@@ -19,8 +19,8 @@
   --bg:#f4f4f4; --surface:#ffffff; --surface2:#f0f0f0; --ink:#171a20; --muted:#5c5e62; --faint:#8e9094; --line:#e8e8e8;
   --accent:#3e6ae1; --accent-ink:#ffffff; --c-gap:#ececec; --seg:#e7e7e7;
   --ok:#3d8b63; --warn:#c08a22; --bad:#cc4b44; --neutral:#a3a5a8;
-  --p0:#4a7c6b; --p1:#5b7fa6; --p2:#8a7aa8; --p3:#a3a5a8; --p4:#c4554d; --p5:#c09346;
-  --p6:#6f9a54; --p7:#b0708f; --p8:#4f9aa3; --p9:#a07856; --p10:#6c74b0; --p11:#9a9a5a; --p12:#3f6f8f; --p13:#c06a3e; --p14:#7d6b4f; --p15:#5f8f73; --p16:#9a5f9f; --p17:#3f8f8a; --p18:#b5803a; --p19:#6a7fa0; --p20:#8f9a3f; --p21:#a2505f; --p22:#4c6b5c; --p23:#7a6fc0; --p24:#34488a;
+  --p0:#18bf86; --p1:#1c7ce3; --p2:#611ce3; --p3:#a3a5a8; --p4:#f91606; --p5:#f79f08;
+  --p6:#62d41a; --p7:#e31c7c; --p8:#1bc3d7; --p9:#db731b; --p10:#1c33e3; --p11:#d9d91b; --p12:#187cbf; --p13:#fb5703; --p14:#bf7d18; --p15:#1ad468; --p16:#d31ce2; --p17:#18bfb4; --p18:#ec8803; --p19:#1c69e3; --p20:#aec316; --p21:#d71b3d; --p22:#18bf6e; --p23:#371ce3; --p24:#0f3ac7;
   --shadow:0 1px 2px rgba(0,0,0,.04),0 6px 24px rgba(0,0,0,.05);
   --f-body:"Manrope","Helvetica Neue",Helvetica,Arial,sans-serif;
   --f-num:"Manrope","Helvetica Neue",Helvetica,Arial,sans-serif;
@@ -29,15 +29,15 @@
   --bg:#0e0e0f; --surface:#1b1b1d; --surface2:#242427; --ink:#f2f2f2; --muted:#a1a3a7; --faint:#75777c; --line:#2b2b2e;
   --accent:#4f7cf0; --accent-ink:#ffffff; --c-gap:#2a2a2d; --seg:#1b1b1d;
   --ok:#5bb585; --warn:#e0ac48; --bad:#e86a62; --neutral:#6e7075;
-  --p0:#6fae97; --p1:#7fa3cc; --p2:#ab9bcc; --p3:#8a8c90; --p4:#e07a71; --p5:#dcb36a;
-  --p6:#94bf78; --p7:#d395b2; --p8:#73bcc4; --p9:#c49c7a; --p10:#9199d6; --p11:#c1c17e; --p12:#6f9fc2; --p13:#e3936a; --p14:#b39f80; --p15:#8cc0a0; --p16:#c48ac9; --p17:#6cc2bc; --p18:#dcab6a; --p19:#9cb0d0; --p20:#bcc66a; --p21:#d27f8e; --p22:#7fa290; --p23:#a89ef0; --p24:#8296e0;
+  --p0:#3cecac; --p1:#5ca1ef; --p2:#9061ef; --p3:#8a8c90; --p4:#ff6052; --p5:#ffbd47;
+  --p6:#8aed4a; --p7:#ef61a4; --p8:#4added; --p9:#ee9950; --p10:#6172f0; --p11:#eeee51; --p12:#44a6ed; --p13:#ff8a4e; --p14:#edab46; --p15:#5def95; --p16:#e461ef; --p17:#42ece0; --p18:#ffb047; --p19:#6198ef; --p20:#daec44; --p21:#f35d78; --p22:#3cec91; --p23:#6752ff; --p24:#5276ff;
   --shadow:none; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0e0e0f; --surface:#1b1b1d; --surface2:#242427; --ink:#f2f2f2; --muted:#a1a3a7; --faint:#75777c; --line:#2b2b2e;
   --accent:#4f7cf0; --accent-ink:#ffffff; --c-gap:#2a2a2d; --seg:#1b1b1d;
   --ok:#5bb585; --warn:#e0ac48; --bad:#e86a62; --neutral:#6e7075;
-  --p0:#6fae97; --p1:#7fa3cc; --p2:#ab9bcc; --p3:#8a8c90; --p4:#e07a71; --p5:#dcb36a;
-  --p6:#94bf78; --p7:#d395b2; --p8:#73bcc4; --p9:#c49c7a; --p10:#9199d6; --p11:#c1c17e; --p12:#6f9fc2; --p13:#e3936a; --p14:#b39f80; --p15:#8cc0a0; --p16:#c48ac9; --p17:#6cc2bc; --p18:#dcab6a; --p19:#9cb0d0; --p20:#bcc66a; --p21:#d27f8e; --p22:#7fa290; --p23:#a89ef0; --p24:#8296e0;
+  --p0:#3cecac; --p1:#5ca1ef; --p2:#9061ef; --p3:#8a8c90; --p4:#ff6052; --p5:#ffbd47;
+  --p6:#8aed4a; --p7:#ef61a4; --p8:#4added; --p9:#ee9950; --p10:#6172f0; --p11:#eeee51; --p12:#44a6ed; --p13:#ff8a4e; --p14:#edab46; --p15:#5def95; --p16:#e461ef; --p17:#42ece0; --p18:#ffb047; --p19:#6198ef; --p20:#daec44; --p21:#f35d78; --p22:#3cec91; --p23:#6752ff; --p24:#5276ff;
   --shadow:none; color-scheme:dark}
 *{box-sizing:border-box}
 html{background:var(--bg)}
@@ -243,13 +243,27 @@ input::placeholder{color:var(--faint)}
 @media (prefers-reduced-motion:reduce){button{transition:none}}
 
 /* ---------- efecto cristal (como planificarproyectos.com) ---------- */
-:root{--glass:rgba(255,255,255,.58);--glass-brd:rgba(255,255,255,.9);--glass-hi:rgba(255,255,255,.45);--glass-seg:rgba(255,255,255,.5);--field:rgba(236,239,243,.78);--glass-sh:0 1px 2px rgba(20,40,54,.05),0 10px 30px rgba(20,40,54,.07)}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--glass:rgba(24,32,46,.58);--glass-brd:rgba(255,255,255,.12);--glass-hi:rgba(255,255,255,.06);--glass-seg:rgba(30,38,52,.55);--field:rgba(44,48,58,.72);--glass-sh:0 10px 30px rgba(0,0,0,.25)}}
-:root[data-theme="dark"]{--glass:rgba(24,32,46,.58);--glass-brd:rgba(255,255,255,.12);--glass-hi:rgba(255,255,255,.06);--glass-seg:rgba(30,38,52,.55);--field:rgba(44,48,58,.72);--glass-sh:0 10px 30px rgba(0,0,0,.25)}
-body .panel,body .datenav,body .authcard,body .consent{background:linear-gradient(115deg,var(--glass-hi) 0%,rgba(255,255,255,0) 40%),var(--glass);border:1px solid var(--glass-brd);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);box-shadow:var(--glass-sh)}
+:root{--glass:rgba(255,255,255,.42);--glass-brd:rgba(255,255,255,.95);--glass-hi:rgba(255,255,255,.7);--glass-seg:rgba(255,255,255,.45);--field:rgba(240,243,247,.82);--glass-sh:0 1px 2px rgba(20,40,54,.05),0 12px 34px rgba(20,40,80,.10);
+  --blob1:rgba(110,160,235,.38);--blob2:rgba(150,195,245,.42);--blob3:rgba(90,130,225,.26)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--glass:rgba(26,36,54,.42);--glass-brd:rgba(255,255,255,.16);--glass-hi:rgba(255,255,255,.10);--glass-seg:rgba(30,40,58,.45);--field:rgba(40,46,58,.78);--glass-sh:0 12px 34px rgba(0,0,0,.35);
+  --blob1:rgba(45,85,180,.30);--blob2:rgba(30,110,160,.22);--blob3:rgba(70,60,170,.22)}}
+:root[data-theme="dark"]{--glass:rgba(26,36,54,.42);--glass-brd:rgba(255,255,255,.16);--glass-hi:rgba(255,255,255,.10);--glass-seg:rgba(30,40,58,.45);--field:rgba(40,46,58,.78);--glass-sh:0 12px 34px rgba(0,0,0,.35);
+  --blob1:rgba(45,85,180,.30);--blob2:rgba(30,110,160,.22);--blob3:rgba(70,60,170,.22)}
+html{background:radial-gradient(55vmax 45vmax at 8% 4%,var(--blob1),transparent 62%),radial-gradient(50vmax 42vmax at 98% 35%,var(--blob2),transparent 62%),radial-gradient(60vmax 48vmax at 28% 100%,var(--blob3),transparent 62%),var(--bg);background-attachment:fixed;min-height:100%}
+body .panel,body .datenav,body .authcard,body .consent{background:linear-gradient(125deg,var(--glass-hi) 0%,rgba(255,255,255,0) 38%),var(--glass);border:1px solid var(--glass-brd);-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%);box-shadow:var(--glass-sh)}
 body .maintabs{background:transparent}
-body .maintabs button:not([aria-selected="true"]){background:var(--glass-seg);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%)}
+body .maintabs button:not([aria-selected="true"]){background:var(--glass-seg);-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%)}
 body input,body select,body textarea{background:var(--field)}
+/* hora en ceros mientras no se define */
+.tz{position:relative}
+.tz .zero{display:none;position:absolute;left:13px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--faint);font-variant-numeric:tabular-nums}
+.tz input[type="time"]:invalid:not(:focus)+.zero{display:block}
+.tz input[type="time"]:invalid:not(:focus)::-webkit-datetime-edit{opacity:0}
+/* iconos nativos de fecha/hora: siempre visibles */
+input[type="date"],input[type="time"]{color-scheme:light}
+input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.75}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) input::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.85}}
+:root[data-theme="dark"] input::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.85}
 </style>
 <style>:root{padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -306,11 +320,11 @@ body input,body select,body textarea{background:var(--field)}
           </div>
         </div>
         <form id="entryForm" class="form" autocomplete="off">
-          <div class="field"><div class="lrow"><label class="label" for="fInicio">Inicio</label><button type="button" class="nowbtn" id="iniNow">Ahora</button></div><input id="fInicio" type="time" required></div>
-          <div class="field"><div class="lrow"><label class="label" for="fFin">Fin</label><button type="button" class="nowbtn" id="finNow">Ahora</button></div><input id="fFin" type="time" required></div>
+          <div class="field"><div class="lrow"><label class="label" for="fInicio">Inicio</label><button type="button" class="nowbtn" id="iniNow">Ahora</button></div><div class="tz"><input id="fInicio" type="time" required><span class="zero" aria-hidden="true">00:00 00</span></div></div>
+          <div class="field"><div class="lrow"><label class="label" for="fFin">Fin</label><button type="button" class="nowbtn" id="finNow">Ahora</button></div><div class="tz"><input id="fFin" type="time" required><span class="zero" aria-hidden="true">00:00 00</span></div></div>
           <div class="field half"><label class="label" for="fCat">Categoría</label><select id="fCat"></select></div>
-          <div class="field full"><label class="label" for="fAct">Qué hice</label><input id="fAct" required placeholder="Ej. Revisión de cantidades de obra"></div>
-          <div class="field full"><label class="label" for="fDesc">Descripción breve</label><input id="fDesc" placeholder="Opcional"></div>
+          <div class="field full"><label class="label" for="fAct">Qué hice</label><input id="fAct" required placeholder="Ej. reunión, almuerzo, dormir"></div>
+          <div class="field full"><label class="label" for="fDesc">Descripción breve</label><input id="fDesc" placeholder="Opcional: con quién o qué lograste"></div>
           <div class="row full" style="justify-content:flex-end">
             <button type="button" id="cancelEdit" class="ghost" hidden>Cancelar edición</button>
             <button type="submit" class="primary" id="saveBtn">Guardar registro</button>
@@ -553,7 +567,7 @@ async function saveCats(){
 function renderCatSelect(){
   const sel=$("fCat"),cur=sel.value;
   const grp=(t,l)=>{const cs=cats.filter(c=>c.tipo===t);return cs.length?`<optgroup label="${l}">`+cs.map(c=>`<option value="${esc(c.id)}">${esc(c.n)}</option>`).join("")+"</optgroup>":""};
-  sel.innerHTML='<option value="auto">Automática</option>'+grp("productiva","Productivas")+grp("neutra","Neutras")+grp("distraccion","Distracción");
+  sel.innerHTML='<option value="auto">Automática (según el texto)</option>'+grp("productiva","Productivas")+grp("neutra","Neutras")+grp("distraccion","Distracción");
   if([...sel.options].some(o=>o.value===cur))sel.value=cur;
 }
 function renderCatLegend(){
@@ -616,8 +630,8 @@ const newId=()=>"e"+Date.now().toString(36)+Math.random().toString(36).slice(2,6
 const nowHM=()=>{const d=new Date();return pad(d.getHours())+":"+pad(d.getMinutes())};
 function resetForm(){$("entryForm").reset();renderCatSelect();editing=null;$("cancelEdit").hidden=true;$("saveBtn").textContent="Guardar registro"}
 $("cancelEdit").onclick=resetForm;
-$("iniNow").onclick=()=>{$("fInicio").value=nowHM();$("formStatus").textContent="Inicio ajustado a la hora actual: "+hm12($("fInicio").value)+".";};
-$("finNow").onclick=()=>{$("fFin").value=nowHM();if($("fInicio").value&&toMin($("fFin").value)<=toMin($("fInicio").value))$("formStatus").textContent="Fin ajustado a la hora actual: "+hm12($("fFin").value)+". Cruza la medianoche: se guardará en dos días.";else $("formStatus").textContent="Fin ajustado a la hora actual: "+hm12($("fFin").value)+".";};
+$("iniNow").onclick=()=>{$("fInicio").value=nowHM();$("formStatus").textContent="Inicio ajustado a la hora actual: "+hm12($("fInicio").value);};
+$("finNow").onclick=()=>{$("fFin").value=nowHM();if($("fInicio").value&&toMin($("fFin").value)<=toMin($("fInicio").value))$("formStatus").textContent="Fin ajustado a la hora actual: "+hm12($("fFin").value)+" Cruza la medianoche: se guardará en dos días.";else $("formStatus").textContent="Fin ajustado a la hora actual: "+hm12($("fFin").value);};
 $("entryForm").addEventListener("submit",async ev=>{
   ev.preventDefault();
   const ini=$("fInicio").value,fin0=$("fFin").value,st=$("formStatus");
@@ -904,21 +918,26 @@ $("csvBtn").onclick=async()=>{
     cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
     const small=W<600;D=small?110:150;
     const n=Math.round(Math.max(small?28:45,Math.min(small?45:95,W*H/(small?11000:16000))));
-    nodes=Array.from({length:n},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,r:1+Math.random()*1.6,g:0}));
+    nodes=Array.from({length:n},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,r:1.5+Math.random()*1.6,g:0,c:Math.random()<.7?0:Math.random()<.5?1:2}));
     pulses=[];
   }
   function links(i){const a=nodes[i],out=[];for(let j=0;j<nodes.length;j++){if(j===i)continue;const b=nodes[j],dx=a.x-b.x,dy=a.y-b.y;if(dx*dx+dy*dy<D*D)out.push(j)}return out}
+  const PAL={d:[[64,128,255],[0,224,255],[176,92,255]],l:[[18,88,255],[0,150,210],[128,48,235]]};
+  const col=(c,al)=>{const v=(dk?PAL.d:PAL.l)[c];return "rgba("+v[0]+","+v[1]+","+v[2]+","+al.toFixed(3)+")"};
   function draw(t,move){
     ctx.clearRect(0,0,W,H);
-    if(move)for(const p of nodes){p.x+=p.vx;p.y+=p.vy;if(p.x<-20)p.x=W+20;if(p.x>W+20)p.x=-20;if(p.y<-20)p.y=H+20;if(p.y>H+20)p.y=-20;p.g*=.96}
-    ctx.lineWidth=.8;
-    for(let i=0;i<nodes.length;i++){const a=nodes[i];for(let j=i+1;j<nodes.length;j++){const b=nodes[j],dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy;if(d2<D*D){const al=(1-Math.sqrt(d2)/D)*(dk?.28:.22);ctx.strokeStyle=(dk?"rgba(79,124,240,":"rgba(40,82,200,")+al.toFixed(3)+")";ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}}}
-    if(move&&t-lastPulse>350){lastPulse=t;const i=Math.floor(Math.random()*nodes.length),l=links(i);if(l.length)pulses.push({a:i,b:l[Math.floor(Math.random()*l.length)],k:0,s:.012+Math.random()*.01})}
+    if(move)for(const p of nodes){p.x+=p.vx;p.y+=p.vy;if(p.x<-20)p.x=W+20;if(p.x>W+20)p.x=-20;if(p.y<-20)p.y=H+20;if(p.y>H+20)p.y=-20;p.g*=.95}
+    ctx.lineWidth=1;
+    for(let i=0;i<nodes.length;i++){const a=nodes[i];for(let j=i+1;j<nodes.length;j++){const b=nodes[j],dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy;if(d2<D*D){const al=(1-Math.sqrt(d2)/D)*(dk?.55:.42)+Math.max(a.g,b.g)*.3;ctx.strokeStyle=col(a.c,Math.min(al,1));ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}}}
+    if(move&&t-lastPulse>180){lastPulse=t;const i=Math.floor(Math.random()*nodes.length),l=links(i);if(l.length)pulses.push({a:i,b:l[Math.floor(Math.random()*l.length)],k:0,s:.014+Math.random()*.012})}
     for(let q=pulses.length-1;q>=0;q--){const p=pulses[q],a=nodes[p.a],b=nodes[p.b];p.k+=p.s;
-      if(p.k>=1){b.g=1;pulses.splice(q,1);if(Math.random()<.6){const l=links(p.b).filter(j=>j!==p.a);if(l.length)pulses.push({a:p.b,b:l[Math.floor(Math.random()*l.length)],k:0,s:p.s})}continue}
-      const x=a.x+(b.x-a.x)*p.k,y=a.y+(b.y-a.y)*p.k,gr=ctx.createRadialGradient(x,y,0,x,y,7);
-      gr.addColorStop(0,dk?"rgba(140,175,255,.9)":"rgba(50,100,235,.75)");gr.addColorStop(1,dk?"rgba(79,124,240,0)":"rgba(50,100,235,0)");ctx.fillStyle=gr;ctx.beginPath();ctx.arc(x,y,7,0,7);ctx.fill()}
-    for(const p of nodes){ctx.fillStyle=(dk?"rgba(120,160,255,":"rgba(40,82,200,")+(dk?.45+p.g*.55:.3+p.g*.5).toFixed(3)+")";ctx.beginPath();ctx.arc(p.x,p.y,p.r+p.g*1.5,0,7);ctx.fill()}
+      if(p.k>=1){b.g=1;pulses.splice(q,1);if(Math.random()<.65){const l=links(p.b).filter(j=>j!==p.a);if(l.length)pulses.push({a:p.b,b:l[Math.floor(Math.random()*l.length)],k:0,s:p.s})}continue}
+      for(let k=3;k>=0;k--){const kk=Math.max(0,p.k-k*.045),x=a.x+(b.x-a.x)*kk,y=a.y+(b.y-a.y)*kk,R=k?5-k:11,gr=ctx.createRadialGradient(x,y,0,x,y,R);
+        gr.addColorStop(0,k?col(a.c,.5-k*.12):(dk?"rgba(225,245,255,1)":col(a.c,1)));gr.addColorStop(.35,col(a.c,k?.3:.85));gr.addColorStop(1,col(a.c,0));
+        ctx.fillStyle=gr;ctx.beginPath();ctx.arc(x,y,R,0,7);ctx.fill()}}
+    for(const p of nodes){const R=p.r+p.g*2.5,h=R*(3.2+p.g*2),gr=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,h);
+      gr.addColorStop(0,col(p.c,(dk?.45:.3)+p.g*.4));gr.addColorStop(1,col(p.c,0));ctx.fillStyle=gr;ctx.beginPath();ctx.arc(p.x,p.y,h,0,7);ctx.fill();
+      ctx.fillStyle=col(p.c,.95);ctx.beginPath();ctx.arc(p.x,p.y,R,0,7);ctx.fill()}
   }
   function loop(t){draw(t,true);raf=requestAnimationFrame(loop)}
   function start(){cancelAnimationFrame(raf);if(!on||document.hidden)return;if(rm.matches){draw(0,false);return}raf=requestAnimationFrame(loop)}
