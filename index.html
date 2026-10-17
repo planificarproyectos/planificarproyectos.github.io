@@ -31,6 +31,7 @@ button{font:inherit;cursor:pointer;border:0}
 a{color:inherit;text-decoration:none}
 :focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 nav{display:flex;align-items:center;background:var(--seg);border-radius:999px;padding:4px;font-weight:500;font-size:14px}
+.page nav{background:rgba(255,255,255,.35);border:1px solid rgba(255,255,255,.6);-webkit-backdrop-filter:blur(14px) saturate(180%);backdrop-filter:blur(14px) saturate(180%)}
 .nav-scroll{display:flex;min-width:0}
 nav a{padding:8px 20px;border-radius:999px;color:var(--muted);flex:0 0 auto}
 nav a:hover{color:var(--ink)}
@@ -68,7 +69,7 @@ header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.86);-webkit
 header.scrolled{border-bottom-color:transparent;box-shadow:0 0 0 100vmax rgba(255,255,255,.86),0 8px 24px -12px rgba(0,0,0,.12);clip-path:inset(0 -100vmax -30px)}
 .sec,.contact{scroll-margin-top:96px}
 nav a{transition:background .25s,color .25s}
-nav a.on:not(.cta){background:var(--bg);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+nav a.on:not(.cta){background:rgba(255,255,255,.92);color:var(--ink);box-shadow:inset 0 1px 1px rgba(255,255,255,.8),0 2px 6px rgba(14,25,36,.12)}
 .wm{will-change:transform}
 .b1,.b2{transition:transform .2s,background .2s,opacity .2s,box-shadow .2s}
 .b1:hover{transform:translateY(-1px);box-shadow:0 8px 20px -8px rgba(31,59,77,.55)}
@@ -159,17 +160,17 @@ html.embed header{position:relative}
 html.embed .wm.bgl{position:absolute;top:50%;height:min(80%,1700px)}
 .page{background:linear-gradient(180deg,rgba(18,30,42,.40) 0%,rgba(18,30,42,.52) 100%),url('https://images.pexels.com/photos/6082416/pexels-photo-6082416.jpeg?auto=compress&cs=tinysrgb&w=1920') center/cover fixed no-repeat}
 body{background:#EEF2FA}
-header{background:rgba(238,242,250,.85);box-shadow:0 0 0 100vmax rgba(238,242,250,.85)}
-header.scrolled{box-shadow:0 0 0 100vmax rgba(238,242,250,.85),0 10px 24px -14px rgba(20,40,54,.35)}
-.hero,.band{position:relative;background:rgba(238,242,250,.66)!important;border:1px solid rgba(255,255,255,.85);-webkit-backdrop-filter:blur(22px) saturate(150%);backdrop-filter:blur(22px) saturate(150%);border-radius:24px;box-shadow:0 2px 4px rgba(20,40,54,.08),0 24px 60px -12px rgba(14,25,36,.45)}
-.hero{margin-top:32px;padding:56px clamp(20px,4vw,44px) 48px;min-height:min(56vh,540px);display:flex;flex-direction:column;justify-content:center;gap:44px}
+header{background:rgba(255,255,255,.55);box-shadow:0 0 0 100vmax rgba(255,255,255,.55)}
+header.scrolled{box-shadow:0 0 0 100vmax rgba(255,255,255,.55),0 10px 24px -14px rgba(31,45,90,.1)}
+.hero,.band{position:relative;background:linear-gradient(115deg,rgba(255,255,255,.22) 0%,rgba(255,255,255,0) 38%),rgba(255,255,255,.52)!important;border:1px solid rgba(255,255,255,.8);-webkit-backdrop-filter:blur(26px) saturate(190%);backdrop-filter:blur(26px) saturate(190%);border-radius:26px;box-shadow:inset 0 1px 1px rgba(255,255,255,.6),0 8px 32px rgba(14,25,36,.18),0 1px 2px rgba(14,25,36,.08)}
+.hero{margin-top:32px;padding:56px clamp(20px,4vw,44px) 48px;min-height:min(56vh,540px);display:flex;flex-direction:column;justify-content:center;gap:44px;background:linear-gradient(115deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,0) 45%),rgba(255,255,255,.14)!important;-webkit-backdrop-filter:blur(8px) saturate(160%);backdrop-filter:blur(8px) saturate(160%);text-shadow:0 1px 3px rgba(255,255,255,.5)}
 .band{margin-top:32px;padding:32px clamp(20px,4vw,44px) 8px!important}
-.band.deep{margin-bottom:20px;margin-top:20px;background:rgba(224,232,244,.66)!important;border:1px solid rgba(255,255,255,.85)}
+.band.deep{margin-bottom:20px;margin-top:20px;background:linear-gradient(115deg,rgba(255,255,255,.2) 0%,rgba(255,255,255,0) 38%),rgba(255,255,255,.46)!important;border:1px solid rgba(255,255,255,.8)}
 .band.dark .grid,.band.deep .contact,.ficha{background:transparent;border:0;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;border-radius:0}
 .band.dark .grid{padding:0;margin:0 0 8px}
 .band.deep .contact{padding:4px 0 10px;margin:0}
-.ficha{background:rgba(255,255,255,.55);border:1px solid rgba(205,228,243,.95);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-radius:18px}
-.band.tint .bp li{background:rgba(255,255,255,.6);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 1px 2px rgba(20,40,54,.04),0 6px 18px rgba(20,40,54,.06)}
+.ficha{background:rgba(255,255,255,.42);border:1px solid rgba(255,255,255,.75);-webkit-backdrop-filter:blur(14px) saturate(180%);backdrop-filter:blur(14px) saturate(180%);border-radius:18px;box-shadow:inset 0 1px 1px rgba(255,255,255,.5)}
+.band.tint .bp li{background:rgba(255,255,255,.46);-webkit-backdrop-filter:blur(14px) saturate(180%);backdrop-filter:blur(14px) saturate(180%);box-shadow:inset 0 1px 1px rgba(255,255,255,.5),0 1px 2px rgba(14,25,36,.04),0 6px 18px rgba(14,25,36,.08);border:1px solid rgba(255,255,255,.7)}
 .band.tint .bp{padding-bottom:24px}
 .up{margin:0 0 24px}
 .band.deep footer{padding-bottom:10px;padding-top:6px}
@@ -177,10 +178,10 @@ header.scrolled{box-shadow:0 0 0 100vmax rgba(238,242,250,.85),0 10px 24px -14px
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.hero,.band{background:rgba(255,255,255,.94)}}
 @media(max-width:760px){.hero,.band{border-radius:18px;margin-top:20px}.hero{padding:28px 20px}.band{padding:24px 18px 4px!important}.wm.bgl{height:70vh}}
 
-header{background:rgba(238,242,250,.85)!important;box-shadow:0 0 0 100vmax rgba(238,242,250,.85)!important;-webkit-backdrop-filter:blur(16px) saturate(150%)!important;backdrop-filter:blur(16px) saturate(150%)!important}
-header.scrolled{box-shadow:0 0 0 100vmax rgba(238,242,250,.85),0 12px 24px -16px rgba(20,40,54,.4)!important}
+header{background:rgba(255,255,255,.55)!important;box-shadow:0 0 0 100vmax rgba(255,255,255,.55)!important;-webkit-backdrop-filter:blur(22px) saturate(190%)!important;backdrop-filter:blur(22px) saturate(190%)!important;border-bottom:1px solid rgba(255,255,255,.5)}
+header.scrolled{box-shadow:0 0 0 100vmax rgba(255,255,255,.55),0 12px 24px -16px rgba(14,25,36,.25)!important}
 nav .cta:hover{color:var(--brand-ink)}
-nav .cta.on{box-shadow:0 0 0 2px #EEF2FA,0 0 0 4px var(--brand)}
+nav .cta.on{box-shadow:0 0 0 2px rgba(255,255,255,.55),0 0 0 4px var(--brand)}
 .endspace{height:0}
 
 @media(max-width:760px){
