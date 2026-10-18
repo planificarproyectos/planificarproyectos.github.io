@@ -19,7 +19,10 @@ window.mfApplyTheme=function(t){t=t||{};var a=MF_ACCENTS[t.accent]?t.accent:'lim
 (function(){var t=null;try{t=JSON.parse(localStorage.getItem('mf:theme')||'null')}catch(e){}mfApplyTheme(t)})();
 </script>
 
-<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<meta name="apple-mobile-web-app-title" content="Mind Focus">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=DM+Sans:wght@400;500;700&display=swap">
 <style>
@@ -457,6 +460,17 @@ body{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
 .between{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .foot{text-align:center;font-size:13px;color:var(--muted)}
 .authh{font-family:var(--f-display);letter-spacing:2px;font-size:30px}
+.installbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:40;width:calc(100% - 32px);max-width:448px;background:var(--surface);border:1px solid var(--accent-fg);border-radius:20px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:10px;animation:ib-in .35s ease-out}
+.installbar[hidden]{display:none}
+.installbar .ir{display:flex;align-items:center;gap:12px}
+.installbar img{width:44px;height:44px;border-radius:11px;flex:0 0 auto}
+.installbar .ir span{font-size:13px;color:var(--muted)}
+.installbar ol{margin:0;padding-left:20px;font-size:14px;display:flex;flex-direction:column;gap:4px}
+.installbar .btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.installbar .btns button{min-height:48px;border-radius:14px}
+.installbar .soft{background:var(--surface2);color:var(--ink)}
+@keyframes ib-in{from{opacity:0;transform:translate(-50%,20px)}to{opacity:1;transform:translate(-50%,0)}}
+@media (prefers-reduced-motion:reduce){.installbar{animation:none}}
 /* bienvenida animada */
 #splash{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .45s ease,visibility .45s}
 #splash.out{opacity:0;visibility:hidden}
@@ -1773,6 +1787,29 @@ function playSplash(){const el=$("splash");if(!el)return;el.classList.remove("ou
 $("authForm").addEventListener("submit",()=>{loginPending=true});
 new MutationObserver(()=>{if(!$("appView").hidden&&loginPending){loginPending=false;playSplash();setView("home")}}).observe($("appView"),{attributes:true,attributeFilter:["hidden"]});
 hideSplash();
+// ---------- instalar como app (igual que PowerFit) ----------
+{const bar=document.createElement("div");bar.className="installbar";bar.id="install";bar.setAttribute("role","dialog");bar.setAttribute("aria-label","Instalar Mind Focus");bar.hidden=true;document.body.appendChild(bar);
+ const card=document.createElement("button");card.className="card";card.id="accInstall";card.hidden=true;card.innerHTML=icn("dl")+'<span class="grow"><b>Instalar app</b><span>Abre Mind Focus desde tu pantalla de inicio</span></span><span class="chev2">'+icn("chev",20)+'</span>';
+ const pw=document.querySelector('[data-c="pwdBtn"]');pw.parentNode.insertBefore(card,pw);}
+const Inst={prompt:null,
+  standalone(){try{return matchMedia("(display-mode: standalone)").matches||navigator.standalone===true}catch(e){return false}},
+  ios(){const u=navigator.userAgent||"";return /iphone|ipad|ipod/i.test(u)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)},
+  can(){return !this.standalone()&&(!!this.prompt||this.ios())},
+  dismissed(){try{return Date.now()-(+localStorage.getItem("mf:installDismiss")||0)<7*864e5}catch(e){return false}},
+  body(){const head='<div class="ir"><img src="icon-192.png" alt=""><div class="stack" style="gap:2px;min-width:0">';
+    if(this.prompt)return head+'<b>Instala Mind Focus</b><span>Ábrela desde tu pantalla de inicio, a pantalla completa y más rápido.</span></div></div><div class="btns"><button data-i="no">Ahora no</button><button class="primary" data-i="go">Instalar</button></div>';
+    return head+'<b>Instala Mind Focus en tu iPhone</b><span>En Safari:</span></div></div><ol><li>Toca <b>Compartir</b> (el cuadro con la flecha hacia arriba).</li><li>Elige <b>Agregar a pantalla de inicio</b> y luego <b>Agregar</b>.</li></ol><button data-i="no">Entendido</button>'},
+  show(force){const el=$("install");const ok=this.can()&&(force||!this.dismissed())&&$("splash").classList.contains("out")&&!$("appView").hidden;
+    if(!ok){el.hidden=true;return}el.innerHTML=this.body();el.hidden=false;
+    el.querySelectorAll("[data-i]").forEach(b=>b.onclick=async()=>{if(b.dataset.i==="go"&&this.prompt){const p=this.prompt;el.hidden=true;p.prompt();try{const r=await p.userChoice;if(r&&r.outcome==="accepted"){this.prompt=null;this.card()}}catch(e){}}else{try{localStorage.setItem("mf:installDismiss",Date.now())}catch(e){}el.hidden=true}})},
+  card(){const c=$("accInstall");if(c)c.hidden=!this.can()}
+};
+$("accInstall").onclick=()=>Inst.show(true);
+addEventListener("beforeinstallprompt",e=>{e.preventDefault();Inst.prompt=e;Inst.card();Inst.show()});
+addEventListener("appinstalled",()=>{Inst.prompt=null;$("install").hidden=true;Inst.card();toast("Mind Focus quedó instalada")});
+setTimeout(()=>{Inst.card();Inst.show()},2800);
+new MutationObserver(()=>{if(!$("appView").hidden)setTimeout(()=>{Inst.card();Inst.show()},2600)}).observe($("appView"),{attributes:true,attributeFilter:["hidden"]});
+
 })();
 </script>
 
