@@ -9,5 +9,5 @@ App web para entrenar en casa con mancuernas y tapete.
 
 Publicada en https://www.planificarproyectos.com/powerfit/
 
-Cuentas con correo y contraseña (Firebase Auth, mismo proyecto que Mindfocus). Datos en Firestore: `powerfit/{uid}/data`.
+Cuentas con correo y contraseña (Firebase Auth, mismo proyecto que Mindfocus). Datos en Firestore: `users/{uid}/powerfit` (usa las mismas reglas e invitaciones de Mindfocus).
 Se puede instalar en el celular con "Agregar a pantalla de inicio".
