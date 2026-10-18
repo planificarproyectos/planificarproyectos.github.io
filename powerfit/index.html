@@ -170,7 +170,11 @@ nav.tabs button.on{color:var(--accent-fg);font-weight:700}
 .hist:first-of-type{border-top:none}
 .empty{border:1.5px dashed var(--line);border-radius:18px;padding:20px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;font-size:14px;z-index:50;max-width:calc(100% - 32px)}
-@media (prefers-reduced-motion: reduce){ .bar i{transition:none} }
+.installbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:40;width:calc(100% - 32px);max-width:448px;background:var(--surface);border:1px solid var(--accent-fg);border-radius:20px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:10px;animation:ib-in .35s ease-out}
+.installbar.low{bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+.installbar ol{margin:0;padding-left:20px;font-size:14px;display:flex;flex-direction:column;gap:4px}
+@keyframes ib-in{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
+@media (prefers-reduced-motion: reduce){ .bar i{transition:none} .installbar{animation:none} }
 /* Bienvenida animada */
 #splash{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .45s ease,visibility .45s}
 #splash.out{opacity:0;visibility:hidden}
@@ -211,6 +215,7 @@ nav.tabs button.on{color:var(--accent-fg);font-weight:700}
   </div>
 </nav>
 <div class="toast" id="toast" hidden></div>
+<div class="installbar" id="install" role="dialog" aria-label="Instalar PowerFit" hidden></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -703,6 +708,7 @@ function render(){
   if(v==='builder') renderBLib();
   setupCanvases();
   Act.persist();
+  if(typeof Inst!=='undefined') Inst.show();
 }
 function navInit(){
   var L={home:['home','Inicio'],routines:['dumb','Rutinas'],lib:['grid','Ejercicios'],progress:['chart','Progreso'],account:['user','Cuenta']};
@@ -929,6 +935,7 @@ function vAccount(){
    '<section class="stack"><h2>Ajustes</h2>'+
    '<button class="card" data-a="resetPass">'+ic('key',22)+'<span class="grow"><b>Cambiar contraseña</b><span class="muted small">Te enviamos un correo para crear una nueva</span></span>'+ic('chevR',20)+'</button>'+
    '<button class="card" data-a="exportCsv"'+(tot.s?'':' disabled style="opacity:.5"')+'>'+ic('download',22)+'<span class="grow"><b>Descargar mi historial</b><span class="muted small">Archivo CSV para abrir en Excel</span></span>'+ic('chevR',20)+'</button>'+
+   (Inst.standalone()?'<div class="card">'+ic('check',22)+'<span class="grow"><b>App instalada</b><span class="muted small">Estás usando PowerFit como app</span></span></div>':Inst.can()?'<div class="panel">'+Inst.body(false)+'</div>':'')+
    '<button class="card" data-a="logout">'+ic('out',22)+'<span class="grow"><b>Cerrar sesión</b><span class="muted small">Tus datos quedan guardados en tu cuenta</span></span>'+ic('chevR',20)+'</button>'+
    del+'</section>'+vEquip()+vTheme();
   if(S.isAdmin) h+=vAdmin();
@@ -1185,6 +1192,8 @@ var A={
   libMine:function(){ S.libAll=!S.libAll; render(); },
   accent:function(v){ setTheme({accent:v},true); keep(render); },
   darkMode:function(){ setTheme({mode:PF_THEME.mode==='light'?'dark':'light'},true); keep(render); },
+  instGo:function(){ var pr=Inst.prompt; if(!pr) return; pr.prompt(); (pr.userChoice||Promise.resolve({})).then(function(c){ if(c&&c.outcome==='accepted') Inst.prompt=null; else { try{ localStorage.setItem('powerfit:installDismiss',Date.now()); }catch(e){} } Inst.show(); if(S.view==='account') render(); }); },
+  instNo:function(){ try{ localStorage.setItem('powerfit:installDismiss',Date.now()); }catch(e){} Inst.show(); },
   logout:function(){ if(Store.auth) Store.auth.signOut(); },
   resetPass:function(){ if(!Store.auth||!S.user) return; Store.auth.sendPasswordResetEmail(S.user.email,{url:"https://www.planificarproyectos.com/powerfit/"}).then(function(){ toast('Te enviamos un correo a '+S.user.email); },function(e){ toast(authErr(e)); }); },
   exportCsv:function(){ if(S.sessions.length) csvExport(); },
@@ -1212,6 +1221,29 @@ document.addEventListener('keydown',function(ev){
 });
 var rt; window.addEventListener('resize',function(){ clearTimeout(rt); rt=setTimeout(setupCanvases,150); });
 
+
+
+/* ---------- Instalar como app ---------- */
+var Inst={prompt:null,
+  standalone:function(){ try{ return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true; }catch(e){ return false; } },
+  ios:function(){ var u=navigator.userAgent||''; return /iphone|ipad|ipod/i.test(u)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1); },
+  can:function(){ return !this.standalone()&&(!!this.prompt||this.ios()); },
+  dismissed:function(){ try{ return Date.now()-(+localStorage.getItem('powerfit:installDismiss')||0)<7*864e5; }catch(e){ return false; } },
+  body:function(inBar){
+    if(this.prompt) return '<div class="row">'+logo(40)+'<div class="stack" style="gap:2px;flex:1;min-width:0"><b>Instala PowerFit</b><span class="muted small">Ábrela desde tu pantalla de inicio, a pantalla completa y más rápido.</span></div></div>'+
+      '<div class="btns">'+(inBar?'<button class="btn soft" data-a="instNo">Ahora no</button>':'')+'<button class="btn" data-a="instGo"'+(inBar?'':' style="grid-column:1/-1"')+'>Instalar</button></div>';
+    return '<div class="row">'+logo(40)+'<div class="stack" style="gap:2px;flex:1;min-width:0"><b>Instala PowerFit en tu iPhone</b><span class="muted small">En Safari:</span></div></div>'+
+      '<ol><li>Toca <b>Compartir</b> (el cuadro con la flecha hacia arriba).</li><li>Elige <b>Agregar a pantalla de inicio</b> y luego <b>Agregar</b>.</li></ol>'+
+      (inBar?'<button class="btn soft" data-a="instNo">Entendido</button>':'');
+  },
+  show:function(){ var el=document.getElementById('install'); if(!el) return;
+    var on=this.can()&&!this.dismissed()&&S.view!=='work'&&S.view!=='done'&&document.getElementById('splash').classList.contains('out');
+    if(!on){ el.hidden=true; return; }
+    el.innerHTML=this.body(true); el.classList.toggle('low',document.getElementById('nav').hidden); el.hidden=false; }
+};
+window.addEventListener('beforeinstallprompt',function(e){ e.preventDefault(); Inst.prompt=e; Inst.show(); if(S.view==='account') render(); });
+window.addEventListener('appinstalled',function(){ Inst.prompt=null; document.getElementById('install').hidden=true; toast('PowerFit quedó instalada'); });
+setTimeout(function(){ Inst.show(); },2700);
 
 /* ---------- Bienvenida ---------- */
 var splashT0=Date.now(), splashTimer=null;
