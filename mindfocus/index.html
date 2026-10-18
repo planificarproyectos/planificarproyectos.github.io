@@ -1017,8 +1017,8 @@ async function pomoLog(kind,t0,t1){
   const isW=kind==="enfoque",act=isW?pomo.act:"Pausa pomodoro",desc=isW?pomo.desc:"";
   const cat=isW?(pomo.cat==="auto"?classify(pomo.act+" "+pomo.desc):pomo.cat):(catById("pausa_activa")&&cats.some(c=>c.id==="pausa_activa")?"pausa_activa":classify("pausa activa"));
   if(fin==="00:00")fin="24:00";
-  if(toMin(fin)<=toMin(ini)){await saveEntry({id:newId(),fecha:addDays(fecha,1),inicio:"00:00",fin,actividad:act,descripcion:desc,categoria:cat,pomodoro:kind,creado:Date.now()});fin="24:00"}
-  if(toMin(fin)>toMin(ini))await saveEntry({id:newId(),fecha,inicio:ini,fin,actividad:act,descripcion:desc,categoria:cat,pomodoro:kind,creado:Date.now()});
+  if(toMin(fin)<=toMin(ini)){await saveEntry({id:"p"+t0+"b",fecha:addDays(fecha,1),inicio:"00:00",fin,actividad:act,descripcion:desc,categoria:cat,pomodoro:kind,creado:Date.now()});fin="24:00"}
+  if(toMin(fin)>toMin(ini))await saveEntry({id:"p"+t0,fecha,inicio:ini,fin,actividad:act,descripcion:desc,categoria:cat,pomodoro:kind,creado:Date.now()});
 }
 function pomoSave(){if(pomo)lsSet("bitacora_pomo",pomo);else try{localStorage.removeItem("bitacora_pomo")}catch(e){}}
 let pomoBusy=false;
@@ -1028,15 +1028,24 @@ async function tickPomo(){
   v.hidden=false;$("pomoCfg").hidden=true;v.classList.toggle("brk",pomo.phase==="break");
   const now=pomo.pausedAt||Date.now(),end=pEnd();
   if(!pomo.pausedAt&&now>=end&&!pomoBusy&&(col||(!window.firebase&&performance.now()>6000))){
-    pomoBusy=true;const was=pomo.phase,st=pomo.start;
-    try{await pomoLog(was==="work"?"enfoque":"pausa",st,end)}catch(e){$("formStatus").textContent="No se pudo guardar el pomodoro: "+(e.message||e.code)}
-    if(was==="work")pomo.done=(pomo.done||0)+1;
-    pomo.phase=was==="work"?"break":"work";if(was==="break")pomo.n++;
-    pomo.start=end;pomo.pausedTotal=0;
-    if(Date.now()>=pEnd()){const n=pomo.done;pomo=null;pomoSave();pomoBusy=false;$("formStatus").textContent="Pomodoro detenido mientras la app estuvo cerrada. Sesiones registradas: "+n+".";gateBtns();tickPomo();return}
-    pomoSave();pomoBusy=false;beep();
-    const m=was==="work"?"¡Sesión "+pomo.done+" completada! Pausa de "+pomo.b+" min.":"Pausa terminada. Sesión "+pomo.n+": "+pomo.act;
-    notify(m);$("formStatus").textContent=m;
+    pomoBusy=true;let steps=0,works=0,lastWas=null;const MAXMS=24*3600e3,t0=Date.now();
+    // ponerse al día con todos los bloques que pasaron (también si la app estuvo cerrada)
+    while(pomo&&!pomo.pausedAt&&Date.now()>=pEnd()&&steps<200){
+      const was=pomo.phase,st=pomo.start,en=pEnd();
+      if(t0-en>MAXMS){const n=pomo.done;pomo=null;pomoSave();pomoBusy=false;const m="El pomodoro llevaba más de 24 horas sin abrirse y se detuvo. Sesiones registradas: "+n+".";if(typeof toast==="function")toast(m);$("formStatus").textContent=m;gateBtns();tickPomo();return}
+      try{await pomoLog(was==="work"?"enfoque":"pausa",st,en)}catch(e){$("formStatus").textContent="No se pudo guardar el pomodoro: "+(e.message||e.code)}
+      if(was==="work"){pomo.done=(pomo.done||0)+1;works++}
+      pomo.phase=was==="work"?"break":"work";if(was==="break")pomo.n++;
+      pomo.start=en;pomo.pausedTotal=0;steps++;lastWas=was;
+    }
+    pomoSave();pomoBusy=false;
+    if(pomo&&steps){
+      const left=Math.max(0,pEnd()-Date.now()),mm=Math.floor(left/60000),ss=Math.floor(left/1000)%60;
+      const m=steps>1?"Mientras no estabas: "+works+" sesi"+(works===1?"ón":"ones")+" de enfoque completada"+(works===1?"":"s")+". Ahora en "+(pomo.phase==="work"?"enfoque (sesión "+pomo.n+")":"pausa")+", quedan "+mm+":"+pad(ss)+".":
+        lastWas==="work"?"¡Sesión "+pomo.done+" completada! Pausa de "+pomo.b+" min.":"Pausa terminada. Sesión "+pomo.n+": "+pomo.act;
+      if(steps===1){beep();notify(m)}
+      $("formStatus").textContent=m;if(typeof toast==="function")toast(m);
+    }
   }
   const left=Math.max(0,pEnd()-now),dur=pDur();
   const s=Math.ceil(left/1000);$("pomoTime").textContent=pad(Math.floor(s/60))+":"+pad(s%60);
@@ -1551,6 +1560,7 @@ else{
 let cur=lsGet("mf_actual",null),favs=lsGet("mf_favs",[]),mode={t:"switch"},favEditing=false,showAllTiles=false,curRemote=false;
 function onCfg(d){
   cur=d.actual||null;lsSet("mf_actual",cur);curRemote=true;
+  if("pomo" in d){const r=d.pomo||null;if(JSON.stringify(r)!==JSON.stringify(pomo)){pomo=r;lsSet("bitacora_pomo",pomo);if(!pomo)try{localStorage.removeItem("bitacora_pomo")}catch(e){}if(typeof tickPomo==="function")setTimeout(tickPomo,0)}}
   if(Array.isArray(d.favs)){favs=d.favs;lsSet("mf_favs",favs)}
 }
 async function saveCur(){lsSet("mf_actual",cur);if(cfgDoc)try{await cfgDoc.set({actual:cur||null},{merge:true})}catch(e){}}
@@ -1675,6 +1685,7 @@ $("wakeBtn").onclick=async()=>{
 };
 // pomodoro dentro de Inicio
 $("pomoSlot").appendChild($("pomoCfg"));$("nowCard").appendChild($("pomoView"));
+{const _ps=pomoSave;pomoSave=function(){_ps();if(cfgDoc)cfgDoc.set({pomo:pomo?JSON.parse(JSON.stringify(pomo)):null},{merge:true}).catch(()=>{})}}
 let lastPomoOn=null;const _tickPomo=tickPomo;tickPomo=async function(){await _tickPomo();const on=!!pomo;$("pomoCfg").hidden=on;if(on!==lastPomoOn){lastPomoOn=on;renderHome()}};
 $("pomoStop").onclick=async()=>{if(!pomo)return;const p=pomo,now=p.pausedAt||Date.now();if(p.phase==="work"){try{await pomoLog("enfoque",p.start,now)}catch(e){}}pomo=null;pomoSave();tickPomo();renderHome();toast("Pomodoro detenido. Sesiones: "+(p.done+(p.phase==="work"&&now-p.start>=60000?1:0)))};
 // formulario detallado plegable dentro de Registro
