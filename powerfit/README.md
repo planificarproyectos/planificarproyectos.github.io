@@ -3,7 +3,7 @@
 App web para entrenar en casa con mancuernas y tapete.
 
 - Elige zonas del cuerpo y genera una rutina, usa una recomendada o arma la tuya.
-- 27 ejercicios con figura animada e indicaciones.
+- 53 ejercicios con vista frontal y lateral animadas, según el equipo que tengas en casa.
 - Botón para chulear cada repetición, temporizador y descansos automáticos.
 - Progreso por semana, mes, semestre y año.
 
