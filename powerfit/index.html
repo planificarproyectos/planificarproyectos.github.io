@@ -163,6 +163,10 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
 </nav>
 <div class="toast" id="toast" hidden></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
 <script>
 (function(){
 'use strict';
@@ -334,25 +338,34 @@ var LK='homefit:v1';
 var Store={mode:'local',col:null,months:{},
   loadLocal:function(){ try{ var j=JSON.parse(localStorage.getItem(LK)||'{}'); S.sessions=j.sessions||[]; S.routines=j.routines||[]; }catch(e){} },
   saveLocal:function(){ try{ localStorage.setItem(LK,JSON.stringify({sessions:S.sessions,routines:S.routines})); }catch(e){} },
+  readLocal:function(){ try{ var j=JSON.parse(localStorage.getItem(LK)||'{}'); return {sessions:j.sessions||[],routines:j.routines||[]}; }catch(e){ return {sessions:[],routines:[]}; } },
   init:function(){
-    var self=this; if(!window.claude||!window.claude.use) return;
-    Promise.all([window.claude.use('db'),window.claude.use('user')]).then(function(r){
-      var db=r[0],user=r[1]; if(!db||!user) return null;
-      return user.id().then(function(uid){ if(!uid) return;
-        var localS=S.sessions.slice(), localR=S.routines.slice(), first=true;
-        self.col=db.collection('data/users/'+uid); self.mode='db'; S.local=false;
-        self.col.onSnapshot(function(snap){
-          if(first && snap.empty && (localS.length||localR.length)){ first=false; self.migrate(localS,localR); return; }
-          first=false;
-          var ses=[],rts=[]; self.months={};
-          snap.docs.forEach(function(d){ var b=d.data()||{};
-            if(d.id==='routines') rts=b.list||[];
-            else if(d.id.indexOf('m-')===0){ self.months[d.id]=b.sessions||[]; ses=ses.concat(b.sessions||[]); } });
-          S.sessions=ses.sort(function(a,b){return a.ts-b.ts;}); S.routines=rts;
-          if(S.view!=='work') render();
-        },function(e){ console.warn('db',e); });
-      });
-    }).catch(function(e){ console.warn(e); });
+    var self=this;
+    if(!window.firebase||!window.FIREBASE_CONFIG) return; // sin Firebase: funciona solo en este navegador
+    try{ firebase.initializeApp(window.FIREBASE_CONFIG); self.auth=firebase.auth(); self.fdb=firebase.firestore(); }
+    catch(e){ console.warn(e); return; }
+    try{ self.fdb.enablePersistence({synchronizeTabs:true}).catch(function(){}); }catch(e){}
+    S.authWait=true; S.view='auth';
+    self.auth.onAuthStateChanged(function(u){
+      S.authWait=false;
+      if(self.unsub){ self.unsub(); self.unsub=null; }
+      if(!u){ S.user=null; S.local=true; self.mode='local'; S.sessions=[]; S.routines=[]; S.w=null; S.view='auth'; render(); return; }
+      S.user={email:u.email,uid:u.uid}; S.local=false; self.mode='db'; self.months={};
+      self.col=self.fdb.collection('powerfit').doc(u.uid).collection('data');
+      var loc=self.readLocal(), first=true;
+      S.sessions=[]; S.routines=[]; S.view='home'; S.prev='home'; render();
+      self.unsub=self.col.onSnapshot(function(snap){
+        if(first && snap.empty && (loc.sessions.length||loc.routines.length)){ first=false; self.migrate(loc.sessions,loc.routines); toast('Subimos a tu cuenta el historial de este navegador'); return; }
+        first=false;
+        var ses=[],rts=[]; self.months={};
+        snap.docs.forEach(function(d){ var b=d.data()||{};
+          if(d.id==='routines') rts=b.list||[];
+          else if(d.id.indexOf('m-')===0){ self.months[d.id]=b.sessions||[]; ses=ses.concat(b.sessions||[]); } });
+        S.sessions=ses.sort(function(a,b){return a.ts-b.ts;}); S.routines=rts;
+        if(S.view!=='work'&&S.view!=='builder') render();
+      },function(e){ console.warn('firestore',e);
+        toast(e&&e.code==='permission-denied'?'Falta activar el permiso de PowerFit en Firebase.':'No se pudo leer tu historial. Revisa tu conexión.'); });
+    });
   },
   migrate:function(ses,rts){ var self=this, by={};
     ses.forEach(function(s){ var k='m-'+s.d.slice(0,7); (by[k]=by[k]||[]).push(s); });
@@ -409,12 +422,14 @@ function pickForYou(){
 var app=document.getElementById('app');
 function go(v){ if(v!==S.view){ S.prev=S.view; S.view=v; } S.ask=null; render(); try{ window.scrollTo(0,0); }catch(e){} }
 function render(){
+  if(Store.auth&&!S.user) S.view='auth';
   var v=S.view, h='';
-  if(v==='home') h=vHome(); else if(v==='routines') h=vRoutines(); else if(v==='lib') h=vLib();
+  if(v==='auth') h=vAuth();
+  else if(v==='home') h=vHome(); else if(v==='routines') h=vRoutines(); else if(v==='lib') h=vLib();
   else if(v==='progress') h=vProgress(); else if(v==='detail') h=vDetail(); else if(v==='builder') h=vBuilder();
   else if(v==='ex') h=vEx(); else if(v==='work') h=vWork(); else if(v==='done') h=vDone();
   app.innerHTML=h;
-  var nav=document.getElementById('nav'); nav.hidden=(v==='work'||v==='done');
+  var nav=document.getElementById('nav'); nav.hidden=(v==='work'||v==='done'||v==='auth');
   var tabOf={home:'home',routines:'routines',detail:'routines',builder:'routines',lib:'lib',ex:'lib',progress:'progress'};
   ['home','routines','lib','progress'].forEach(function(t){ var b=document.getElementById('t-'+t); b.classList.toggle('on',tabOf[v]===t); if(tabOf[v]===t) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
   if(v==='builder') renderBLib();
@@ -620,7 +635,51 @@ function vProgress(){
    '<div class="panel"><b class="small">Minutos entrenados</b>'+chart+'</div>'+
    '<div class="panel"><b class="small">Zonas trabajadas</b>'+(zones||'<span class="muted small">Sin entrenos en este periodo.</span>')+'</div>'+
    (hist?'<div class="panel"><b class="small">Sesiones</b><div>'+hist+'</div></div>':'')+
-   (S.local?'<p class="muted small">Tu historial se guarda en este navegador.</p>':'')+'</div>';
+   (S.local?'<p class="muted small">Tu historial se guarda en este navegador.</p>':'')+
+   (S.user?'<div class="between small"><span class="muted" style="min-width:0;overflow-wrap:anywhere">Cuenta: '+esc(S.user.email)+'</span><button class="link" data-a="logout">Cerrar sesión</button></div>':'')+'</div>';
+}
+
+/* Acceso */
+function vAuth(){
+  if(S.authWait) return '<div class="wrap full" style="justify-content:center;align-items:center">'+brand(48,32)+'<p class="muted">Cargando…</p></div>';
+  var m=S.authMode||'login';
+  var T={login:['Inicia sesión','Entrar'],register:['Crea tu cuenta','Crear cuenta'],reset:['Recupera tu contraseña','Enviar correo']}[m];
+  return '<div class="wrap full" style="justify-content:center">'+
+   '<div class="stack" style="align-items:center;text-align:center;gap:10px">'+brand(56,36)+'<p class="muted">Entrena en casa y guarda todo tu progreso en tu cuenta.</p></div>'+
+   '<form id="authForm" class="panel" novalidate><h2>'+T[0]+'</h2>'+
+   '<label class="stack" style="gap:6px" for="aEmail"><span class="label">Correo</span><span class="field" style="background:var(--surface2)"><input id="aEmail" type="email" autocomplete="email" inputmode="email" required style="font-size:16px" value="'+esc(S.authEmail||'')+'"></span></label>'+
+   (m!=='reset'?'<label class="stack" style="gap:6px" for="aPass"><span class="label">Contraseña</span><span class="field" style="background:var(--surface2)"><input id="aPass" type="password" autocomplete="'+(m==='register'?'new-password':'current-password')+'" required minlength="6" style="font-size:16px"></span></label>':'')+
+   (m==='register'?'<label class="stack" style="gap:6px" for="aPass2"><span class="label">Repite la contraseña</span><span class="field" style="background:var(--surface2)"><input id="aPass2" type="password" autocomplete="new-password" required minlength="6" style="font-size:16px"></span></label>':'')+
+   '<p id="aMsg" class="small" role="status" style="min-height:1em"></p>'+
+   '<button class="btn" type="submit" id="aBtn">'+T[1]+'</button>'+
+   (m==='login'?'<button class="link" type="button" data-a="authMode" data-v="reset" style="align-self:center">¿Olvidaste tu contraseña?</button>':'')+
+   '</form>'+
+   (m==='login'?'<p class="muted small" style="text-align:center">¿No tienes cuenta? <button class="link" data-a="authMode" data-v="register" style="color:var(--accent)">Crear cuenta</button></p><p class="muted small" style="text-align:center">Si ya usas Mindfocus, entra con la misma cuenta.</p>'
+     :'<p class="muted small" style="text-align:center"><button class="link" data-a="authMode" data-v="login" style="color:var(--accent)">Volver a iniciar sesión</button></p>')+
+  '</div>';
+}
+function authErr(e){
+  var c=(e&&e.code)||'';
+  if(/invalid-credential|wrong-password|user-not-found|invalid-login/.test(c)) return 'Correo o contraseña incorrectos.';
+  if(c==='auth/email-already-in-use') return 'Ya existe una cuenta con ese correo. Inicia sesión.';
+  if(c==='auth/weak-password') return 'La contraseña debe tener al menos 6 caracteres.';
+  if(c==='auth/invalid-email'||c==='auth/missing-email') return 'Revisa que el correo esté bien escrito.';
+  if(c==='auth/too-many-requests') return 'Demasiados intentos. Espera unos minutos e intenta de nuevo.';
+  if(c==='auth/network-request-failed') return 'Sin conexión. Revisa tu internet.';
+  return 'No se pudo completar. Intenta de nuevo.';
+}
+function authSubmit(){
+  var m=S.authMode||'login', em=(document.getElementById('aEmail').value||'').trim(), msg=document.getElementById('aMsg'), btn=document.getElementById('aBtn');
+  var p=document.getElementById('aPass'), p2=document.getElementById('aPass2'); S.authEmail=em;
+  function show(t,ok){ msg.textContent=t; msg.style.color=ok?'var(--accent)':'var(--danger)'; }
+  if(!em) return show('Escribe tu correo.');
+  if(m==='register'&&p.value!==p2.value) return show('Las contraseñas no coinciden.');
+  var label=btn.textContent; btn.disabled=true; btn.textContent='Un momento…';
+  var job=m==='login'?Store.auth.signInWithEmailAndPassword(em,p.value)
+        :m==='register'?Store.auth.createUserWithEmailAndPassword(em,p.value)
+        :Store.auth.sendPasswordResetEmail(em);
+  job.then(function(){ if(m==='reset'){ show('Te enviamos un correo para restablecer tu contraseña.',true); btn.disabled=false; btn.textContent=label; } })
+     .catch(function(e){ show(authErr(e)); btn.disabled=false; btn.textContent=label; });
 }
 
 /* ---------- Entreno: lógica ---------- */
@@ -716,6 +775,8 @@ var A={
   skipRest:function(){ S.w.phase='work'; render(); },
   period:function(v){ S.period=v; S.pOff=0; S.ask=null; render(); },
   pOff:function(v){ var n=S.pOff+(+v); if(n>0) return; S.pOff=n; render(); },
+  authMode:function(v){ var e=document.getElementById('aEmail'); if(e) S.authEmail=e.value; S.authMode=v; render(); },
+  logout:function(){ if(Store.auth) Store.auth.signOut(); },
   delS:function(v){ Store.delSession(v); S.ask=null; toast('Sesión borrada'); render(); }
 };
 function keep(fn){ var y=window.scrollY; fn(); window.scrollTo(0,y); }
@@ -723,6 +784,7 @@ document.addEventListener('click',function(ev){
   var el=ev.target.closest('[data-a]'); if(!el||el.disabled) return;
   audio(); var f=A[el.dataset.a]; if(f) f(el.dataset.v,el);
 });
+document.addEventListener('submit',function(ev){ if(ev.target.id==='authForm'){ ev.preventDefault(); authSubmit(); } });
 document.addEventListener('input',function(ev){
   if(ev.target.id==='bname'&&S.builder) S.builder.n=ev.target.value;
   if(ev.target.id==='bq'){ S.bQ=ev.target.value; renderBLib(); }
@@ -735,9 +797,8 @@ document.addEventListener('keydown',function(ev){
 var rt; window.addEventListener('resize',function(){ clearTimeout(rt); rt=setTimeout(setupCanvases,150); });
 
 /* ---------- Arranque ---------- */
-navInit(); Store.loadLocal(); render(); requestAnimationFrame(loop);
+navInit(); Store.loadLocal(); Store.init(); render(); requestAnimationFrame(loop);
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ if(S.view!=='work') setupCanvases(); });
-Store.init();
 if("serviceWorker" in navigator) window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); });
 })();
 </script>

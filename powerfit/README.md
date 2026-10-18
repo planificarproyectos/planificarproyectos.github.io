@@ -9,5 +9,5 @@ App web para entrenar en casa con mancuernas y tapete.
 
 Publicada en https://www.planificarproyectos.com/powerfit/
 
-El historial se guarda en el navegador de cada dispositivo (localStorage).
+Cuentas con correo y contraseña (Firebase Auth, mismo proyecto que Mindfocus). Datos en Firestore: `powerfit/{uid}/data`.
 Se puede instalar en el celular con "Agregar a pantalla de inicio".
