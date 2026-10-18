@@ -159,7 +159,7 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
 #splash .word span{color:var(--accent)}
 @keyframes sp-lift{0%{opacity:0;transform:translateY(60px) scale(.85)}60%{opacity:1;transform:translateY(-10px) scale(1.02)}80%{transform:translateY(3px)}100%{opacity:1;transform:none}}
 @keyframes sp-bolt{0%{opacity:0;transform:translateY(-140%) scaleY(1.3)}100%{opacity:1;transform:none}}
-@keyframes sp-flash{0%{opacity:.9;transform:scale(.2)}100%{opacity:0;transform:scale(2.4)}}
+@keyframes sp-flash{0%{opacity:0;transform:scale(.2)}1%{opacity:.9;transform:scale(.2)}100%{opacity:0;transform:scale(2.4)}}
 @keyframes sp-glow{from{filter:drop-shadow(0 0 0 rgba(198,244,50,0))}to{filter:drop-shadow(0 0 10px rgba(198,244,50,.75))}}
 @keyframes sp-word{from{opacity:0;transform:translateY(12px);letter-spacing:10px}to{opacity:1;transform:none;letter-spacing:3px}}
 #splash.replay .db,#splash.replay .bolt,#splash.replay .flash,#splash.replay .word{animation-name:none}
