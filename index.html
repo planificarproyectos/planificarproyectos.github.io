@@ -349,14 +349,14 @@ nav .home .hi{width:16px;height:16px;flex:0 0 auto}
 .pslider{position:relative;padding:4px 0 8px}
 .ptrack{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:none;padding:4px 2px 16px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .ptrack::-webkit-scrollbar{display:none}
-.pcard{position:relative;flex:0 0 auto;width:min(240px,70vw);border-radius:16px;overflow:hidden;aspect-ratio:4/3;display:flex;align-items:flex-end;padding:14px;text-align:left;box-shadow:var(--shadow);scroll-snap-align:start;transition:transform .3s cubic-bezier(.2,.7,.2,1),box-shadow .3s}
+.pcard{position:relative;flex:0 0 auto;width:min(360px,80vw);border-radius:16px;overflow:hidden;aspect-ratio:16/10;display:flex;align-items:flex-end;padding:14px;text-align:left;box-shadow:var(--shadow);scroll-snap-align:start;transition:transform .3s cubic-bezier(.2,.7,.2,1),box-shadow .3s}
 .pcard:hover{transform:translateY(-4px);box-shadow:0 2px 4px rgba(0,0,0,.04),0 16px 36px rgba(0,0,0,.09)}
 .pthumb{position:absolute;inset:0;background:#0e1c26}
 .pthumb img{width:100%;height:100%;object-fit:cover;display:block;filter:grayscale(1);transition:filter .45s ease}
 .pcard:hover .pthumb img,.pcard:focus-visible .pthumb img{filter:none}
 .pthumb::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.6),rgba(0,0,0,0) 60%)}
 @media(prefers-reduced-motion:reduce){.pthumb img{transition:none}}
-.pname{position:relative;color:#fff;font-weight:600;font-size:15px}
+.pname{position:relative;color:#fff;font-weight:600;font-size:16px}
 .pnav{display:flex;gap:10px;justify-content:flex-end;margin-top:-6px}
 .pnav button{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.7);border:1px solid rgba(205,228,243,.9);color:var(--brand);font-size:18px;display:grid;place-items:center;transition:background .2s,transform .2s}
 .pnav button:hover{background:#fff;transform:translateY(-1px)}
