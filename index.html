@@ -164,7 +164,7 @@ h1,h2,h3,h4{font-family:Poppins,sans-serif;font-weight:600;line-height:1.05;lett
 .tab-panel.active{display:block;animation:tabIn .6s var(--ease)}
 @keyframes tabIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 .tab-panel .services{margin-top:clamp(24px,3vw,40px)}
-@media (min-width:821px){#t2 .services{grid-template-columns:repeat(3,1fr)}#t3 .services{grid-template-columns:repeat(2,1fr)}}
+@media (min-width:821px){#t2 .services{grid-template-columns:repeat(3,1fr)}#t3 .services{grid-template-columns:repeat(2,minmax(0,340px));justify-content:center}}
 .about{margin-top:clamp(24px,3vw,40px);background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:clamp(26px,4vw,52px);display:grid;grid-template-columns:1.3fr 1fr;gap:clamp(24px,4vw,60px);align-items:center}
 .about-txt{font-family:Poppins;font-weight:500;font-size:clamp(1.15rem,1.7vw,1.5rem);line-height:1.45;letter-spacing:-.01em;color:var(--text)}
 .about-values h4{font-size:.72rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:1.1rem;font-family:Manrope,sans-serif}
