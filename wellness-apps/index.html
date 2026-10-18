@@ -40,22 +40,71 @@ footer{margin-top:auto;padding-top:40px;display:flex;justify-content:space-betwe
 footer a{display:inline-flex;align-items:center;gap:8px;padding:.55rem .95rem;border:1px solid var(--line);border-radius:99px;color:var(--muted)}
 footer a:hover{border-color:var(--fg);color:var(--fg)}
 @media (max-width:420px){h1{font-size:2.2rem}.app{gap:14px;padding:16px}.app img{width:60px;height:60px;border-radius:15px}.app h2{font-size:1.45rem}.app .go{width:38px;height:38px}}
+
+.lock{position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:50%;background:var(--surface2);display:none;place-items:center;color:var(--muted)}
+.lock svg{width:14px;height:14px}
+.app{position:relative}
+body.guest .app{opacity:.55}
+body.guest .app .go{background:var(--surface2);color:var(--muted)}
+body.guest .lock{display:grid}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:22px;margin-bottom:22px}
+.card h3{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:1.55rem;line-height:1.05;text-transform:uppercase;letter-spacing:.02em}
+.card h3 span{color:var(--accent)}
+.card p.sub{color:var(--muted);font-size:.93rem;line-height:1.5;margin:8px 0 16px}
+.field{display:block;margin-bottom:10px}
+.field input{width:100%;font:inherit;font-size:1rem;padding:.9rem 1rem;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.field input:focus{outline:none;border-color:var(--accent)}
+.btn{width:100%;font:inherit;font-weight:700;font-size:1rem;padding:.95rem 1rem;border-radius:14px;border:0;background:var(--accent);color:var(--accent-ink);cursor:pointer;margin-top:4px}
+.btn[disabled]{opacity:.6;cursor:wait}
+.links{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:14px;font-size:.88rem}
+.link{background:none;border:0;font:inherit;color:var(--accent);cursor:pointer;padding:0}
+.link.dim{color:var(--muted)}
+.msg{min-height:1.2em;font-size:.88rem;margin-top:10px;color:#FF9B8A}
+.msg.ok{color:var(--accent)}
+.hello{display:flex;gap:14px;align-items:flex-start}
+.hello .dot{flex:none;width:44px;height:44px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:1.4rem}
+.out{margin-top:12px}
+[hidden]{display:none!important}
+.loading .card,.loading .lead{visibility:hidden}
 </style>
 </head>
-<body>
+<body class="loading">
 <div class="wrap">
   <header>
     <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" rx="44" fill="#111315"/><circle cx="100" cy="100" r="58" fill="none" stroke="#F2F2EE" stroke-width="10"/><path d="M34 104 H72 L84 80 L100 130 L114 92 L124 104 H166" fill="none" stroke="#C6F432" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <div><div class="kicker">Planificar Proyectos</div><h1>Wellness <span>Apps</span></h1></div>
   </header>
-  <p class="lead">Tus apps de bienestar en un solo lugar. Elige una para abrirla.</p>
+  <p class="lead" id="lead">Tus apps de bienestar en un solo lugar.</p>
+
+  <section class="card" id="authCard" hidden>
+    <h3 id="aTitle">Crea tu cuenta <span>gratis</span></h3>
+    <p class="sub" id="aSub">Con una sola cuenta tendrás acceso a todas las apps de Wellness Apps: Mind Focus y PowerFit.</p>
+    <form id="aForm" novalidate>
+      <label class="field" id="fName"><input id="aName" type="text" autocomplete="name" placeholder="Tu nombre"></label>
+      <label class="field"><input id="aEmail" type="email" autocomplete="email" inputmode="email" placeholder="Correo" required></label>
+      <label class="field" id="fPass"><input id="aPass" type="password" autocomplete="new-password" placeholder="Contraseña (mínimo 6 caracteres)" required minlength="6"></label>
+      <button class="btn" id="aBtn" type="submit">Crear cuenta</button>
+      <div class="msg" id="aMsg" role="status"></div>
+    </form>
+    <div class="links">
+      <button class="link" id="aSwitch" type="button">¿Ya tienes cuenta? Inicia sesión</button>
+      <button class="link dim" id="aForgot" type="button" hidden>¿Olvidaste tu contraseña?</button>
+    </div>
+  </section>
+
+  <section class="card" id="userCard" hidden>
+    <div class="hello"><div class="dot" id="uDot">·</div>
+      <div><h3>Hola, <span id="uName"></span></h3>
+      <p class="sub" style="margin-bottom:0">Ya tienes cuenta en Wellness Apps. Selecciona una de las apps y empieza a mejorar tu vida.</p></div></div>
+    <div class="links out"><span class="link dim" id="uMail" style="cursor:default"></span><button class="link dim" id="uOut" type="button">Cerrar sesión</button></div>
+  </section>
   <nav class="apps">
-    <a class="app" href="/mindfocus/">
+    <a class="app" href="/mindfocus/"><span class="lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
       <img src="/mindfocus/icon.svg" alt="" width="72" height="72">
       <div><h2>Mind Focus</h2><p>Registro diario de actividades, pomodoro y análisis de productividad.</p></div>
       <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
     </a>
-    <a class="app" href="/powerfit/">
+    <a class="app" href="/powerfit/"><span class="lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
       <img src="/powerfit/icon.svg" alt="" width="72" height="72">
       <div><h2>PowerFit</h2><p>Entrena en casa con rutinas por zona y seguimiento de tu progreso.</p></div>
       <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
@@ -66,6 +115,56 @@ footer a:hover{border-color:var(--fg);color:var(--fg)}
     <a href="/"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>planificarproyectos.com</a>
   </footer>
 </div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+(function(){
+var $=function(id){return document.getElementById(id)};
+var mode='register', auth=null;
+function err(e){var c=(e&&e.code)||'';
+ if(/invalid-credential|wrong-password|user-not-found|invalid-login/.test(c))return 'Correo o contraseña incorrectos.';
+ if(c==='auth/email-already-in-use')return 'Ya existe una cuenta con ese correo. Inicia sesión.';
+ if(c==='auth/weak-password')return 'La contraseña debe tener al menos 6 caracteres.';
+ if(c==='auth/invalid-email'||c==='auth/missing-email')return 'Revisa que el correo esté bien escrito.';
+ if(c==='auth/too-many-requests')return 'Demasiados intentos. Espera unos minutos e intenta de nuevo.';
+ if(c==='auth/network-request-failed')return 'Sin conexión. Revisa tu internet.';
+ return 'No se pudo completar. Intenta de nuevo.';}
+function msg(t,ok){var m=$('aMsg');m.textContent=t||'';m.className='msg'+(ok?' ok':'')}
+function setMode(m){mode=m;msg('');
+ var reg=m==='register',reset=m==='reset';
+ $('aTitle').innerHTML=reg?'Crea tu cuenta <span>gratis</span>':reset?'Recupera tu <span>contraseña</span>':'Inicia <span>sesión</span>';
+ $('aSub').textContent=reg?'Con una sola cuenta tendrás acceso a todas las apps de Wellness Apps: Mind Focus y PowerFit.':reset?'Te enviaremos un correo para crear una nueva contraseña.':'Entra con tu cuenta de Wellness Apps. Si ya usas Mind Focus o PowerFit, es la misma.';
+ $('fName').hidden=!reg;$('fPass').hidden=reset;
+ $('aPass').autocomplete=reg?'new-password':'current-password';
+ $('aBtn').textContent=reg?'Crear cuenta':reset?'Enviar correo':'Iniciar sesión';
+ $('aSwitch').textContent=reg?'¿Ya tienes cuenta? Inicia sesión':reset?'Volver a iniciar sesión':'¿No tienes cuenta? Créala aquí';
+ $('aForgot').hidden=m!=='login';}
+function render(u){document.body.classList.remove('loading');document.body.classList.toggle('guest',!u);
+ $('authCard').hidden=!!u;$('userCard').hidden=!u;
+ $('lead').textContent=u?'Tus apps de bienestar en un solo lugar.':'Tus apps de bienestar en un solo lugar. Crea tu cuenta para empezar.';
+ if(u){var n=(u.displayName||u.email.split('@')[0]).split(' ')[0];$('uName').textContent=n;$('uDot').textContent=n.charAt(0).toUpperCase();$('uMail').textContent=u.email}}
+$('aSwitch').onclick=function(){setMode(mode==='login'?'register':'login')};
+$('aForgot').onclick=function(){setMode('reset')};
+$('aForm').onsubmit=function(e){e.preventDefault();if(!auth){msg('Sin conexión. Revisa tu internet.');return}
+ var em=$('aEmail').value.trim(),pw=$('aPass').value,nm=$('aName').value.trim(),b=$('aBtn');
+ if(!em){msg('Escribe tu correo.');return}
+ if(mode!=='reset'&&pw.length<6){msg('La contraseña debe tener al menos 6 caracteres.');return}
+ if(mode==='register'&&!nm){msg('Escribe tu nombre.');return}
+ b.disabled=true;msg('');
+ var p=mode==='register'?auth.createUserWithEmailAndPassword(em,pw).then(function(c){return c.user.updateProfile({displayName:nm}).then(function(){render(auth.currentUser)})})
+  :mode==='login'?auth.signInWithEmailAndPassword(em,pw)
+  :auth.sendPasswordResetEmail(em).then(function(){msg('Listo. Revisa tu correo para crear una nueva contraseña.',true)});
+ p.catch(function(x){msg(err(x))}).finally(function(){b.disabled=false})};
+$('uOut').onclick=function(){auth&&auth.signOut()};
+document.querySelectorAll('.app').forEach(function(a){a.addEventListener('click',function(e){
+ if(document.body.classList.contains('guest')){e.preventDefault();$('authCard').scrollIntoView({behavior:'smooth',block:'center'});msg('Crea tu cuenta o inicia sesión para abrir las apps.');(mode==='register'?$('aName'):$('aEmail')).focus({preventScroll:true})}})});
+setMode('register');
+try{firebase.initializeApp(window.FIREBASE_CONFIG);auth=firebase.auth();auth.languageCode='es';
+ auth.onAuthStateChanged(render);}catch(e){render(null)}
+setTimeout(function(){if(document.body.classList.contains('loading'))render(auth&&auth.currentUser)},4000);
+})();
+</script>
 <script>document.getElementById('y').textContent=new Date().getFullYear();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
 </body>
 </html>
