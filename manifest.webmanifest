@@ -1,0 +1,47 @@
+{
+  "id": "/",
+  "name": "Planificar Proyectos",
+  "short_name": "Planificar",
+  "description": "Diseño, consultoría técnica, construcción e interventoría en Bogotá y Cundinamarca.",
+  "start_url": "/?source=app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#04141b",
+  "theme_color": "#04141b",
+  "lang": "es-CO",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/app-icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/app-icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Contacto",
+      "url": "/#contacto"
+    },
+    {
+      "name": "Wellness Apps",
+      "url": "/wellness-apps/"
+    }
+  ]
+}
