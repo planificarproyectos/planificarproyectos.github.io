@@ -215,6 +215,7 @@ h1,h2,h3,h4{font-family:Poppins,sans-serif;font-weight:600;line-height:1.05;lett
 
 /* Aliados */
 .aliados{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:clamp(14px,2vw,24px);margin-top:clamp(24px,3vw,44px)}
+@media (max-width:820px){.aliados{grid-template-columns:repeat(3,1fr);gap:.5rem}.aliado{min-height:70px;padding:.5rem}.aliado span{font-size:.6rem}}
 .aliado{background:var(--surface);border:1px solid var(--line);border-radius:14px;min-height:100px;display:grid;place-items:center;padding:1.4rem;transition:border-color .3s,transform .3s var(--ease),box-shadow .3s}
 .aliado:hover{border-color:rgba(4,20,27,.25);transform:translateY(-3px);box-shadow:rgba(4,20,27,.35) 0 14px 30px -20px}
 .aliado span{color:var(--muted);font-family:Poppins;font-weight:600;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;opacity:.5}
