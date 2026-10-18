@@ -129,6 +129,11 @@ nav.tabs button.on{color:var(--accent-fg);font-weight:700}
 .wtop{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .stage{position:relative;background:var(--surface);border-radius:24px;aspect-ratio:1/0.82;max-width:100%;overflow:hidden}
 .stage canvas{width:100%;height:100%;display:block}
+.views2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.views2 .view{position:relative;background:var(--surface);border-radius:20px;overflow:hidden;aspect-ratio:1/1.15;max-width:100%}
+.views2 canvas{width:100%;height:100%;display:block}
+.vtag{position:absolute;left:10px;top:10px;background:var(--bg);border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent-fg)}
+.views2 .eq{position:absolute;right:10px;bottom:10px;background:var(--bg);border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;color:var(--muted)}
 .stage .eq{position:absolute;left:12px;bottom:12px;background:var(--bg);border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;color:var(--accent-fg)}
 .sets{display:flex;gap:8px}
 .sets>div{flex:1;display:flex;flex-direction:column;gap:6px}
@@ -319,15 +324,60 @@ var FAM={
  sumo:[M(FD,{lp:[90,112],rp:[110,112],lk:[80,148],lf:[70,184],rk:[120,148],rf:[130,184],le:[92,92],lh:[100,124],re:[108,92],rh:[100,124]}),
        M(FD,{h:[100,64],ls:[88,86],rs:[112,86],lp:[90,140],rp:[110,140],lk:[70,150],lf:[70,184],rk:[130,150],rf:[130,184],le:[92,120],lh:[100,152],re:[108,120],rh:[100,152]})]
 };
+
+/* Vista frontal (y vistas laterales para los que antes solo tenían frente) */
+function mir(e,h){ return {le:e,lh:h,re:[200-e[0],e[1]],rh:[200-h[0],h[1]]}; }
+function mirL(k,f){ return {lk:k,lf:f,rk:[200-k[0],k[1]],rf:[200-f[0],f[1]]}; }
+function sh(o,k){ return {ls:[100-k[0],k[1]],rs:[100+k[0],k[1]]}; }
+var FDH=M(FD,mir([82,108],[84,150]));
+var HGF=M(FD,{h:[100,80]},sh(0,[14,94]),mir([84,120],[84,150]));
+var PUF={h:[100,122],ls:[84,138],rs:[116,138],lp:[96,146],rp:[104,146],le:[70,160],lh:[64,184],re:[130,160],rh:[136,184],lk:[96,146],lf:[96,146],rk:[104,146],rf:[104,146]};
+var PUFd=M(PUF,{h:[100,158]},sh(0,[18,168]),{lp:[96,172],rp:[104,172],lk:[96,172],lf:[96,172],rk:[104,172],rf:[104,172]},mir([58,166],[64,184]));
+var LYF={h:[100,148],ls:[86,160],rs:[114,160],lp:[92,170],rp:[108,170],lk:[84,146],lf:[84,184],rk:[116,146],rf:[116,184],le:[70,170],lh:[66,180],re:[130,170],rh:[134,180]};
+var SITF=M(LYF,{h:[100,104]},sh(0,[14,124]),mirL([84,150],[80,184]));
+var FAMF={
+ curl:[FD,M(FD,mir([82,86],[84,60]))],
+ press:[M(FD,mir([66,72],[68,48])),M(FD,mir([78,34],[86,10]))],
+ ohext:[M(FD,mir([86,22],[96,44])),M(FD,mir([88,22],[96,2]))],
+ front:[FD,M(FD,mir([86,70],[90,52]))],
+ lateral:[FD,M(FD,{le:[64,62],lh:[40,64],re:[136,62],rh:[160,64]})],
+ jacks:[FD,M(FD,{le:[72,36],lh:[64,14],re:[128,36],rh:[136,14],lk:[80,148],lf:[66,184],rk:[120,148],rf:[134,184]})],
+ squat:[M(FD,mir([90,86],[98,72]),mirL([88,148],[84,184])),M(FD,{h:[100,66]},sh(0,[14,88]),{lp:[90,140],rp:[110,140]},mir([90,114],[98,100]),mirL([72,156],[82,184]))],
+ sumo:[M(FD,{lp:[90,112],rp:[110,112]},mirL([80,148],[70,184]),mir([92,92],[100,124])),M(FD,{h:[100,64]},sh(0,[12,86]),{lp:[90,140],rp:[110,140]},mirL([70,150],[70,184]),mir([92,120],[100,152]))],
+ lunge:[M(FDH,mirL([90,148],[88,184])),M(FDH,{h:[100,58]},sh(0,[14,80]),{lp:[91,134],rp:[109,134]},mir([84,106],[86,146]),{lk:[86,158],lf:[84,184],rk:[114,178],rf:[116,184]})],
+ rdl:[FDH,HGF],
+ row:[M(HGF,mir([84,120],[84,150])),M(HGF,mir([68,100],[78,118]))],
+ kickback:[M(HGF,mir([80,108],[82,128])),M(HGF,mir([80,108],[82,100]))],
+ calf:[FDH,shift(FDH,0,-10)],
+ pushup:[PUF,PUFd],
+ pushupK:[PUF,PUFd],
+ plank:[M(PUF,{h:[100,146]},sh(0,[16,160]),mir([82,184],[94,182]),{lp:[96,166],rp:[104,166],lk:[96,166],lf:[96,166],rk:[104,166],rf:[104,166]}),M(PUF,{h:[100,145]},sh(0,[16,159]),mir([82,184],[94,182]),{lp:[96,165],rp:[104,165],lk:[96,165],lf:[96,165],rk:[104,165],rf:[104,165]})],
+ climber:[M(PUF,{lk:[92,168],lf:[92,178],rk:[104,146],rf:[104,146]}),M(PUF,{lk:[96,146],lf:[96,146],rk:[108,168],rf:[108,178]})],
+ floorpress:[M(LYF,mir([70,166],[72,140])),M(LYF,mir([82,132],[86,106]))],
+ fly:[M(LYF,mir([84,130],[88,106])),M(LYF,mir([64,156],[46,170]))],
+ crunch:[M(LYF,mir([80,152],[92,148])),M(LYF,{h:[100,128]},sh(0,[14,144]),mir([80,136],[92,128]))],
+ bike:[M(LYF,{h:[96,130]},sh(0,[14,146]),mir([80,138],[92,130]),{lk:[88,130],lf:[88,150],rk:[116,176],rf:[120,186]}),M(LYF,{h:[104,130]},sh(0,[14,146]),mir([80,138],[92,130]),{rk:[112,130],rf:[112,150],lk:[84,176],lf:[80,186]})],
+ legraise:[M(LYF,mirL([92,178],[90,186])),M(LYF,mirL([94,132],[94,96]))],
+ bridge:[M(LYF,mir([72,172],[66,182])),M(LYF,{lp:[92,148],rp:[108,148]},mirL([86,140],[84,184]),mir([72,172],[66,182]))],
+ superman:[{h:[100,168],ls:[84,176],rs:[116,176],lp:[94,172],rp:[106,172],le:[80,182],lh:[82,186],re:[120,182],rh:[118,186],lk:[94,172],lf:[94,172],rk:[106,172],rf:[106,172]},
+           {h:[100,154],ls:[84,166],rs:[116,166],lp:[94,172],rp:[106,172],le:[74,158],lh:[72,146],re:[126,158],rh:[128,146],lk:[94,172],lf:[96,150],rk:[106,172],rf:[104,150]}],
+ twist:[M(SITF,mir([90,136],[100,146])),M(SITF,{h:[94,104]},sh(0,[14,124]),{le:[80,140],lh:[72,152],re:[100,140],rh:[80,150]})]
+};
+/* laterales nuevos para los que antes eran frontales */
+FAM.lateral=[SD,M(SD,arms([100,72],[101,62],2))];
+FAM.jacks=[SD,M(SD,arms([100,36],[100,12],2),{lk:[98,148],lf:[90,184],rk:[103,148],rf:[112,184]})];
+FAM.sumo=[M(SD,arms([102,92],[102,124],0)),M(SD,{h:[100,64]},tor([100,86],[100,140]),legs([112,152],[100,184]),arms([104,120],[104,152],0))];
 var FRONT={lateral:1,jacks:1,sumo:1};
+var DBH={lateral:1,front:1,jacks:1,squat:1,sumo:1,ohext:1,twist:1};
 var FLOOR={pushup:1,pushupK:1,plank:1,climber:1,floorpress:1,fly:1,crunch:1,bike:1,legraise:1,bridge:1,superman:1,twist:1};
 var DB1={squat:1,sumo:1,ohext:1,kickback:1,twist:1};
 var reduce=false; try{ reduce=matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
 
 var CC={}; function readColors(){ var cs=getComputedStyle(document.documentElement); ['bg','surface','surface2','line','fg','muted','accent'].forEach(function(k){ CC[k]=cs.getPropertyValue('--'+k).trim(); }); }
-function drawFig(c,f,eq,t){
+function drawFig(c,f,eq,t,view){
+  var fv=view==='front';
   var ctx=c.getContext('2d'); if(!ctx||!c.width) return;
-  var P=FAM[f]||FAM.curl, A=P[0], B=P[1];
+  var P=(fv?FAMF[f]:FAM[f])||FAM.curl, A=P[0], B=P[1];
   function pt(k){ return [A[k][0]+(B[k][0]-A[k][0])*t, A[k][1]+(B[k][1]-A[k][1])*t]; }
   var W=c.width,H=c.height, s=Math.min(W,H)/215;
   ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,W,H);
@@ -335,7 +385,8 @@ function drawFig(c,f,eq,t){
   ctx.lineCap='round'; ctx.lineJoin='round';
   if(FLOOR[f]||eq==='tapete'){ ctx.fillStyle=CC.line; rr(ctx,10,186,190,6,3); ctx.fill(); }
   else { ctx.strokeStyle=CC.line; ctx.lineWidth=2; line(ctx,[16,188],[184,188]); }
-  var fg=CC.fg, back=FRONT[f]?fg:CC.muted;
+  if(fv&&FLOOR[f]){ ctx.translate(100,188); ctx.scale(1.45,1.45); ctx.translate(-100,-188); }
+  var fg=CC.fg, back=fv?fg:CC.muted;
   var ls=pt('ls'),rs=pt('rs'),lp=pt('lp'),rp=pt('rp'),h=pt('h');
   var sm=[(ls[0]+rs[0])/2,(ls[1]+rs[1])/2], pm=[(lp[0]+rp[0])/2,(lp[1]+rp[1])/2];
   ctx.strokeStyle=back; ctx.lineWidth=6.5;
@@ -345,26 +396,29 @@ function drawFig(c,f,eq,t){
   ctx.lineWidth=7; line(ctx,rp,pt('rk'),pt('rf'));
   ctx.beginPath(); ctx.arc(h[0],h[1],11,0,Math.PI*2); ctx.fillStyle=CC.surface; ctx.fill(); ctx.lineWidth=5; ctx.stroke();
   ctx.strokeStyle=fg; ctx.lineWidth=7; line(ctx,rs,pt('re'),pt('rh'));
-  if(eq==='mancuernas'){ ctx.fillStyle=CC.accent; if(!DB1[f]) dumb(ctx,pt('lh')); dumb(ctx,pt('rh')); }
+  if(eq==='mancuernas'){ ctx.fillStyle=CC.accent;
+    if(fv&&DB1[f]&&f!=='kickback'){ var a=pt('lh'),b=pt('rh'); dumb(ctx,[(a[0]+b[0])/2,(a[1]+b[1])/2],false); }
+    else { var vert=fv&&!DBH[f]; if(fv||!DB1[f]) dumb(ctx,pt('lh'),vert); dumb(ctx,pt('rh'),vert); } }
 }
 function line(ctx){ ctx.beginPath(); ctx.moveTo(arguments[1][0],arguments[1][1]); for(var i=2;i<arguments.length;i++) ctx.lineTo(arguments[i][0],arguments[i][1]); ctx.stroke(); }
 function rr(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
-function dumb(ctx,p){ rr(ctx,p[0]-10,p[1]-4.5,20,9,3); ctx.fill(); ctx.fillRect(p[0]-12,p[1]-6.5,5,13); ctx.fillRect(p[0]+7,p[1]-6.5,5,13); }
+function dumb(ctx,p,vert){ if(vert){ rr(ctx,p[0]-4.5,p[1]-10,9,20,3); ctx.fill(); ctx.fillRect(p[0]-6.5,p[1]-12,13,5); ctx.fillRect(p[0]-6.5,p[1]+7,13,5); return; } rr(ctx,p[0]-10,p[1]-4.5,20,9,3); ctx.fill(); ctx.fillRect(p[0]-12,p[1]-6.5,5,13); ctx.fillRect(p[0]+7,p[1]-6.5,5,13); }
 function setupCanvases(){
   readColors();
   var cs=document.querySelectorAll('canvas.fig');
   var dpr=Math.min(window.devicePixelRatio||1,2);
   for(var i=0;i<cs.length;i++){ var c=cs[i], r=c.getBoundingClientRect();
     c.width=Math.max(1,Math.round(r.width*dpr)); c.height=Math.max(1,Math.round(r.height*dpr));
-    if(!c.dataset.anim||reduce) drawFig(c,c.dataset.f,c.dataset.eq,0.65); }
+    if(!c.dataset.anim||reduce) drawFig(c,c.dataset.f,c.dataset.eq,0.65,c.dataset.view); }
 }
 function loop(now){
   if(!reduce){ var cs=document.querySelectorAll('canvas.fig[data-anim]');
     var t=(1-Math.cos((now/2200)*Math.PI*2))/2;
-    for(var i=0;i<cs.length;i++) drawFig(cs[i],cs[i].dataset.f,cs[i].dataset.eq,t); }
+    for(var i=0;i<cs.length;i++) drawFig(cs[i],cs[i].dataset.f,cs[i].dataset.eq,t,cs[i].dataset.view); }
   requestAnimationFrame(loop);
 }
-function fig(e,cls,anim){ return '<canvas class="fig '+(cls||'')+'" data-f="'+e.f+'" data-eq="'+e.eq+'"'+(anim?' data-anim="1"':'')+' role="img" aria-label="Figura: '+esc(e.n)+'"></canvas>'; }
+function views(e){ return '<div class="views2"><div class="view">'+fig(e,'',true,'front')+'<span class="vtag">Frente</span></div><div class="view">'+fig(e,'',true,'side')+'<span class="vtag">Lateral</span><span class="eq">'+EQ[e.eq]+'</span></div></div>'; }
+function fig(e,cls,anim,view){ return '<canvas class="fig '+(cls||'')+'" data-f="'+e.f+'" data-eq="'+e.eq+'"'+(view?' data-view="'+view+'"':'')+(anim?' data-anim="1"':'')+' role="img" aria-label="Figura: '+esc(e.n)+'"></canvas>'; }
 
 /* ---------- Fechas ---------- */
 var MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
@@ -614,7 +668,7 @@ function vLib(){
 function vEx(){
   var e=EX[S.ex];
   return '<div class="wrap">'+head(e.n,true)+
-   '<div class="stage">'+fig(e,'',true)+'<span class="eq">'+EQ[e.eq]+'</span></div>'+
+   views(e)+
    '<div class="chips">'+e.z.map(function(z){return '<span class="pill" style="font-weight:500">'+z+'</span>';}).join('')+'</div>'+
    '<div class="panel"><span class="label">Cómo hacerlo</span><p>'+esc(e.c)+'</p><span class="muted small num">Sugerido: '+e.s+' series × '+(e.t?e.t+' segundos':e.r+' repeticiones')+'</span></div>'+
    '<button class="btn" data-a="addToB" data-v="'+e.id+'">'+ic('plus',18,2.4)+'Agregar a mi rutina</button></div>';
@@ -646,7 +700,7 @@ function vWork(){
    '<div class="wtop"><button class="icon-btn" data-a="ask" data-v="exit" aria-label="Salir del entreno">'+ic('close')+'</button>'+
    '<span class="muted small num">Ejercicio '+(w.ei+1)+' de '+w.items.length+' · <b id="elapsed" style="color:var(--fg)">'+mmss((Date.now()-w.start)/1000)+'</b></span>'+
    '<button class="link" data-a="finish">Finalizar</button></div>'+ask+
-   '<div class="stage">'+fig(e,'',true)+'<span class="eq">'+EQ[e.eq]+'</span></div>'+
+   views(e)+
    '<div class="stack" style="gap:4px"><h1>'+esc(e.n)+'</h1><p class="muted">'+esc(e.c)+'</p></div>'+
    '<div class="sets">'+sets+'</div>'+body+'</div>';
 }
