@@ -148,10 +148,35 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
 .empty{border:1.5px dashed var(--line);border-radius:18px;padding:20px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;font-size:14px;z-index:50;max-width:calc(100% - 32px)}
 @media (prefers-reduced-motion: reduce){ .bar i{transition:none} }
+/* Bienvenida animada */
+#splash{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .45s ease,visibility .45s}
+#splash.out{opacity:0;visibility:hidden}
+#splash svg{width:min(44vw,190px);height:auto;overflow:visible}
+#splash .db{transform-box:fill-box;transform-origin:50% 50%;animation:sp-lift .9s cubic-bezier(.2,.9,.3,1.25) .05s both}
+#splash .bolt{transform-box:fill-box;transform-origin:50% 0;animation:sp-bolt .38s cubic-bezier(.5,0,.75,0) .8s both, sp-glow 1.2s ease-in-out 1.2s infinite alternate}
+#splash .flash{transform-box:fill-box;transform-origin:50% 50%;animation:sp-flash .6s ease-out 1.12s both}
+#splash .word{font-family:var(--f-display);font-weight:700;font-size:clamp(30px,9vw,44px);letter-spacing:3px;line-height:1;color:var(--fg);animation:sp-word .5s ease-out 1.3s both}
+#splash .word span{color:var(--accent)}
+@keyframes sp-lift{0%{opacity:0;transform:translateY(60px) scale(.85)}60%{opacity:1;transform:translateY(-10px) scale(1.02)}80%{transform:translateY(3px)}100%{opacity:1;transform:none}}
+@keyframes sp-bolt{0%{opacity:0;transform:translateY(-140%) scaleY(1.3)}100%{opacity:1;transform:none}}
+@keyframes sp-flash{0%{opacity:.9;transform:scale(.2)}100%{opacity:0;transform:scale(2.4)}}
+@keyframes sp-glow{from{filter:drop-shadow(0 0 0 rgba(198,244,50,0))}to{filter:drop-shadow(0 0 10px rgba(198,244,50,.75))}}
+@keyframes sp-word{from{opacity:0;transform:translateY(12px);letter-spacing:10px}to{opacity:1;transform:none;letter-spacing:3px}}
+#splash.replay .db,#splash.replay .bolt,#splash.replay .flash,#splash.replay .word{animation-name:none}
+@media (prefers-reduced-motion: reduce){#splash *{animation:none!important}}
+
 </style>
 
 </head>
 <body>
+<div id="splash" role="img" aria-label="PowerFit">
+  <svg viewBox="0 0 200 200" aria-hidden="true">
+    <circle class="flash" cx="104" cy="100" r="40" fill="#C6F432" opacity="0"/>
+    <g class="db" fill="#F2F2EE"><rect x="40" y="94" width="120" height="12" rx="4"/><rect x="26" y="62" width="20" height="76" rx="6"/><rect x="154" y="62" width="20" height="76" rx="6"/><rect x="12" y="78" width="12" height="44" rx="4"/><rect x="176" y="78" width="12" height="44" rx="4"/></g>
+    <path class="bolt" d="M112 22 L78 104 L100 104 L86 180 L128 88 L106 88 L122 22 Z" fill="#C6F432" stroke="#111315" stroke-width="6" stroke-linejoin="round"/>
+  </svg>
+  <div class="word">POWER<span>FIT</span></div>
+</div>
 <main id="app"></main>
 <nav class="tabs" id="nav" aria-label="Secciones">
   <div class="in">
@@ -352,6 +377,7 @@ var Store={mode:'local',col:null,months:{},
       S.authWait=false;
       if(self.unsub){ self.unsub(); self.unsub=null; }
       if(!u){ S.user=null; S.local=true; self.mode='local'; S.sessions=[]; S.routines=[]; S.w=null; S.view='auth'; render(); return; }
+      if(S.loginPending){ S.loginPending=false; playSplash(); }
       S.user={email:u.email,uid:u.uid,created:u.metadata&&Date.parse(u.metadata.creationTime)}; S.isAdmin=u.uid===ADMIN_UID; S.adm=null; S.noAccess=false; S.local=false; self.mode='db'; self.months={};
       self.col=self.fdb.collection('users').doc(u.uid).collection('powerfit');
       var loc=self.readLocal(), first=true;
@@ -763,12 +789,12 @@ function authSubmit(){
   function show(t,ok){ msg.textContent=t; msg.style.color=ok?'var(--accent)':'var(--danger)'; }
   if(!em) return show('Escribe tu correo.');
   if(m==='register'&&p.value!==p2.value) return show('Las contraseñas no coinciden.');
-  var label=btn.textContent; btn.disabled=true; btn.textContent='Un momento…';
+  var label=btn.textContent; btn.disabled=true; btn.textContent='Un momento…'; if(m!=='reset') S.loginPending=true;
   var job=m==='login'?Store.auth.signInWithEmailAndPassword(em,p.value)
         :m==='register'?Store.auth.createUserWithEmailAndPassword(em,p.value)
         :Store.auth.sendPasswordResetEmail(em);
   job.then(function(){ if(m==='reset'){ show('Te enviamos un correo para restablecer tu contraseña.',true); btn.disabled=false; btn.textContent=label; } })
-     .catch(function(e){ show(authErr(e)); btn.disabled=false; btn.textContent=label; });
+     .catch(function(e){ S.loginPending=false; show(authErr(e)); btn.disabled=false; btn.textContent=label; });
 }
 
 /* ---------- Entreno: lógica ---------- */
@@ -892,8 +918,17 @@ document.addEventListener('keydown',function(ev){
 });
 var rt; window.addEventListener('resize',function(){ clearTimeout(rt); rt=setTimeout(setupCanvases,150); });
 
+
+/* ---------- Bienvenida ---------- */
+var splashT0=Date.now(), splashTimer=null;
+function hideSplash(){ var el=document.getElementById('splash'); if(!el) return;
+  clearTimeout(splashTimer); splashTimer=setTimeout(function(){ el.classList.add('out'); }, Math.max(0,2200-(Date.now()-splashT0))); }
+function playSplash(){ var el=document.getElementById('splash'); if(!el) return;
+  el.classList.remove('out'); el.classList.add('replay'); void el.offsetWidth; el.classList.remove('replay');
+  splashT0=Date.now(); hideSplash(); }
+
 /* ---------- Arranque ---------- */
-navInit(); Store.loadLocal(); Store.init(); render(); requestAnimationFrame(loop);
+navInit(); Store.loadLocal(); Store.init(); render(); requestAnimationFrame(loop); hideSplash();
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ if(S.view!=='work') setupCanvases(); });
 if("serviceWorker" in navigator) window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); });
 })();
