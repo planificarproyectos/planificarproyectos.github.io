@@ -1,11 +1,3 @@
-// Service worker mínimo: guarda la interfaz para abrir rápido; los datos siempre vienen de Firebase.
-const CACHE = "bitacora-v6";
-const SHELL = ["./", "./index.html", "./firebase-config.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
-self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
-self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
-self.addEventListener("fetch", e => {
-  const url = new URL(e.request.url);
-  if (e.request.method !== "GET" || url.origin !== location.origin) return; // Firebase y CDN van directo a la red
-  e.respondWith(fetch(e.request).then(r => { const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return r; })
-    .catch(() => caches.match(e.request).then(m => m || caches.match("./"))));
-});
+// Reemplaza el service worker anterior de /bitacora: borra su caché y se desinstala para que la redirección a /mindfocus funcione.
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.map(k => caches.delete(k)))).then(() => self.registration.unregister()).then(() => self.clients.matchAll()).then(cs => cs.forEach(c => c.navigate(c.url)))); });
