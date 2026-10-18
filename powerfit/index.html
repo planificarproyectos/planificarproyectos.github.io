@@ -450,12 +450,12 @@ var Store={mode:'local',col:null,months:{},
     self.auth.onAuthStateChanged(function(u){
       S.authWait=false;
       if(self.unsub){ self.unsub(); self.unsub=null; }
-      if(!u){ S.user=null; S.local=true; self.mode='local'; S.sessions=[]; S.routines=[]; S.w=null; S.view='auth'; render(); return; }
+      if(!u){ Act.ready=false; S.pendingW=null; S.user=null; S.local=true; self.mode='local'; S.sessions=[]; S.routines=[]; S.w=null; S.view='auth'; render(); return; }
       if(S.loginPending){ S.loginPending=false; playSplash(); }
       self.gotFirst=false; S.user={email:u.email,uid:u.uid,created:u.metadata&&Date.parse(u.metadata.creationTime)}; S.isAdmin=u.uid===ADMIN_UID; S.adm=null; S.noAccess=false; S.local=false; self.mode='db'; self.months={};
       self.col=self.fdb.collection('users').doc(u.uid).collection('powerfit');
       var loc=self.readLocal(), first=true;
-      S.sessions=[]; S.routines=[]; S.view='home'; S.prev='home'; render();
+      Act.ready=false; Act.uid=u.uid; S.sessions=[]; S.routines=[]; S.w=null; S.pendingW=null; S.view='home'; S.prev='home'; Act.restore(u.uid,null); Act.ready=false; render();
       var me=u.uid;
       self.ensureAccess(u).then(function(ok){
         if(!S.user||S.user.uid!==me) return;
@@ -480,13 +480,15 @@ var Store={mode:'local',col:null,months:{},
       self.unsub=self.col.onSnapshot(function(snap){
         if(first && snap.empty && (loc.sessions.length||loc.routines.length)){ first=false; self.migrate(loc.sessions,loc.routines); toast('Subimos a tu cuenta el historial de este navegador'); return; }
         first=false;
-        var ses=[],rts=[],prefsChanged=false,hasPrefs=false,wasFirst=!self.gotFirst; self.gotFirst=true; self.months={};
+        var remoteAct=null,ses=[],rts=[],prefsChanged=false,hasPrefs=false,wasFirst=!self.gotFirst; self.gotFirst=true; self.months={};
         snap.docs.forEach(function(d){ var b=d.data()||{};
-          if(d.id==='prefs'){ hasPrefs=true; if(b.accent!==PF_THEME.accent||b.mode!==PF_THEME.mode){ setTheme(b,false); prefsChanged=true; } }
+          if(d.id==='active'){ remoteAct=b; }
+          else if(d.id==='prefs'){ hasPrefs=true; if(b.accent!==PF_THEME.accent||b.mode!==PF_THEME.mode){ setTheme(b,false); prefsChanged=true; } }
           else if(d.id==='routines') rts=b.list||[];
           else if(d.id.indexOf('m-')===0){ self.months[d.id]=b.sessions||[]; ses=ses.concat(b.sessions||[]); } });
         S.sessions=ses.sort(function(a,b){return a.ts-b.ts;}); S.routines=rts;
         if(wasFirst&&!hasPrefs) setTheme({},true);
+        if(wasFirst){ if(remoteAct&&remoteAct.w){ var loc0=Act.read(); if(!loc0||remoteAct.upd>(loc0.upd||0)){ S.w=null; S.pendingW=null; Act.restore(S.user.uid,remoteAct); render(); } } Act.ready=true; }
         if(S.view!=='work'&&S.view!=='builder') render();
       },function(e){ console.warn('firestore',e);
         if(e&&e.code==='permission-denied'){ S.noAccess=true; render(); } else toast('No se pudo leer tu historial. Revisa tu conexión.'); });
@@ -564,6 +566,7 @@ function render(){
   ['home','routines','lib','progress','account'].forEach(function(t){ var b=document.getElementById('t-'+t); b.classList.toggle('on',tabOf[v]===t); if(tabOf[v]===t) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
   if(v==='builder') renderBLib();
   setupCanvases();
+  Act.persist();
 }
 function navInit(){
   var L={home:['home','Inicio'],routines:['dumb','Rutinas'],lib:['grid','Ejercicios'],progress:['chart','Progreso'],account:['user','Cuenta']};
@@ -585,7 +588,8 @@ function vHome(){
   var todayS=S.sessions.filter(function(s){return s.d===dk(now);});
   var todayTxt=''; if(todayS.length){ var m=0,rp=0; todayS.forEach(function(s){m+=s.sec;rp+=s.reps;}); todayTxt='<div class="panel"><div class="between"><b>Hoy ya entrenaste</b><span class="muted small num">'+Math.round(m/60)+' min · '+rp+' reps</span></div></div>'; }
   var na=S.noAccess?'<div class="panel" style="border:1px solid var(--danger)"><b>Tu cuenta aún no tiene acceso</b><span class="muted small">Tu acceso fue desactivado o aún no se pudo activar. Escríbele al administrador; mientras tanto tus entrenos no se guardarán.</span></div>':'';
-  return '<div class="wrap">'+brand(34,26)+na+
+  var pw=S.pendingW?'<div class="panel" style="border:1px solid var(--accent-fg)"><b>Tienes un entreno sin terminar</b><span class="muted small">'+esc(S.pendingW.n)+' · ejercicio '+(S.pendingW.ei+1)+' de '+S.pendingW.items.length+' · última actividad '+ago(S.pendingUpd)+'</span><div class="btns"><button class="btn soft" data-a="saveP">Guardar y terminar</button><button class="btn" data-a="resumeP">Continuar</button></div><button class="link" data-a="dropP" style="align-self:center">Descartar</button></div>':'';
+  return '<div class="wrap">'+brand(34,26)+na+pw+
    '<div class="between"><div class="stack" style="gap:2px"><span class="muted small">'+DIA[now.getDay()]+', '+now.getDate()+' '+MES[now.getMonth()]+'</span><h1>'+greet+'</h1></div>'+
    '<span class="pill">'+ic('flame',16)+st+(st===1?' día':' días')+'</span></div>'+
    '<div class="week" aria-label="Esta semana">'+wk+'</div>'+todayTxt+
@@ -890,13 +894,53 @@ function authSubmit(){
 
 /* ---------- Entreno: lógica ---------- */
 var wake=null, actx=null;
+
+/* ---------- Continuidad: el entreno y la pantalla sobreviven a recargas y cierres ---------- */
+var STALE=6*3600e3, PV={home:1,routines:1,lib:1,progress:1,account:1,builder:1,detail:1,ex:1,work:1};
+var Act={uid:null,t:null,lastRemote:0,
+  key:function(){ return 'powerfit:state:'+(this.uid||'local'); },
+  snap:function(){
+    var w=S.w?JSON.parse(JSON.stringify(S.w)):null;
+    if(w&&w.running){ w.tLeft=Math.max(0,(w.endAt-Date.now())/1000); w.running=false; }
+    return {upd:Date.now(),view:PV[S.view]?S.view:'home',w:w,builder:S.builder||null,detail:S.view==='detail'?S.detail:null,ex:S.view==='ex'?S.ex:null};
+  },
+  persist:function(now){
+    if(!this.ready||S.view==='auth'||S.view==='done') return;
+    var st=this.snap(), self=this;
+    try{ localStorage.setItem(this.key(),JSON.stringify(st)); }catch(e){}
+    clearTimeout(this.t);
+    var push=function(){ if(Store.mode==='db'&&Store.col) Store.col.doc('active').set(st.w?{upd:st.upd,w:st.w}:{upd:st.upd,w:null}).catch(function(){}); };
+    if(now) push(); else this.t=setTimeout(push,1500);
+  },
+  read:function(){ try{ return JSON.parse(localStorage.getItem(this.key())||'null'); }catch(e){ return null; } },
+  restore:function(uid,remote){
+    this.uid=uid||null; this.ready=true;
+    var st=this.read();
+    if(remote&&remote.w&&(!st||remote.upd>(st.upd||0))) st={upd:remote.upd,view:'work',w:remote.w};
+    if(!st) return;
+    if(st.builder) S.builder=st.builder;
+    if(st.w){
+      var w=st.w; w.running=false;
+      if(Date.now()-st.upd>STALE){ S.pendingW=w; S.pendingUpd=st.upd; S.view='home'; }
+      else { S.w=w; S.view='work'; wakeOn(); }
+    } else if(st.view==='builder'&&S.builder) S.view='builder';
+    else if(st.view==='detail'&&st.detail){ S.detail=st.detail; S.view='detail'; }
+    else if(st.view==='ex'&&st.ex&&EX[st.ex]){ S.ex=st.ex; S.view='ex'; }
+    else if(PV[st.view]&&st.view!=='work') S.view=st.view;
+    S.prev='home';
+  }
+};
+function wakeOn(){ try{ navigator.wakeLock&&navigator.wakeLock.request('screen').then(function(l){wake=l;}).catch(function(){}); }catch(e){} }
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') Act.persist(true); else if(S.w&&S.view==='work') wakeOn(); });
+window.addEventListener('pagehide',function(){ Act.persist(true); });
+
 function audio(){ try{ if(!actx){ var A=window.AudioContext||window.webkitAudioContext; if(A) actx=new A(); } if(actx&&actx.state==='suspended') actx.resume(); }catch(e){} }
 function beep(f,d){ try{ if(!actx) return; var o=actx.createOscillator(), g=actx.createGain(); o.frequency.value=f||880; g.gain.value=0.08; o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime+(d||0.15)); }catch(e){} }
 function buzz(){ try{ navigator.vibrate&&navigator.vibrate(12); }catch(e){} }
 function startW(r){
   var items=r.items.map(function(i){return {id:i.id,s:i.s,r:i.r,t:i.t};});
   S.w={n:r.n,items:items,ei:0,si:0,count:0,log:items.map(function(i){var a=[];for(var k=0;k<i.s;k++)a.push(null);return a;}),start:Date.now(),phase:'work',restEnd:0,tLeft:items[0].t,running:false,endAt:0};
-  try{ navigator.wakeLock&&navigator.wakeLock.request('screen').then(function(l){wake=l;}).catch(function(){}); }catch(e){}
+  wakeOn();
   go('work');
 }
 function curIt(){ return S.w.items[S.w.ei]; }
@@ -918,9 +962,9 @@ function finish(){
     done.forEach(function(v){ if(it.t) hold+=v; else reps+=v; });
     e.z.forEach(function(z){ zones[z]=(zones[z]||0)+done.length; }); });
   releaseWake();
-  if(!sets){ S.w=null; toast('No registraste series, no se guardó nada.'); go('home'); return; }
+  if(!sets){ S.w=null; Act.persist(true); toast('No registraste series, no se guardó nada.'); go('home'); return; }
   var now=new Date(), rec={id:'s'+now.getTime(),ts:now.getTime(),d:dk(now),n:w.n,sec:Math.round((now-w.start)/1000),reps:reps,hold:hold,sets:sets,zones:zones,ex:ex};
-  Store.addSession(rec); S.last=rec; S.w=null; beep(660,.12); setTimeout(function(){beep(990,.2);},140); go('done');
+  Store.addSession(rec); S.last=rec; S.w=null; Act.persist(true); beep(660,.12); setTimeout(function(){beep(990,.2);},140); go('done');
 }
 function releaseWake(){ try{ wake&&wake.release(); }catch(e){} wake=null; }
 setInterval(function(){
@@ -968,7 +1012,10 @@ var A={
     toast('Agregado a tu rutina'); S.prev='lib'; S.view='builder'; render(); window.scrollTo(0,0); },
   ask:function(v){ S.ask=v; render(); },
   cancelAsk:function(){ S.ask=null; render(); },
-  exitW:function(){ S.w=null; releaseWake(); go('home'); },
+  exitW:function(){ S.w=null; releaseWake(); go('home'); Act.persist(true); },
+  resumeP:function(){ S.w=S.pendingW; S.pendingW=null; S.w.running=false; wakeOn(); go('work'); Act.persist(true); },
+  saveP:function(){ S.w=S.pendingW; S.pendingW=null; finish(); },
+  dropP:function(){ S.pendingW=null; Act.persist(true); render(); toast('Entreno descartado'); },
   finish:function(){ finish(); },
   rep:function(){ var w=S.w, it=curIt(); w.count++; buzz(); beep(1200,.04);
     if(w.count>=it.r){ beep(880,.2); completeSet(w.count); } else render(); },
@@ -1021,7 +1068,7 @@ function playSplash(){ var el=document.getElementById('splash'); if(!el) return;
   splashT0=Date.now(); hideSplash(); }
 
 /* ---------- Arranque ---------- */
-navInit(); Store.loadLocal(); Store.init(); render(); requestAnimationFrame(loop); hideSplash();
+navInit(); Store.loadLocal(); Store.init(); if(!Store.auth) Act.restore(null); render(); requestAnimationFrame(loop); hideSplash();
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ if(S.view!=='work') setupCanvases(); });
 if("serviceWorker" in navigator) window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); });
 })();
