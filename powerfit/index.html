@@ -10,6 +10,14 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="PowerFit">
 <link rel="manifest" href="manifest.webmanifest">
+<script>
+window.PF_ACCENTS={lima:['Lima','#C6F432','#4D7A00'],azul:['Azul','#3D8BFF','#1F5FD1'],naranja:['Naranja','#FF8A1F','#B35400'],rosa:['Rosa','#FF4FA3','#C2186B'],cian:['Cian','#22E0E0','#007C85'],morado:['Morado','#A97BFF','#6A3FD1'],amarillo:['Amarillo','#FFD60A','#8A6D00'],coral:['Coral','#FF5A5F','#C62828']};
+window.pfApplyTheme=function(t){ t=t||{}; var a=PF_ACCENTS[t.accent]?t.accent:'lima', light=t.mode==='light', c=PF_ACCENTS[a], r=document.documentElement;
+  r.setAttribute('data-mode',light?'light':'dark'); r.style.setProperty('--accent',c[1]); r.style.setProperty('--accent-fg',light?c[2]:c[1]);
+  var m=document.querySelector('meta[name=theme-color]'); if(m) m.setAttribute('content',light?'#F3F4F1':'#111315');
+  window.PF_THEME={accent:a,mode:light?'light':'dark'}; };
+(function(){ var t=null; try{ t=JSON.parse(localStorage.getItem('powerfit:theme')||'null'); }catch(e){} pfApplyTheme(t); })();
+</script>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
@@ -20,16 +28,26 @@
   color-scheme: dark;
   --bg:#111315; --surface:#1C1F22; --surface2:#2A2E32; --line:#3A3F44;
   --fg:#F2F2EE; --muted:#A3A8AD; --dim:#767C82;
-  --accent:#C6F432; --accent-ink:#111315; --danger:#FF9B8A;
+  --accent:#C6F432; --accent-ink:#111315; --accent-fg:#C6F432; --danger:#FF9B8A; --ok:#F2F2EE;
   --f-display:'Barlow Condensed','Arial Narrow',sans-serif;
   --f-body:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
 }
+:root[data-mode="light"]{color-scheme:light;--bg:#F3F4F1;--surface:#FFFFFF;--surface2:#E8EBE5;--line:#CDD2CA;--fg:#15181A;--muted:#596066;--dim:#868D93;--danger:#C62828}
 html,body{height:100%}
+.swatches{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.sw{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:none;padding:6px 0;font-size:12px;color:var(--muted)}
+.sw i{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#111315;box-shadow:0 0 0 2px var(--surface),0 0 0 4px transparent}
+.sw[aria-checked="true"]{color:var(--fg);font-weight:700}
+.sw[aria-checked="true"] i{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--fg)}
+.switch{width:52px;height:30px;border-radius:999px;background:var(--line);border:none;position:relative;flex-shrink:0;transition:background .2s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s}
+.switch[aria-checked="true"]{background:var(--accent)}
+.switch[aria-checked="true"]::after{transform:translateX(22px);background:var(--accent-ink)}
 body{background:var(--bg);color:var(--fg);font:15px/1.45 var(--f-body);-webkit-tap-highlight-color:transparent}
 *{box-sizing:border-box}
 button,input{font:inherit;color:inherit}
 button{cursor:pointer}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+:focus-visible{outline:2px solid var(--accent-fg);outline-offset:2px}
 .wrap{max-width:480px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 112px;display:flex;flex-direction:column;gap:22px}
 .wrap.full{padding-block:14px 24px;min-height:100%}
 h1,h2,h3{margin:0;font-family:var(--f-display);font-weight:700;line-height:1.02;text-wrap:balance}
@@ -45,12 +63,12 @@ p{margin:0}
 .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700}
 
 .pill{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border-radius:999px;padding:8px 14px;font-size:14px;font-weight:700;white-space:nowrap}
-.pill svg{color:var(--accent)}
+.pill svg{color:var(--accent-fg)}
 .week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}
 .week span{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
 .dot{width:36px;height:36px;margin:0 auto;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;color:var(--accent-ink)}
 .dot.on{background:var(--accent)}
-.dot.today{background:transparent;border:2px dashed var(--accent)}
+.dot.today{background:transparent;border:2px dashed var(--accent-fg)}
 .dot.today.on{background:var(--accent);border:none}
 
 .chips{display:flex;flex-wrap:wrap;gap:8px}
@@ -60,7 +78,7 @@ p{margin:0}
 .chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
 
 .btn{min-height:52px;border-radius:16px;border:none;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 18px;width:100%}
-.btn.ghost{background:transparent;border:2px solid var(--accent);color:var(--accent)}
+.btn.ghost{background:transparent;border:2px solid var(--accent-fg);color:var(--accent-fg)}
 .btn.soft{background:var(--surface);color:var(--fg)}
 .btn.danger{background:transparent;border:1px solid var(--danger);color:var(--danger)}
 .btn:disabled{opacity:.4;cursor:not-allowed}
@@ -99,25 +117,25 @@ p{margin:0}
 .stepper span{min-width:58px;text-align:center;font-weight:700;font-size:14px}
 .field{display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:14px;padding:0 14px;min-height:48px;color:var(--muted)}
 .field input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--fg);font-size:15px;min-height:46px}
-.field:focus-within{outline:2px solid var(--accent)}
+.field:focus-within{outline:2px solid var(--accent-fg)}
 .sticky{position:sticky;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:5;background:var(--bg);padding-block:10px 4px}
 
 nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);z-index:20;padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 nav.tabs .in{max-width:480px;margin:0 auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));height:72px}
 nav.tabs button{background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:500}
-nav.tabs button.on{color:var(--accent);font-weight:700}
+nav.tabs button.on{color:var(--accent-fg);font-weight:700}
 
 /* Entreno */
 .wtop{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .stage{position:relative;background:var(--surface);border-radius:24px;aspect-ratio:1/0.82;max-width:100%;overflow:hidden}
 .stage canvas{width:100%;height:100%;display:block}
-.stage .eq{position:absolute;left:12px;bottom:12px;background:var(--bg);border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;color:var(--accent)}
+.stage .eq{position:absolute;left:12px;bottom:12px;background:var(--bg);border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;color:var(--accent-fg)}
 .sets{display:flex;gap:8px}
 .sets>div{flex:1;display:flex;flex-direction:column;gap:6px}
 .bar{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden}
 .bar i{display:block;height:100%;background:var(--accent);border-radius:4px;transition:width .2s}
 .counter{display:flex;align-items:baseline;justify-content:center;gap:8px;padding-block:6px}
-.counter b{font-family:var(--f-display);font-size:84px;line-height:1;color:var(--accent)}
+.counter b{font-family:var(--f-display);font-size:84px;line-height:1;color:var(--accent-fg)}
 .counter span{font-family:var(--f-display);font-size:30px;font-weight:600;color:var(--muted)}
 .tapbtn{min-height:72px;border-radius:22px;font-size:19px}
 .ctl{display:flex;gap:12px}
@@ -133,7 +151,7 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
 .kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .kpi{background:var(--surface);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:4px}
 .kpi b{font-family:var(--f-display);font-size:32px;line-height:1}
-.kpi:first-child b{color:var(--accent)}
+.kpi:first-child b{color:var(--accent-fg)}
 .kpi span{font-size:12px;color:var(--muted)}
 .chart{height:170px;display:grid;gap:6px;align-items:end}
 .chart .col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;height:100%;min-width:0}
@@ -156,7 +174,7 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
 #splash .bolt{transform-box:fill-box;transform-origin:50% 0;animation:sp-bolt .38s cubic-bezier(.5,0,.75,0) .8s both, sp-glow 1.2s ease-in-out 1.2s infinite alternate}
 #splash .flash{transform-box:fill-box;transform-origin:50% 50%;animation:sp-flash .6s ease-out 1.12s both}
 #splash .word{font-family:var(--f-display);font-weight:700;font-size:clamp(30px,9vw,44px);letter-spacing:3px;line-height:1;color:var(--fg);animation:sp-word .5s ease-out 1.3s both}
-#splash .word span{color:var(--accent)}
+#splash .word span{color:var(--accent-fg)}
 @keyframes sp-lift{0%{opacity:0;transform:translateY(60px) scale(.85)}60%{opacity:1;transform:translateY(-10px) scale(1.02)}80%{transform:translateY(3px)}100%{opacity:1;transform:none}}
 @keyframes sp-bolt{0%{opacity:0;transform:translateY(-140%) scaleY(1.3)}100%{opacity:1;transform:none}}
 @keyframes sp-flash{0%{opacity:0;transform:scale(.2)}1%{opacity:.9;transform:scale(.2)}100%{opacity:0;transform:scale(2.4)}}
@@ -171,9 +189,9 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
 <body>
 <div id="splash" role="img" aria-label="PowerFit">
   <svg viewBox="0 0 200 200" aria-hidden="true">
-    <circle class="flash" cx="104" cy="100" r="40" fill="#C6F432" opacity="0"/>
-    <g class="db" fill="#F2F2EE"><rect x="40" y="94" width="120" height="12" rx="4"/><rect x="26" y="62" width="20" height="76" rx="6"/><rect x="154" y="62" width="20" height="76" rx="6"/><rect x="12" y="78" width="12" height="44" rx="4"/><rect x="176" y="78" width="12" height="44" rx="4"/></g>
-    <path class="bolt" d="M112 22 L78 104 L100 104 L86 180 L128 88 L106 88 L122 22 Z" fill="#C6F432" stroke="#111315" stroke-width="6" stroke-linejoin="round"/>
+    <circle class="flash" cx="104" cy="100" r="40" style="fill:var(--accent)" opacity="0"/>
+    <g class="db" style="fill:var(--fg)"><rect x="40" y="94" width="120" height="12" rx="4"/><rect x="26" y="62" width="20" height="76" rx="6"/><rect x="154" y="62" width="20" height="76" rx="6"/><rect x="12" y="78" width="12" height="44" rx="4"/><rect x="176" y="78" width="12" height="44" rx="4"/></g>
+    <path class="bolt" d="M112 22 L78 104 L100 104 L86 180 L128 88 L106 88 L122 22 Z" style="fill:var(--accent);stroke:var(--bg)" stroke-width="6" stroke-linejoin="round"/>
   </svg>
   <div class="word">POWER<span>FIT</span></div>
 </div>
@@ -211,8 +229,8 @@ var IP = {
 function ic(n,s,w){ s=s||20; w=w||2;
   if(n==='play') return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>';
   return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+w+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+IP[n]+'"/></svg>'; }
-function logo(s){ return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 200 200" role="img" aria-label="PowerFit"><g fill="#F2F2EE"><rect x="40" y="94" width="120" height="12" rx="4"/><rect x="26" y="62" width="20" height="76" rx="6"/><rect x="154" y="62" width="20" height="76" rx="6"/><rect x="12" y="78" width="12" height="44" rx="4"/><rect x="176" y="78" width="12" height="44" rx="4"/></g><path d="M112 22 L78 104 L100 104 L86 180 L128 88 L106 88 L122 22 Z" fill="#C6F432" stroke="#111315" stroke-width="6" stroke-linejoin="round"/></svg>'; }
-function brand(s,fs){ return '<span class="row" style="gap:6px">'+logo(s)+'<span style="font-family:var(--f-display);font-weight:700;font-size:'+fs+'px;letter-spacing:1.5px;line-height:1">POWER<span style="color:var(--accent)">FIT</span></span></span>'; }
+function logo(s){ return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 200 200" role="img" aria-label="PowerFit"><g style="fill:var(--fg)"><rect x="40" y="94" width="120" height="12" rx="4"/><rect x="26" y="62" width="20" height="76" rx="6"/><rect x="154" y="62" width="20" height="76" rx="6"/><rect x="12" y="78" width="12" height="44" rx="4"/><rect x="176" y="78" width="12" height="44" rx="4"/></g><path d="M112 22 L78 104 L100 104 L86 180 L128 88 L106 88 L122 22 Z" style="fill:var(--accent);stroke:var(--bg)" stroke-width="6" stroke-linejoin="round"/></svg>'; }
+function brand(s,fs){ return '<span class="row" style="gap:6px">'+logo(s)+'<span style="font-family:var(--f-display);font-weight:700;font-size:'+fs+'px;letter-spacing:1.5px;line-height:1">POWER<span style="color:var(--accent-fg)">FIT</span></span></span>'; }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 
 /* ---------- Ejercicios ---------- */
@@ -306,6 +324,7 @@ var FLOOR={pushup:1,pushupK:1,plank:1,climber:1,floorpress:1,fly:1,crunch:1,bike
 var DB1={squat:1,sumo:1,ohext:1,kickback:1,twist:1};
 var reduce=false; try{ reduce=matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
 
+var CC={}; function readColors(){ var cs=getComputedStyle(document.documentElement); ['bg','surface','surface2','line','fg','muted','accent'].forEach(function(k){ CC[k]=cs.getPropertyValue('--'+k).trim(); }); }
 function drawFig(c,f,eq,t){
   var ctx=c.getContext('2d'); if(!ctx||!c.width) return;
   var P=FAM[f]||FAM.curl, A=P[0], B=P[1];
@@ -314,9 +333,9 @@ function drawFig(c,f,eq,t){
   ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,W,H);
   ctx.setTransform(s,0,0,s,(W-200*s)/2,(H-200*s)/2+2*s);
   ctx.lineCap='round'; ctx.lineJoin='round';
-  if(FLOOR[f]||eq==='tapete'){ ctx.fillStyle='#34393E'; rr(ctx,10,186,190,6,3); ctx.fill(); }
-  else { ctx.strokeStyle='#3A3F44'; ctx.lineWidth=2; line(ctx,[16,188],[184,188]); }
-  var fg='#F2F2EE', back=FRONT[f]?fg:'#80868B';
+  if(FLOOR[f]||eq==='tapete'){ ctx.fillStyle=CC.line; rr(ctx,10,186,190,6,3); ctx.fill(); }
+  else { ctx.strokeStyle=CC.line; ctx.lineWidth=2; line(ctx,[16,188],[184,188]); }
+  var fg=CC.fg, back=FRONT[f]?fg:CC.muted;
   var ls=pt('ls'),rs=pt('rs'),lp=pt('lp'),rp=pt('rp'),h=pt('h');
   var sm=[(ls[0]+rs[0])/2,(ls[1]+rs[1])/2], pm=[(lp[0]+rp[0])/2,(lp[1]+rp[1])/2];
   ctx.strokeStyle=back; ctx.lineWidth=6.5;
@@ -324,14 +343,15 @@ function drawFig(c,f,eq,t){
   ctx.strokeStyle=fg; ctx.lineWidth=8;
   line(ctx,h,sm); line(ctx,sm,pm); line(ctx,ls,rs); line(ctx,lp,rp);
   ctx.lineWidth=7; line(ctx,rp,pt('rk'),pt('rf'));
-  ctx.beginPath(); ctx.arc(h[0],h[1],11,0,Math.PI*2); ctx.fillStyle='#111315'; ctx.fill(); ctx.lineWidth=5; ctx.stroke();
+  ctx.beginPath(); ctx.arc(h[0],h[1],11,0,Math.PI*2); ctx.fillStyle=CC.surface; ctx.fill(); ctx.lineWidth=5; ctx.stroke();
   ctx.strokeStyle=fg; ctx.lineWidth=7; line(ctx,rs,pt('re'),pt('rh'));
-  if(eq==='mancuernas'){ ctx.fillStyle='#C6F432'; if(!DB1[f]) dumb(ctx,pt('lh')); dumb(ctx,pt('rh')); }
+  if(eq==='mancuernas'){ ctx.fillStyle=CC.accent; if(!DB1[f]) dumb(ctx,pt('lh')); dumb(ctx,pt('rh')); }
 }
 function line(ctx){ ctx.beginPath(); ctx.moveTo(arguments[1][0],arguments[1][1]); for(var i=2;i<arguments.length;i++) ctx.lineTo(arguments[i][0],arguments[i][1]); ctx.stroke(); }
 function rr(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 function dumb(ctx,p){ rr(ctx,p[0]-10,p[1]-4.5,20,9,3); ctx.fill(); ctx.fillRect(p[0]-12,p[1]-6.5,5,13); ctx.fillRect(p[0]+7,p[1]-6.5,5,13); }
 function setupCanvases(){
+  readColors();
   var cs=document.querySelectorAll('canvas.fig');
   var dpr=Math.min(window.devicePixelRatio||1,2);
   for(var i=0;i<cs.length;i++){ var c=cs[i], r=c.getBoundingClientRect();
@@ -378,7 +398,7 @@ var Store={mode:'local',col:null,months:{},
       if(self.unsub){ self.unsub(); self.unsub=null; }
       if(!u){ S.user=null; S.local=true; self.mode='local'; S.sessions=[]; S.routines=[]; S.w=null; S.view='auth'; render(); return; }
       if(S.loginPending){ S.loginPending=false; playSplash(); }
-      S.user={email:u.email,uid:u.uid,created:u.metadata&&Date.parse(u.metadata.creationTime)}; S.isAdmin=u.uid===ADMIN_UID; S.adm=null; S.noAccess=false; S.local=false; self.mode='db'; self.months={};
+      self.gotFirst=false; S.user={email:u.email,uid:u.uid,created:u.metadata&&Date.parse(u.metadata.creationTime)}; S.isAdmin=u.uid===ADMIN_UID; S.adm=null; S.noAccess=false; S.local=false; self.mode='db'; self.months={};
       self.col=self.fdb.collection('users').doc(u.uid).collection('powerfit');
       var loc=self.readLocal(), first=true;
       S.sessions=[]; S.routines=[]; S.view='home'; S.prev='home'; render();
@@ -406,11 +426,13 @@ var Store={mode:'local',col:null,months:{},
       self.unsub=self.col.onSnapshot(function(snap){
         if(first && snap.empty && (loc.sessions.length||loc.routines.length)){ first=false; self.migrate(loc.sessions,loc.routines); toast('Subimos a tu cuenta el historial de este navegador'); return; }
         first=false;
-        var ses=[],rts=[]; self.months={};
+        var ses=[],rts=[],prefsChanged=false,hasPrefs=false,wasFirst=!self.gotFirst; self.gotFirst=true; self.months={};
         snap.docs.forEach(function(d){ var b=d.data()||{};
-          if(d.id==='routines') rts=b.list||[];
+          if(d.id==='prefs'){ hasPrefs=true; if(b.accent!==PF_THEME.accent||b.mode!==PF_THEME.mode){ setTheme(b,false); prefsChanged=true; } }
+          else if(d.id==='routines') rts=b.list||[];
           else if(d.id.indexOf('m-')===0){ self.months[d.id]=b.sessions||[]; ses=ses.concat(b.sessions||[]); } });
         S.sessions=ses.sort(function(a,b){return a.ts-b.ts;}); S.routines=rts;
+        if(wasFirst&&!hasPrefs) setTheme({},true);
         if(S.view!=='work'&&S.view!=='builder') render();
       },function(e){ console.warn('firestore',e);
         if(e&&e.code==='permission-denied'){ S.noAccess=true; render(); } else toast('No se pudo leer tu historial. Revisa tu conexión.'); });
@@ -712,7 +734,7 @@ function vAccount(){
    '<button class="card" data-a="resetPass">'+ic('key',22)+'<span class="grow"><b>Cambiar contraseña</b><span class="muted small">Te enviamos un correo para crear una nueva</span></span>'+ic('chevR',20)+'</button>'+
    '<button class="card" data-a="exportCsv"'+(tot.s?'':' disabled style="opacity:.5"')+'>'+ic('download',22)+'<span class="grow"><b>Descargar mi historial</b><span class="muted small">Archivo CSV para abrir en Excel</span></span>'+ic('chevR',20)+'</button>'+
    '<button class="card" data-a="logout">'+ic('out',22)+'<span class="grow"><b>Cerrar sesión</b><span class="muted small">Tus datos quedan guardados en tu cuenta</span></span>'+ic('chevR',20)+'</button>'+
-   del+'</section>';
+   del+'</section>'+vTheme();
   if(S.isAdmin) h+=vAdmin();
   return h+'<p class="muted small" style="text-align:center">PowerFit · una cuenta para PowerFit y Mindfocus</p></div>';
 }
@@ -725,7 +747,7 @@ function vAdmin(){
   var rows=A.list.filter(function(x){return !q||x.id.indexOf(q)>=0;}).map(function(x){
     var rev=x.estado==='revocado', me=x.uid===S.user.uid, conf=S.ask==='rev:'+x.id;
     var pill='<span class="pill" style="padding:4px 10px;font-size:12px;'+(rev?'background:transparent;border:1px solid var(--danger);color:var(--danger)':x.estado==='pendiente'?'background:var(--surface2);color:var(--muted)':'background:var(--surface2);color:var(--accent)')+'">'+(rev?'Revocado':x.estado==='pendiente'?'Pendiente':'Activo')+'</span>';
-    var btn=me?'<span class="muted small">Tú</span>':rev?'<button class="link" data-a="admSet" data-v="'+esc(x.id)+'" data-s="activo" style="color:var(--accent)">Reactivar</button>'
+    var btn=me?'<span class="muted small">Tú</span>':rev?'<button class="link" data-a="admSet" data-v="'+esc(x.id)+'" data-s="activo" style="color:var(--accent-fg)">Reactivar</button>'
       :conf?'<button class="link" data-a="cancelAsk">No</button><button class="link" data-a="admSet" data-v="'+esc(x.id)+'" data-s="revocado" style="color:var(--danger)">Sí, revocar</button>'
       :'<button class="link" data-a="ask" data-v="rev:'+esc(x.id)+'">Revocar</button>';
     return '<div class="hist" style="flex-wrap:wrap"><div style="flex:1;min-width:0"><b style="overflow-wrap:anywhere;font-size:14px">'+esc(x.id)+'</b><div class="muted small">'+(x.autoregistro?'Se registró solo':'Invitado')+' · '+fmtDate(x.activado||x.invitado)+' · último uso '+ago(x.ultimoUso)+'</div></div>'+pill+btn+'</div>';
@@ -754,6 +776,21 @@ function csvExport(){
   setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500); toast('Historial descargado');
 }
 
+/* Apariencia */
+function setTheme(patch,save){
+  var t={accent:PF_THEME.accent,mode:PF_THEME.mode}; for(var k in patch) t[k]=patch[k];
+  pfApplyTheme(t); try{ localStorage.setItem('powerfit:theme',JSON.stringify(PF_THEME)); }catch(e){}
+  if(save&&Store.mode==='db'&&Store.col) Store.col.doc('prefs').set({accent:PF_THEME.accent,mode:PF_THEME.mode}).catch(function(){ toast('No se pudo guardar en tu cuenta.'); });
+}
+function vTheme(){
+  var sw=Object.keys(PF_ACCENTS).map(function(k){ var c=PF_ACCENTS[k], on=PF_THEME.accent===k;
+    return '<button class="sw" role="radio" aria-checked="'+on+'" data-a="accent" data-v="'+k+'"><i style="background:'+c[1]+'">'+(on?ic('check',20,3):'')+'</i>'+c[0]+'</button>'; }).join('');
+  var dark=PF_THEME.mode!=='light';
+  return '<section class="stack"><h2>Apariencia</h2><div class="panel"><b class="small">Color de énfasis</b><div class="swatches" role="radiogroup" aria-label="Color de énfasis">'+sw+'</div></div>'+
+   '<div class="panel"><div class="between"><div class="stack" style="gap:2px"><b>Modo oscuro</b><span class="muted small">'+(dark?'Activado':'Desactivado')+' · no depende del celular</span></div>'+
+   '<button class="switch" role="switch" aria-checked="'+dark+'" aria-label="Modo oscuro" data-a="darkMode"></button></div></div></section>';
+}
+
 /* Acceso */
 function vAuth(){
   if(S.authWait) return '<div class="wrap full" style="justify-content:center;align-items:center">'+brand(48,32)+'<p class="muted">Cargando…</p></div>';
@@ -769,8 +806,8 @@ function vAuth(){
    '<button class="btn" type="submit" id="aBtn">'+T[1]+'</button>'+
    (m==='login'?'<button class="link" type="button" data-a="authMode" data-v="reset" style="align-self:center">¿Olvidaste tu contraseña?</button>':'')+
    '</form>'+
-   (m==='login'?'<p class="muted small" style="text-align:center">¿No tienes cuenta? <button class="link" data-a="authMode" data-v="register" style="color:var(--accent)">Crear cuenta</button></p><p class="muted small" style="text-align:center">Si ya usas Mindfocus, entra con la misma cuenta.</p>'
-     :'<p class="muted small" style="text-align:center"><button class="link" data-a="authMode" data-v="login" style="color:var(--accent)">Volver a iniciar sesión</button></p>')+
+   (m==='login'?'<p class="muted small" style="text-align:center">¿No tienes cuenta? <button class="link" data-a="authMode" data-v="register" style="color:var(--accent-fg)">Crear cuenta</button></p><p class="muted small" style="text-align:center">Si ya usas Mindfocus, entra con la misma cuenta.</p>'
+     :'<p class="muted small" style="text-align:center"><button class="link" data-a="authMode" data-v="login" style="color:var(--accent-fg)">Volver a iniciar sesión</button></p>')+
   '</div>';
 }
 function authErr(e){
@@ -786,7 +823,7 @@ function authErr(e){
 function authSubmit(){
   var m=S.authMode||'login', em=(document.getElementById('aEmail').value||'').trim(), msg=document.getElementById('aMsg'), btn=document.getElementById('aBtn');
   var p=document.getElementById('aPass'), p2=document.getElementById('aPass2'); S.authEmail=em;
-  function show(t,ok){ msg.textContent=t; msg.style.color=ok?'var(--accent)':'var(--danger)'; }
+  function show(t,ok){ msg.textContent=t; msg.style.color=ok?'var(--accent-fg)':'var(--danger)'; }
   if(!em) return show('Escribe tu correo.');
   if(m==='register'&&p.value!==p2.value) return show('Las contraseñas no coinciden.');
   var label=btn.textContent; btn.disabled=true; btn.textContent='Un momento…'; if(m!=='reset') S.loginPending=true;
@@ -891,6 +928,8 @@ var A={
   period:function(v){ S.period=v; S.pOff=0; S.ask=null; render(); },
   pOff:function(v){ var n=S.pOff+(+v); if(n>0) return; S.pOff=n; render(); },
   authMode:function(v){ var e=document.getElementById('aEmail'); if(e) S.authEmail=e.value; S.authMode=v; render(); },
+  accent:function(v){ setTheme({accent:v},true); keep(render); },
+  darkMode:function(){ setTheme({mode:PF_THEME.mode==='light'?'dark':'light'},true); keep(render); },
   logout:function(){ if(Store.auth) Store.auth.signOut(); },
   resetPass:function(){ if(!Store.auth||!S.user) return; Store.auth.sendPasswordResetEmail(S.user.email).then(function(){ toast('Te enviamos un correo a '+S.user.email); },function(e){ toast(authErr(e)); }); },
   exportCsv:function(){ if(S.sessions.length) csvExport(); },
