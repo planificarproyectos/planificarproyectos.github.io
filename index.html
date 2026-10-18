@@ -112,8 +112,8 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;padding
 @media(prefers-reduced-motion:reduce){}
 
 html{scroll-behavior:auto;overscroll-behavior:none}
-header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 0 0 100vmax rgba(255,255,255,.86);clip-path:inset(0 -100vmax);transition:border-color .3s}
-header.scrolled{border-bottom-color:transparent;box-shadow:0 0 0 100vmax rgba(255,255,255,.86),0 8px 24px -12px rgba(0,0,0,.12);clip-path:inset(0 -100vmax -30px)}
+header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:border-color .3s,box-shadow .3s}
+header.scrolled{border-bottom-color:transparent;box-shadow:0 8px 24px -12px rgba(0,0,0,.12)}
 .sec,.contact{scroll-margin-top:96px}
 nav a{transition:background .25s,color .25s}
 nav a.on:not(.cta){background:rgba(255,255,255,.92);color:var(--ink);box-shadow:inset 0 1px 1px rgba(255,255,255,.8),0 2px 6px rgba(14,25,36,.12)}
@@ -150,8 +150,6 @@ html.js .rv.in{opacity:1;transform:none}
 .b2{background:#e9eff3}
 @media(max-width:760px){.band{padding-top:36px}}
 
-header{background:#fff;box-shadow:0 0 0 100vmax #fff;-webkit-backdrop-filter:none;backdrop-filter:none}
-header.scrolled{box-shadow:0 0 0 100vmax #fff,0 10px 24px -14px rgba(20,40,54,.35)}
 .band{scroll-margin-top:0}
 html.embed .band{scroll-margin-top:0}
 html.embed header{position:relative}
@@ -210,8 +208,6 @@ html{background:#f4f4f4;min-height:100%}
 .page{position:relative;z-index:1}
 .page{background:transparent}
 body{background:transparent}
-header{background:rgba(255,255,255,.55);box-shadow:0 0 0 100vmax rgba(255,255,255,.55)}
-header.scrolled{box-shadow:0 0 0 100vmax rgba(255,255,255,.55),0 10px 24px -14px rgba(31,45,90,.1)}
 .hero,.band{position:relative;background:linear-gradient(125deg,rgba(255,255,255,.7) 0%,rgba(255,255,255,0) 38%),rgba(255,255,255,.42)!important;border:1px solid rgba(255,255,255,.95);-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%);border-radius:18px;box-shadow:0 1px 2px rgba(20,40,54,.05),0 12px 34px rgba(20,40,80,.1)}
 .hero{margin-top:32px;padding:56px clamp(20px,4vw,44px) 48px;min-height:min(56vh,540px);display:flex;flex-direction:column;justify-content:center;gap:44px;background:linear-gradient(115deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,0) 45%),rgba(255,255,255,.14)!important;-webkit-backdrop-filter:blur(8px) saturate(160%);backdrop-filter:blur(8px) saturate(160%)}
 .band{margin-top:32px;padding:32px clamp(20px,4vw,44px) 8px!important}
@@ -228,8 +224,8 @@ header.scrolled{box-shadow:0 0 0 100vmax rgba(255,255,255,.55),0 10px 24px -14px
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.hero,.band{background:rgba(255,255,255,.94)}}
 @media(max-width:760px){.hero,.band{border-radius:18px;margin-top:20px}.hero{padding:28px 20px}.band{padding:24px 18px 4px!important}.wm.bgl{height:70vh}}
 
-header{background:rgba(255,255,255,.55)!important;box-shadow:0 0 0 100vmax rgba(255,255,255,.55)!important;-webkit-backdrop-filter:blur(22px) saturate(190%)!important;backdrop-filter:blur(22px) saturate(190%)!important;border-bottom:1px solid rgba(255,255,255,.5)}
-header.scrolled{box-shadow:0 0 0 100vmax rgba(255,255,255,.55),0 12px 24px -16px rgba(14,25,36,.25)!important}
+header{background:rgba(255,255,255,.55)!important;-webkit-backdrop-filter:blur(18px) saturate(190%)!important;backdrop-filter:blur(18px) saturate(190%)!important;border-bottom:1px solid rgba(255,255,255,.5)}
+header.scrolled{box-shadow:0 12px 24px -16px rgba(14,25,36,.25)!important}
 nav .cta:hover{color:var(--brand-ink)}
 nav .cta.on{box-shadow:0 0 0 2px rgba(255,255,255,.55),0 0 0 4px var(--brand)}
 .endspace{height:0}
