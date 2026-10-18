@@ -1400,10 +1400,10 @@ $("authForm").addEventListener("submit",async ev=>{
   $("aSubmit").disabled=false;
 });
 $("aForgot").onclick=async()=>{const em=$("aEmail").value.trim();if(!em){authMsg("Escribe tu correo y vuelve a pulsar «Olvidé mi contraseña».");$("aEmail").focus();return}
-  try{await auth.sendPasswordResetEmail(em);authMsg("Te enviamos un correo para restablecer la contraseña.")}catch(e){authMsg(errTxt(e))}};
+  try{await auth.sendPasswordResetEmail(em,{url:"https://www.planificarproyectos.com/mindfocus/"});authMsg("Te enviamos un correo para restablecer la contraseña.")}catch(e){authMsg(errTxt(e))}};
 $("logoutBtn").onclick=()=>auth.signOut();
 $("pwdBtn").onclick=async()=>{const u=auth.currentUser;if(!u)return;
-  try{await auth.sendPasswordResetEmail(u.email);$("storeBanner").hidden=false;$("storeBanner").textContent="Te enviamos un correo a "+u.email+" para cambiar la contraseña."}catch(e){$("storeBanner").hidden=false;$("storeBanner").textContent=errTxt(e)}};
+  try{await auth.sendPasswordResetEmail(u.email,{url:"https://www.planificarproyectos.com/mindfocus/"});$("storeBanner").hidden=false;$("storeBanner").textContent="Te enviamos un correo a "+u.email+" para cambiar la contraseña."}catch(e){$("storeBanner").hidden=false;$("storeBanner").textContent=errTxt(e)}};
 
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 
@@ -1536,7 +1536,7 @@ const CFG=window.FIREBASE_CONFIG||{};
 let auth=null;
 if(!CFG.apiKey||!window.firebase){$("cfgView").hidden=false}
 else{
-  firebase.initializeApp(CFG);auth=firebase.auth();db=firebase.firestore();
+  firebase.initializeApp(CFG);auth=firebase.auth();auth.languageCode="es";db=firebase.firestore();
   auth.onAuthStateChanged(async user=>{
     unsubs.forEach(u=>u());unsubs=[];entries=[];cats=DEFAULT_CATS.map(c=>({...c}));me=null;isAdmin=false;
     $("noAccessView").hidden=true;

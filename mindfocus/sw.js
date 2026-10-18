@@ -1,5 +1,5 @@
 // Service worker mínimo: guarda la interfaz para abrir rápido; los datos siempre vienen de Firebase.
-const CACHE = "mindfocus-v3";
+const CACHE = "mindfocus-v4";
 const SHELL = ["./", "./index.html", "./firebase-config.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });

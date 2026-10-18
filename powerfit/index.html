@@ -443,7 +443,7 @@ var Store={mode:'local',col:null,months:{},
   init:function(){
     var self=this;
     if(!window.firebase||!window.FIREBASE_CONFIG) return; // sin Firebase: funciona solo en este navegador
-    try{ firebase.initializeApp(window.FIREBASE_CONFIG); self.auth=firebase.auth(); self.fdb=firebase.firestore(); }
+    try{ firebase.initializeApp(window.FIREBASE_CONFIG); self.auth=firebase.auth(); self.auth.languageCode="es"; self.fdb=firebase.firestore(); }
     catch(e){ console.warn(e); return; }
     try{ self.fdb.enablePersistence({synchronizeTabs:true}).catch(function(){}); }catch(e){}
     S.authWait=true; S.view='auth';
@@ -887,7 +887,7 @@ function authSubmit(){
   var label=btn.textContent; btn.disabled=true; btn.textContent='Un momento…'; if(m!=='reset') S.loginPending=true;
   var job=m==='login'?Store.auth.signInWithEmailAndPassword(em,p.value)
         :m==='register'?Store.auth.createUserWithEmailAndPassword(em,p.value)
-        :Store.auth.sendPasswordResetEmail(em);
+        :Store.auth.sendPasswordResetEmail(em,{url:"https://www.planificarproyectos.com/powerfit/"});
   job.then(function(){ if(m==='reset'){ show('Te enviamos un correo para restablecer tu contraseña.',true); btn.disabled=false; btn.textContent=label; } })
      .catch(function(e){ S.loginPending=false; show(authErr(e)); btn.disabled=false; btn.textContent=label; });
 }
@@ -1032,7 +1032,7 @@ var A={
   accent:function(v){ setTheme({accent:v},true); keep(render); },
   darkMode:function(){ setTheme({mode:PF_THEME.mode==='light'?'dark':'light'},true); keep(render); },
   logout:function(){ if(Store.auth) Store.auth.signOut(); },
-  resetPass:function(){ if(!Store.auth||!S.user) return; Store.auth.sendPasswordResetEmail(S.user.email).then(function(){ toast('Te enviamos un correo a '+S.user.email); },function(e){ toast(authErr(e)); }); },
+  resetPass:function(){ if(!Store.auth||!S.user) return; Store.auth.sendPasswordResetEmail(S.user.email,{url:"https://www.planificarproyectos.com/powerfit/"}).then(function(){ toast('Te enviamos un correo a '+S.user.email); },function(e){ toast(authErr(e)); }); },
   exportCsv:function(){ if(S.sessions.length) csvExport(); },
   wipe:function(){ S.ask=null; Store.wipe(); toast('Historial borrado'); render(); },
   admLoad:function(){ S.adm=null; render(); admLoad(); },
