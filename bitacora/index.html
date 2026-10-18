@@ -550,7 +550,7 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 <div class="auth" id="noAccessView" hidden>
   <div class="authcard">
     <h1 class="authh">Sin acceso</h1>
-    <p class="status" id="noAccessMsg">Tu cuenta no tiene una invitación activa. Pide al administrador que te invite con este correo.</p>
+    <p class="status" id="noAccessMsg">Tu cuenta no tiene acceso activo. Pide al administrador que lo active.</p>
     <button class="primary" id="noAccessOut" type="button">Cerrar sesión</button>
   </div>
 </div>
@@ -1146,7 +1146,12 @@ async function checkAccess(user){
   }
   const ref=db.collection("invitaciones").doc(user.email.toLowerCase());
   let snap;try{snap=await ref.get()}catch(e){return false}
-  if(!snap.exists)return false;const inv=snap.data();
+  if(!snap.exists){ // autorregistro: quien crea su cuenta queda activo (el admin puede revocarlo)
+    const now=Date.now();
+    try{await ref.set({email:user.email.toLowerCase(),estado:"activo",uid:user.uid,activado:now,ultimoUso:now,autoregistro:true});return true}
+    catch(e){return false}
+  }
+  const inv=snap.data();
   if(inv.estado==="revocado")return false;
   const upd={estado:"activo",uid:user.uid,ultimoUso:Date.now()};if(!inv.activado)upd.activado=Date.now();
   try{await ref.update(upd)}catch(e){}
@@ -1242,7 +1247,7 @@ else{
     $("noAccessView").hidden=true;
     if(!user){$("appView").hidden=true;$("authView").hidden=false;$("acctBar").hidden=true;$("tabAdm").hidden=true;return}
     $("authView").hidden=true;
-    if(!(await checkAccess(user))){$("appView").hidden=true;$("acctBar").hidden=true;$("noAccessView").hidden=false;$("noAccessMsg").textContent="La cuenta "+user.email+" no tiene una invitación activa. Pide al administrador que te invite con este correo.";return}
+    if(!(await checkAccess(user))){$("appView").hidden=true;$("acctBar").hidden=true;$("noAccessView").hidden=false;$("noAccessMsg").textContent="La cuenta "+user.email+" no tiene acceso activo. Pide al administrador que lo active.";return}
     me=user;isAdmin=user.uid===ADMIN_UID;$("tabAdm").hidden=!isAdmin;document.querySelector(".maintabs").classList.toggle("adm",isAdmin);
     if(!isAdmin&&view==="adm")setView("reg");
     trackSession(user);if(isAdmin)loadAdmin();

@@ -354,6 +354,27 @@ var Store={mode:'local',col:null,months:{},
       self.col=self.fdb.collection('users').doc(u.uid).collection('powerfit');
       var loc=self.readLocal(), first=true;
       S.sessions=[]; S.routines=[]; S.view='home'; S.prev='home'; render();
+      var me=u.uid;
+      self.ensureAccess(u).then(function(ok){
+        if(!S.user||S.user.uid!==me) return;
+        if(!ok){ S.noAccess=true; render(); return; }
+        self.subscribe(loc);
+      });
+    });
+  },
+  ensureAccess:function(u){
+    // Autorregistro: si el correo no tiene registro, se crea como "activo" (mismo esquema de Mindfocus); revocado = sin acceso.
+    var em=(u.email||'').toLowerCase(), ref=this.fdb.collection('invitaciones').doc(em), now=Date.now();
+    return ref.get().then(function(sn){
+      if(!sn.exists) return ref.set({email:em,estado:'activo',uid:u.uid,activado:now,ultimoUso:now,autoregistro:true}).then(function(){return true;});
+      var d=sn.data()||{};
+      if(d.estado==='revocado') return false;
+      var upd={estado:'activo',uid:u.uid,ultimoUso:now}; if(!d.activado) upd.activado=now;
+      return ref.update(upd).then(function(){return true;},function(){return true;});
+    }).catch(function(e){ console.warn('acceso',e); return true; });
+  },
+  subscribe:function(loc){
+      var self=this, first=true;
       self.unsub=self.col.onSnapshot(function(snap){
         if(first && snap.empty && (loc.sessions.length||loc.routines.length)){ first=false; self.migrate(loc.sessions,loc.routines); toast('Subimos a tu cuenta el historial de este navegador'); return; }
         first=false;
@@ -365,7 +386,6 @@ var Store={mode:'local',col:null,months:{},
         if(S.view!=='work'&&S.view!=='builder') render();
       },function(e){ console.warn('firestore',e);
         if(e&&e.code==='permission-denied'){ S.noAccess=true; render(); } else toast('No se pudo leer tu historial. Revisa tu conexión.'); });
-    });
   },
   migrate:function(ses,rts){ var self=this, by={};
     ses.forEach(function(s){ var k='m-'+s.d.slice(0,7); (by[k]=by[k]||[]).push(s); });
@@ -454,7 +474,7 @@ function vHome(){
   var others=RECS.filter(function(x){return x!==r;}).slice(0,2).map(recCard).join('');
   var todayS=S.sessions.filter(function(s){return s.d===dk(now);});
   var todayTxt=''; if(todayS.length){ var m=0,rp=0; todayS.forEach(function(s){m+=s.sec;rp+=s.reps;}); todayTxt='<div class="panel"><div class="between"><b>Hoy ya entrenaste</b><span class="muted small num">'+Math.round(m/60)+' min · '+rp+' reps</span></div></div>'; }
-  var na=S.noAccess?'<div class="panel" style="border:1px solid var(--danger)"><b>Tu cuenta aún no tiene acceso</b><span class="muted small">PowerFit usa las mismas invitaciones de Mindfocus. Pide al administrador que invite tu correo; mientras tanto tus entrenos no se guardarán.</span></div>':'';
+  var na=S.noAccess?'<div class="panel" style="border:1px solid var(--danger)"><b>Tu cuenta aún no tiene acceso</b><span class="muted small">Tu acceso fue desactivado o aún no se pudo activar. Escríbele al administrador; mientras tanto tus entrenos no se guardarán.</span></div>':'';
   return '<div class="wrap">'+brand(34,26)+na+
    '<div class="between"><div class="stack" style="gap:2px"><span class="muted small">'+DIA[now.getDay()]+', '+now.getDate()+' '+MES[now.getMonth()]+'</span><h1>'+greet+'</h1></div>'+
    '<span class="pill">'+ic('flame',16)+st+(st===1?' día':' días')+'</span></div>'+
@@ -655,7 +675,7 @@ function vAuth(){
    '<button class="btn" type="submit" id="aBtn">'+T[1]+'</button>'+
    (m==='login'?'<button class="link" type="button" data-a="authMode" data-v="reset" style="align-self:center">¿Olvidaste tu contraseña?</button>':'')+
    '</form>'+
-   (m==='login'?'<p class="muted small" style="text-align:center">¿No tienes cuenta? <button class="link" data-a="authMode" data-v="register" style="color:var(--accent)">Crear cuenta</button></p><p class="muted small" style="text-align:center">Si ya usas Mindfocus, entra con la misma cuenta. Para guardar tu progreso tu correo debe estar invitado.</p>'
+   (m==='login'?'<p class="muted small" style="text-align:center">¿No tienes cuenta? <button class="link" data-a="authMode" data-v="register" style="color:var(--accent)">Crear cuenta</button></p><p class="muted small" style="text-align:center">Si ya usas Mindfocus, entra con la misma cuenta.</p>'
      :'<p class="muted small" style="text-align:center"><button class="link" data-a="authMode" data-v="login" style="color:var(--accent)">Volver a iniciar sesión</button></p>')+
   '</div>';
 }
