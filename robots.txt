@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /index-anterior.html
 
 Sitemap: https://www.planificarproyectos.com/sitemap.xml
