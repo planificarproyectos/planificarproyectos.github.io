@@ -103,7 +103,7 @@ p{margin:0}
 .sticky{position:sticky;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:5;background:var(--bg);padding-block:10px 4px}
 
 nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);z-index:20;padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-nav.tabs .in{max-width:480px;margin:0 auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));height:72px}
+nav.tabs .in{max-width:480px;margin:0 auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));height:72px}
 nav.tabs button{background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:500}
 nav.tabs button.on{color:var(--accent);font-weight:700}
 
@@ -159,6 +159,7 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
     <button data-a="tab" data-v="routines" id="t-routines"></button>
     <button data-a="tab" data-v="lib" id="t-lib"></button>
     <button data-a="tab" data-v="progress" id="t-progress"></button>
+    <button data-a="tab" data-v="account" id="t-account"></button>
   </div>
 </nav>
 <div class="toast" id="toast" hidden></div>
@@ -179,7 +180,8 @@ var IP = {
   minus:'M5 12h14', up:'M6 15l6-6 6 6', down:'M6 9l6 6 6-6', undo:'M4 4v6h6M5 15a8 8 0 1 0 2-8L4 10',
   trash:'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13', flame:'M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-3 2-4 2-7 2 1 3 2 3 4',
   chevL:'M15 6l-6 6 6 6', chevR:'M9 6l6 6-6 6', pause:'M8 5v14M16 5v14', search:'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4',
-  edit:'M4 20h4L20 8l-4-4L4 16zM14 6l4 4'
+  edit:'M4 20h4L20 8l-4-4L4 16zM14 6l4 4', user:'M12 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM4 21c1-4 4-6 8-6s7 2 8 6',
+  key:'M15 7a4 4 0 1 1-3.5 6H9v2H7v2H4v-3l6.5-6.5A4 4 0 0 1 15 7z', download:'M12 4v11M7 10l5 5 5-5M5 20h14', out:'M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10', shield:'M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z'
 };
 function ic(n,s,w){ s=s||20; w=w||2;
   if(n==='play') return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>';
@@ -350,7 +352,7 @@ var Store={mode:'local',col:null,months:{},
       S.authWait=false;
       if(self.unsub){ self.unsub(); self.unsub=null; }
       if(!u){ S.user=null; S.local=true; self.mode='local'; S.sessions=[]; S.routines=[]; S.w=null; S.view='auth'; render(); return; }
-      S.user={email:u.email,uid:u.uid}; S.noAccess=false; S.local=false; self.mode='db'; self.months={};
+      S.user={email:u.email,uid:u.uid,created:u.metadata&&Date.parse(u.metadata.creationTime)}; S.isAdmin=u.uid===ADMIN_UID; S.adm=null; S.noAccess=false; S.local=false; self.mode='db'; self.months={};
       self.col=self.fdb.collection('users').doc(u.uid).collection('powerfit');
       var loc=self.readLocal(), first=true;
       S.sessions=[]; S.routines=[]; S.view='home'; S.prev='home'; render();
@@ -405,6 +407,12 @@ var Store={mode:'local',col:null,months:{},
     if(this.mode==='db'){ var k='m-'+rec.d.slice(0,7); this.months[k]=(this.months[k]||[]).filter(function(s){return s.id!==id;}); this.putMonth(k); }
     else this.saveLocal();
   },
+  wipe:function(){ var self=this, ks=Object.keys(this.months);
+    S.sessions=[]; S.routines=[]; this.months={};
+    if(this.mode==='db'){ ks.forEach(function(k){ self.col.doc(k).delete().catch(function(){}); }); self.col.doc('routines').delete().catch(function(){}); }
+    else this.saveLocal();
+    try{ localStorage.removeItem(LK); }catch(e){}
+  },
   saveRoutines:function(){
     if(this.mode==='db') this.col.doc('routines').set({list:S.routines}).catch(function(){ toast('No se pudo guardar la rutina.'); });
     else this.saveLocal();
@@ -446,17 +454,17 @@ function render(){
   var v=S.view, h='';
   if(v==='auth') h=vAuth();
   else if(v==='home') h=vHome(); else if(v==='routines') h=vRoutines(); else if(v==='lib') h=vLib();
-  else if(v==='progress') h=vProgress(); else if(v==='detail') h=vDetail(); else if(v==='builder') h=vBuilder();
+  else if(v==='progress') h=vProgress(); else if(v==='account') h=vAccount(); else if(v==='detail') h=vDetail(); else if(v==='builder') h=vBuilder();
   else if(v==='ex') h=vEx(); else if(v==='work') h=vWork(); else if(v==='done') h=vDone();
   app.innerHTML=h;
   var nav=document.getElementById('nav'); nav.hidden=(v==='work'||v==='done'||v==='auth');
-  var tabOf={home:'home',routines:'routines',detail:'routines',builder:'routines',lib:'lib',ex:'lib',progress:'progress'};
-  ['home','routines','lib','progress'].forEach(function(t){ var b=document.getElementById('t-'+t); b.classList.toggle('on',tabOf[v]===t); if(tabOf[v]===t) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
+  var tabOf={home:'home',routines:'routines',detail:'routines',builder:'routines',lib:'lib',ex:'lib',progress:'progress',account:'account'};
+  ['home','routines','lib','progress','account'].forEach(function(t){ var b=document.getElementById('t-'+t); b.classList.toggle('on',tabOf[v]===t); if(tabOf[v]===t) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
   if(v==='builder') renderBLib();
   setupCanvases();
 }
 function navInit(){
-  var L={home:['home','Inicio'],routines:['dumb','Rutinas'],lib:['grid','Ejercicios'],progress:['chart','Progreso']};
+  var L={home:['home','Inicio'],routines:['dumb','Rutinas'],lib:['grid','Ejercicios'],progress:['chart','Progreso'],account:['user','Cuenta']};
   for(var k in L) document.getElementById('t-'+k).innerHTML=ic(L[k][0],22)+L[k][1];
 }
 function head(title,back){ return '<div class="row">'+(back?'<button class="icon-btn" data-a="back" aria-label="Volver">'+ic('back')+'</button>':'')+'<h1>'+esc(title)+'</h1></div>'; }
@@ -657,7 +665,67 @@ function vProgress(){
    '<div class="panel"><b class="small">Zonas trabajadas</b>'+(zones||'<span class="muted small">Sin entrenos en este periodo.</span>')+'</div>'+
    (hist?'<div class="panel"><b class="small">Sesiones</b><div>'+hist+'</div></div>':'')+
    (S.local?'<p class="muted small">Tu historial se guarda en este navegador.</p>':'')+
-   (S.user?'<div class="between small"><span class="muted" style="min-width:0;overflow-wrap:anywhere">Cuenta: '+esc(S.user.email)+'</span><button class="link" data-a="logout">Cerrar sesión</button></div>':'')+'</div>';
+   '</div>';
+}
+
+/* Cuenta */
+var ADMIN_UID='AQaEMcKNYfWEhcHVdc8N0ghxeZk1';
+function fmtDate(t){ if(!t) return '—'; var d=new Date(t); return d.getDate()+' '+MES[d.getMonth()]+' '+d.getFullYear(); }
+function ago(t){ if(!t) return 'nunca'; var m=Math.round((Date.now()-t)/6e4); if(m<60) return 'hace '+Math.max(1,m)+' min'; var h=Math.round(m/60); if(h<24) return 'hace '+h+' h'; var d=Math.round(h/24); return d<60?'hace '+d+' días':fmtDate(t); }
+function vAccount(){
+  var u=S.user||{}, tot={s:S.sessions.length,m:0,r:0}; S.sessions.forEach(function(x){tot.m+=x.sec/60;tot.r+=x.reps;});
+  var first=S.sessions.length?S.sessions[0].ts:null;
+  var del=S.ask==='wipe'?'<div class="ask"><b>¿Borrar todo tu historial?</b><span class="muted small">Se eliminan tus '+tot.s+' sesiones y tus rutinas propias. No se puede deshacer.</span><div class="btns"><button class="btn soft" data-a="cancelAsk">Cancelar</button><button class="btn danger" data-a="wipe">Borrar todo</button></div></div>'
+     :'<button class="btn danger" data-a="ask" data-v="wipe"'+(tot.s||S.routines.length?'':' disabled')+'>'+ic('trash',18)+'Borrar mi historial</button>';
+  var h='<div class="wrap">'+head('Cuenta')+
+   '<div class="panel"><div class="row"><span class="go" style="width:52px;height:52px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;flex-shrink:0">'+ic('user',26,2.2)+'</span>'+
+   '<div class="stack" style="gap:2px;min-width:0"><b style="overflow-wrap:anywhere">'+esc(u.email||'Sin sesión')+'</b><span class="muted small">'+(u.created?'Cuenta creada el '+fmtDate(u.created):'')+(S.isAdmin?' · Administrador':'')+'</span></div></div></div>'+
+   '<div class="kpis"><div class="kpi"><b class="num">'+tot.s+'</b><span>Sesiones</span></div><div class="kpi"><b class="num">'+Math.round(tot.m)+'</b><span>Minutos</span></div><div class="kpi"><b class="num">'+tot.r+'</b><span>Repeticiones</span></div></div>'+
+   '<p class="muted small">'+(first?'Entrenando desde el '+fmtDate(first)+' · racha actual: '+streak()+' días':'Aún no has registrado entrenos.')+'</p>'+
+   '<section class="stack"><h2>Ajustes</h2>'+
+   '<button class="card" data-a="resetPass">'+ic('key',22)+'<span class="grow"><b>Cambiar contraseña</b><span class="muted small">Te enviamos un correo para crear una nueva</span></span>'+ic('chevR',20)+'</button>'+
+   '<button class="card" data-a="exportCsv"'+(tot.s?'':' disabled style="opacity:.5"')+'>'+ic('download',22)+'<span class="grow"><b>Descargar mi historial</b><span class="muted small">Archivo CSV para abrir en Excel</span></span>'+ic('chevR',20)+'</button>'+
+   '<button class="card" data-a="logout">'+ic('out',22)+'<span class="grow"><b>Cerrar sesión</b><span class="muted small">Tus datos quedan guardados en tu cuenta</span></span>'+ic('chevR',20)+'</button>'+
+   del+'</section>';
+  if(S.isAdmin) h+=vAdmin();
+  return h+'<p class="muted small" style="text-align:center">PowerFit · una cuenta para PowerFit y Mindfocus</p></div>';
+}
+function vAdmin(){
+  var A=S.adm;
+  if(!A) return '<section class="stack"><h2>Usuarios</h2><span class="muted small">Cargando usuarios…</span></section>';
+  if(A.err) return '<section class="stack"><h2>Usuarios</h2><span class="muted small">'+esc(A.err)+'</span></section>';
+  var act=A.list.filter(function(x){return x.estado!=='revocado';}).length, wk=A.list.filter(function(x){return x.ultimoUso&&Date.now()-x.ultimoUso<7*864e5;}).length;
+  var q=(S.admQ||'').toLowerCase();
+  var rows=A.list.filter(function(x){return !q||x.id.indexOf(q)>=0;}).map(function(x){
+    var rev=x.estado==='revocado', me=x.uid===S.user.uid, conf=S.ask==='rev:'+x.id;
+    var pill='<span class="pill" style="padding:4px 10px;font-size:12px;'+(rev?'background:transparent;border:1px solid var(--danger);color:var(--danger)':x.estado==='pendiente'?'background:var(--surface2);color:var(--muted)':'background:var(--surface2);color:var(--accent)')+'">'+(rev?'Revocado':x.estado==='pendiente'?'Pendiente':'Activo')+'</span>';
+    var btn=me?'<span class="muted small">Tú</span>':rev?'<button class="link" data-a="admSet" data-v="'+esc(x.id)+'" data-s="activo" style="color:var(--accent)">Reactivar</button>'
+      :conf?'<button class="link" data-a="cancelAsk">No</button><button class="link" data-a="admSet" data-v="'+esc(x.id)+'" data-s="revocado" style="color:var(--danger)">Sí, revocar</button>'
+      :'<button class="link" data-a="ask" data-v="rev:'+esc(x.id)+'">Revocar</button>';
+    return '<div class="hist" style="flex-wrap:wrap"><div style="flex:1;min-width:0"><b style="overflow-wrap:anywhere;font-size:14px">'+esc(x.id)+'</b><div class="muted small">'+(x.autoregistro?'Se registró solo':'Invitado')+' · '+fmtDate(x.activado||x.invitado)+' · último uso '+ago(x.ultimoUso)+'</div></div>'+pill+btn+'</div>';
+  }).join('');
+  return '<section class="stack"><div class="between"><h2>Usuarios</h2><button class="link" data-a="admLoad">Actualizar</button></div>'+
+   '<div class="kpis"><div class="kpi"><b class="num">'+A.list.length+'</b><span>Cuentas</span></div><div class="kpi"><b class="num">'+act+'</b><span>Activas</span></div><div class="kpi"><b class="num">'+wk+'</b><span>Usaron esta semana</span></div></div>'+
+   '<label class="field" for="admQ">'+ic('search',18)+'<input id="admQ" type="text" placeholder="Buscar correo" value="'+esc(S.admQ||'')+'"></label>'+
+   '<div class="panel" style="gap:0">'+(rows||'<span class="muted small">Sin resultados.</span>')+'</div>'+
+   '<p class="muted small">Revocar quita el acceso a PowerFit y Mindfocus; sus datos no se borran.</p></section>';
+}
+function admLoad(){
+  if(!Store.fdb||!S.isAdmin) return;
+  Store.fdb.collection('invitaciones').get().then(function(sn){
+    var list=sn.docs.map(function(d){ var x=d.data()||{}; x.id=d.id; return x; });
+    list.sort(function(a,b){ return (b.ultimoUso||b.activado||b.invitado||0)-(a.ultimoUso||a.activado||a.invitado||0); });
+    S.adm={list:list}; if(S.view==='account') keep(render);
+  }).catch(function(e){ S.adm={err:'No se pudo cargar la lista de usuarios.'}; if(S.view==='account') render(); });
+}
+function csvExport(){
+  var q=function(v){ v=String(v==null?'':v); return /[",;\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  var lines=['Fecha;Hora;Rutina;Minutos;Repeticiones;Segundos por tiempo;Series;Zonas;Ejercicios'];
+  S.sessions.forEach(function(s){ var d=new Date(s.ts);
+    lines.push([s.d,pad(d.getHours())+':'+pad(d.getMinutes()),s.n,Math.round(s.sec/60),s.reps,s.hold||0,s.sets,Object.keys(s.zones||{}).join(', '),(s.ex||[]).map(function(e){return (EX[e.id]?EX[e.id].n:e.id)+' ('+e.log.filter(function(v){return v!=null;}).join('/')+')';}).join(' | ')].map(q).join(';')); });
+  var blob=new Blob(['﻿'+lines.join('\n')],{type:'text/csv;charset=utf-8'}), a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='powerfit_historial_'+dk(new Date())+'.csv'; document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500); toast('Historial descargado');
 }
 
 /* Acceso */
@@ -752,7 +820,7 @@ setInterval(function(){
 /* ---------- Acciones ---------- */
 function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(function(){t.hidden=true;},2600); }
 var A={
-  tab:function(v){ go(v); },
+  tab:function(v){ go(v); if(v==='account'&&S.isAdmin&&!S.adm) admLoad(); },
   back:function(){ go(S.prev&&S.prev!==S.view&&S.prev!=='work'&&S.prev!=='done'?S.prev:'home'); },
   zone:function(v){ var i=S.zones.indexOf(v); if(i>=0) S.zones.splice(i,1); else S.zones.push(v); render(); },
   zoneAll:function(){ S.zones=S.zones.length===ZONES.length?[]:ZONES.slice(); render(); },
@@ -798,6 +866,12 @@ var A={
   pOff:function(v){ var n=S.pOff+(+v); if(n>0) return; S.pOff=n; render(); },
   authMode:function(v){ var e=document.getElementById('aEmail'); if(e) S.authEmail=e.value; S.authMode=v; render(); },
   logout:function(){ if(Store.auth) Store.auth.signOut(); },
+  resetPass:function(){ if(!Store.auth||!S.user) return; Store.auth.sendPasswordResetEmail(S.user.email).then(function(){ toast('Te enviamos un correo a '+S.user.email); },function(e){ toast(authErr(e)); }); },
+  exportCsv:function(){ if(S.sessions.length) csvExport(); },
+  wipe:function(){ S.ask=null; Store.wipe(); toast('Historial borrado'); render(); },
+  admLoad:function(){ S.adm=null; render(); admLoad(); },
+  admSet:function(v,el){ var st=el.dataset.s; S.ask=null;
+    Store.fdb.collection('invitaciones').doc(v).set({estado:st},{merge:true}).then(function(){ toast(st==='revocado'?'Acceso revocado':'Acceso reactivado'); admLoad(); },function(){ toast('No se pudo cambiar el acceso.'); }); },
   delS:function(v){ Store.delSession(v); S.ask=null; toast('Sesión borrada'); render(); }
 };
 function keep(fn){ var y=window.scrollY; fn(); window.scrollTo(0,y); }
@@ -808,6 +882,7 @@ document.addEventListener('click',function(ev){
 document.addEventListener('submit',function(ev){ if(ev.target.id==='authForm'){ ev.preventDefault(); authSubmit(); } });
 document.addEventListener('input',function(ev){
   if(ev.target.id==='bname'&&S.builder) S.builder.n=ev.target.value;
+  if(ev.target.id==='admQ'){ S.admQ=ev.target.value; var pos=ev.target.selectionStart; keep(render); var i=document.getElementById('admQ'); if(i){ i.focus(); try{i.setSelectionRange(pos,pos);}catch(e){} } }
   if(ev.target.id==='bq'){ S.bQ=ev.target.value; renderBLib(); }
 });
 document.addEventListener('keydown',function(ev){
