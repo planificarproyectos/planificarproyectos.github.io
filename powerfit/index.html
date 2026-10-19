@@ -617,7 +617,7 @@ function addD(d,n){ var x=new Date(d); x.setDate(x.getDate()+n); return x; }
 function mmss(sec){ sec=Math.max(0,Math.round(sec)); return Math.floor(sec/60)+':'+pad(sec%60); }
 
 /* ---------- Estado ---------- */
-var S={view:'home',prev:'home',zones:[],sessions:[],routines:[],detail:null,builder:null,bZone:'Todos',bQ:'',libZone:'Todos',tools:[],libQ:'',ex:null,
+var S={view:'home',prev:'home',zones:[],sessions:[],routines:[],detail:null,builder:null,bZone:'Todos',bQ:'',libZone:'Todos',tools:[],libQ:'',name:(function(){try{return localStorage.getItem('powerfit:name')||'';}catch(e){return '';}})(),ex:null,
   period:'week',pOff:0,w:null,last:null,ask:null,local:true};
 var LK='homefit:v1';
 
@@ -669,7 +669,7 @@ var Store={mode:'local',col:null,months:{},
         snap.docs.forEach(function(d){ var b=d.data()||{};
           if(d.id==='equip'){ hasEquip=true; if(JSON.stringify(b.list||[])!==JSON.stringify(S.equip)) setEquip(b.list||[],false); }
           else if(d.id==='active'){ remoteAct=b; }
-          else if(d.id==='prefs'){ hasPrefs=true; if(b.accent!==PF_THEME.accent||b.mode!==PF_THEME.mode){ setTheme(b,false); prefsChanged=true; } }
+          else if(d.id==='prefs'){ hasPrefs=true; if((b.name||'')!==S.name){ S.name=b.name||''; try{localStorage.setItem('powerfit:name',S.name);}catch(e){} prefsChanged=true; } if(b.accent!==PF_THEME.accent||b.mode!==PF_THEME.mode){ setTheme(b,false); prefsChanged=true; } }
           else if(d.id==='routines') rts=b.list||[];
           else if(d.id.indexOf('m-')===0){ self.months[d.id]=b.sessions||[]; ses=ses.concat(b.sessions||[]); } });
         S.sessions=ses.sort(function(a,b){return a.ts-b.ts;}); S.routines=rts;
@@ -789,8 +789,9 @@ function vHome(){
   var na=S.noAccess?'<div class="panel" style="border:1px solid var(--danger)"><b>Tu cuenta aún no tiene acceso</b><span class="muted small">Tu acceso fue desactivado o aún no se pudo activar. Escríbele al administrador; mientras tanto tus entrenos no se guardarán.</span></div>':'';
   var eqb=(S.user||!Store.auth)&&S.equip==null?'<button class="card" data-a="equipGo" style="border:1px solid var(--accent-fg)">'+ic('dumb',24)+'<span class="grow"><b>¿Qué tienes en casa?</b><span class="muted small">Elige tu equipo y te recomendamos ejercicios que sí puedes hacer</span></span>'+ic('chevR',20)+'</button>':'';
   var pw=S.pendingW?'<div class="panel" style="border:1px solid var(--accent-fg)"><b>Tienes un entreno sin terminar</b><span class="muted small">'+esc(S.pendingW.n)+' · ejercicio '+(S.pendingW.ei+1)+' de '+S.pendingW.items.length+' · última actividad '+ago(S.pendingUpd)+'</span><div class="btns"><button class="btn soft" data-a="saveP">Guardar y terminar</button><button class="btn" data-a="resumeP">Continuar</button></div><button class="link" data-a="dropP" style="align-self:center">Descartar</button></div>':'';
-  return '<div class="wrap">'+brand(34,26)+na+pw+eqb+
-   '<div class="between"><div class="stack" style="gap:2px"><span class="muted small">'+DIA[now.getDay()]+', '+now.getDate()+' '+MES[now.getMonth()]+'</span><h1>'+greet+'</h1></div>'+
+  var nmb=(!S.name&&(S.user||!Store.auth))?'<button class="card" data-a="tab" data-v="account" style="border:1px solid var(--accent-fg)">'+ic('user',24)+'<span class="grow"><b>Configura tu nombre</b><span class="muted small">Ve a Cuenta y escribe cómo quieres que te saludemos</span></span>'+ic('chevR',20)+'</button>':'';
+  return '<div class="wrap">'+brand(34,26)+na+pw+nmb+eqb+
+   '<div class="between"><div class="stack" style="gap:2px"><span class="muted small">'+DIA[now.getDay()]+', '+now.getDate()+' '+MES[now.getMonth()]+'</span><h1>'+greet+(S.name?', '+esc(S.name):'')+'</h1></div>'+
    '<span class="pill">'+ic('flame',16)+st+(st===1?' día':' días')+'</span></div>'+
    '<div class="week" aria-label="Esta semana">'+wk+'</div>'+todayTxt+
    vCombos()+
@@ -1033,9 +1034,10 @@ function vAccount(){
   var first=S.sessions.length?S.sessions[0].ts:null;
   var del=S.ask==='wipe'?'<div class="ask"><b>¿Borrar todo tu historial?</b><span class="muted small">Se eliminan tus '+tot.s+' sesiones y tus rutinas propias. No se puede deshacer.</span><div class="btns"><button class="btn soft" data-a="cancelAsk">Cancelar</button><button class="btn danger" data-a="wipe">Borrar todo</button></div></div>'
      :'<button class="btn danger" data-a="ask" data-v="wipe"'+(tot.s||S.routines.length?'':' disabled')+'>'+ic('trash',18)+'Borrar mi historial</button>';
-  var h='<div class="wrap">'+head('Cuenta')+
+  var nmp='<div class="panel"'+(S.name?'':' style="background:var(--accent);color:var(--accent-ink)"')+'>'+(S.name?'':'<b>Configura tu nombre para personalizar PowerFit</b>')+'<label class="field" for="pname" style="'+(S.name?'':'background:rgba(0,0,0,.13);color:var(--accent-ink)')+'">'+ic('user',18)+'<input id="pname" type="text" placeholder="Tu nombre" maxlength="30" autocomplete="given-name" value="'+esc(S.name)+'"></label><button class="btn'+(S.name?' soft':'')+'" data-a="saveName" style="'+(S.name?'':'background:var(--accent-ink);color:var(--accent)')+'">Guardar nombre</button></div>';
+  var h='<div class="wrap">'+head('Cuenta')+nmp+
    '<div class="panel"><div class="row"><span class="go" style="width:52px;height:52px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;flex-shrink:0">'+ic('user',26,2.2)+'</span>'+
-   '<div class="stack" style="gap:2px;min-width:0"><b style="overflow-wrap:anywhere">'+esc(u.email||'Sin sesión')+'</b><span class="muted small">'+(u.created?'Cuenta creada el '+fmtDate(u.created):'')+(S.isAdmin?' · Administrador':'')+'</span></div></div></div>'+
+   '<div class="stack" style="gap:2px;min-width:0"><b style="overflow-wrap:anywhere">'+esc(S.name||u.email||'Sin sesión')+'</b>'+(S.name?'<span class="muted small" style="overflow-wrap:anywhere">'+esc(u.email||'')+'</span>':'')+'<span class="muted small">'+(u.created?'Cuenta creada el '+fmtDate(u.created):'')+(S.isAdmin?' · Administrador':'')+'</span></div></div></div>'+
    '<div class="kpis"><div class="kpi"><b class="num">'+tot.s+'</b><span>Sesiones</span></div><div class="kpi"><b class="num">'+Math.round(tot.m)+'</b><span>Minutos</span></div><div class="kpi"><b class="num">'+tot.r+'</b><span>Repeticiones</span></div></div>'+
    '<p class="muted small">'+(first?'Entrenando desde el '+fmtDate(first)+' · racha actual: '+streak()+' días':'Aún no has registrado entrenos.')+'</p>'+
    '<section class="stack"><h2>Ajustes</h2>'+
@@ -1102,7 +1104,7 @@ function setEquip(list,save){
 function setTheme(patch,save){
   var t={accent:PF_THEME.accent,mode:PF_THEME.mode}; for(var k in patch) t[k]=patch[k];
   pfApplyTheme(t); try{ localStorage.setItem('powerfit:theme',JSON.stringify(PF_THEME)); }catch(e){}
-  if(save&&Store.mode==='db'&&Store.col) Store.col.doc('prefs').set({accent:PF_THEME.accent,mode:PF_THEME.mode}).catch(function(){ toast('No se pudo guardar en tu cuenta.'); });
+  if(save&&Store.mode==='db'&&Store.col) Store.col.doc('prefs').set({accent:PF_THEME.accent,mode:PF_THEME.mode},{merge:true}).catch(function(){ toast('No se pudo guardar en tu cuenta.'); });
 }
 function vTheme(){
   var sw=Object.keys(PF_ACCENTS).map(function(k){ var c=PF_ACCENTS[k], on=PF_THEME.accent===k;
@@ -1270,6 +1272,10 @@ var A={
     Store.saveRoutines(); S.builder=null; S.detail=r; toast('Rutina guardada'); S.prev='routines'; S.view='detail'; render(); },
   startB:function(){ var b=S.builder; if(!b.items.length) return; startW({n:(b.n||'').trim()||'Rutina libre',items:b.items}); },
   libZone:function(v){ S.libZone=v; render(); },
+  saveName:function(){ var i=document.getElementById('pname'), v=((i&&i.value)||'').trim().slice(0,30); if(!v){ toast('Escribe tu nombre.'); return; }
+    S.name=v; try{localStorage.setItem('powerfit:name',v);}catch(e){}
+    if(Store.mode==='db'&&Store.col) Store.col.doc('prefs').set({name:v},{merge:true}).catch(function(){ toast('No se pudo guardar en tu cuenta.'); });
+    toast('Nombre guardado'); render(); },
   tool:function(v){ var i=S.tools.indexOf(v); if(i>=0) S.tools.splice(i,1); else S.tools.push(v); syncTools(); },
   toolClear:function(){ S.tools=[]; syncTools(); },
   libBuild:function(){ S.builder={id:null,n:'',items:[]}; S.bQ=''; S.bZone=S.libZone; go('builder'); },
