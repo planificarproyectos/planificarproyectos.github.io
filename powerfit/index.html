@@ -20,7 +20,14 @@ window.pfApplyTheme=function(t){ t=t||{}; var a=PF_ACCENTS[t.accent]?t.accent:'l
 </script>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<style>:root{padding-top:env(safe-area-inset-top,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}.cpanel{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:20px;background:var(--accent);color:var(--accent-ink)}
+.cpanel h2{color:var(--accent-ink);font-size:20px}
+.clab{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;opacity:.7}
+.cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.cbtn{position:relative;min-height:46px;padding:6px 4px;border-radius:12px;border:none;background:rgba(0,0,0,.13);color:var(--accent-ink);font:inherit;font-weight:700;font-size:13px;line-height:1.15;text-align:center;display:flex;align-items:center;justify-content:center}
+.cbtn.hoy{background:var(--accent-ink);color:var(--accent)}
+.cbtn i{position:absolute;top:-7px;right:6px;font-style:normal;font-size:10px;font-weight:800;background:var(--accent);color:var(--accent-ink);border:1.5px solid var(--accent-ink);border-radius:999px;padding:0 7px}
+</style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap">
 <style>
 /* Layout: una columna tipo app móvil (máx 480px), navegación fija abajo; entreno a pantalla completa. */
@@ -781,9 +788,9 @@ function vHome(){
 }
 function vCombos(){
   var due=comboDue();
-  function row(t){ return COMBOS.filter(function(c){ return c.t===t; }).map(function(c){ var n=genCombo(c).items.length;
-    return '<button class="card" data-a="combo" data-v="'+c.id+'"'+(n<3?' disabled style="opacity:.5"':'')+'><span class="grow"><b>'+c.n+(due&&due.id===c.id?' <span class="pill" style="padding:2px 8px;font-size:11px;background:var(--accent);color:var(--accent-ink)">Hoy</span>':'')+'</b><span class="muted small">'+c.d+(n<3?' · falta equipo':'')+'</span></span>'+ic('chevR',20)+'</button>'; }).join(''); }
-  return '<section class="stack"><h2>¿Qué entrenas hoy?</h2><span class="label">Músculos sinérgicos · mismo gesto</span>'+row('syn')+'<span class="label">Antagonistas · en superserie</span>'+row('ant')+'</section>';
+  function row(t){ return '<div class="cgrid">'+COMBOS.filter(function(c){ return c.t===t; }).map(function(c){ var n=genCombo(c).items.length, hoy=due&&due.id===c.id;
+    return '<button class="cbtn'+(hoy?' hoy':'')+'" data-a="combo" data-v="'+c.id+'"'+(n<3?' disabled style="opacity:.5"':'')+'>'+(hoy?'<i>Hoy</i>':'')+'<b>'+c.n+'</b></button>'; }).join('')+'</div>'; }
+  return '<section class="cpanel"><h2>¿Qué entrenas hoy?</h2><span class="clab">Mismo gesto</span>'+row('syn')+'<span class="clab">Superserie · antagonistas</span>'+row('ant')+'</section>';
 }
 function recCard(r){
   return '<button class="card" data-a="openRec" data-v="'+esc(r.id)+'"><span class="grow"><h3>'+esc(r.n)+'</h3><span class="muted small">'+estMin(r.items)+' min · '+r.items.length+' ejercicios'+(r.lvl?' · '+esc(r.lvl):'')+'</span></span>'+ic('chevR',20)+'</button>';
