@@ -1658,9 +1658,9 @@ function setMode(m){mode=m;const b=$("modeBar");
 $("modeCancel").onclick=()=>setMode({t:"switch"});
 function usage(){const n={},since=addDays(ymd(new Date()),-30);for(const e of entries)if(e.fecha>=since)n[e.categoria]=(n[e.categoria]||0)+1;return n}
 function freqActs(){const n={},since=addDays(ymd(new Date()),-30);
-  for(const e of entries){if(e.fecha<since||!e.actividad)continue;const c=catById(e.categoria);if(c.missing||e.actividad.trim().toLowerCase()===c.n.toLowerCase())continue;const k=e.actividad.trim()+"|"+e.categoria;n[k]=(n[k]||0)+1}
-  return Object.entries(n).filter(([k,v])=>v>=2).sort((a,b)=>b[1]-a[1]).map(([k])=>{const i=k.lastIndexOf("|");return{act:k.slice(0,i),cat:k.slice(i+1)}})}
-function nk(s){return String(s||"").trim().toLowerCase()}
+  for(const e of entries){if(e.fecha<since||!e.actividad)continue;const c=catById(e.categoria);if(c.missing||e.actividad.trim().toLowerCase()===c.n.toLowerCase())continue;const k=nk(e.actividad)+"|"+e.categoria;(n[k]=n[k]||{c:0,v:{}});n[k].c++;const t=e.actividad.trim();n[k].v[t]=(n[k].v[t]||0)+1}
+  return Object.entries(n).filter(([k,o])=>o.c>=2).sort((a,b)=>b[1].c-a[1].c).map(([k,o])=>{const i=k.lastIndexOf("|");const best=Object.entries(o.v).sort((a,b)=>b[1]-a[1])[0][0];return{act:best,cat:k.slice(i+1)}})}
+function nk(s){return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase().replace(/\s+/g," ")}
 function dedupeFavs(){const seen=new Set();const out=favs.filter(f=>{const k=nk(f.act);if(!k||seen.has(k))return false;seen.add(k);return true});if(out.length!==favs.length){favs=out;saveFavs()}}
 function chipBtn(ch,extra){const b=document.createElement("button");b.type="button";const c=catById(ch.cat);b.innerHTML=`<i style="background:${catColor(c)}"></i><span>${esc(ch.act)}</span>${extra||""}`;b.title=ch.act+" · "+c.n;return b}
 function renderHome(){
