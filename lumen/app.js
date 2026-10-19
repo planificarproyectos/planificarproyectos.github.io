@@ -512,7 +512,7 @@ function vHoy(){
    var isR=!!p.ref, body;
    if(p.verses&&p.verses.length) body='<p class="verses">'+p.verses.map(function(v){ return '<sup>'+v.v+'</sup>'+esc(v.t); }).join(' ')+'</p>';
    else body='<p class="ptext">'+(p.missing?esc(p.text.replace(/^[^.]*\.\s*/,'')):fmt(p.text,WHOLE.test(p.h)))+'</p>';
-   out+='<details class="part'+(p.gospel?' gos':'')+'" data-part="'+p.i+'"'+(isR?' open':'')+'><summary><span class="stack" style="gap:2px;min-width:0"><b>'+esc(p.h)+'</b>'+(p.ref?'<span class="small ref">'+esc(p.ref)+'</span>':'')+'</span><button class="pbtn" data-a="massFrom" data-v="'+p.i+'" aria-label="Escuchar desde '+esc(p.h)+'">'+ic('play',14)+'</button></summary>'+body+'</details>';
+   out+='<details class="part'+(p.gospel?' gos':'')+'" data-part="'+p.i+'"'+(isR?' open':'')+'><summary><span class="stack" style="gap:2px;min-width:0"><b>'+esc(p.h)+'</b>'+(p.ref?(p.verses&&p.verses.length?'<button class="small ref reflink" data-a="goread" data-v="'+p.i+'" aria-label="Abrir '+esc(p.ref)+' en la Biblia">'+esc(p.ref)+' ›</button>':'<span class="small ref">'+esc(p.ref)+'</span>'):'')+'</span><button class="pbtn" data-a="massFrom" data-v="'+p.i+'" aria-label="Escuchar desde '+esc(p.h)+'">'+ic('play',14)+'</button></summary>'+body+'</details>';
   });
   out+='</section>';
  });
@@ -543,23 +543,55 @@ function vBible(){
  if(U.bk&&U.ch) return vChapter();
  if(U.bk){ var n=IDX[U.bk-1][1], g=''; for(var c=1;c<=n;c++) g+='<button data-a="chap" data-v="'+c+'">'+c+'</button>';
   return '<header class="row"><button class="icon-btn" data-a="bback" aria-label="Volver">'+ic('back')+'</button><h1>'+esc(IDX[U.bk-1][0]).toUpperCase()+'</h1></header><p class="muted small">'+n+' capítulos</p><div class="chgrid">'+g+'</div>'; }
- var q=U.q.trim().toLowerCase(), from=U.test==='at'?1:40, to=U.test==='at'?39:66, list=[];
- for(var i=from;i<=to;i++){ var nm=IDX[i-1][0]; if(!q||nm.toLowerCase().indexOf(q)>=0) list.push(i); }
+ var q=nrm(U.q).replace(/[\d,:.\-–]+$/,'').trim(), from=U.test==='at'?1:40, to=U.test==='at'?39:66, list=[];
+ for(var i=from;i<=to;i++){ var nm=nrm(IDX[i-1][0]); if(!q||nm.indexOf(q)>=0||BS.items) list.push(i); }
  var lect=LIT.mass?massParts(LIT.mass).filter(function(p){ return p.ref; }):[];
  return '<header><h1>BIBLIA</h1></header>'
-  +'<label class="field" for="bq">'+ic('search',18)+'<input id="bq" type="search" data-a="bq" placeholder="Buscar libro" value="'+esc(U.q)+'" autocomplete="off"></label>'
-  +(lect.length?'<div class="panel" style="gap:0"><div class="between" style="margin-bottom:6px"><span class="label ac">Lecturas de hoy</span><button class="say" data-a="tab" data-v="misa">'+ic('play',14)+'<span>Misa de hoy</span></button></div>'+lect.map(function(p){ return '<div class="kv"><span class="muted">'+esc(p.h)+'</span><b>'+esc(p.ref)+'</b></div>'; }).join('')+'</div>':'')
+  +'<form class="field" id="bqForm" role="search">'+ic('search',18)+'<input id="bq" type="search" data-a="bq" placeholder="Libro, cita (Juan 3,16) o palabras" value="'+esc(U.q)+'" autocomplete="off" enterkeyhint="search" aria-label="Buscar en la Biblia"><button class="say" type="submit">Buscar</button></form>'+searchResults()
+  +(lect.length?'<div class="panel" style="gap:0"><div class="between" style="margin-bottom:6px"><span class="label ac">Lecturas de hoy</span><button class="say" data-a="tab" data-v="misa">'+ic('play',14)+'<span>Misa de hoy</span></button></div>'+lect.map(function(p){ return '<button class="kv kvbtn" data-a="goread" data-v="'+p.i+'"><span class="muted">'+esc(p.h)+'</span><b>'+esc(p.ref)+'</b></button>'; }).join('')+'</div>':'')
   +'<div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr))">'+[['at','Antiguo Testamento'],['nt','Nuevo Testamento']].map(function(x){ return '<button class="'+(U.test===x[0]?'on':'')+'" data-a="test" data-v="'+x[0]+'">'+x[1]+'</button>'; }).join('')+'</div>'
   +(list.length?'<div class="books">'+list.map(function(b){ return '<button class="book" data-a="book" data-v="'+b+'"><b>'+esc(IDX[b-1][0])+'</b><span class="small muted">'+IDX[b-1][1]+' capítulos</span></button>'; }).join('')+'</div>':'<div class="empty muted">Ningún libro coincide con “'+esc(U.q)+'”.</div>')
   +'<p class="small muted">Reina-Valera 1909 (dominio público), con ortografía actualizada. Esta edición no incluye Tobías, Judit, Sabiduría, Eclesiástico, Baruc ni 1 y 2 Macabeos.</p>';
 }
 var CHAP={};
+function nrm(t){ return String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim(); }
+var ABR={gn:1,gen:1,ex:2,lv:3,lev:3,nm:4,num:4,dt:5,deut:5,jos:6,jue:7,jc:7,rt:8,'1 s':9,'1 sam':9,'1 sm':9,'2 s':10,'2 sam':10,'2 sm':10,'1 r':11,'1 re':11,'1 rey':11,'2 r':12,'2 re':12,'2 rey':12,'1 cr':13,'1 cro':13,'2 cr':14,'2 cro':14,esd:15,neh:16,ne:16,est:17,jb:18,sal:19,salmo:19,sl:19,ps:19,pr:20,prov:20,ecl:21,qo:21,cant:22,ct:22,is:23,isa:23,jer:24,jr:24,lam:25,ez:26,dn:27,dan:27,os:28,jl:29,am:30,abd:31,jon:32,miq:33,mi:33,nah:34,na:34,hab:35,sof:36,ag:37,zac:38,za:38,mal:39,mt:40,mat:40,mc:41,mr:41,mar:41,lc:42,luc:42,jn:43,ju:43,hch:44,hech:44,rom:45,rm:45,ro:45,'1 cor':46,'1 co':46,'2 cor':47,'2 co':47,gal:48,ga:48,ef:49,efe:49,flp:50,fil:50,col:51,'1 tes':52,'1 ts':52,'2 tes':53,'2 ts':53,'1 tim':54,'1 tm':54,'2 tim':55,'2 tm':55,tit:56,tt:56,flm:57,heb:58,hb:58,sant:59,stgo:59,st:59,'1 pe':60,'1 pd':60,'2 pe':61,'2 pd':61,'1 jn':62,'2 jn':63,'3 jn':64,jds:65,jud:65,ap:66,apoc:66};
+function findBook(name){ var n=nrm(name).replace(/\.$/,'').replace(/^(i{1,3})\s+/,function(m,r){ return r.length+' '; }).replace(/^(\d)(?=[a-z])/,'$1 ');
+ if(ABR[n]) return ABR[n];
+ for(var i=0;i<IDX.length;i++) if(nrm(IDX[i][0])===n) return i+1;
+ var hit=0, cnt=0; for(var j=0;j<IDX.length;j++){ if(nrm(IDX[j][0]).indexOf(n)===0){ hit=j+1; cnt++; } } return cnt>=1&&n.length>=2?hit:0; }
+function parseCita(q){
+ var m=/^\s*((?:[1-3]|i{1,3})?\s*[a-zA-ZáéíóúñÁÉÍÓÚÑ ]+?)\.?\s*(\d+)(?:\s*[,:.]\s*(\d+)(?:\s*[-–]\s*(\d+))?)?\s*$/.exec(q||''); if(!m) return null;
+ var b=findBook(m[1]); if(!b) return null; var c=+m[2]; if(c<1||c>IDX[b-1][1]) return null;
+ return {b:b,c:c,v1:m[3]?+m[3]:0,v2:m[4]?+m[4]:(m[3]?+m[3]:0)}; }
+function goCita(ci,from){ U.tab='bible'; U.bk=ci.b; U.ch=ci.c; U.hl=ci.v1?[ci.v1,ci.v2]:null; U.from=from||null; stopSpeak(); render(); setTimeout(scrollHl,60); }
+function scrollHl(){ var el=document.querySelector('.reader .hlv'); if(el) try{ el.scrollIntoView({block:'center'}); }catch(e){} else try{ window.scrollTo(0,0); }catch(e){} }
+var BS={q:'',busy:false,items:null,done:0};
+function bibleSearch(q){
+ var nq=nrm(q); if(nq.length<3){ toast('Escribe al menos 3 letras'); return; }
+ BS={q:q,busy:true,items:[],done:0}; render(); var my=BS;
+ var chain=Promise.resolve();
+ for(var b=1;b<=66;b++)(function(b){ chain=chain.then(function(){ if(BS!==my) return; return Bible.get(b).then(function(bk){ BOOKS_DATA[b]=bk;
+   bk.c.forEach(function(ch,ci){ ch.forEach(function(t,vi){ if(my.items.length<150&&nrm(t).indexOf(nq)>=0) my.items.push({b:b,c:ci+1,v:vi+1,t:t}); }); });
+   my.done=b; if(b%11===0&&U.tab==='bible') render(); },function(){}); }); })(b);
+ chain.then(function(){ if(BS!==my) return; my.busy=false; if(U.tab==='bible') render(); });
+}
+function hlText(t,q){ var e=esc(t), n=nrm(q); var plain=nrm(t); var k=plain.indexOf(n); if(k<0) return e;
+ var a=esc(t.slice(0,k)), m=esc(t.slice(k,k+q.length)), z=esc(t.slice(k+q.length)); return a+'<mark class="qhit">'+m+'</mark>'+z; }
+function searchResults(){
+ if(!BS.items) return '';
+ var h='<div class="panel" style="gap:8px"><div class="between"><span class="label ac">Resultados para “'+esc(BS.q)+'”</span><button class="link" data-a="bsClear">Cerrar</button></div>';
+ if(BS.busy) h+='<p class="small muted">Buscando… '+Math.round(BS.done/66*100)+'%</p>';
+ if(!BS.busy&&!BS.items.length) h+='<p class="small muted">No se encontró ese texto. Prueba con menos palabras o una cita como “Juan 3,16”.</p>';
+ h+=BS.items.map(function(x){ return '<button class="hitrow" data-a="gohit" data-b="'+x.b+'" data-c="'+x.c+'" data-v="'+x.v+'"><b>'+esc(IDX[x.b-1][0])+' '+x.c+', '+x.v+'</b><span>'+hlText(x.t,BS.q)+'</span></button>'; }).join('');
+ if(BS.items.length>=150) h+='<p class="small muted">Se muestran los primeros 150 resultados.</p>';
+ return h+'</div>'; }
 function vChapter(){
  var b=U.bk, c=U.ch, key=b+':'+c, bk=BOOKS_DATA[b];
  var head='<header class="row"><button class="icon-btn" data-a="cback" aria-label="Volver">'+ic('back')+'</button><h1>'+esc(IDX[b-1][0]).toUpperCase()+' '+c+'</h1></header>';
  if(!bk){ Bible.get(b).then(function(d){ BOOKS_DATA[b]=d; render(); },function(){ toast('No se pudo abrir el libro. Revisa tu conexión.'); }); return head+loading(); }
  var vs=bk.c[c-1]||[], n=IDX[b-1][1];
- return head+'<div>'+sayBtn('cap-'+key,'Escuchar capítulo')+'</div><div class="reader">'+vs.map(function(t,i){ return '<p><sup>'+(i+1)+'</sup>'+esc(t)+'</p>'; }).join('')+'</div>'
+ var hl=U.hl; return head+(U.from==='misa'?'<button class="link" data-a="tab" data-v="misa" style="align-self:flex-start;color:var(--accent-fg)">← Volver a la Misa</button>':'')+'<div>'+sayBtn('cap-'+key,'Escuchar capítulo')+'</div><div class="reader">'+vs.map(function(t,i){ var on=hl&&i+1>=hl[0]&&i+1<=hl[1]; return '<p'+(on?' class="hlv"':'')+'><sup>'+(i+1)+'</sup>'+esc(t)+'</p>'; }).join('')+'</div>'
   +'<div class="grid2"><button class="btn soft" data-a="chap" data-v="'+(c-1)+'"'+(c<=1?' disabled':'')+'>'+ic('chevL',18)+'Anterior</button><button class="btn soft" data-a="chap" data-v="'+(c+1)+'"'+(c>=n?' disabled':'')+'>Siguiente'+ic('chevR',18)+'</button></div>';
 }
 var BOOKS_DATA={};
@@ -666,10 +698,13 @@ document.addEventListener('click',function(e){
   save(); var wasPlaying=R.playing; R.playing=false; stopSpeak(); render(); if(wasPlaying&&i<STEPS.length) R.play(); return; }
  if(a==='rosRestart'){ R.playing=false; stopSpeak(); S.ros[rosKey()]=0; save(); render(); return; }
  if(a==='rreset'){ S.ros[rosKey()]=0; save(); render(); return; }
+ if(a==='goread'){ var src=U.tab==='misa'?viewMass():LIT.mass; var pp=massParts(src).filter(function(x){ return x.i===+v; })[0]; if(pp&&pp.verses&&pp.verses.length){ var f=pp.verses[0], same=pp.verses.filter(function(x){ return x.c===f.c; }); goCita({b:pp.book,c:f.c,v1:f.v,v2:same[same.length-1].v},U.tab==='misa'?'misa':null); } return; }
+ if(a==='gohit'){ goCita({b:+el.getAttribute('data-b'),c:+el.getAttribute('data-c'),v1:+v,v2:+v}); return; }
+ if(a==='bsClear'){ BS={q:'',busy:false,items:null,done:0}; render(); return; }
  if(a==='book'){ U.bk=+v; U.ch=null; render(); window.scrollTo(0,0); return; }
- if(a==='chap'){ U.ch=+v; stopSpeak(); render(); window.scrollTo(0,0); return; }
+ if(a==='chap'){ U.hl=null; U.ch=+v; stopSpeak(); render(); window.scrollTo(0,0); return; }
  if(a==='bback'){ U.bk=null; render(); return; }
- if(a==='cback'){ U.ch=null; stopSpeak(); render(); return; }
+ if(a==='cback'){ U.hl=null; U.from=null; U.ch=null; stopSpeak(); render(); return; }
  if(a==='mode'){ S.mode=v; applyTheme(); save(); render(); return; }
  if(a==='dark'){ S.mode=S.mode==='light'?'dark':'light'; applyTheme(); save(); render(); return; }
  if(a==='saveName'){ var nv=(($('nm')||{}).value||'').trim().slice(0,30); if(!nv){ toast('Escribe tu nombre.'); return; } S.name=nv; save(); Cloud.pushName(nv); render(); return; }
@@ -684,7 +719,7 @@ document.addEventListener('click',function(e){
  if(a==='instGo'){ var pr=Inst.prompt; if(!pr) return; pr.prompt(); (pr.userChoice||Promise.resolve({})).then(function(c){ if(c&&c.outcome==='accepted') Inst.prompt=null; else { try{ localStorage.setItem('lumen:installDismiss',Date.now()); }catch(x){} } Inst.show(); if(U.tab==='me') render(); }); return; }
  if(a==='instNo'){ try{ localStorage.setItem('lumen:installDismiss',Date.now()); }catch(x){} Inst.show(); return; }
 });
-document.addEventListener('submit',function(e){ if(e.target.id==='authForm'){ e.preventDefault(); authSubmit(); }
+document.addEventListener('submit',function(e){ if(e.target.id==='bqForm'){ e.preventDefault(); var qv=($('bq').value||'').trim(); U.q=qv; if(!qv) return; var ci=parseCita(qv); if(ci){ BS={q:'',busy:false,items:null,done:0}; goCita(ci); } else bibleSearch(qv); try{ $('bq').blur(); }catch(x){} return; } if(e.target.id==='authForm'){ e.preventDefault(); authSubmit(); }
  if(e.target.id==='nameForm'){ e.preventDefault(); var v=($('nameIn').value||'').trim().slice(0,30); if(!v){ $('nameIn').focus(); return; } S.name=v; save(); closeName(); render(); toast('Paz y bien, '+v); } });
 document.addEventListener('change',function(e){
  var a=e.target.getAttribute('data-a');
