@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Wellness Apps · Planificar Proyectos</title>
-<meta name="description" content="Acceso a las apps de bienestar: Mind Focus y PowerFit.">
+<meta name="description" content="Acceso a las apps de bienestar: Mind Focus, PowerFit y Lumen.">
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#111315">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -78,7 +78,7 @@ body.guest .lock{display:grid}
 
   <section class="card" id="authCard" hidden>
     <h3 id="aTitle">Crea tu cuenta <span>gratis</span></h3>
-    <p class="sub" id="aSub">Con una sola cuenta tendrás acceso a todas las apps de Wellness Apps: Mind Focus y PowerFit.</p>
+    <p class="sub" id="aSub">Con una sola cuenta tendrás acceso a todas las apps de Wellness Apps: Mind Focus, PowerFit y Lumen.</p>
     <form id="aForm" novalidate>
       <label class="field" id="fName"><input id="aName" type="text" autocomplete="name" placeholder="Tu nombre"></label>
       <label class="field"><input id="aEmail" type="email" autocomplete="email" inputmode="email" placeholder="Correo" required></label>
@@ -109,6 +109,11 @@ body.guest .lock{display:grid}
       <div><h2>PowerFit</h2><p>Entrena en casa con rutinas por zona y seguimiento de tu progreso.</p></div>
       <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
     </a>
+    <a class="app" href="/lumen/"><span class="lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+      <img src="/lumen/icon.svg" alt="" width="72" height="72">
+      <div><h2>Lumen</h2><p>Reza el Rosario, lee el Evangelio del día y lleva tu rutina de oración.</p></div>
+      <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </a>
   </nav>
   <footer>
     <span>© <span id="y"></span> Planificar Proyectos</span>
@@ -134,7 +139,7 @@ function msg(t,ok){var m=$('aMsg');m.textContent=t||'';m.className='msg'+(ok?' o
 function setMode(m){mode=m;msg('');
  var reg=m==='register',reset=m==='reset';
  $('aTitle').innerHTML=reg?'Crea tu cuenta <span>gratis</span>':reset?'Recupera tu <span>contraseña</span>':'Inicia <span>sesión</span>';
- $('aSub').textContent=reg?'Con una sola cuenta tendrás acceso a todas las apps de Wellness Apps: Mind Focus y PowerFit.':reset?'Te enviaremos un correo para crear una nueva contraseña.':'Entra con tu cuenta de Wellness Apps. Si ya usas Mind Focus o PowerFit, es la misma.';
+ $('aSub').textContent=reg?'Con una sola cuenta tendrás acceso a todas las apps de Wellness Apps: Mind Focus, PowerFit y Lumen.':reset?'Te enviaremos un correo para crear una nueva contraseña.':'Entra con tu cuenta de Wellness Apps. Si ya usas Mind Focus, PowerFit o Lumen, es la misma.';
  $('fName').hidden=!reg;$('fPass').hidden=reset;
  $('aPass').autocomplete=reg?'new-password':'current-password';
  $('aBtn').textContent=reg?'Crear cuenta':reset?'Enviar correo':'Iniciar sesión';
