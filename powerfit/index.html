@@ -79,7 +79,9 @@ p{margin:0}
 .dot.today.on{background:var(--accent);border:none}
 
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-.chips.scroll{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chips.scroll{flex-wrap:nowrap;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin;scrollbar-color:var(--accent-fg) transparent;cursor:grab;-webkit-overflow-scrolling:touch}
+.chips.scroll.drag{cursor:grabbing;user-select:none}
+.chips.scroll .chip{flex-shrink:0}
 .chip{min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:transparent;font-weight:500;font-size:14px;white-space:nowrap}
 .chip.sm{min-height:36px;padding:0 14px;font-size:13px}
 .chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
@@ -740,7 +742,9 @@ function render(){
   else if(v==='home') h=vHome(); else if(v==='routines') h=vRoutines(); else if(v==='lib') h=vLib();
   else if(v==='progress') h=vProgress(); else if(v==='account') h=vAccount(); else if(v==='sedit') h=vSedit(); else if(v==='detail') h=vDetail(); else if(v==='builder') h=vBuilder();
   else if(v==='ex') h=vEx(); else if(v==='work') h=vWork(); else if(v==='done') h=vDone();
+  var _cs=document.querySelector('.chips.scroll'), _sl=_cs?_cs.scrollLeft:0;
   app.innerHTML=h;
+  var _c2=document.querySelector('.chips.scroll'); if(_c2&&_sl) _c2.scrollLeft=_sl;
   var nav=document.getElementById('nav'); nav.hidden=(v==='work'||v==='done'||v==='auth');
   var tabOf={home:'home',routines:'routines',detail:'routines',builder:'routines',lib:'lib',ex:'lib',progress:'progress',account:'account',sedit:'progress'};
   ['home','routines','lib','progress','account'].forEach(function(t){ var b=document.getElementById('t-'+t); b.classList.toggle('on',tabOf[v]===t); if(tabOf[v]===t) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
@@ -1357,6 +1361,16 @@ try{ S.equip=JSON.parse(localStorage.getItem('powerfit:equip:local')||'null'); }
 navInit(); Store.loadLocal(); Store.init(); if(!Store.auth) Act.restore(null); render(); requestAnimationFrame(loop); hideSplash();
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ if(S.view!=='work') setupCanvases(); });
 if("serviceWorker" in navigator) window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); });
+})();
+
+/* Deslizar chips con mouse: rueda y arrastre */
+(function(){
+  var el=null,x0=0,s0=0,moved=false;
+  document.addEventListener('wheel',function(e){ var c=e.target.closest&&e.target.closest('.chips.scroll'); if(c&&Math.abs(e.deltaY)>Math.abs(e.deltaX)){ c.scrollLeft+=e.deltaY; e.preventDefault(); } },{passive:false});
+  document.addEventListener('mousedown',function(e){ var c=e.target.closest&&e.target.closest('.chips.scroll'); if(!c) return; el=c; x0=e.clientX; s0=c.scrollLeft; moved=false; });
+  document.addEventListener('mousemove',function(e){ if(!el) return; var d=e.clientX-x0; if(Math.abs(d)>4){ moved=true; el.classList.add('drag'); } if(moved) el.scrollLeft=s0-d; });
+  document.addEventListener('mouseup',function(){ if(el) el.classList.remove('drag'); el=null; });
+  document.addEventListener('click',function(e){ if(moved){ e.stopPropagation(); e.preventDefault(); moved=false; } },true);
 })();
 </script>
 
