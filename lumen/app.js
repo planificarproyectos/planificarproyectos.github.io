@@ -178,7 +178,19 @@ if(TTS){ try{ speechSynthesis.getVoices(); }catch(e){} }
 
 function sayBtn(id,label){ var on=speaking===id; return '<button class="say'+(on?' on':'')+'" data-a="say" data-id="'+id+'" data-l="'+esc(label||'Escuchar')+'" aria-pressed="'+on+'">'+ic(on?'stop':'speaker',16)+'<span>'+(on?'Detener':(label||'Escuchar'))+'</span></button>'; }
 function updSay(){ var bs=document.querySelectorAll('[data-a=say]'); for(var i=0;i<bs.length;i++){ var b=bs[i], on=b.getAttribute('data-id')===speaking; b.classList.toggle('on',on); b.setAttribute('aria-pressed',on); b.innerHTML=ic(on?'stop':'speaker',16)+'<span>'+(on?'Detener':(b.getAttribute('data-l')||'Escuchar'))+'</span>'; }
- updMass(); updRos(); }
+ updMass(); updRos(); syncWake(); }
+/* Pantalla encendida mientras se escucha (Wake Lock) */
+var WL=null, wlBusy=false;
+function syncWake(){
+ var want=!!speaking||M.playing||R.playing;
+ if(!('wakeLock' in navigator)) return;
+ if(want&&!WL&&!wlBusy&&document.visibilityState==='visible'){ wlBusy=true;
+  navigator.wakeLock.request('screen').then(function(l){ wlBusy=false; WL=l; l.addEventListener('release',function(){ if(WL===l) WL=null; }); if(!(speaking||M.playing||R.playing)){ l.release().catch(function(){}); } })
+   .catch(function(){ wlBusy=false; }); }
+ else if(!want&&WL){ var l=WL; WL=null; l.release().catch(function(){}); }
+}
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState!=='visible') return;
+ setTimeout(function(){ var ss=window.speechSynthesis; if((M.playing||R.playing||speaking)&&ss&&!ss.speaking&&!ss.pending){ gen++; M.playing=false; R.playing=false; speaking=null; updSay(); toast('El audio se detuvo al salir de Lumen. Toca ▶ para continuar donde ibas.',5000); } else syncWake(); },700); });
 
 /* ---------- Oraciones ---------- */
 var PR={
@@ -312,7 +324,7 @@ function massParts(m){ var a=[]; (m===undefined?viewMass():m||[]).forEach(functi
 /* ---------- Reproductor de la Misa ---------- */
 var M={idx:0,playing:false,
  play:function(i){ var ps=massParts(); if(!ps.length) return;
-  if(i>=ps.length){ M.playing=false; M.idx=0; if(!U.mdate) setDone('misa',true); updMass(); toast('Misa completa. Pueden ir en paz.'); return; }
+  if(i>=ps.length){ M.playing=false; M.idx=0; if(!U.mdate) setDone('misa',true); updSay(); toast('Misa completa. Pueden ir en paz.'); return; }
   M.idx=i; M.playing=true; var p=ps[i];
   speak(p.h+'. '+p.text,'misa:'+i,function(){ setTimeout(function(){ if(M.playing&&!speaking) M.play(i+1); },900); });
   M.playing=true; updMass();
@@ -427,7 +439,7 @@ function vHoy(){
  if(!info) return head+loading();
  head+='<div class="panel" style="gap:6px">'+litBadge(info)+'<b style="font-size:18px;line-height:1.3">'+esc(info.cel.n)+'</b>'+(info.commem?'<span class="small muted">Santo del día: '+esc(info.commem.n)+'</span>':'')+'</div>';
  if(!mass) return head+loading(err?'No se pudieron cargar las lecturas. Revisa tu conexión.':'Preparando las lecturas…');
- var out=head+'<div class="stack" style="gap:8px"><button class="btn playbig" id="massBtn" data-a="massPlay"></button><div class="between small"><span class="muted" id="massProg"></span>'+(M.idx>0?'<button class="link" data-a="massRestart">Empezar desde el inicio</button>':'')+'</div></div>';
+ var out=head+'<div class="stack" style="gap:8px"><button class="btn playbig" id="massBtn" data-a="massPlay"></button>'+(('wakeLock' in navigator)?'<p class="small muted" style="text-align:center">La pantalla se mantendrá encendida mientras escuchas. Si la bloqueas o sales de Lumen, el audio se detiene.</p>':'')+'<div class="between small"><span class="muted" id="massProg"></span>'+(M.idx>0?'<button class="link" data-a="massRestart">Empezar desde el inicio</button>':'')+'</div></div>';
  mass.forEach(function(s){
   out+='<section class="stack"><h2>'+esc(s.title)+'</h2>';
   s.parts.forEach(function(p){
