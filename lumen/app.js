@@ -5,6 +5,7 @@ var L=window.Liturgia;
 
 /* ---------- Íconos ---------- */
 var IP={
+ apps:'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
  chat:'M21 12a8 8 0 0 1-11.6 7.1L4 20l1-5A8 8 0 1 1 21 12z', bulb:'M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z',
  key:'M15 7a4 4 0 1 1-3.9 5H7v3H4v-3H2v-3h9.1A4 4 0 0 1 15 7z', out:'M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10', trash:'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13', dl:'M12 4v11M7 10l5 5 5-5M5 20h14',
  home:'M3 11l9-7 9 7v9h-6v-6H9v6H3z', rosary:'M12 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12zM12 14v8M9 18h6',
@@ -608,6 +609,7 @@ function vMe(){
    +'<div class="between"><label class="small muted" for="rate">Velocidad</label><span class="small num" id="rateV">'+(+S.rate||1).toFixed(1)+'×</span></div><input type="range" id="rate" data-a="rate" min="0.6" max="1.4" step="0.1" value="'+(S.rate||1)+'">'
    +'<div>'+sayBtn('test','Probar voz')+'</div>'+voiceGuide()
    :'<p class="small muted">Este navegador no permite lectura en voz alta. Usa Chrome (Android) o Safari (iPhone).</p>')+'</div></section>'
+  +'<a class="card" target="_blank" rel="noopener" style="border:1px solid var(--accent-fg)" href="'+esc((window.WELLNESS_APPS_URL||"https://www.planificarproyectos.com/wellness-apps/"))+'">'+ic('apps',22)+'<span class="grow"><b>Conoce más Wellness Apps</b><span>Mind Focus, PowerFit y Lumen en un solo lugar</span></span>'+ic('chevR',20)+'</a>'
   +'<p class="small muted" style="text-align:center">'+(u?'Una cuenta para Mind Focus, PowerFit y Lumen':'Tus datos se guardan en este dispositivo')+'</p>';
 }
 

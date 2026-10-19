@@ -102,6 +102,7 @@ p{margin:0}
 .hero .k{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px}
 .hero h3{font-size:30px}
 .hero .go{width:48px;height:48px;border-radius:50%;background:var(--accent-ink);display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0}
+a.card{text-decoration:none;color:var(--fg)}
 .card{background:var(--surface);border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:12px;border:none;text-align:left;width:100%}
 .card h3{font-size:21px}
 .card .grow{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
@@ -238,6 +239,7 @@ nav.tabs button.on{color:var(--accent-fg);font-weight:700}
 
 /* ---------- Íconos ---------- */
 var IP = {
+  apps:'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
   chat:'M21 12a8 8 0 0 1-11.6 7.1L4 20l1-5A8 8 0 1 1 21 12z', bulb:'M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z',
   home:'M3 11l9-7 9 7v9h-6v-6H9v6H3z', dumb:'M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12',
   grid:'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z', chart:'M4 20V10M10 20V4M16 20v-7M22 20H2',
@@ -1057,7 +1059,7 @@ function vAccount(){
    '<button class="card" data-a="logout">'+ic('out',22)+'<span class="grow"><b>Cerrar sesión</b><span class="muted small">Tus datos quedan guardados en tu cuenta</span></span>'+ic('chevR',20)+'</button>'+
    del+'</section>'+vEquip()+vTheme();
   if(S.isAdmin) h+=vAdmin();
-  return h+'<p class="muted small" style="text-align:center">Una cuenta para Mind Focus, PowerFit y Lumen</p></div>';
+  return h+'<a class="card" target="_blank" rel="noopener" style="text-decoration:none;border:1px solid var(--accent-fg)" href="'+esc((window.WELLNESS_APPS_URL||"https://www.planificarproyectos.com/wellness-apps/"))+'">'+ic('apps',22)+'<span class="grow"><b>Conoce más Wellness Apps</b><span class="muted small">Mind Focus, PowerFit y Lumen en un solo lugar</span></span>'+ic('chevR',20)+'</a>'+'<p class="muted small" style="text-align:center">Una cuenta para Mind Focus, PowerFit y Lumen</p></div>';
 }
 function vAdmin(){
   var A=S.adm;
