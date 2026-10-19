@@ -5,6 +5,7 @@ var L=window.Liturgia;
 
 /* ---------- Íconos ---------- */
 var IP={
+ key:'M15 7a4 4 0 1 1-3.9 5H7v3H4v-3H2v-3h9.1A4 4 0 0 1 15 7z', out:'M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10', trash:'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13', dl:'M12 4v11M7 10l5 5 5-5M5 20h14',
  home:'M3 11l9-7 9 7v9h-6v-6H9v6H3z', rosary:'M12 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12zM12 14v8M9 18h6',
  church:'M12 2v4M10 4h4M5 21V11l7-5 7 5v10M9 21v-5a3 3 0 0 1 6 0v5M3 21h18',
  book:'M5 4h12a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2zM5 18a2 2 0 0 1 2-2h12M12 7v6M9.5 9.5h5', user:'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0',
@@ -42,7 +43,7 @@ function save(){ saveLocal(); Cloud.push(); }
 function prune(o,days){ var lim=dkey(new Date(Date.now()-days*864e5)), r={}; for(var k in o) if(k.slice(0,10)>=lim) r[k]=o[k]; return r; }
 
 /* ---------- Cuenta (Firebase, mismo proyecto que Mind Focus y PowerFit) ---------- */
-var Cloud={auth:null,db:null,user:null,wait:false,ref:null,unsub:null,t:null,noAccess:false,loginPending:false,
+var Cloud={auth:null,db:null,user:null,wait:false,ref:null,unsub:null,prof:null,unsubP:null,perfilOk:false,t:null,noAccess:false,loginPending:false,
  init:function(){
   var self=this;
   if(!window.firebase||!window.FIREBASE_CONFIG) return; // sin Firebase: funciona solo en este navegador
@@ -50,10 +51,10 @@ var Cloud={auth:null,db:null,user:null,wait:false,ref:null,unsub:null,t:null,noA
   try{ self.db.enablePersistence({synchronizeTabs:true}).catch(function(){}); }catch(e){}
   self.wait=true;
   self.auth.onAuthStateChanged(function(u){
-   self.wait=false; if(self.unsub){ self.unsub(); self.unsub=null; } clearTimeout(self.t);
+   self.wait=false; if(self.unsub){ self.unsub(); self.unsub=null; } if(self.unsubP){ self.unsubP(); self.unsubP=null; } self.perfilOk=false; self.prof=null; clearTimeout(self.t);
    if(!u){ self.user=null; self.ref=null; self.noAccess=false; loadLocal(); applyTheme(); render(); return; }
    if(self.loginPending){ self.loginPending=false; playSplash(); }
-   self.user={email:u.email,uid:u.uid}; self.noAccess=false; loadLocal(); applyTheme(); U.tab='home';
+   self.user={email:u.email,uid:u.uid,created:u.metadata&&Date.parse(u.metadata.creationTime)}; self.noAccess=false; loadLocal(); applyTheme(); U.tab='home';
    self.ref=self.db.collection('users').doc(u.uid).collection('lumen').doc('data');
    render();
    var me=u.uid;
@@ -72,11 +73,17 @@ var Cloud={auth:null,db:null,user:null,wait:false,ref:null,unsub:null,t:null,noA
  },
  sub:function(){
   var self=this, first=true;
+  // Perfil compartido Wellness Apps: users/{uid}/perfil/datos (nombre). Tema y color siguen siendo propios de Lumen.
+  self.prof=self.db.collection('users').doc(self.user.uid).collection('perfil').doc('datos');
+  self.unsubP=self.prof.onSnapshot(function(sn){ var d=sn.exists?sn.data():null;
+   if(d&&typeof d.nombre==='string'){ self.perfilOk=true; if(d.nombre!==S.name){ S.name=d.nombre; saveLocal(); var a=document.activeElement; if(!(a&&(a.id==='bq'||a.id==='nm'))) render(); } return; }
+   if(!self.perfilOk){ self.perfilOk=true; if(S.name) self.prof.set({nombre:S.name,upd:Date.now()},{merge:true}).catch(function(){}); }
+  },function(){});
   self.unsub=self.ref.onSnapshot(function(sn){
    if(first){ first=false; if(!sn.exists){ self.push(true); return; } }
    if(!sn.exists||sn.metadata.hasPendingWrites) return;
    var d=sn.data()||{};
-   ['done','ros','name','guided','rate','accent','mode'].forEach(function(k){ if(d[k]!==undefined) S[k]=d[k]; });
+   ['done','ros','name','guided','rate','accent','mode'].forEach(function(k){ if(d[k]!==undefined&&!(k==='name'&&(self.perfilOk||!d[k]))) S[k]=d[k]; });
    saveLocal(); applyTheme();
    var a=document.activeElement; if(!(a&&(a.id==='bq'||a.id==='nm'))) render();
   },function(e){ console.warn('firestore',e); if(e&&e.code==='permission-denied'){ self.noAccess=true; render(); } else toast('No se pudo leer tu cuenta. Revisa tu conexión.'); });
@@ -87,7 +94,9 @@ var Cloud={auth:null,db:null,user:null,wait:false,ref:null,unsub:null,t:null,noA
    self.ref.set({done:prune(S.done,400),ros:prune(S.ros,7),name:S.name,guided:S.guided,rate:S.rate,accent:S.accent,mode:S.mode,upd:Date.now()})
     .catch(function(){ toast('No se pudo guardar en tu cuenta. Revisa tu conexión.'); }); },now?0:600);
  },
- wipe:function(){ if(this.ref) this.ref.delete().catch(function(){}); }
+ wipe:function(){ if(this.ref) this.ref.delete().catch(function(){}); },
+ pushName:function(v){ if(!this.prof){ toast('Nombre guardado'); return; }
+  this.prof.set({nombre:v,upd:Date.now()},{merge:true}).then(function(){ toast('Nombre guardado para Mind Focus, PowerFit y Lumen'); },function(){ toast('Guardado en Lumen; no se pudo compartir con las otras apps.'); }); }
 };
 loadLocal();
 function applyTheme(){
@@ -410,6 +419,7 @@ function vHome(){
   wk+='<div><span'+(i===0?' style="color:var(--fg);font-weight:700"':'')+'>'+'DLMMJVS'.charAt(d.getDay())+'</span><i class="dot'+(on?' on':'')+(i===0?' today':'')+'" style="display:block"></i></div>'; }
  var fr=LIT.frase, st=streak(), next=RUT.filter(function(r){ return !isDone(r[0]); })[0];
  return '<header class="between"><span class="row" style="gap:8px">'+logo(30)+'<span style="font-family:var(--f-display);font-weight:700;font-size:24px;letter-spacing:2px">LU<span style="color:var(--accent-fg)">MEN</span></span></span><span class="small muted">'+longDate(NOW)+'</span></header>'
+  +((!S.name&&!needAuth())?'<button class="card" data-a="tab" data-v="me" style="border:1px solid var(--accent-fg)">'+ic('user',24)+'<span class="grow"><b>Configura tu nombre</b><span>Ve a Cuenta y escribe cómo quieres que te saludemos</span></span>'+ic('chevR',20)+'</button>':'')
   +'<div class="stack" style="gap:6px"><h1>'+greet()+(S.name?',<br>'+esc(S.name):'')+'</h1>'+(info?litBadge(info):'')+'</div>'
   +(info?'<div class="daycard"><span class="lbar" style="background:'+(LCOL[info.cel.c]||'#999')+'"></span><div class="stack" style="gap:4px;min-width:0"><span class="label">Hoy celebramos</span><b>'+esc(info.cel.n)+'</b>'+(info.commem?'<span class="small muted">Santo del día: '+esc(info.commem.n)+'</span>':'')+'</div></div>':'')
   +'<div class="quote"><div class="between"><span class="label ac">Frase del día</span>'+(fr?sayBtn('frase'):'')+'</div>'+(fr?'<p>'+esc(fr.t)+'</p><div class="between"><span class="ref">'+esc(fr.ref)+'</span><button class="say" data-a="copy">'+ic('copy',16)+'<span>Copiar</span></button></div>':'<p class="muted" style="font-size:18px">Cargando el Evangelio de hoy…</p>')+'</div>'
@@ -511,26 +521,32 @@ function voiceGuide(){
   :['Abre Ajustes › Sistema › Idioma › <b>Salida de texto a voz</b>.','Elige el motor <b>Servicios de voz de Google</b>.','En ⚙️ › Instalar datos de voz › Español, descarga la voz de mayor calidad.','Vuelve a Lumen, elige una voz <b>Google español</b> arriba y toca <b>Probar voz</b>.'];
  return '<details class="guide"><summary>¿La voz suena robótica? Mejórala en '+(ios?'tu iPhone':'tu Android')+'</summary><ol>'+steps.map(function(x){ return '<li>'+x+'</li>'; }).join('')+'</ol><p class="small muted">Consejo: una velocidad de 0.9× suena más natural.</p></details>'; }
 function vMe(){
- var vs=rankedVoices();
- return '<header><h1>PERFIL</h1></header>'
-  +'<div class="panel"><label class="label" for="nm">Tu nombre</label><input class="inp" id="nm" data-a="name" value="'+esc(S.name)+'" placeholder="¿Cómo te llamas?" autocomplete="given-name"></div>'
-  +'<div class="panel"><span class="label">Apariencia</span>'
-  +'<div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr));background:var(--surface2)"><button class="'+(S.mode==='dark'?'on':'')+'" data-a="mode" data-v="dark">Oscuro</button><button class="'+(S.mode==='light'?'on':'')+'" data-a="mode" data-v="light">Claro</button></div>'
-  +'<span class="small muted">Color de acento</span><div class="swatches">'+Object.keys(ACCENTS).map(function(k){ var c=ACCENTS[k], on=S.accent===k; return '<button class="sw'+(on?' on':'')+'" data-a="accent" data-v="'+k+'" aria-pressed="'+on+'" aria-label="'+c[0]+'"><i style="background:'+c[1]+'">'+(on?ic('check',18,3):'')+'</i>'+c[0]+'</button>'; }).join('')+'</div></div>'
-  +'<div class="panel"><span class="label">Lectura en voz alta</span>'
+ var vs=rankedVoices(), u=Cloud.user, cr=u&&u.created?new Date(u.created):null, dark=S.mode!=='light';
+ var card=function(a,icn,t,sub,cls){ return '<button class="card'+(cls?' '+cls:'')+'" data-a="'+a+'">'+ic(icn,22)+'<span class="grow"><b>'+t+'</b><span>'+sub+'</span></span>'+ic('chevR',20)+'</button>'; };
+ return '<header><h1>CUENTA</h1></header>'
+  +'<div class="panel"><div class="prof"><span class="av">'+ic('user',26,2.2)+'</span><div class="stack" style="gap:2px;min-width:0"><b style="overflow-wrap:anywhere">'+esc(S.name||(u&&u.email)||'Sin sesión')+'</b>'
+   +(S.name&&u?'<span class="small muted" style="overflow-wrap:anywhere">'+esc(u.email)+'</span>':'')
+   +(cr?'<span class="small muted">Cuenta creada el '+cr.getDate()+' '+MONTHS[cr.getMonth()].slice(0,3)+' '+cr.getFullYear()+'</span>':'')+'</div></div></div>'
+  +'<div class="panel"><label class="label" for="nm">Tu nombre</label><div class="namerow"><input class="inp" id="nm" maxlength="30" value="'+esc(S.name)+'" placeholder="¿Cómo te llamas?" autocomplete="given-name"><button class="btn" data-a="saveName">Guardar</button></div><span class="small muted">Se usa en Mind Focus, PowerFit y Lumen.</span></div>'
+  +'<section class="stack"><h2>Ajustes</h2>'
+   +(u?card('resetPass','key','Cambiar contraseña','Te enviamos un correo para crear una nueva'):'')
+   +(Inst.standalone()?'<div class="card">'+ic('check',22)+'<span class="grow"><b>App instalada</b><span>Estás usando Lumen como app</span></span></div>':Inst.can()?'<div class="panel">'+Inst.body(false)+'</div>':'<div class="card">'+ic('dl',22)+'<span class="grow"><b>Instalar app</b><span>Android: Chrome › ⋮ › Instalar app. iPhone: Safari › Compartir › Agregar a pantalla de inicio</span></span></div>')
+   +(u?card('logout','out','Cerrar sesión','Tus datos quedan guardados en tu cuenta'):'')
+   +(U.confirmReset?'<div class="panel"><b>¿Borrar racha, rutina y progreso del Rosario?</b><span class="small muted">No se puede deshacer.</span><div class="grid2"><button class="btn soft" data-a="resetNo">Cancelar</button><button class="btn danger" data-a="resetYes">Sí, borrar</button></div></div>'
+     :card('reset','trash','Borrar mis datos',u?'Racha, rutina y progreso del Rosario. No se puede deshacer':'Se borran de este dispositivo','danger'))
+  +'</section>'
+  +'<section class="stack"><h2>Apariencia</h2><div class="panel"><b class="small">Color de énfasis</b><div class="swatches" role="radiogroup" aria-label="Color de énfasis">'+Object.keys(ACCENTS).map(function(k){ var c=ACCENTS[k], on=S.accent===k; return '<button class="sw'+(on?' on':'')+'" role="radio" data-a="accent" data-v="'+k+'" aria-checked="'+on+'"><i style="background:'+c[1]+'">'+(on?ic('check',18,3):'')+'</i>'+c[0]+'</button>'; }).join('')+'</div></div>'
+   +'<div class="panel"><div class="between"><div class="stack" style="gap:2px"><b>Modo oscuro</b><span class="small muted">'+(dark?'Activado':'Desactivado')+' · no depende del celular</span></div><button class="switch" role="switch" aria-checked="'+dark+'" aria-label="Modo oscuro" data-a="dark"></button></div></div></section>'
+  +'<section class="stack"><h2>Lectura en voz alta</h2><div class="panel">'
   +(TTS?'<label class="small muted" for="vsel">Voz</label><select class="inp" id="vsel" data-a="voice"><option value="">Automática (recomendada)</option>'+vs.map(function(v,k){ return '<option value="'+esc(v.name)+'"'+(v.name===S.voice?' selected':'')+'>'+esc(v.name)+' ('+v.lang+')'+(k===0?' · mejor disponible':'')+'</option>'; }).join('')+'</select>'
    +'<div class="between"><label class="small muted" for="rate">Velocidad</label><span class="small num" id="rateV">'+(+S.rate||1).toFixed(1)+'×</span></div><input type="range" id="rate" data-a="rate" min="0.6" max="1.4" step="0.1" value="'+(S.rate||1)+'">'
    +'<div>'+sayBtn('test','Probar voz')+'</div>'+voiceGuide()
-   :'<p class="small muted">Este navegador no permite lectura en voz alta. Usa Chrome (Android) o Safari (iPhone).</p>')+'</div>'
-  +'<div class="panel"><span class="label">Instalar como app</span>'+(Inst.standalone()?'<p class="small muted">Lumen ya está instalada en este dispositivo.</p>':Inst.can()?Inst.body(false):'<p class="small muted">En Android abre esta página en Chrome y toca ⋮ › <b>Instalar app</b> o <b>Agregar a la pantalla principal</b>. En iPhone abre en Safari, toca Compartir › <b>Agregar a pantalla de inicio</b>.</p>')+'</div>'
-  +(Cloud.user?'<div class="panel"><span class="label">Cuenta</span><p class="small" style="overflow-wrap:anywhere">'+esc(Cloud.user.email)+'</p><div class="grid2"><button class="btn soft" data-a="resetPass">Cambiar contraseña</button><button class="btn soft" data-a="logout">Cerrar sesión</button></div><p class="small muted">Es la misma cuenta de Mind Focus y PowerFit.</p></div>':'')
-  +'<div class="panel"><span class="label">Tus datos</span><p class="small muted">'+(Cloud.user?'Se guardan en tu cuenta y en este dispositivo.':'Se guardan en este dispositivo.')+'</p>'
-  +(U.confirmReset?'<p class="small">¿Borrar racha, rutina y progreso del Rosario?</p><div class="grid2"><button class="btn soft" data-a="resetNo">Cancelar</button><button class="btn danger" data-a="resetYes">Sí, borrar</button></div>':'<button class="btn danger" data-a="reset">Borrar mis datos</button>')
-  +'</div>';
+   :'<p class="small muted">Este navegador no permite lectura en voz alta. Usa Chrome (Android) o Safari (iPhone).</p>')+'</div></section>'
+  +'<p class="small muted" style="text-align:center">'+(u?'Una cuenta para Mind Focus, PowerFit y Lumen':'Tus datos se guardan en este dispositivo')+'</p>';
 }
 
 /* ---------- Render ---------- */
-var TABS=[['misa','Misa','church'],['rosary','Rosario','rosary'],['home','Hoy','sun'],['bible','Biblia','book'],['me','Perfil','user']];
+var TABS=[['misa','Misa','church'],['rosary','Rosario','rosary'],['home','Hoy','sun'],['bible','Biblia','book'],['me','Cuenta','user']];
 function render(){
  refreshDay();
  var nav=document.querySelector('nav.tabs');
@@ -585,6 +601,8 @@ document.addEventListener('click',function(e){
  if(a==='bback'){ U.bk=null; render(); return; }
  if(a==='cback'){ U.ch=null; stopSpeak(); render(); return; }
  if(a==='mode'){ S.mode=v; applyTheme(); save(); render(); return; }
+ if(a==='dark'){ S.mode=S.mode==='light'?'dark':'light'; applyTheme(); save(); render(); return; }
+ if(a==='saveName'){ var nv=(($('nm')||{}).value||'').trim().slice(0,30); if(!nv){ toast('Escribe tu nombre.'); return; } S.name=nv; save(); Cloud.pushName(nv); render(); return; }
  if(a==='accent'){ S.accent=v; applyTheme(); save(); render(); return; }
  if(a==='reset'){ U.confirmReset=true; render(); return; }
  if(a==='resetNo'){ U.confirmReset=false; render(); return; }
@@ -597,13 +615,12 @@ document.addEventListener('click',function(e){
  if(a==='instNo'){ try{ localStorage.setItem('lumen:installDismiss',Date.now()); }catch(x){} Inst.show(); return; }
 });
 document.addEventListener('submit',function(e){ if(e.target.id==='authForm'){ e.preventDefault(); authSubmit(); }
- if(e.target.id==='nameForm'){ e.preventDefault(); var v=($('nameIn').value||'').trim().slice(0,40); if(!v){ $('nameIn').focus(); return; } S.name=v; save(); closeName(); render(); toast('Paz y bien, '+v); } });
+ if(e.target.id==='nameForm'){ e.preventDefault(); var v=($('nameIn').value||'').trim().slice(0,30); if(!v){ $('nameIn').focus(); return; } S.name=v; save(); closeName(); render(); toast('Paz y bien, '+v); } });
 document.addEventListener('change',function(e){
  var a=e.target.getAttribute('data-a');
  if(a==='voice'){ S.voice=e.target.value; save(); }
  if(a==='mdate'&&e.target.value){ var q=e.target.value.split('-'); setMassDate(new Date(+q[0],+q[1]-1,+q[2])); }
  if(a==='rate'){ S.rate=parseFloat(e.target.value)||1; save(); }
- if(a==='name'){ S.name=e.target.value.trim().slice(0,40); save(); }
 });
 document.addEventListener('input',function(e){
  var a=e.target.getAttribute('data-a');
@@ -683,7 +700,7 @@ function authSubmit(){
 
 
 /* ---------- Pedir el nombre ---------- */
-function askName(){
+function askName(){ return; // reemplazado por el aviso en Hoy (igual que Mind Focus y PowerFit)
  var box=$('namebox'); if(!box||!box.hidden) return;
  if(needAuth()||Cloud.noAccess||S.name) return;
  try{ if(localStorage.getItem('lumen:askName')===dkey(new Date())) return; }catch(e){}

@@ -634,7 +634,7 @@ var Store={mode:'local',col:null,months:{},
     S.authWait=true; S.view='auth';
     self.auth.onAuthStateChanged(function(u){
       S.authWait=false;
-      if(self.unsub){ self.unsub(); self.unsub=null; }
+      if(self.unsub){ self.unsub(); self.unsub=null; } if(self.unsubP){ self.unsubP(); self.unsubP=null; } S.perfilOk=false;
       if(!u){ Act.ready=false; S.pendingW=null; S.user=null; S.local=true; self.mode='local'; S.sessions=[]; S.routines=[]; S.w=null; S.view='auth'; render(); return; }
       if(S.loginPending){ S.loginPending=false; playSplash(); }
       self.gotFirst=false; S.equip=(function(){ try{ return JSON.parse(localStorage.getItem('powerfit:equip:'+u.uid)||'null'); }catch(e){ return null; } })(); S.user={email:u.email,uid:u.uid,created:u.metadata&&Date.parse(u.metadata.creationTime)}; S.isAdmin=u.uid===ADMIN_UID; S.adm=null; S.noAccess=false; S.local=false; self.mode='db'; self.months={};
@@ -662,6 +662,12 @@ var Store={mode:'local',col:null,months:{},
   },
   subscribe:function(loc){
       var self=this, first=true;
+      // Perfil compartido Wellness Apps: users/{uid}/perfil/datos (nombre). Tema y color siguen siendo propios de PowerFit.
+      self.prof=self.fdb.collection('users').doc(S.user.uid).collection('perfil').doc('datos');
+      self.unsubP=self.prof.onSnapshot(function(sn){ var d=sn.exists?sn.data():null;
+        if(d&&typeof d.nombre==='string'){ S.perfilOk=true; if(d.nombre!==S.name){ S.name=d.nombre; try{localStorage.setItem('powerfit:name',S.name);}catch(e){} if(S.view!=='work'&&S.view!=='builder') keep(render); } return; }
+        if(!S.perfilOk){ S.perfilOk=true; if(S.name) self.prof.set({nombre:S.name,upd:Date.now()},{merge:true}).catch(function(){}); }
+      },function(){});
       self.unsub=self.col.onSnapshot(function(snap){
         if(first && snap.empty && (loc.sessions.length||loc.routines.length)){ first=false; self.migrate(loc.sessions,loc.routines); toast('Subimos a tu cuenta el historial de este navegador'); return; }
         first=false;
@@ -669,7 +675,7 @@ var Store={mode:'local',col:null,months:{},
         snap.docs.forEach(function(d){ var b=d.data()||{};
           if(d.id==='equip'){ hasEquip=true; if(JSON.stringify(b.list||[])!==JSON.stringify(S.equip)) setEquip(b.list||[],false); }
           else if(d.id==='active'){ remoteAct=b; }
-          else if(d.id==='prefs'){ hasPrefs=true; if((b.name||'')!==S.name){ S.name=b.name||''; try{localStorage.setItem('powerfit:name',S.name);}catch(e){} prefsChanged=true; } if(b.accent!==PF_THEME.accent||b.mode!==PF_THEME.mode){ setTheme(b,false); prefsChanged=true; } }
+          else if(d.id==='prefs'){ hasPrefs=true; if(!S.perfilOk&&b.name&&b.name!==S.name){ S.name=b.name||''; try{localStorage.setItem('powerfit:name',S.name);}catch(e){} prefsChanged=true; } if(b.accent!==PF_THEME.accent||b.mode!==PF_THEME.mode){ setTheme(b,false); prefsChanged=true; } }
           else if(d.id==='routines') rts=b.list||[];
           else if(d.id.indexOf('m-')===0){ self.months[d.id]=b.sessions||[]; ses=ses.concat(b.sessions||[]); } });
         S.sessions=ses.sort(function(a,b){return a.ts-b.ts;}); S.routines=rts;
@@ -1034,10 +1040,10 @@ function vAccount(){
   var first=S.sessions.length?S.sessions[0].ts:null;
   var del=S.ask==='wipe'?'<div class="ask"><b>¿Borrar todo tu historial?</b><span class="muted small">Se eliminan tus '+tot.s+' sesiones y tus rutinas propias. No se puede deshacer.</span><div class="btns"><button class="btn soft" data-a="cancelAsk">Cancelar</button><button class="btn danger" data-a="wipe">Borrar todo</button></div></div>'
      :'<button class="btn danger" data-a="ask" data-v="wipe"'+(tot.s||S.routines.length?'':' disabled')+'>'+ic('trash',18)+'Borrar mi historial</button>';
-  var nmp='<div class="panel"'+(S.name?'':' style="background:var(--accent);color:var(--accent-ink)"')+'>'+(S.name?'':'<b>Configura tu nombre para personalizar PowerFit</b>')+'<label class="field" for="pname" style="'+(S.name?'':'background:rgba(0,0,0,.13);color:var(--accent-ink)')+'">'+ic('user',18)+'<input id="pname" type="text" placeholder="Tu nombre" maxlength="30" autocomplete="given-name" value="'+esc(S.name)+'"></label><button class="btn'+(S.name?' soft':'')+'" data-a="saveName" style="'+(S.name?'':'background:var(--accent-ink);color:var(--accent)')+'">Guardar nombre</button></div>';
-  var h='<div class="wrap">'+head('Cuenta')+nmp+
+  var nmp='<div class="panel"'+(S.name?'':' style="background:var(--accent);color:var(--accent-ink)"')+'>'+(S.name?'':'<b>Configura tu nombre para personalizar PowerFit</b>')+'<label class="field" for="pname" style="'+(S.name?'':'background:rgba(0,0,0,.13);color:var(--accent-ink)')+'">'+ic('user',18)+'<input id="pname" type="text" placeholder="Tu nombre" maxlength="30" autocomplete="given-name" value="'+esc(S.name)+'"></label><button class="btn'+(S.name?' soft':'')+'" data-a="saveName" style="'+(S.name?'':'background:var(--accent-ink);color:var(--accent)')+'">Guardar nombre</button><span class="small" style="opacity:.75">Se usa en Mind Focus, PowerFit y Lumen.</span></div>';
+  var h='<div class="wrap">'+head('Cuenta')+
    '<div class="panel"><div class="row"><span class="go" style="width:52px;height:52px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;flex-shrink:0">'+ic('user',26,2.2)+'</span>'+
-   '<div class="stack" style="gap:2px;min-width:0"><b style="overflow-wrap:anywhere">'+esc(S.name||u.email||'Sin sesión')+'</b>'+(S.name?'<span class="muted small" style="overflow-wrap:anywhere">'+esc(u.email||'')+'</span>':'')+'<span class="muted small">'+(u.created?'Cuenta creada el '+fmtDate(u.created):'')+(S.isAdmin?' · Administrador':'')+'</span></div></div></div>'+
+   '<div class="stack" style="gap:2px;min-width:0"><b style="overflow-wrap:anywhere">'+esc(S.name||u.email||'Sin sesión')+'</b>'+(S.name?'<span class="muted small" style="overflow-wrap:anywhere">'+esc(u.email||'')+'</span>':'')+'<span class="muted small">'+(u.created?'Cuenta creada el '+fmtDate(u.created):'')+(S.isAdmin?' · Administrador':'')+'</span></div></div></div>'+nmp+
    '<div class="kpis"><div class="kpi"><b class="num">'+tot.s+'</b><span>Sesiones</span></div><div class="kpi"><b class="num">'+Math.round(tot.m)+'</b><span>Minutos</span></div><div class="kpi"><b class="num">'+tot.r+'</b><span>Repeticiones</span></div></div>'+
    '<p class="muted small">'+(first?'Entrenando desde el '+fmtDate(first)+' · racha actual: '+streak()+' días':'Aún no has registrado entrenos.')+'</p>'+
    '<section class="stack"><h2>Ajustes</h2>'+
@@ -1047,7 +1053,7 @@ function vAccount(){
    '<button class="card" data-a="logout">'+ic('out',22)+'<span class="grow"><b>Cerrar sesión</b><span class="muted small">Tus datos quedan guardados en tu cuenta</span></span>'+ic('chevR',20)+'</button>'+
    del+'</section>'+vEquip()+vTheme();
   if(S.isAdmin) h+=vAdmin();
-  return h+'<p class="muted small" style="text-align:center">PowerFit · una cuenta para PowerFit y Mindfocus</p></div>';
+  return h+'<p class="muted small" style="text-align:center">Una cuenta para Mind Focus, PowerFit y Lumen</p></div>';
 }
 function vAdmin(){
   var A=S.adm;
@@ -1274,8 +1280,10 @@ var A={
   libZone:function(v){ S.libZone=v; render(); },
   saveName:function(){ var i=document.getElementById('pname'), v=((i&&i.value)||'').trim().slice(0,30); if(!v){ toast('Escribe tu nombre.'); return; }
     S.name=v; try{localStorage.setItem('powerfit:name',v);}catch(e){}
-    if(Store.mode==='db'&&Store.col) Store.col.doc('prefs').set({name:v},{merge:true}).catch(function(){ toast('No se pudo guardar en tu cuenta.'); });
-    toast('Nombre guardado'); render(); },
+    if(Store.mode==='db'&&Store.col){ Store.col.doc('prefs').set({name:v},{merge:true}).catch(function(){});
+      if(Store.prof) Store.prof.set({nombre:v,upd:Date.now()},{merge:true}).then(function(){ toast('Nombre guardado para Mind Focus, PowerFit y Lumen'); },function(){ toast('Guardado en PowerFit; no se pudo compartir con las otras apps.'); });
+      else toast('Nombre guardado'); } else toast('Nombre guardado');
+    render(); },
   tool:function(v){ var i=S.tools.indexOf(v); if(i>=0) S.tools.splice(i,1); else S.tools.push(v); syncTools(); },
   toolClear:function(){ S.tools=[]; syncTools(); },
   libBuild:function(){ S.builder={id:null,n:'',items:[]}; S.bQ=''; S.bZone=S.libZone; go('builder'); },
