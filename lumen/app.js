@@ -293,12 +293,18 @@ function buildMass(info){
   return secs;
  });
 }
-function massParts(){ var a=[]; (LIT.mass||[]).forEach(function(s){ s.parts.forEach(function(p){ a.push(p); }); }); return a; }
+var SEL={key:null,info:null,mass:null,err:false};
+function viewMass(){ return U.mdate?SEL.mass:LIT.mass; }
+function loadSel(d){ var key=dkey(d); if(SEL.key===key) return;
+ SEL={key:key,info:L.day(new Date(d.getFullYear(),d.getMonth(),d.getDate())),mass:null,err:false};
+ buildMass(SEL.info).then(function(m){ if(SEL.key!==key) return; SEL.mass=m; render(); },function(){ if(SEL.key===key){ SEL.err=true; render(); } }); }
+function setMassDate(d){ M.stop(); M.idx=0; if(d&&dkey(d)===dkey(new Date())) d=null; U.mdate=d; render(); try{ window.scrollTo(0,0); }catch(e){} }
+function massParts(m){ var a=[]; (m===undefined?viewMass():m||[]).forEach(function(s){ s.parts.forEach(function(p){ a.push(p); }); }); return a; }
 
 /* ---------- Reproductor de la Misa ---------- */
 var M={idx:0,playing:false,
  play:function(i){ var ps=massParts(); if(!ps.length) return;
-  if(i>=ps.length){ M.playing=false; M.idx=0; setDone('misa',true); updMass(); toast('Misa completa. Pueden ir en paz.'); return; }
+  if(i>=ps.length){ M.playing=false; M.idx=0; if(!U.mdate) setDone('misa',true); updMass(); toast('Misa completa. Pueden ir en paz.'); return; }
   M.idx=i; M.playing=true; var p=ps[i];
   speak(p.h+'. '+p.text,'misa:'+i,function(){ if(M.playing) M.play(i+1); });
   M.playing=true; updMass();
@@ -326,7 +332,7 @@ var STEPS=(function(){ var st=[{k:'cr',b:'cross'},{k:'pn',b:'b0'}];
  st.push({k:'gl',b:'g0'});
  for(var d=0;d<5;d++){ st.push({k:'pn',b:'D'+d,d:d}); for(var n=1;n<=10;n++) st.push({k:'am',b:'d'+d+'s'+n,d:d,n:n}); st.push({k:'gl',b:'g'+(d+1),d:d}); }
  st.push({k:'salve',b:'medal'}); return st; })();
-var U={tab:'home',test:'nt',q:'',bk:null,ch:null,pid:null,confirmReset:false,rosSet:BYDAY[new Date().getDay()]};
+var U={mdate:null,tab:'home',test:'nt',q:'',bk:null,ch:null,pid:null,confirmReset:false,rosSet:BYDAY[new Date().getDay()]};
 function rosKey(){ return TODAY+':'+U.rosSet; }
 function rosI(){ return Math.min(S.ros[rosKey()]||0,STEPS.length); }
 function stepTitle(s){ return s.k==='cr'?'Señal de la cruz y Credo':s.k==='pn'?'Padre Nuestro':s.k==='am'?'Ave María':s.k==='gl'?'Gloria':'Salve'; }
@@ -380,7 +386,7 @@ function vHome(){
  var fr=LIT.frase;
  return '<header class="between"><span class="row" style="gap:8px">'+logo(30)+'<span style="font-family:var(--f-display);font-weight:700;font-size:24px;letter-spacing:2px">LU<span style="color:var(--accent-fg)">MEN</span></span></span></header>'
   +'<div class="stack" style="gap:4px"><span class="small muted">'+longDate(NOW)+'</span><h1>'+greet()+(S.name?', '+esc(S.name):'')+'</h1></div>'
-  +(info?'<div class="panel" style="gap:6px">'+litBadge(info)+'<b style="font-size:17px;line-height:1.3">'+esc(info.cel.n)+'</b>'+(info.commem?'<span class="small muted">Memoria: '+esc(info.commem.n)+'</span>':'')+'</div>':'')
+  +(info?'<div class="panel" style="gap:6px">'+litBadge(info)+'<b style="font-size:17px;line-height:1.3">'+esc(info.cel.n)+'</b>'+(info.commem?'<span class="small muted">Santo del día: '+esc(info.commem.n)+'</span>':'')+'</div>':'')
   +'<button class="hero" data-a="tab" data-v="hoy"><span class="stack" style="gap:6px"><span class="k">Misa de hoy</span><h3>Escucha la Misa</h3><span class="small" style="font-weight:500">Lecturas, Salmo y Evangelio del día</span></span><span class="go">'+ic('play',20)+'</span></button>'
   +'<div class="panel"><div class="between"><span class="label ac">Frase del día</span>'+(fr?sayBtn('frase'):'')+'</div>'+(fr?'<p style="font-family:var(--f-display);font-weight:600;font-size:24px;line-height:1.15">'+esc(fr.t)+'</p><div class="between"><span class="ref">'+esc(fr.ref)+'</span><button class="say" data-a="copy">'+ic('copy',16)+'<span>Copiar</span></button></div>':'<p class="muted">Cargando el Evangelio de hoy…</p>')+'</div>'
   +'<div class="grid2"><div class="tile"><span class="label">Racha de oración</span><span class="row" style="gap:6px;align-items:baseline"><b class="big num">'+streak()+'</b><span class="small muted">días</span></span></div>'
@@ -395,13 +401,20 @@ function vHome(){
 }
 
 function vHoy(){
- var info=LIT.info;
- var head='<header class="stack" style="gap:2px"><span class="label">'+longDate(NOW)+'</span><h1>MISA DE HOY</h1></header>';
+ var d=U.mdate, info, mass, err;
+ if(d){ if(LIT.ready) loadSel(d); info=SEL.info; mass=SEL.mass; err=SEL.err; } else { d=NOW; info=LIT.info; mass=LIT.mass; err=LIT.massErr; }
+ var t0=new Date(); t0.setHours(0,0,0,0); var d0=new Date(d); d0.setHours(0,0,0,0); var dd=Math.round((d0-t0)/864e5);
+ var title=dd===0?'MISA DE HOY':dd===-1?'MISA DE AYER':dd===1?'MISA DE MAÑANA':'MISA DEL '+d.getDate()+' DE '+MONTHS[d.getMonth()].toUpperCase();
+ var nav='<div class="datebar"><button class="icon-btn" data-a="mprev" aria-label="Día anterior">'+ic('chevL')+'</button>'
+  +'<label class="datepick" for="mdate">'+'<span>'+longDate(d)+(d.getFullYear()!==t0.getFullYear()?' de '+d.getFullYear():'')+'</span><input type="date" id="mdate" data-a="mdate" value="'+dkey(d)+'" aria-label="Elegir fecha"></label>'
+  +'<button class="icon-btn" data-a="mnext" aria-label="Día siguiente">'+ic('chevR')+'</button></div>'
+  +(dd!==0?'<button class="link" data-a="mtoday" style="align-self:center;color:var(--accent-fg)">Volver a hoy</button>':'');
+ var head='<header class="stack" style="gap:10px"><h1>'+title+'</h1>'+nav+'</header>';
  if(!info) return head+loading();
- head+='<div class="panel" style="gap:6px">'+litBadge(info)+'<b style="font-size:18px;line-height:1.3">'+esc(info.cel.n)+'</b>'+(info.commem?'<span class="small muted">Memoria: '+esc(info.commem.n)+'</span>':'')+'</div>';
- if(!LIT.mass) return head+loading(LIT.massErr?'No se pudieron cargar las lecturas. Revisa tu conexión.':'Preparando las lecturas…');
+ head+='<div class="panel" style="gap:6px">'+litBadge(info)+'<b style="font-size:18px;line-height:1.3">'+esc(info.cel.n)+'</b>'+(info.commem?'<span class="small muted">Santo del día: '+esc(info.commem.n)+'</span>':'')+'</div>';
+ if(!mass) return head+loading(err?'No se pudieron cargar las lecturas. Revisa tu conexión.':'Preparando las lecturas…');
  var out=head+'<div class="stack" style="gap:8px"><button class="btn playbig" id="massBtn" data-a="massPlay"></button><div class="between small"><span class="muted" id="massProg"></span>'+(M.idx>0?'<button class="link" data-a="massRestart">Empezar desde el inicio</button>':'')+'</div></div>';
- LIT.mass.forEach(function(s){
+ mass.forEach(function(s){
   out+='<section class="stack"><h2>'+esc(s.title)+'</h2>';
   s.parts.forEach(function(p){
    var isR=!!p.ref, body;
@@ -438,10 +451,10 @@ function vBible(){
   return '<header class="row"><button class="icon-btn" data-a="bback" aria-label="Volver">'+ic('back')+'</button><h1>'+esc(IDX[U.bk-1][0]).toUpperCase()+'</h1></header><p class="muted small">'+n+' capítulos</p><div class="chgrid">'+g+'</div>'; }
  var q=U.q.trim().toLowerCase(), from=U.test==='at'?1:40, to=U.test==='at'?39:66, list=[];
  for(var i=from;i<=to;i++){ var nm=IDX[i-1][0]; if(!q||nm.toLowerCase().indexOf(q)>=0) list.push(i); }
- var lect=LIT.mass?massParts().filter(function(p){ return p.ref; }):[];
+ var lect=LIT.mass?massParts(LIT.mass).filter(function(p){ return p.ref; }):[];
  return '<header><h1>BIBLIA</h1></header>'
   +'<label class="field" for="bq">'+ic('search',18)+'<input id="bq" type="search" data-a="bq" placeholder="Buscar libro" value="'+esc(U.q)+'" autocomplete="off"></label>'
-  +(lect.length?'<div class="panel" style="gap:0"><div class="between" style="margin-bottom:6px"><span class="label ac">Lecturas de hoy</span><button class="say" data-a="tab" data-v="hoy">'+ic('play',14)+'<span>Misa</span></button></div>'+lect.map(function(p){ return '<div class="kv"><span class="muted">'+esc(p.h)+'</span><b>'+esc(p.ref)+'</b></div>'; }).join('')+'</div>':'')
+  +(lect.length?'<div class="panel" style="gap:0"><div class="between" style="margin-bottom:6px"><span class="label ac">Lecturas de hoy</span><button class="say" data-a="tab" data-v="hoy">'+ic('play',14)+'<span>Misa de hoy</span></button></div>'+lect.map(function(p){ return '<div class="kv"><span class="muted">'+esc(p.h)+'</span><b>'+esc(p.ref)+'</b></div>'; }).join('')+'</div>':'')
   +'<div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr))">'+[['at','Antiguo Testamento'],['nt','Nuevo Testamento']].map(function(x){ return '<button class="'+(U.test===x[0]?'on':'')+'" data-a="test" data-v="'+x[0]+'">'+x[1]+'</button>'; }).join('')+'</div>'
   +(list.length?'<div class="books">'+list.map(function(b){ return '<button class="book" data-a="book" data-v="'+b+'"><b>'+esc(IDX[b-1][0])+'</b><span class="small muted">'+IDX[b-1][1]+' capítulos</span></button>'; }).join('')+'</div>':'<div class="empty muted">Ningún libro coincide con “'+esc(U.q)+'”.</div>')
   +'<p class="small muted">Reina-Valera 1909 (dominio público), con ortografía actualizada. Esta edición no incluye Tobías, Judit, Sabiduría, Eclesiástico, Baruc ni 1 y 2 Macabeos.</p>';
@@ -486,7 +499,7 @@ function vMe(){
 }
 
 /* ---------- Render ---------- */
-var TABS=[['home','Inicio','home'],['rosary','Rosario','rosary'],['hoy','Misa','church'],['bible','Biblia','book'],['me','Perfil','user']];
+var TABS=[['home','Inicio','home'],['rosary','Rosario','rosary'],['hoy','Hoy','church'],['bible','Biblia','book'],['me','Perfil','user']];
 function render(){
  refreshDay();
  var nav=document.querySelector('nav.tabs');
@@ -496,7 +509,7 @@ function render(){
  $('app').innerHTML='<div class="wrap">'+v+'</div>';
  var cur=U.tab==='pray'?'home':U.tab;
  $('navIn').innerHTML=TABS.map(function(t){
-  if(t[0]==='hoy') return '<button class="hoy" data-a="tab" data-v="hoy" aria-current="'+(cur==='hoy'?'page':'false')+'"><span>'+ic('church',26,2)+'</span>Misa</button>';
+  if(t[0]==='hoy') return '<button class="hoy" data-a="tab" data-v="hoy" aria-current="'+(cur==='hoy'?'page':'false')+'"><span>'+ic('church',26,2)+'</span>Hoy</button>';
   return '<button class="'+(cur===t[0]?'on':'')+'" data-a="tab" data-v="'+t[0]+'" aria-current="'+(cur===t[0]?'page':'false')+'">'+ic(t[2],22)+t[1]+'</button>'; }).join('');
  updSay();
  if(U.tab==='rosary'){ var st=$('rstrip'), sv=$('rsvg'); if(st&&sv){ var rs=rosarySvg(rosI()); st.scrollLeft=Math.max(0,rs.x-st.clientWidth/2); } }
@@ -526,6 +539,8 @@ document.addEventListener('click',function(e){
   if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){ toast('Frase copiada'); },function(){ toast(txt,5000); }); } else toast(txt,5000); return; }
  if(a==='massPlay'){ if(M.playing) M.stop(); else M.play(M.idx); return; }
  if(a==='massFrom'){ M.play(+v); return; }
+ if(a==='mprev'||a==='mnext'){ var b0=U.mdate?new Date(U.mdate):new Date(); b0.setDate(b0.getDate()+(a==='mprev'?-1:1)); setMassDate(b0); return; }
+ if(a==='mtoday'){ setMassDate(null); return; }
  if(a==='massRestart'){ M.stop(); M.idx=0; render(); return; }
  if(a==='rset'){ R.playing=false; stopSpeak(); U.rosSet=v; render(); return; }
  if(a==='rosPlay'){ if(R.playing){ R.playing=false; stopSpeak(); updSay(); } else R.play(); return; }
@@ -553,6 +568,7 @@ document.addEventListener('submit',function(e){ if(e.target.id==='authForm'){ e.
 document.addEventListener('change',function(e){
  var a=e.target.getAttribute('data-a');
  if(a==='voice'){ S.voice=e.target.value; save(); }
+ if(a==='mdate'&&e.target.value){ var q=e.target.value.split('-'); setMassDate(new Date(+q[0],+q[1]-1,+q[2])); }
  if(a==='rate'){ S.rate=parseFloat(e.target.value)||1; save(); }
  if(a==='name'){ S.name=e.target.value.trim().slice(0,40); save(); }
 });
