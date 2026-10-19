@@ -322,19 +322,63 @@ var BOOKS={
 /* ---------- UI state ---------- */
 var U={tab:'home',hoyTab:'frase',test:'nt',q:'',confirmReset:false,rosSet:BYDAY[NOW.getDay()]};
 
-/* ---------- Voz (lectura en voz alta) ---------- */
-var TTS='speechSynthesis' in window, speaking=null;
-function voices(){ if(!TTS) return []; return speechSynthesis.getVoices().filter(function(v){ return /^es/i.test(v.lang); }); }
-function speak(text,id){
- if(!TTS){ toast('Este navegador no permite lectura en voz alta'); return; }
- if(speaking===id){ speechSynthesis.cancel(); speaking=null; updSay(); return; }
- speechSynthesis.cancel();
- var u=new SpeechSynthesisUtterance(text); u.lang='es-ES'; u.rate=S.rate;
- var vs=voices(), v=vs.filter(function(x){ return x.name===S.voice; })[0]||vs[0]; if(v){ u.voice=v; u.lang=v.lang; }
- u.onend=u.onerror=function(){ if(speaking===id){ speaking=null; updSay(); } };
- speaking=id; updSay(); speechSynthesis.speak(u);
+/* ---------- Voz (lectura en voz alta) ----------
+   Compatible con Android (Chrome) y iPhone (Safari): lee por frases cortas, arranca en el mismo toque,
+   reintenta si el motor no empezó y elige automáticamente la mejor voz en español. */
+var TTS=('speechSynthesis' in window)&&typeof SpeechSynthesisUtterance!=='undefined', speaking=null, Q=[], QI=0, gen=0, started=false, watch=null;
+window.__lumenUtt=[];
+function voices(){ if(!TTS) return []; try{ return speechSynthesis.getVoices().filter(function(v){ return /^es([-_]|$)/i.test(v.lang||''); }); }catch(e){ return []; } }
+var VPREF=['es-co','es-mx','es-us','es-419','es-es'];
+function pickVoice(){
+ var vs=voices(); if(!vs.length) return null;
+ if(S.voice){ var m=vs.filter(function(x){ return x.name===S.voice; })[0]; if(m) return m; }
+ for(var i=0;i<VPREF.length;i++){ var c=vs.filter(function(x){ return (x.lang||'').replace('_','-').toLowerCase()===VPREF[i]; });
+  if(c.length) return c.filter(function(x){ return x.localService; })[0]||c[0]; }
+ return vs.filter(function(x){ return x.localService; })[0]||vs[0];
 }
-function stopSpeak(){ if(TTS) speechSynthesis.cancel(); speaking=null; }
+function chunks(t){
+ var parts=String(t||'').replace(/\s+/g,' ').trim().match(/[^.!?;:]+[.!?;:]*/g)||[], out=[];
+ parts.forEach(function(p){ p=p.trim(); if(!p) return;
+  while(p.length>180){ var cut=p.lastIndexOf(',',180); if(cut<60) cut=p.lastIndexOf(' ',180); if(cut<1) cut=180; out.push(p.slice(0,cut+1).trim()); p=p.slice(cut+1).trim(); }
+  if(p) out.push(p); });
+ return out;
+}
+function isIOS(){ var u=navigator.userAgent||''; return /iphone|ipad|ipod/i.test(u)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1); }
+function ttsHelp(){
+ if(!TTS) return toast('Este navegador no tiene lectura en voz alta. Abre Lumen en Chrome (Android) o Safari (iPhone).',6000);
+ if(isIOS()) return toast('No se escucha: quita el modo silencio del iPhone y sube el volumen. Si sigue igual, revisa Ajustes › Accesibilidad › Contenido leído › Voces › Español.',8000);
+ toast('No se escucha: sube el volumen multimedia y revisa Ajustes › Idioma › Salida de texto a voz (motor de Google con español instalado).',8000);
+}
+function sayNext(my){
+ if(my!==gen) return;
+ if(QI>=Q.length){ speaking=null; updSay(); return; }
+ var u=new SpeechSynthesisUtterance(Q[QI]), v=pickVoice();
+ if(v){ u.voice=v; u.lang=v.lang; } else u.lang='es-ES';
+ u.rate=S.rate||1; u.pitch=1; u.volume=1;
+ u.onstart=function(){ if(my===gen) started=true; };
+ u.onend=function(){ if(my!==gen) return; started=true; QI++; sayNext(my); };
+ u.onerror=function(e){ if(my!==gen) return; var er=e&&e.error; if(er==='interrupted'||er==='canceled') return;
+  if(er==='not-allowed'||er==='audio-busy'||er==='synthesis-unavailable'||er==='language-unavailable'||er==='voice-unavailable'){ if(!started){ speaking=null; updSay(); ttsHelp(); return; } }
+  QI++; sayNext(my); };
+ window.__lumenUtt.push(u); if(window.__lumenUtt.length>40) window.__lumenUtt.shift(); // evita que el navegador descarte la frase en curso
+ try{ speechSynthesis.speak(u); if(speechSynthesis.paused) speechSynthesis.resume(); }catch(e){}
+}
+function speak(text,id){
+ if(!TTS){ ttsHelp(); return; }
+ if(speaking===id){ stopSpeak(); updSay(); return; }
+ var ss=window.speechSynthesis; gen++; var my=gen; clearTimeout(watch);
+ try{ if(ss.speaking||ss.pending) ss.cancel(); }catch(e){}
+ Q=chunks(text); QI=0; started=false; speaking=id; updSay();
+ if(!Q.length){ speaking=null; updSay(); return; }
+ sayNext(my); // en el mismo toque (requisito de iPhone)
+ watch=setTimeout(function(){ // Android a veces ignora la primera orden: reintenta una vez
+  if(my!==gen||started) return;
+  try{ ss.cancel(); }catch(e){} gen++; my=gen; QI=0; sayNext(my);
+  watch=setTimeout(function(){ if(my===gen&&!started&&!ss.speaking){ gen++; speaking=null; updSay(); ttsHelp(); } },3000);
+ },450);
+}
+function stopSpeak(){ gen++; clearTimeout(watch); if(TTS){ try{ speechSynthesis.cancel(); }catch(e){} } speaking=null; }
+if(TTS){ try{ speechSynthesis.getVoices(); }catch(e){} }
 function sayBtn(id,label){ var on=speaking===id; return '<button class="say'+(on?' on':'')+'" data-a="say" data-id="'+id+'" aria-pressed="'+on+'">'+ic(on?'stop':'speaker',16)+'<span>'+(on?'Detener':(label||'Escuchar'))+'</span></button>'; }
 function updSay(){ var bs=document.querySelectorAll('[data-a=say]'); for(var i=0;i<bs.length;i++){ var b=bs[i], on=b.getAttribute('data-id')===speaking; b.classList.toggle('on',on); b.setAttribute('aria-pressed',on); b.innerHTML=ic(on?'stop':'speaker',16)+'<span>'+(on?'Detener':(b.getAttribute('data-l')||'Escuchar'))+'</span>'; } }
 if(TTS && speechSynthesis.addEventListener) speechSynthesis.addEventListener('voiceschanged',function(){ if(U.tab==='me') render(); });
@@ -428,7 +472,7 @@ function vMe(){
   +'<div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr));background:var(--surface2)"><button class="'+(S.mode==='dark'?'on':'')+'" data-a="mode" data-v="dark">Oscuro</button><button class="'+(S.mode==='light'?'on':'')+'" data-a="mode" data-v="light">Claro</button></div>'
   +'<span class="small muted">Color de acento</span><div class="swatches">'+Object.keys(ACCENTS).map(function(k){ var c=ACCENTS[k], on=S.accent===k; return '<button class="sw'+(on?' on':'')+'" data-a="accent" data-v="'+k+'" aria-pressed="'+on+'" aria-label="'+c[0]+'"><i style="background:'+c[1]+'">'+(on?ic('check',18,3):'')+'</i>'+c[0]+'</button>'; }).join('')+'</div></div>'
   +'<div class="panel"><span class="label">Lectura en voz alta</span>'
-  +(TTS?'<label class="small muted" for="vsel">Voz</label><select class="inp" id="vsel" data-a="voice">'+(vs.length?vs.map(function(v){ return '<option value="'+esc(v.name)+'"'+(v.name===S.voice?' selected':'')+'>'+esc(v.name)+' ('+v.lang+')</option>'; }).join(''):'<option value="">Voz en español del dispositivo</option>')+'</select>'
+  +(TTS?'<label class="small muted" for="vsel">Voz</label><select class="inp" id="vsel" data-a="voice">'+'<option value="">Automática (recomendada)</option>'+(vs.length?vs.map(function(v){ return '<option value="'+esc(v.name)+'"'+(v.name===S.voice?' selected':'')+'>'+esc(v.name)+' ('+v.lang+')</option>'; }).join(''):'')+'</select>'
    +'<div class="between"><label class="small muted" for="rate">Velocidad</label><span class="small num" id="rateV">'+S.rate.toFixed(1)+'×</span></div><input type="range" id="rate" data-a="rate" min="0.6" max="1.4" step="0.1" value="'+S.rate+'">'
    +'<div>'+sayBtn('test','Probar voz')+'</div>'
    :'<p class="small muted">Este navegador no permite lectura en voz alta. Prueba con Chrome o Safari.</p>')
@@ -522,7 +566,7 @@ function render(){
  Inst.show();
  var bs=document.querySelectorAll('[data-a=say]'); for(var i=0;i<bs.length;i++){ var s=bs[i].querySelector('span'); if(s&&!bs[i].classList.contains('on')) bs[i].setAttribute('data-l',s.textContent); }
 }
-var tt; function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.hidden=false; clearTimeout(tt); tt=setTimeout(function(){ t.hidden=true; },2200); }
+var tt; function toast(m,ms){ var t=document.getElementById('toast'); t.textContent=m; t.hidden=false; clearTimeout(tt); tt=setTimeout(function(){ t.hidden=true; },ms||2200); }
 
 function sayText(id){
  if(id==='frase') return HOY.frase+'. '+HOY.fraseRef;
