@@ -73,10 +73,11 @@ p{margin:0}
 .pill svg{color:var(--accent-fg)}
 .week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}
 .week span{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-.dot{width:36px;height:36px;box-sizing:border-box;margin:0 auto;border-radius:50%;background:transparent;border:2px dashed var(--accent-fg);display:flex;align-items:center;justify-content:center;color:var(--accent-ink)}
-.dot.on{background:var(--accent);border:none}
-.dot.today{border-width:3px}
-.dot.today.on{border:none}
+.dot{width:36px;height:36px;box-sizing:border-box;margin:0 auto;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center}
+.dot svg{display:block}
+.dot.ok,.dot.sad{background:transparent}
+.dot.part{background:transparent;border:2px dashed var(--accent-fg)}
+.dot.today{outline:2px solid var(--fg);outline-offset:2px}
 
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chips.scroll{flex-wrap:nowrap;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin;scrollbar-color:var(--accent-fg) transparent;cursor:grab;-webkit-overflow-scrolling:touch}
@@ -762,8 +763,12 @@ function head(title,back){ return '<div class="row">'+(back?'<button class="icon
 function vHome(){
   var now=new Date(), hr=now.getHours(), greet=hr<12?'Buenos días':hr<19?'Buenas tardes':'Buenas noches';
   var ds=daySet(), mon=monday(now), st=streak();
-  var wk=''; for(var i=0;i<7;i++){ var d=addD(mon,i), k=dk(d), on=!!ds[k], today=k===dk(now);
-    wk+='<div><span'+(today?' style="color:var(--fg);font-weight:700"':'')+'>'+DL[i]+'</span><div class="dot'+(on?' on':'')+(today?' today':'')+'" aria-label="'+DIA[d.getDay()]+(on?': entrenaste':'')+'">'+(on?ic('check',16,3):'')+'</div></div>'; }
+  var FH='<svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="18" fill="var(--accent)"/><circle cx="12.5" cy="14" r="2.1" fill="var(--accent-ink)"/><circle cx="23.5" cy="14" r="2.1" fill="var(--accent-ink)"/><path d="M9.5 21.5c1.6 5.4 15.4 5.4 17 0" fill="none" stroke="var(--accent-ink)" stroke-width="2.6" stroke-linecap="round"/></svg>';
+  var FS='<svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="16.8" fill="var(--surface2)" stroke="var(--accent-fg)" stroke-width="2.4"/><circle cx="12.5" cy="14" r="2.1" fill="var(--accent-fg)"/><circle cx="23.5" cy="14" r="2.1" fill="var(--accent-fg)"/><path d="M10.5 27c1.6-5 13.4-5 15 0" fill="none" stroke="var(--accent-fg)" stroke-width="2.6" stroke-linecap="round"/></svg>';
+  var inProg=!!(S.w||S.pendingW), tk=dk(now);
+  var wk=''; for(var i=0;i<7;i++){ var d=addD(mon,i), k=dk(d), on=!!ds[k], today=k===tk, past=k<tk;
+    var st8=on?'ok':(today&&inProg?'part':(past?'sad':'')), lab=on?': sesión completa':(st8==='part'?': entreno en proceso':(past?': sin sesión':''));
+    wk+='<div><span'+(today?' style="color:var(--fg);font-weight:700"':'')+'>'+DL[i]+'</span><div class="dot '+st8+(today?' today':'')+'" role="img" aria-label="'+DIA[d.getDay()]+lab+'">'+(on?FH:(past&&!on?FS:''))+'</div></div>'; }
   var chips=ZONES.map(function(z){ return '<button class="chip'+(S.zones.indexOf(z)>=0?' on':'')+'" data-a="zone" data-v="'+z+'" aria-pressed="'+(S.zones.indexOf(z)>=0)+'">'+z+'</button>'; }).join('');
   var all=S.zones.length===ZONES.length;
   chips+='<button class="chip'+(all?' on':'')+'" data-a="zoneAll" aria-pressed="'+all+'">Cuerpo completo</button>';
