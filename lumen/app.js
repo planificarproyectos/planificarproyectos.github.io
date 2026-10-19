@@ -113,13 +113,21 @@ var TTS_DONE=null;
 var TTS=('speechSynthesis' in window)&&typeof SpeechSynthesisUtterance!=='undefined', speaking=null, Q=[], QI=0, gen=0, started=false, watch=null;
 window.__lumenUtt=[];
 function voices(){ if(!TTS) return []; try{ return speechSynthesis.getVoices().filter(function(v){ return /^es([-_]|$)/i.test(v.lang||''); }); }catch(e){ return []; } }
-var VPREF=['es-co','es-mx','es-us','es-419','es-es'];
+var VPREF={'es-co':12,'es-mx':11,'es-us':10,'es-419':10,'es-es':8};
+var NOVELTY=/eddy|flo\b|grandma|grandpa|reed|rocko|sandy|shelley|albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|espeak/i;
+function voiceScore(v){ var n=(v.name||'')+' '+(v.voiceURI||''), sc=VPREF[(v.lang||'').replace('_','-').toLowerCase()]||5;
+ if(/premium/i.test(n)) sc+=60; else if(/enhanced|mejorad/i.test(n)) sc+=45;
+ if(/neural|natural|online/i.test(n)) sc+=40;
+ if(/google/i.test(n)) sc+=35;
+ if(/siri/i.test(n)) sc+=30;
+ if(/compact/i.test(n)) sc-=15;
+ if(NOVELTY.test(n)) sc-=80;
+ return sc; }
+function rankedVoices(){ return voices().slice().sort(function(a,b){ return voiceScore(b)-voiceScore(a); }); }
 function pickVoice(){
- var vs=voices(); if(!vs.length) return null;
+ var vs=rankedVoices(); if(!vs.length) return null;
  if(S.voice){ var m=vs.filter(function(x){ return x.name===S.voice; })[0]; if(m) return m; }
- for(var i=0;i<VPREF.length;i++){ var c=vs.filter(function(x){ return (x.lang||'').replace('_','-').toLowerCase()===VPREF[i]; });
-  if(c.length) return c.filter(function(x){ return x.localService; })[0]||c[0]; }
- return vs.filter(function(x){ return x.localService; })[0]||vs[0];
+ return vs[0];
 }
 function chunks(t){
  var parts=String(t||'').replace(/\s+/g,' ').trim().match(/[^.!?;:]+[.!?;:]*/g)||[], out=[];
@@ -141,7 +149,7 @@ function sayNext(my){
  if(v){ u.voice=v; u.lang=v.lang; } else u.lang='es-ES';
  u.rate=S.rate||1; u.pitch=1; u.volume=1;
  u.onstart=function(){ if(my===gen) started=true; };
- u.onend=function(){ if(my!==gen) return; started=true; QI++; sayNext(my); };
+ u.onend=function(){ if(my!==gen) return; started=true; var last=Q[QI]||''; QI++; setTimeout(function(){ sayNext(my); },/[.!?]$/.test(last)?320:(/[;:]$/.test(last)?220:90)); };
  u.onerror=function(e){ if(my!==gen) return; var er=e&&e.error; if(er==='interrupted'||er==='canceled') return;
   if(er==='not-allowed'||er==='audio-busy'||er==='synthesis-unavailable'||er==='language-unavailable'||er==='voice-unavailable'){ if(!started){ speaking=null; updSay(); ttsHelp(); return; } }
   QI++; sayNext(my); };
@@ -306,7 +314,7 @@ var M={idx:0,playing:false,
  play:function(i){ var ps=massParts(); if(!ps.length) return;
   if(i>=ps.length){ M.playing=false; M.idx=0; if(!U.mdate) setDone('misa',true); updMass(); toast('Misa completa. Pueden ir en paz.'); return; }
   M.idx=i; M.playing=true; var p=ps[i];
-  speak(p.h+'. '+p.text,'misa:'+i,function(){ if(M.playing) M.play(i+1); });
+  speak(p.h+'. '+p.text,'misa:'+i,function(){ setTimeout(function(){ if(M.playing&&!speaking) M.play(i+1); },900); });
   M.playing=true; updMass();
   var el=document.querySelector('[data-part="'+i+'"]'); if(el){ if(el.tagName==='DETAILS') el.open=true; try{ el.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){} }
  },
@@ -348,7 +356,7 @@ var R={playing:false,
  play:function(){ var i=rosI(); if(i>=STEPS.length) return;
   R.playing=true; speak(stepText(STEPS[i]),'rosa:'+i,function(){ if(!R.playing) return; var k=rosI()+1; S.ros[rosKey()]=k; save();
    if(k>=STEPS.length){ R.playing=false; setDone('ros',true); toast('Rosario completado'); }
-   if(U.tab==='rosary') render(); if(R.playing) R.play(); });
+   if(U.tab==='rosary') render(); setTimeout(function(){ if(R.playing&&!speaking) R.play(); },600); });
   R.playing=true; updRos(); }
 };
 function updRos(){ var b=$('rosBtn'); if(b) b.innerHTML=R.playing?ic('pause',20)+'Pausar':ic('play',20)+'Rezar con voz'; }
@@ -485,17 +493,22 @@ function vPray(){
   +(rut?'<button class="btn'+(isDone(id)?' soft':'')+'" data-a="done" data-id="'+id+'">'+(isDone(id)?'Rezada hoy ✓':'Marcar como rezada')+'</button>':'');
 }
 
+function voiceGuide(){
+ var ios=isIOS();
+ var steps=ios?['Abre Ajustes › Accesibilidad › Contenido leído › Voces › Español.','Descarga una voz <b>Mejorada</b> o <b>Premium</b> (por ejemplo Paulina o Mónica).','Vuelve a Lumen, elígela arriba en <b>Voz</b> y toca <b>Probar voz</b>.','Si no suena nada, quita el modo silencio del iPhone.']
+  :['Abre Ajustes › Sistema › Idioma › <b>Salida de texto a voz</b>.','Elige el motor <b>Servicios de voz de Google</b>.','En ⚙️ › Instalar datos de voz › Español, descarga la voz de mayor calidad.','Vuelve a Lumen, elige una voz <b>Google español</b> arriba y toca <b>Probar voz</b>.'];
+ return '<details class="guide"><summary>¿La voz suena robótica? Mejórala en '+(ios?'tu iPhone':'tu Android')+'</summary><ol>'+steps.map(function(x){ return '<li>'+x+'</li>'; }).join('')+'</ol><p class="small muted">Consejo: una velocidad de 0.9× suena más natural.</p></details>'; }
 function vMe(){
- var vs=voices();
+ var vs=rankedVoices();
  return '<header><h1>PERFIL</h1></header>'
   +'<div class="panel"><label class="label" for="nm">Tu nombre</label><input class="inp" id="nm" data-a="name" value="'+esc(S.name)+'" placeholder="¿Cómo te llamas?" autocomplete="given-name"></div>'
   +'<div class="panel"><span class="label">Apariencia</span>'
   +'<div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr));background:var(--surface2)"><button class="'+(S.mode==='dark'?'on':'')+'" data-a="mode" data-v="dark">Oscuro</button><button class="'+(S.mode==='light'?'on':'')+'" data-a="mode" data-v="light">Claro</button></div>'
   +'<span class="small muted">Color de acento</span><div class="swatches">'+Object.keys(ACCENTS).map(function(k){ var c=ACCENTS[k], on=S.accent===k; return '<button class="sw'+(on?' on':'')+'" data-a="accent" data-v="'+k+'" aria-pressed="'+on+'" aria-label="'+c[0]+'"><i style="background:'+c[1]+'">'+(on?ic('check',18,3):'')+'</i>'+c[0]+'</button>'; }).join('')+'</div></div>'
   +'<div class="panel"><span class="label">Lectura en voz alta</span>'
-  +(TTS?'<label class="small muted" for="vsel">Voz</label><select class="inp" id="vsel" data-a="voice"><option value="">Automática (recomendada)</option>'+vs.map(function(v){ return '<option value="'+esc(v.name)+'"'+(v.name===S.voice?' selected':'')+'>'+esc(v.name)+' ('+v.lang+')</option>'; }).join('')+'</select>'
+  +(TTS?'<label class="small muted" for="vsel">Voz</label><select class="inp" id="vsel" data-a="voice"><option value="">Automática (recomendada)</option>'+vs.map(function(v,k){ return '<option value="'+esc(v.name)+'"'+(v.name===S.voice?' selected':'')+'>'+esc(v.name)+' ('+v.lang+')'+(k===0?' · mejor disponible':'')+'</option>'; }).join('')+'</select>'
    +'<div class="between"><label class="small muted" for="rate">Velocidad</label><span class="small num" id="rateV">'+(+S.rate||1).toFixed(1)+'×</span></div><input type="range" id="rate" data-a="rate" min="0.6" max="1.4" step="0.1" value="'+(S.rate||1)+'">'
-   +'<div>'+sayBtn('test','Probar voz')+'</div>'
+   +'<div>'+sayBtn('test','Probar voz')+'</div>'+voiceGuide()
    :'<p class="small muted">Este navegador no permite lectura en voz alta. Usa Chrome (Android) o Safari (iPhone).</p>')+'</div>'
   +'<div class="panel"><span class="label">Instalar como app</span>'+(Inst.standalone()?'<p class="small muted">Lumen ya está instalada en este dispositivo.</p>':Inst.can()?Inst.body(false):'<p class="small muted">En Android abre esta página en Chrome y toca ⋮ › <b>Instalar app</b> o <b>Agregar a la pantalla principal</b>. En iPhone abre en Safari, toca Compartir › <b>Agregar a pantalla de inicio</b>.</p>')+'</div>'
   +(Cloud.user?'<div class="panel"><span class="label">Cuenta</span><p class="small" style="overflow-wrap:anywhere">'+esc(Cloud.user.email)+'</p><div class="grid2"><button class="btn soft" data-a="resetPass">Cambiar contraseña</button><button class="btn soft" data-a="logout">Cerrar sesión</button></div><p class="small muted">Es la misma cuenta de Mind Focus y PowerFit.</p></div>':'')
