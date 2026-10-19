@@ -363,6 +363,14 @@ var RECS=[
 function itemOf(id){ var e=EX[id]; return {id:id,s:e.s,r:e.r,t:e.t}; }
 function owned(){ return S.equip||['mancuernas','tapete']; }
 function avail(e){ var o=owned(); return e.req.every(function(x){ return x==='ninguno'||x==='tapete'||o.indexOf(x)>=0; }); }
+function reqTools(e){ var r=e.req.filter(function(x){return x!=='ninguno'&&x!=='tapete';}); return r.length?r:(e.eq==='tapete'?['tapete']:[]); }
+function usesTool(e,t){ return t==='tapete'?e.eq==='tapete'||e.req.indexOf('tapete')>=0:e.req.indexOf(t)>=0; }
+function toolMatch(e){ return S.tools.some(function(t){ return usesTool(e,t); }); }
+function toolLabel(e){ var r=reqTools(e); var l=r.length?r.map(function(x){return EQ[x];}).join(' + '):'Sin equipo';
+  if(S.tools.length){ var have=owned().concat(S.tools), miss=reqTools(e).filter(function(x){return have.indexOf(x)<0;}); if(miss.length) l+=' · te falta '+miss.map(function(x){return EQ[x];}).join(' y '); }
+  return l; }
+function toolBar(){ return '<div class="stack" style="gap:6px"><div class="between"><span class="small muted">Usar ahora (accesorio)</span>'+(S.tools.length?'<button class="link" data-a="toolClear" style="min-height:28px">Limpiar</button>':'<span></span>')+'</div>'+
+  '<div class="chips scroll" id="toolchips">'+EQ_OPT.map(function(t){ var on=S.tools.indexOf(t)>=0; return '<button class="chip sm'+(on?' on':'')+'" data-a="tool" data-v="'+t+'" aria-pressed="'+on+'">'+EQ[t]+'</button>'; }).join('')+'</div></div>'; }
 function adapt(r){
   var used={}, items=[], miss=0;
   r.items.forEach(function(it){ var e=EX[it.id];
@@ -609,7 +617,7 @@ function addD(d,n){ var x=new Date(d); x.setDate(x.getDate()+n); return x; }
 function mmss(sec){ sec=Math.max(0,Math.round(sec)); return Math.floor(sec/60)+':'+pad(sec%60); }
 
 /* ---------- Estado ---------- */
-var S={view:'home',prev:'home',zones:[],sessions:[],routines:[],detail:null,builder:null,bZone:'Todos',bQ:'',libZone:'Todos',ex:null,
+var S={view:'home',prev:'home',zones:[],sessions:[],routines:[],detail:null,builder:null,bZone:'Todos',bQ:'',libZone:'Todos',tools:[],libQ:'',ex:null,
   period:'week',pOff:0,w:null,last:null,ask:null,local:true};
 var LK='homefit:v1';
 
@@ -844,30 +852,41 @@ function vBuilder(){
   return '<div class="wrap">'+head(b.id?'Editar rutina':'Mi rutina',true)+
    '<label class="field" for="bname">'+ic('edit',18)+'<input id="bname" type="text" placeholder="Nombre de la rutina" value="'+esc(b.n)+'" maxlength="40"></label>'+
    '<label class="field" for="bq">'+ic('search',18)+'<input id="bq" type="text" placeholder="Buscar ejercicio" value="'+esc(S.bQ)+'"></label>'+
-   '<div class="chips scroll">'+zc+'</div>'+
+   toolBar()+'<div class="chips scroll">'+zc+'</div>'+
    '<div class="stack" style="gap:8px" id="blib"></div>'+
    '<section class="panel"><div class="between"><h2 style="font-size:20px">Tu rutina ('+b.items.length+')</h2><span class="muted small num">'+(b.items.length?'≈ '+estMin(b.items)+' min':'')+'</span></div><div class="sel">'+sel+'</div></section>'+
    '<div class="sticky btns"><button class="btn soft" data-a="saveB"'+(b.items.length?'':' disabled')+'>Guardar</button><button class="btn" data-a="startB"'+(b.items.length?'':' disabled')+'>'+ic('play',16)+'Empezar</button></div></div>';
 }
+function syncTools(){
+  var bar=document.getElementById('toolchips'); if(!bar){ render(); return; }
+  var host=bar.parentNode; var tmp=document.createElement('div'); tmp.innerHTML=toolBar(); var sc=bar.scrollLeft;
+  host.parentNode.replaceChild(tmp.firstChild,host); var nb=document.getElementById('toolchips'); if(nb) nb.scrollLeft=sc;
+  if(S.view==='builder') renderBLib(); else if(S.view==='lib'){ var g=document.getElementById('libgrid'); if(g){ g.innerHTML=libGrid(); setupCanvases(); } }
+}
 function renderBLib(){
   var box=document.getElementById('blib'); if(!box) return;
   var q=S.bQ.trim().toLowerCase(), ids=S.builder.items.map(function(i){return i.id;});
-  var list=EX_LIST.filter(function(e){ return avail(e)&&(S.bZone==='Todos'||e.z.indexOf(S.bZone)>=0)&&(!q||e.n.toLowerCase().indexOf(q)>=0); });
+  var list=EX_LIST.filter(function(e){ return (S.tools.length?toolMatch(e):avail(e))&&(S.bZone==='Todos'||e.z.indexOf(S.bZone)>=0)&&(!q||e.n.toLowerCase().indexOf(q)>=0); });
   box.innerHTML=list.length?list.map(function(e){ var on=ids.indexOf(e.id)>=0;
-    return '<div class="exrow">'+fig(e,'mini')+'<div class="grow"><b>'+esc(e.n)+'</b><span class="tag">'+EQ[e.eq]+' · '+e.z[0]+'</span></div>'+
+    return '<div class="exrow">'+fig(e,'mini')+'<div class="grow"><b>'+esc(e.n)+'</b><span class="tag">'+toolLabel(e)+' · '+e.z[0]+'</span></div>'+
       '<button class="check'+(on?' on':'')+'" data-a="tog" data-v="'+e.id+'" aria-pressed="'+on+'" aria-label="'+(on?'Quitar ':'Agregar ')+esc(e.n)+'">'+ic(on?'check':'plus',16,2.6)+'</button></div>'; }).join('')
-    :'<span class="muted small">No hay ejercicios con ese nombre.</span>';
+    :'<span class="muted small">No hay ejercicios con ese filtro.</span>';
   setupCanvases();
 }
 
 /* Biblioteca */
+function libList(){ var q=S.libQ.trim().toLowerCase(), mine=!S.libAll;
+  return EX_LIST.filter(function(e){ return (S.libZone==='Todos'||e.z.indexOf(S.libZone)>=0)&&(S.tools.length?toolMatch(e):(!mine||avail(e)))&&(!q||e.n.toLowerCase().indexOf(q)>=0); }); }
+function libGrid(){ var list=libList(), mine=!S.libAll;
+  return '<div class="between"><span class="small muted">'+list.length+(list.length===1?' ejercicio':' ejercicios')+(S.tools.length?' con '+S.tools.map(function(t){return EQ[t].toLowerCase();}).join(' o '):(mine?' con tu equipo':''))+'</span>'+
+   (S.tools.length?'<button class="chip sm on" data-a="libBuild">Armar rutina con estos</button>':'<button class="chip sm'+(mine?' on':'')+'" data-a="libMine" aria-pressed="'+mine+'">Solo mi equipo</button>')+'</div>'+
+   '<div class="grid2">'+list.map(function(e){
+    return '<button class="libcard" data-a="openEx" data-v="'+e.id+'">'+fig(e)+'<b>'+esc(e.n)+'</b><span class="tag">'+toolLabel(e)+((!S.tools.length&&!avail(e))?' · no lo tienes':'')+'</span></button>'; }).join('')+(list.length?'':'<span class="muted small">No hay ejercicios con este filtro.</span>')+'</div>'; }
 function vLib(){
   var zc=['Todos'].concat(ZONES).map(function(z){ return '<button class="chip sm'+(S.libZone===z?' on':'')+'" data-a="libZone" data-v="'+z+'">'+z+'</button>'; }).join('');
-  var mine=!S.libAll, list=EX_LIST.filter(function(e){ return (S.libZone==='Todos'||e.z.indexOf(S.libZone)>=0)&&(!mine||avail(e)); });
-  return '<div class="wrap">'+head('Ejercicios')+'<p class="muted">'+EX_LIST.length+' ejercicios para casa. Toca uno para ver cómo se hace.</p>'+
-   '<div class="between"><span class="small muted">'+(mine?list.length+' con tu equipo':'Todos los ejercicios')+'</span><button class="chip sm'+(mine?' on':'')+'" data-a="libMine" aria-pressed="'+mine+'">Solo mi equipo</button></div>'+
-   '<div class="chips scroll">'+zc+'</div><div class="grid2">'+list.map(function(e){
-    return '<button class="libcard" data-a="openEx" data-v="'+e.id+'">'+fig(e)+'<b>'+esc(e.n)+'</b><span class="tag">'+EQ[e.eq]+(avail(e)?'':' · no lo tienes')+'</span></button>'; }).join('')+(list.length?'':'<span class="muted small">No hay ejercicios de esta zona con tu equipo.</span>')+'</div></div>';
+  return '<div class="wrap">'+head('Ejercicios')+
+   '<label class="field" for="lq">'+ic('search',18)+'<input id="lq" type="text" placeholder="Buscar ejercicio" value="'+esc(S.libQ)+'"></label>'+
+   toolBar()+'<div class="chips scroll">'+zc+'</div><div class="stack" style="gap:10px" id="libgrid">'+libGrid()+'</div></div>';
 }
 function vEx(){
   var e=EX[S.ex];
@@ -1251,6 +1270,9 @@ var A={
     Store.saveRoutines(); S.builder=null; S.detail=r; toast('Rutina guardada'); S.prev='routines'; S.view='detail'; render(); },
   startB:function(){ var b=S.builder; if(!b.items.length) return; startW({n:(b.n||'').trim()||'Rutina libre',items:b.items}); },
   libZone:function(v){ S.libZone=v; render(); },
+  tool:function(v){ var i=S.tools.indexOf(v); if(i>=0) S.tools.splice(i,1); else S.tools.push(v); syncTools(); },
+  toolClear:function(){ S.tools=[]; syncTools(); },
+  libBuild:function(){ S.builder={id:null,n:'',items:[]}; S.bQ=''; S.bZone=S.libZone; go('builder'); },
   openEx:function(v){ S.ex=v; go('ex'); },
   addToB:function(v){ if(!S.builder) S.builder={id:null,n:'',items:[]};
     if(!S.builder.items.some(function(i){return i.id===v;})) S.builder.items.push(itemOf(v));
@@ -1321,6 +1343,7 @@ document.addEventListener('input',function(ev){
   if(ev.target.id==='seM'&&S.se) S.se.sec=(+ev.target.value||1)*60;
   if(ev.target.id==='admQ'){ S.admQ=ev.target.value; var pos=ev.target.selectionStart; keep(render); var i=document.getElementById('admQ'); if(i){ i.focus(); try{i.setSelectionRange(pos,pos);}catch(e){} } }
   if(ev.target.id==='bq'){ S.bQ=ev.target.value; renderBLib(); }
+  if(ev.target.id==='lq'){ S.libQ=ev.target.value; var g=document.getElementById('libgrid'); if(g){ g.innerHTML=libGrid(); setupCanvases(); } }
 });
 document.addEventListener('keydown',function(ev){
   if(S.view!=='work'||!S.w||S.w.phase!=='work') return;
