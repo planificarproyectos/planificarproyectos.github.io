@@ -10,7 +10,7 @@ var IP={
  book:'M5 4h12a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2zM5 18a2 2 0 0 1 2-2h12M12 7v6M9.5 9.5h5', user:'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0',
  check:'M5 12l5 5 9-10', back:'M15 6l-6 6 6 6', undo:'M4 4v6h6M5 15a8 8 0 1 0 2-8L4 10', speaker:'M4 9h4l5-4v14l-5-4H4zM16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12',
  stop:'M7 7h10v10H7z', pause:'M8 5v14M16 5v14', search:'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4', down:'M6 9l6 6 6-6',
- chevR:'M9 6l6 6-6 6', chevL:'M15 6l-6 6 6 6', copy:'M8 8h12v12H8zM4 16V4h12'
+ sun:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4', chevR:'M9 6l6 6-6 6', chevL:'M15 6l-6 6 6 6', copy:'M8 8h12v12H8zM4 16V4h12'
 };
 function ic(n,s,w){ s=s||20; w=w||2;
  if(n==='play') return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>';
@@ -379,24 +379,30 @@ var LCOL={green:'#3E9B4F',purple:'#7A4FC0',white:'#F2F2EE',red:'#D23B3B',rose:'#
 function litBadge(info){ return '<span class="row small" style="gap:8px"><i class="ldot" style="background:'+(LCOL[info.cel.c]||'#999')+'"></i><span class="muted">'+esc(info.colorName)+' · '+esc(info.seasonName||'')+' · Ciclo '+info.cycle+(info.sunday?'':' · Año '+info.wcyc)+'</span></span>'; }
 function loading(t){ return '<div class="panel"><p class="muted">'+(LIT.err?'No se pudieron cargar los datos. Revisa tu conexión y vuelve a abrir Lumen.':(t||'Cargando…'))+'</p></div>'; }
 
+function ring(n,tot){ var r=44, c=2*Math.PI*r, f=tot?n/tot:0;
+ return '<svg width="112" height="112" viewBox="0 0 112 112" role="img" aria-label="'+n+' de '+tot+' oraciones hoy"><circle cx="56" cy="56" r="'+r+'" fill="none" stroke="var(--surface2)" stroke-width="10"/>'
+  +'<circle cx="56" cy="56" r="'+r+'" fill="none" stroke="var(--accent)" stroke-width="10" stroke-linecap="round" stroke-dasharray="'+(c*f).toFixed(1)+' '+c.toFixed(1)+'" transform="rotate(-90 56 56)"/>'
+  +'<text x="56" y="56" text-anchor="middle" font-family="Barlow Condensed,Arial Narrow,sans-serif" font-weight="700" font-size="34" fill="var(--fg)">'+n+'<tspan font-size="18" fill="var(--muted)">/'+tot+'</tspan></text>'
+  +'<text x="56" y="76" text-anchor="middle" font-size="11" font-weight="700" fill="var(--muted)" letter-spacing="1">HOY</text></svg>'; }
 function vHome(){
  var info=LIT.info, dn=doneToday().length, set=BYDAY[new Date().getDay()], ri=S.ros[TODAY+':'+set]||0, dec=Math.max(0,Math.min(5,Math.floor((ri-6)/12)+(ri>=STEPS.length?1:0)));
  var wk=''; for(var i=6;i>=0;i--){ var d=new Date(); d.setDate(d.getDate()-i); var on=(S.done[dkey(d)]||[]).length>0;
   wk+='<div><span'+(i===0?' style="color:var(--fg);font-weight:700"':'')+'>'+'DLMMJVS'.charAt(d.getDay())+'</span><i class="dot'+(on?' on':'')+(i===0?' today':'')+'" style="display:block"></i></div>'; }
- var fr=LIT.frase;
- return '<header class="between"><span class="row" style="gap:8px">'+logo(30)+'<span style="font-family:var(--f-display);font-weight:700;font-size:24px;letter-spacing:2px">LU<span style="color:var(--accent-fg)">MEN</span></span></span></header>'
-  +'<div class="stack" style="gap:4px"><span class="small muted">'+longDate(NOW)+'</span><h1>'+greet()+(S.name?', '+esc(S.name):'')+'</h1></div>'
-  +(info?'<div class="panel" style="gap:6px">'+litBadge(info)+'<b style="font-size:17px;line-height:1.3">'+esc(info.cel.n)+'</b>'+(info.commem?'<span class="small muted">Santo del día: '+esc(info.commem.n)+'</span>':'')+'</div>':'')
-  +'<button class="hero" data-a="tab" data-v="hoy"><span class="stack" style="gap:6px"><span class="k">Misa de hoy</span><h3>Escucha la Misa</h3><span class="small" style="font-weight:500">Lecturas, Salmo y Evangelio del día</span></span><span class="go">'+ic('play',20)+'</span></button>'
-  +'<div class="panel"><div class="between"><span class="label ac">Frase del día</span>'+(fr?sayBtn('frase'):'')+'</div>'+(fr?'<p style="font-family:var(--f-display);font-weight:600;font-size:24px;line-height:1.15">'+esc(fr.t)+'</p><div class="between"><span class="ref">'+esc(fr.ref)+'</span><button class="say" data-a="copy">'+ic('copy',16)+'<span>Copiar</span></button></div>':'<p class="muted">Cargando el Evangelio de hoy…</p>')+'</div>'
-  +'<div class="grid2"><div class="tile"><span class="label">Racha de oración</span><span class="row" style="gap:6px;align-items:baseline"><b class="big num">'+streak()+'</b><span class="small muted">días</span></span></div>'
-  +'<div class="tile"><span class="label">Oraciones hoy</span><span class="row" style="gap:6px;align-items:baseline"><b class="big num">'+dn+'</b><span class="small muted">de '+RUT.length+'</span></span></div></div>'
-  +'<button class="hero alt" data-a="tab" data-v="rosary"><span class="stack" style="gap:6px"><span class="k">Santo Rosario de hoy</span><h3>Misterios '+MYS[set][0]+'</h3><span class="small" style="font-weight:500">'+(ri>=STEPS.length?'Rezado hoy':dec+' de 5 decenas')+'</span></span><span class="go">'+ic('play',20)+'</span></button>'
-  +'<div class="week">'+wk+'</div>'
+ var fr=LIT.frase, st=streak(), next=RUT.filter(function(r){ return !isDone(r[0]); })[0];
+ return '<header class="between"><span class="row" style="gap:8px">'+logo(30)+'<span style="font-family:var(--f-display);font-weight:700;font-size:24px;letter-spacing:2px">LU<span style="color:var(--accent-fg)">MEN</span></span></span><span class="small muted">'+longDate(NOW)+'</span></header>'
+  +'<div class="stack" style="gap:6px"><h1>'+greet()+(S.name?',<br>'+esc(S.name):'')+'</h1>'+(info?litBadge(info):'')+'</div>'
+  +(info?'<div class="daycard"><span class="lbar" style="background:'+(LCOL[info.cel.c]||'#999')+'"></span><div class="stack" style="gap:4px;min-width:0"><span class="label">Hoy celebramos</span><b>'+esc(info.cel.n)+'</b>'+(info.commem?'<span class="small muted">Santo del día: '+esc(info.commem.n)+'</span>':'')+'</div></div>':'')
+  +'<div class="quote"><div class="between"><span class="label ac">Frase del día</span>'+(fr?sayBtn('frase'):'')+'</div>'+(fr?'<p>'+esc(fr.t)+'</p><div class="between"><span class="ref">'+esc(fr.ref)+'</span><button class="say" data-a="copy">'+ic('copy',16)+'<span>Copiar</span></button></div>':'<p class="muted" style="font-size:18px">Cargando el Evangelio de hoy…</p>')+'</div>'
+  +'<div class="panel prog"><div class="row" style="gap:16px;align-items:center">'+ring(dn,RUT.length)
+  +'<div class="stack" style="gap:6px;flex:1;min-width:0"><span class="label">Tu progreso</span><span class="row" style="gap:6px;align-items:baseline"><b class="big num">'+st+'</b><span class="small muted">'+(st===1?'día seguido':'días seguidos')+'</span></span>'
+  +(next?'<button class="nextbtn" data-a="open" data-v="'+next[0]+'"><span class="small muted">Siguiente:</span> <b>'+esc(rutName(next[0]))+'</b>'+ic('chevR',16)+'</button>':'<span class="small" style="color:var(--accent-fg);font-weight:700">¡Rutina completa! Gloria a Dios.</span>')+'</div></div>'
+  +'<div class="week">'+wk+'</div></div>'
+  +'<div class="grid2"><button class="qa" data-a="tab" data-v="misa"><span class="qi">'+ic('church',22)+'</span><b>Misa de hoy</b><span class="small muted">'+(isDone('misa')?'Escuchada ✓':'Lecturas y Evangelio')+'</span></button>'
+  +'<button class="qa" data-a="tab" data-v="rosary"><span class="qi">'+ic('rosary',22)+'</span><b>Santo Rosario</b><span class="small muted">'+(ri>=STEPS.length?'Rezado ✓':'Misterios '+MYS[set][0]+' · '+dec+'/5')+'</span></button></div>'
   +'<section class="stack"><div class="between"><h2>Rutina de hoy</h2><span class="small muted num">'+dn+'/'+RUT.length+'</span></div>'
-  +RUT.map(function(r){ var on=isDone(r[0]); return '<div class="item"><span class="t">'+r[1]+'</span><button class="grow linkrow" data-a="open" data-v="'+r[0]+'"><b>'+esc(rutName(r[0]))+'</b><span class="small muted">'+r[3]+'</span></button><button class="check'+(on?' on':'')+'" data-a="done" data-id="'+r[0]+'" aria-pressed="'+on+'" aria-label="'+(on?'Desmarcar ':'Marcar ')+esc(rutName(r[0]))+'">'+ic('check',16,3)+'</button></div>'; }).join('')
+  +RUT.map(function(r){ var on=isDone(r[0]); return '<div class="item'+(on?' done':'')+'"><span class="t">'+r[1]+'</span><button class="grow linkrow" data-a="open" data-v="'+r[0]+'"><b>'+esc(rutName(r[0]))+'</b><span class="small muted">'+r[3]+'</span></button><button class="check'+(on?' on':'')+'" data-a="done" data-id="'+r[0]+'" aria-pressed="'+on+'" aria-label="'+(on?'Desmarcar ':'Marcar ')+esc(rutName(r[0]))+'">'+ic('check',16,3)+'</button></div>'; }).join('')
   +'</section>'
-  +'<section class="stack"><h2>Oraciones</h2><div class="chips wrap">'
+  +'<section class="stack"><h2>Oraciones</h2><div class="chips cwrap">'
   +['pn','am','gl','credo','salve','ag','contri','esp'].map(function(k){ return '<button class="chip" data-a="open" data-v="'+k+'">'+PRAY[k].t+'</button>'; }).join('')+'</div></section>';
 }
 
@@ -454,7 +460,7 @@ function vBible(){
  var lect=LIT.mass?massParts(LIT.mass).filter(function(p){ return p.ref; }):[];
  return '<header><h1>BIBLIA</h1></header>'
   +'<label class="field" for="bq">'+ic('search',18)+'<input id="bq" type="search" data-a="bq" placeholder="Buscar libro" value="'+esc(U.q)+'" autocomplete="off"></label>'
-  +(lect.length?'<div class="panel" style="gap:0"><div class="between" style="margin-bottom:6px"><span class="label ac">Lecturas de hoy</span><button class="say" data-a="tab" data-v="hoy">'+ic('play',14)+'<span>Misa de hoy</span></button></div>'+lect.map(function(p){ return '<div class="kv"><span class="muted">'+esc(p.h)+'</span><b>'+esc(p.ref)+'</b></div>'; }).join('')+'</div>':'')
+  +(lect.length?'<div class="panel" style="gap:0"><div class="between" style="margin-bottom:6px"><span class="label ac">Lecturas de hoy</span><button class="say" data-a="tab" data-v="misa">'+ic('play',14)+'<span>Misa de hoy</span></button></div>'+lect.map(function(p){ return '<div class="kv"><span class="muted">'+esc(p.h)+'</span><b>'+esc(p.ref)+'</b></div>'; }).join('')+'</div>':'')
   +'<div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr))">'+[['at','Antiguo Testamento'],['nt','Nuevo Testamento']].map(function(x){ return '<button class="'+(U.test===x[0]?'on':'')+'" data-a="test" data-v="'+x[0]+'">'+x[1]+'</button>'; }).join('')+'</div>'
   +(list.length?'<div class="books">'+list.map(function(b){ return '<button class="book" data-a="book" data-v="'+b+'"><b>'+esc(IDX[b-1][0])+'</b><span class="small muted">'+IDX[b-1][1]+' capítulos</span></button>'; }).join('')+'</div>':'<div class="empty muted">Ningún libro coincide con “'+esc(U.q)+'”.</div>')
   +'<p class="small muted">Reina-Valera 1909 (dominio público), con ortografía actualizada. Esta edición no incluye Tobías, Judit, Sabiduría, Eclesiástico, Baruc ni 1 y 2 Macabeos.</p>';
@@ -499,17 +505,17 @@ function vMe(){
 }
 
 /* ---------- Render ---------- */
-var TABS=[['home','Inicio','home'],['rosary','Rosario','rosary'],['hoy','Hoy','church'],['bible','Biblia','book'],['me','Perfil','user']];
+var TABS=[['misa','Misa','church'],['rosary','Rosario','rosary'],['home','Hoy','sun'],['bible','Biblia','book'],['me','Perfil','user']];
 function render(){
  refreshDay();
  var nav=document.querySelector('nav.tabs');
  if(needAuth()||Cloud.noAccess){ nav.hidden=true; $('app').innerHTML='<div class="wrap" style="padding-bottom:24px">'+(Cloud.noAccess?vNoAccess():vAuth())+'</div>'; Inst.show(); return; }
  nav.hidden=false;
- var v={home:vHome,rosary:vRosary,hoy:vHoy,bible:vBible,me:vMe,pray:vPray}[U.tab]();
+ var v={home:vHome,rosary:vRosary,misa:vHoy,bible:vBible,me:vMe,pray:vPray}[U.tab]();
  $('app').innerHTML='<div class="wrap">'+v+'</div>';
  var cur=U.tab==='pray'?'home':U.tab;
  $('navIn').innerHTML=TABS.map(function(t){
-  if(t[0]==='hoy') return '<button class="hoy" data-a="tab" data-v="hoy" aria-current="'+(cur==='hoy'?'page':'false')+'"><span>'+ic('church',26,2)+'</span>Hoy</button>';
+  if(t[0]==='home') return '<button class="hoy'+(cur==='home'?' on':'')+'" data-a="tab" data-v="home" aria-current="'+(cur==='home'?'page':'false')+'"><span>'+ic('sun',26,2.2)+'</span>Hoy</button>';
   return '<button class="'+(cur===t[0]?'on':'')+'" data-a="tab" data-v="'+t[0]+'" aria-current="'+(cur===t[0]?'page':'false')+'">'+ic(t[2],22)+t[1]+'</button>'; }).join('');
  updSay();
  if(U.tab==='rosary'){ var st=$('rstrip'), sv=$('rsvg'); if(st&&sv){ var rs=rosarySvg(rosI()); st.scrollLeft=Math.max(0,rs.x-st.clientWidth/2); } }
@@ -533,7 +539,7 @@ document.addEventListener('click',function(e){
  if(a==='tab'){ if(v==='bible'&&U.tab==='bible'){ U.bk=null; U.ch=null; } go(v); return; }
  if(a==='say'){ var id=el.getAttribute('data-id'); speak(sayText(id),id); return; }
  if(a==='done'){ var id2=el.getAttribute('data-id'); setDone(id2,!isDone(id2)); render(); return; }
- if(a==='open'){ if(v==='misa'){ go('hoy'); return; } if(v==='ros'){ go('rosary'); return; } U.pid=v; go('pray'); return; }
+ if(a==='open'){ if(v==='misa'){ go('misa'); return; } if(v==='ros'){ go('rosary'); return; } U.pid=v; go('pray'); return; }
  if(a==='pback'){ go('home'); return; }
  if(a==='copy'){ if(!LIT.frase) return; var txt=LIT.frase.t+' ('+LIT.frase.ref+')';
   if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){ toast('Frase copiada'); },function(){ toast(txt,5000); }); } else toast(txt,5000); return; }
