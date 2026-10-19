@@ -417,7 +417,7 @@ var R={playing:false,
    if(U.tab==='rosary') render(); setTimeout(function(){ if(R.playing&&!speaking) R.play(); },600); });
   R.playing=true; updRos(); }
 };
-function updRos(){ var b=$('rosBtn'); if(b) b.innerHTML=R.playing?ic('pause',20)+'Pausar':ic('play',20)+'Rezar con voz'; }
+function updRos(){ var b=$('rosBtn'); if(b) b.innerHTML=R.playing?ic('pause',22)+'Pausar':ic('play',22)+(rosI()>0?'Continuar el Rosario':'Rezar el Rosario'); }
 function rosarySvg(cur){
  var pts=[], x=26, G=19;
  function add(id,type,dx){ x+=dx; pts.push({id:id,t:type,x:x}); }
@@ -526,12 +526,14 @@ function vRosary(){
  var strip='<div class="rstrip" id="rstrip">'+rs.svg+'</div>';
  if(i>=STEPS.length) return head+strip+'<div class="empty"><span class="big">Amén</span><h3 style="font-size:24px">Rosario completado</h3><p class="muted small">Misterios '+set[0]+' · '+longDate(NOW)+'</p><button class="btn ghost" data-a="rreset">Rezar de nuevo</button></div>';
  var s=STEPS[i], mys=s.d!=null?ORD[s.d]+' misterio':(s.k==='salve'?'Final':'Oraciones iniciales'), myst=s.d!=null?set[1][s.d]:(s.k==='salve'?'Salve y despedida':'Misterios '+set[0]);
- var cnt=s.k==='am'?'<div class="counter"><b class="num">'+s.n+'</b><span>/ '+(s.d!=null?10:3)+'</span></div>':'<div class="counter"><b style="font-size:48px">'+stepTitle(s).toUpperCase()+'</b></div>';
+ var cnt=s.k==='am'?'<div class="counter"><b class="num">'+s.n+'</b><span>/ '+(s.d!=null?10:3)+'</span></div>':'<div class="counter"><b style="font-size:38px;text-align:center">'+stepTitle(s).toUpperCase()+'</b></div>';
  return head
   +'<div class="panel"><span class="label ac">'+set[0]+' · '+mys+'</span><h3 style="font-size:26px">'+esc(myst)+'</h3></div>'
+  +'<div class="stack" style="gap:8px"><div class="row" style="gap:8px"><button class="btn playbig" id="rosBtn" data-a="rosPlay" style="flex:1"></button><button class="icon-btn lockbtn" data-a="pocket" aria-label="Modo bolsillo: bloquear pantalla">'+ic('lock',24)+'</button></div>'
+  +'<div class="between small"><span class="muted">Cuenta '+(i+1)+' de '+STEPS.length+'</span>'+(i>0?'<button class="link" data-a="rosRestart">Empezar desde el inicio</button>':'')+'</div></div>'
   +strip
-  +'<div class="stack" style="align-items:center;gap:2px">'+cnt+'<span class="label">'+(s.k==='am'?'Ave María':'Cuenta '+(i+1)+' de '+STEPS.length)+'</span></div>'
-  +'<div class="prayer"><p>'+fmt(stepText(s))+'</p><div class="between">'+sayBtn('ros-'+i)+'<span class="row" style="gap:6px"><button class="say" id="rosBtn" data-a="rosPlay"></button><button class="say" data-a="pocket" aria-label="Modo bolsillo">'+ic('lock',16)+'</button></span></div></div>'
+  +'<div class="stack" style="align-items:center;gap:2px">'+cnt+(s.k==='am'?'<span class="label">Ave María</span>':'')+'</div>'
+  +'<div class="prayer"><p>'+fmt(stepText(s))+'</p></div>'
   +'<div class="ctl"><button class="icon-btn" data-a="rprev" aria-label="Cuenta anterior">'+ic('undo',22)+'</button><button class="btn" data-a="rnext">Siguiente cuenta</button></div>';
 }
 
@@ -660,6 +662,7 @@ document.addEventListener('click',function(e){
   var i=rosI(); i=a==='rnext'?Math.min(STEPS.length,i+1):Math.max(0,i-1); S.ros[rosKey()]=i;
   if(i>=STEPS.length){ setDone('ros',true); toast('Rosario completado'); }
   save(); var wasPlaying=R.playing; R.playing=false; stopSpeak(); render(); if(wasPlaying&&i<STEPS.length) R.play(); return; }
+ if(a==='rosRestart'){ R.playing=false; stopSpeak(); S.ros[rosKey()]=0; save(); render(); return; }
  if(a==='rreset'){ S.ros[rosKey()]=0; save(); render(); return; }
  if(a==='book'){ U.bk=+v; U.ch=null; render(); window.scrollTo(0,0); return; }
  if(a==='chap'){ U.ch=+v; stopSpeak(); render(); window.scrollTo(0,0); return; }
