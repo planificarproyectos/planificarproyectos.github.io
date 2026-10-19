@@ -474,6 +474,7 @@ body{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
 .card .grow{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
 .card .grow b{font-weight:700}
 .card .grow span{font-size:13px;color:var(--muted)}
+.card.danger,.card.danger .grow b,.card.danger svg{color:var(--bad)}
 .card svg{flex:0 0 auto;color:var(--accent-fg)}
 .card .chev2{color:var(--muted)}
 .swatches{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
@@ -907,7 +908,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 
 let entries=[], cats=DEFAULT_CATS.map(c=>({...c}));
 let viaTimer=false;let day=ymd(new Date()), range="day", view="reg", pAnchor=ymd(new Date()), cFrom=null, cTo=null;
-let db=null, col=null, cfgDoc=null, editing=null, unsubs=[];
+let db=null, col=null, cfgDoc=null, profDoc=null, editing=null, unsubs=[];
 
 // ---------- categorías ----------
 const catById=id=>cats.find(c=>c.id===id)||{id,n:"Sin categoría",tipo:"neutra",slot:3,missing:true};
@@ -1591,7 +1592,8 @@ else{
     trackSession(user);if(isAdmin)loadAdmin();
     $("appView").hidden=false;$("acctBar").hidden=false;$("acctEmail").textContent=user.email;
     const base=db.collection("users").doc(user.uid);
-    col=base.collection("entradas");cfgDoc=base.collection("config").doc("categorias");
+    col=base.collection("entradas");cfgDoc=base.collection("config").doc("categorias");profDoc=base.collection("perfil").doc("datos");
+    unsubs.push(profDoc.onSnapshot(snap=>{try{onPerfil(snap.exists?snap.data():null)}catch(e){}},()=>{}));
     renderAll();
     unsubs.push(cfgDoc.onSnapshot(snap=>{const d=snap.exists&&snap.data();if(d&&Array.isArray(d.lista)&&d.lista.length)cats=JSON.parse(JSON.stringify(d.lista));onCfg(d||{});renderAll()},()=>{}));
     unsubs.push(col.onSnapshot(snap=>{entries=snap.docs.map(d=>({id:d.id,...d.data()})).filter(e=>e.fecha&&e.inicio&&e.fin);$("storeBanner").hidden=true;renderAll()},
@@ -1765,7 +1767,7 @@ document.querySelectorAll("#bnav button").forEach(b=>b.onclick=()=>setView(b.dat
 setView("home");
 
 // ================= ESTÉTICA POWERFIT: CUENTA, APARIENCIA Y BIENVENIDA =================
-const IC={key:'<path d="M15 7a4 4 0 1 1-3.9 5H7v3H4v-3H2v-3h9.1A4 4 0 0 1 15 7z"/>',dl:'<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',ul:'<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>',csv:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h7"/>',out:'<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',chev:'<path d="M9 6l6 6-6 6"/>',check:'<path d="M5 12l5 5 9-10"/>'};
+const IC={key:'<path d="M15 7a4 4 0 1 1-3.9 5H7v3H4v-3H2v-3h9.1A4 4 0 0 1 15 7z"/>',dl:'<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',ul:'<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>',csv:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h7"/>',out:'<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',chev:'<path d="M9 6l6 6-6 6"/>',check:'<path d="M5 12l5 5 9-10"/>',trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'};
 const icn=(k,sz,w)=>'<svg viewBox="0 0 24 24" width="'+(sz||22)+'" height="'+(sz||22)+'" fill="none" stroke="currentColor" stroke-width="'+(w||1.9)+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+IC[k]+'</svg>';
 function setMfTheme(patch,save){const t=Object.assign({},window.MF_THEME||{},patch);mfApplyTheme(t);renderTheme();if(save&&cfgDoc)cfgDoc.set({tema:{accent:MF_THEME.accent,mode:MF_THEME.mode}},{merge:true}).catch(()=>toast("No se pudo guardar en tu cuenta."))}
 {const _o=onCfg;onCfg=function(d){_o(d);const t=d&&d.tema;if(t&&(t.accent!==MF_THEME.accent||t.mode!==MF_THEME.mode)){mfApplyTheme(t);renderTheme()}}}
@@ -1774,8 +1776,8 @@ function setMfTheme(patch,save){const t=Object.assign({},window.MF_THEME||{},pat
  const aiPanel=$("aiTitle").closest(".panel");stash.append(aiPanel,$("themeBtn"),$("accEmail"),$("pwdBtn"),$("logoutBtn"));
  acc.querySelector('[aria-labelledby="accTitle"]').remove();acc.querySelector('[aria-labelledby="looksTitle"]').remove();
  const top=document.createElement("div");top.className="stack";top.innerHTML=
-  '<div class="panel"><div class="prof"><span class="av">'+icn("user",26,2.2)+'</span><div class="stack" style="gap:2px;min-width:0"><b id="accEmail2"></b><span class="status" id="accRole"></span></div></div></div>'+
-  '<div class="panel"><label class="label" for="nameIn">Tu nombre</label><div class="namerow"><input id="nameIn" maxlength="30" placeholder="¿Cómo te llamas?" autocomplete="given-name"><button type="button" class="primary" id="nameSave">Guardar</button></div><p class="status" id="nameMsg" style="margin:6px 0 0">Aparece arriba, en todas las pantallas.</p></div>'+
+  '<div class="panel"><div class="prof"><span class="av">'+icn("user",26,2.2)+'</span><div class="stack" style="gap:2px;min-width:0"><b id="accName" style="overflow-wrap:anywhere"></b><span class="status" id="accEmail2" style="overflow-wrap:anywhere"></span><span class="status" id="accRole"></span></div></div></div>'+
+  '<div class="panel"><label class="label" for="nameIn">Tu nombre</label><div class="namerow"><input id="nameIn" maxlength="30" placeholder="¿Cómo te llamas?" autocomplete="given-name"><button type="button" class="primary" id="nameSave">Guardar</button></div><p class="status" id="nameMsg" style="margin:6px 0 0">Se usa en Mind Focus, PowerFit y Lumen.</p></div>'+
   '<div class="acckpis"><div><b class="num" id="akReg">0</b><span>Registros</span></div><div><b class="num" id="akHrs">0</b><span>Horas</span></div><div><b class="num" id="akStk">0</b><span>Días de racha</span></div></div>'+
   '<section class="stack"><h2>Ajustes</h2>'+
   '<button class="card" data-c="pwdBtn">'+icn("key")+'<span class="grow"><b>Cambiar contraseña</b><span>Te enviamos un correo para crear una nueva</span></span><span class="chev2">'+icn("chev",20)+'</span></button>'+
@@ -1783,17 +1785,21 @@ function setMfTheme(patch,save){const t=Object.assign({},window.MF_THEME||{},pat
   '<button class="card" data-c="bkExport">'+icn("dl")+'<span class="grow"><b>Descargar respaldo</b><span>Copia completa de tus registros y categorías</span></span><span class="chev2">'+icn("chev",20)+'</span></button>'+
   '<button class="card" data-c="bkImportBtn">'+icn("ul")+'<span class="grow"><b>Importar respaldo</b><span>Recupera registros desde un archivo de respaldo</span></span><span class="chev2">'+icn("chev",20)+'</span></button>'+
   '<button class="card" data-c="logoutBtn">'+icn("out")+'<span class="grow"><b>Cerrar sesión</b><span>Tus datos quedan guardados en tu cuenta</span></span><span class="chev2">'+icn("chev",20)+'</span></button>'+
+  '<button class="card danger" id="wipeBtn">'+icn("trash")+'<span class="grow"><b>Borrar mi historial</b><span>Elimina todos tus registros. No se puede deshacer</span></span><span class="chev2">'+icn("chev",20)+'</span></button>'+
   '<p class="status" id="aiStatusSlot"></p></section>'+
   '<section class="stack"><h2>Apariencia</h2><div class="panel"><b class="small">Color de énfasis</b><div class="swatches" role="radiogroup" aria-label="Color de énfasis" id="swatches"></div></div>'+
   '<div class="panel"><div class="between"><div class="stack" style="gap:2px"><b>Modo oscuro</b><span class="status" id="modeSub"></span></div><button class="switch" role="switch" id="modeSw" aria-label="Modo oscuro"></button></div></div></section>'+
   '<h2 style="margin-top:6px">Categorías</h2>';
  acc.prepend(top);
- acc.appendChild(Object.assign(document.createElement("p"),{className:"foot",textContent:"Mind Focus · una cuenta para Mind Focus y PowerFit"}));
+ acc.appendChild(Object.assign(document.createElement("p"),{className:"foot",textContent:"Una cuenta para Mind Focus, PowerFit y Lumen"}));
  $("aiStatusSlot").replaceWith($("aiStatus"));
  top.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>$(b.dataset.c).click());
  document.body.appendChild($("bkFile"));
  $("admBox").querySelector(".admh").outerHTML='<h2 style="margin-top:6px">Administración</h2>';
  $("catTitle").innerHTML='Editar categorías <span class="cnt" id="catCount">'+cats.length+'</span>';$("catTitle").style.cssText="font-family:var(--f-body);font-size:15px;text-transform:none;letter-spacing:0";
+ $("wipeBtn").onclick=async()=>{if(!col||!entries.length){toast("No tienes registros para borrar.");return}
+  if(!confirm("¿Borrar tus "+entries.length+" registros de Mind Focus? No se puede deshacer."))return;
+  try{const snap=await col.get();for(const d of snap.docs)await d.ref.delete();toast("Historial borrado")}catch(e){toast("No se pudo borrar. Revisa tu conexión.")}};
  $("modeSw").onclick=()=>setMfTheme({mode:MF_THEME.mode==="light"?"dark":"light"},true);
 }
 function renderTheme(){
@@ -1803,7 +1809,9 @@ function renderTheme(){
   const dark=MF_THEME.mode!=="light";$("modeSw").setAttribute("aria-checked",dark);$("modeSub").textContent=(dark?"Activado":"Desactivado")+" · no depende del celular";
 }
 function renderAccTop(){
-  const em=$("accEmail").textContent;$("accEmail2").textContent=em||"Sin sesión";$("accRole").textContent=(typeof isAdmin!=="undefined"&&isAdmin)?"Administrador":"";
+  const em=$("accEmail").textContent;$("accName").textContent=userName||em||"Sin sesión";$("accEmail2").textContent=userName?em:"";$("accEmail2").hidden=!userName;
+  const cr=me&&me.metadata&&Date.parse(me.metadata.creationTime),MS=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"],fd=cr?new Date(cr):null;
+  $("accRole").textContent=[fd?"Cuenta creada el "+fd.getDate()+" "+MS[fd.getMonth()]+" "+fd.getFullYear():"",(typeof isAdmin!=="undefined"&&isAdmin)?"Administrador":""].filter(Boolean).join(" · ");
   const mins=entries.reduce((a,e)=>a+Math.max(0,toMin(e.fin)-toMin(e.inicio)),0);
   $("akReg").textContent=entries.length;$("akHrs").textContent=Math.round(mins/60);$("akStk").textContent=streak();
 }
@@ -1824,9 +1832,16 @@ function renderHello(){
     h.append(t,g,x);return}
   h.hidden=true;
 }
-{const _oc=onCfg;onCfg=function(d){_oc(d);if(typeof d.nombre==="string"){userName=d.nombre;lsSet("mf_name",userName)}renderHello();if($("nameIn")&&document.activeElement!==$("nameIn"))$("nameIn").value=userName}}
+// Perfil compartido Wellness Apps: users/{uid}/perfil/datos (nombre). Tema y color siguen siendo propios de Mind Focus.
+let perfilOk=false;
+function setName(v){userName=v;lsSet("mf_name",v);renderHello();if($("nameIn")&&document.activeElement!==$("nameIn"))$("nameIn").value=v;if(view==="acc")renderAccTop()}
+function onPerfil(d){if(d&&typeof d.nombre==="string"){perfilOk=true;setName(d.nombre);return}
+  // primera vez: subir el nombre que ya exista en Mind Focus
+  if(!perfilOk&&profDoc){perfilOk=true;if(userName)profDoc.set({nombre:userName,upd:Date.now()},{merge:true}).catch(()=>{})}}
+{const _oc=onCfg;onCfg=function(d){_oc(d);if(!perfilOk&&typeof d.nombre==="string"&&d.nombre&&!userName){userName=d.nombre;lsSet("mf_name",userName)}renderHello();if($("nameIn")&&document.activeElement!==$("nameIn"))$("nameIn").value=userName}}
 $("nameSave").onclick=async()=>{const v=$("nameIn").value.trim().slice(0,30);userName=v;lsSet("mf_name",v);renderHello();
-  try{if(cfgDoc)await cfgDoc.set({nombre:v},{merge:true});$("nameMsg").textContent=v?"Listo, guardado en tu cuenta.":"Nombre quitado."}catch(e){$("nameMsg").textContent="No se pudo guardar en tu cuenta. Intenta de nuevo."}};
+  try{if(cfgDoc)await cfgDoc.set({nombre:v},{merge:true})}catch(e){$("nameMsg").textContent="No se pudo guardar en tu cuenta. Intenta de nuevo.";return}
+  try{if(profDoc)await profDoc.set({nombre:v,upd:Date.now()},{merge:true});$("nameMsg").textContent=v?"Listo, guardado para Mind Focus, PowerFit y Lumen.":"Nombre quitado."}catch(e){$("nameMsg").textContent="Guardado en Mind Focus; no se pudo compartir con las otras apps."}};
 $("nameIn").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("nameSave").click()}});
 $("nameIn").value=userName;renderHello();
 {const _sv=setView;setView=function(v){_sv(v);if(view==="acc")renderAccTop()}}
