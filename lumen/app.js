@@ -558,13 +558,15 @@ document.addEventListener('click',function(e){
  if(a==='reset'){ U.confirmReset=true; render(); return; }
  if(a==='resetNo'){ U.confirmReset=false; render(); return; }
  if(a==='resetYes'){ S.done={}; S.ros={}; save(); U.confirmReset=false; render(); toast('Datos borrados'); return; }
+ if(a==='nameNo'){ try{ localStorage.setItem('lumen:askName',dkey(new Date())); }catch(x){} closeName(); return; }
  if(a==='authMode'){ U.authMode=v; render(); return; }
  if(a==='logout'){ stopSpeak(); if(Cloud.auth) Cloud.auth.signOut(); return; }
  if(a==='resetPass'){ if(Cloud.auth&&Cloud.user) Cloud.auth.sendPasswordResetEmail(Cloud.user.email,{url:RESET_URL}).then(function(){ toast('Te enviamos un correo a '+Cloud.user.email); },function(err){ toast(authErr(err)); }); return; }
  if(a==='instGo'){ var pr=Inst.prompt; if(!pr) return; pr.prompt(); (pr.userChoice||Promise.resolve({})).then(function(c){ if(c&&c.outcome==='accepted') Inst.prompt=null; else { try{ localStorage.setItem('lumen:installDismiss',Date.now()); }catch(x){} } Inst.show(); if(U.tab==='me') render(); }); return; }
  if(a==='instNo'){ try{ localStorage.setItem('lumen:installDismiss',Date.now()); }catch(x){} Inst.show(); return; }
 });
-document.addEventListener('submit',function(e){ if(e.target.id==='authForm'){ e.preventDefault(); authSubmit(); } });
+document.addEventListener('submit',function(e){ if(e.target.id==='authForm'){ e.preventDefault(); authSubmit(); }
+ if(e.target.id==='nameForm'){ e.preventDefault(); var v=($('nameIn').value||'').trim().slice(0,40); if(!v){ $('nameIn').focus(); return; } S.name=v; save(); closeName(); render(); toast('Paz y bien, '+v); } });
 document.addEventListener('change',function(e){
  var a=e.target.getAttribute('data-a');
  if(a==='voice'){ S.voice=e.target.value; save(); }
@@ -595,7 +597,7 @@ var Inst={prompt:null,
  },
  show:function(){ var el=document.getElementById('install'); if(!el) return;
   var sp=document.getElementById('splash');
-  var on=this.can()&&!this.dismissed()&&!needAuth()&&(!sp||sp.classList.contains('out'));
+  var nb=document.getElementById('namebox'); var on=this.can()&&!this.dismissed()&&!needAuth()&&(!nb||nb.hidden)&&(!sp||sp.classList.contains('out'));
   if(!on){ el.hidden=true; return; }
   el.innerHTML=this.body(true); el.hidden=false; }
 };
@@ -649,10 +651,23 @@ function authSubmit(){
 }
 
 
+/* ---------- Pedir el nombre ---------- */
+function askName(){
+ var box=$('namebox'); if(!box||!box.hidden) return;
+ if(needAuth()||Cloud.noAccess||S.name) return;
+ try{ if(localStorage.getItem('lumen:askName')===dkey(new Date())) return; }catch(e){}
+ box.innerHTML='<form class="namecard" id="nameForm" novalidate>'+logo(44)+'<h2>¿Cómo te llamas?</h2><p class="muted small">Así Lumen te saludará por tu nombre cada día.</p>'
+  +'<input class="inp" id="nameIn" autocomplete="given-name" maxlength="40" placeholder="Tu nombre" style="font-size:16px" aria-label="Tu nombre">'
+  +'<div class="grid2"><button class="btn soft" type="button" data-a="nameNo">Ahora no</button><button class="btn" type="submit">Guardar</button></div></form>';
+ box.hidden=false; $('install').hidden=true;
+ setTimeout(function(){ var i=$('nameIn'); if(i) i.focus(); },50);
+}
+function closeName(){ var box=$('namebox'); if(box){ box.hidden=true; box.innerHTML=''; } Inst.show(); }
+
 /* ---------- Bienvenida ---------- */
 var splashT0=Date.now(), splashTimer=null;
 function hideSplash(){ var el=document.getElementById('splash'); if(!el) return;
- clearTimeout(splashTimer); splashTimer=setTimeout(function(){ el.classList.add('out'); Inst.show(); }, Math.max(0,2300-(Date.now()-splashT0))); }
+ clearTimeout(splashTimer); splashTimer=setTimeout(function(){ el.classList.add('out'); Inst.show(); setTimeout(askName,1200); }, Math.max(0,2300-(Date.now()-splashT0))); }
 function playSplash(){ var el=document.getElementById('splash'); if(!el) return;
  el.classList.remove('out'); el.classList.add('replay'); void el.offsetWidth; el.classList.remove('replay'); splashT0=Date.now(); hideSplash(); }
 
