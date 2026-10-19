@@ -1,11 +1,16 @@
-// Service worker mínimo: guarda la app para abrirla rápido y sin conexión; tus datos viven en tu cuenta.
-const CACHE = "lumen-v2";
-const SHELL = ["./", "./index.html", "./firebase-config.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon.svg"];
+// Service worker: abre Lumen rápido y sin conexión (app, liturgia y Biblia completa).
+const CACHE = "lumen-v3";
+const SHELL = ["./", "./index.html", "./app.js", "./liturgia.js", "./firebase-config.js", "./manifest.webmanifest",
+  "./icon.svg", "./icon-192.png", "./icon-512.png", "./datos/calendario.json", "./datos/leccionario.json", "./biblia/indice.json"];
+const BIBLIA = Array.from({length: 66}, (_, i) => "./biblia/" + (i + 1) + ".json");
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
-self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
+self.addEventListener("activate", e => {
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  caches.open(CACHE).then(c => Promise.all(BIBLIA.map(u => c.match(u).then(m => m || c.add(u).catch(() => {})))));
+});
 self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== location.origin) return;
-  e.respondWith(fetch(e.request).then(r => { const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return r; })
+  e.respondWith(fetch(e.request).then(r => { if (r.ok) { const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); } return r; })
     .catch(() => caches.match(e.request).then(m => m || caches.match("./"))));
 });

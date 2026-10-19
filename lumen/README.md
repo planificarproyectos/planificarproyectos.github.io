@@ -1,16 +1,13 @@
 # Lumen
 
-App web católica para la vida de fe diaria.
+App web católica para la vida de fe diaria. Publicada en https://www.planificarproyectos.com/lumen/
 
-- Santo Rosario guiado: misterios según el día, contador por cuentas y decenas, voz guiada opcional.
-- Botón central "Hoy": frase, Evangelio y reflexión del día.
-- Biblia: lecturas del día y libros del Antiguo y Nuevo Testamento.
-- Rutina diaria de oración, racha y oraciones básicas.
-- Lectura en voz alta (voz en español del dispositivo), selector de color y modo claro/oscuro.
+- **Misa de hoy** con botón ▶: lee en voz alta toda la estructura de la Misa con las lecturas reales del día (calendario litúrgico y Leccionario: ciclo dominical A/B/C, ferial I/II, santos y solemnidades; Epifanía, Ascensión y Corpus Christi en domingo, como en Colombia).
+- **Santo Rosario** guiado, con indicador en forma de rosario horizontal, misterios según el día y rezo continuo con voz.
+- **Biblia** completa (Reina-Valera 1909, dominio público, ortografía actualizada), disponible sin conexión.
+- Frase del día (del Evangelio), rutina de oración con racha, oraciones completas, selector de color y modo claro/oscuro.
+- Instalable como app (Android e iPhone) y funciona sin conexión.
 
-Publicada en https://www.planificarproyectos.com/lumen/
+Cuentas con correo y contraseña (Firebase Auth, mismo proyecto que Mind Focus y PowerFit). Datos en Firestore: `users/{uid}/lumen`.
 
-Cuentas con correo y contraseña (Firebase Auth, mismo proyecto que Mind Focus y PowerFit). Datos en Firestore: `users/{uid}/lumen` (mismas reglas e invitaciones de Mind Focus).
-Se puede instalar en el celular con "Agregar a pantalla de inicio".
-
-Pendiente: fuente real del contenido diario (por ahora de muestra) y texto bíblico completo.
+Fuentes: calendario y leccionario derivados de Liturgical Calendar API (Apache-2.0) y del Ordo Lectionum Missae; Biblia Reina-Valera 1909 (dominio público). Esta edición bíblica no incluye Tobías, Judit, Sabiduría, Eclesiástico, Baruc ni 1-2 Macabeos; esos días la app lo indica.

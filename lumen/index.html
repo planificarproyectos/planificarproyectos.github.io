@@ -137,6 +137,30 @@ nav.tabs .hoy span{width:60px;height:60px;border-radius:50%;background:var(--acc
 .installbar ol{margin:0;padding-left:20px;font-size:14px;display:flex;flex-direction:column;gap:4px}
 .link{background:none;border:none;color:var(--muted);font-weight:700;font-size:14px;min-height:44px;padding:0 6px}
 .full{min-height:100%;justify-content:center;padding-block:24px}
+
+.ldot{display:inline-block;width:10px;height:10px;border-radius:50%;box-shadow:0 0 0 1px var(--line);flex-shrink:0}
+.hero.alt{background:var(--surface);color:var(--fg)}.hero.alt .k{color:var(--accent-fg)}.hero.alt .go{background:var(--accent);color:var(--accent-ink)}
+.chips.wrap{flex-wrap:wrap;overflow:visible}
+.linkrow{background:none;border:none;text-align:left;padding:0;color:inherit;cursor:pointer}
+.playbig{min-height:64px;font-size:18px;border-radius:20px}
+.part{background:var(--surface);border-radius:16px;padding:4px 14px;scroll-margin:90px}
+.part.now{box-shadow:0 0 0 2px var(--accent)}
+.part summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:52px}
+.part summary::-webkit-details-marker{display:none}
+.part .ref{color:var(--accent-fg);font-weight:700}
+.part p{margin:0 0 12px;line-height:1.6;color:var(--soft)}
+.verses sup,.reader sup{color:var(--accent-fg);font-size:11px;font-weight:700;margin-right:3px}
+.pbtn{width:40px;height:40px;border-radius:50%;border:none;background:var(--surface2);color:var(--accent-fg);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.part.now .pbtn{background:var(--accent);color:var(--accent-ink)}
+.ptext{white-space:pre-line;line-height:1.6;color:var(--soft)}
+.rstrip{overflow-x:auto;scrollbar-width:none;background:var(--surface);border-radius:20px;padding:4px 0;-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
+.rstrip::-webkit-scrollbar{display:none}
+.rstrip svg{display:block}
+.chgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.chgrid button{min-height:46px;border-radius:12px;border:none;background:var(--surface);font-weight:700;color:var(--fg)}
+.reader{display:flex;flex-direction:column;gap:2px}
+.reader p{margin:0;line-height:1.7;color:var(--soft);font-size:16px}
+.book{color:var(--fg)}
 /* Animación de inicio (misma mecánica que Mind Focus) */
 #splash{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .45s ease,visibility .45s}
 #splash.out{opacity:0;visibility:hidden}
@@ -154,9 +178,7 @@ nav.tabs .hoy span{width:60px;height:60px;border-radius:50%;background:var(--acc
 @keyframes lm-flash{0%{opacity:0;transform:scale(.2)}1%{opacity:.85;transform:scale(.2)}100%{opacity:0;transform:scale(2.6)}}
 @keyframes lm-word{from{opacity:0;transform:translateY(12px);letter-spacing:10px}to{opacity:1;transform:none;letter-spacing:3px}}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}#splash *{animation:none!important;stroke-dashoffset:0!important;opacity:1!important}#splash .fl{opacity:0!important}}
-</style>
-
-</head>
+</style></head>
 <body>
 <div id="splash" role="img" aria-label="Lumen">
   <svg viewBox="0 0 48 48" aria-hidden="true">
@@ -168,472 +190,18 @@ nav.tabs .hoy span{width:60px;height:60px;border-radius:50%;background:var(--acc
   </svg>
   <div class="word">LU<span>MEN</span></div>
 </div>
+
 <main id="app"></main>
 <div class="installbar" id="install" role="dialog" aria-label="Instalar Lumen" hidden></div>
 <nav class="tabs" aria-label="Secciones">
   <div class="in" id="navIn"></div>
 </nav>
 <div class="toast" id="toast" role="status" hidden></div>
-
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
-<script>
-(function(){
-'use strict';
-
-/* ---------- Íconos ---------- */
-var IP={
- home:'M3 11l9-7 9 7v9h-6v-6H9v6H3z', rosary:'M12 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12zM12 14v8M9 18h6',
- sun:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4',
- book:'M5 4h12a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2zM5 18a2 2 0 0 1 2-2h12M12 7v6M9.5 9.5h5', user:'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0',
- check:'M5 12l5 5 9-10', back:'M15 6l-6 6 6 6', undo:'M4 4v6h6M5 15a8 8 0 1 0 2-8L4 10', speaker:'M4 9h4l5-4v14l-5-4H4zM16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12',
- stop:'M7 7h10v10H7z', search:'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4', down:'M6 9l6 6 6-6', flame:'M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-3 2-4 2-7 2 1 3 2 3 4'
-};
-function ic(n,s,w){ s=s||20; w=w||2;
- if(n==='play') return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>';
- return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+w+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+IP[n]+'"/></svg>'; }
-function logo(s){ return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 32 32" role="img" aria-label="Lumen"><circle cx="16" cy="16" r="13" fill="none" stroke="var(--accent)" stroke-width="2"/><path d="M16 6v20M10 12h12" stroke="var(--fg)" stroke-width="3" stroke-linecap="round"/></svg>'; }
-function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
-
-/* ---------- Colores (igual que Mind Focus / PowerFit) ---------- */
-var ACCENTS={lima:['Lima','#C6F432','#4D7A00'],dorado:['Dorado','#E3B95B','#8A6510'],azul:['Azul','#3D8BFF','#1F5FD1'],naranja:['Naranja','#FF8A1F','#B35400'],rosa:['Rosa','#FF4FA3','#C2186B'],cian:['Cian','#22E0E0','#007C85'],morado:['Morado','#A97BFF','#6A3FD1'],amarillo:['Amarillo','#FFD60A','#8A6D00'],coral:['Coral','#FF5A5F','#C62828'],mariano:['Mariano','#7FA7E6','#2F5FA8']};
-
-/* ---------- Estado guardado ---------- */
-var BASE={name:'',accent:'lima',mode:'dark',rate:1,voice:'',guided:false,done:{},ros:{}}, S={};
-function KEY(){ return 'lumen:v1'+(Cloud.user?':'+Cloud.user.uid:''); }
-function loadLocal(){ S=JSON.parse(JSON.stringify(BASE)); try{ var t=JSON.parse(localStorage.getItem('lumen:theme')||'null'); if(t){ S.accent=t.accent||S.accent; S.mode=t.mode||S.mode; } var raw=localStorage.getItem(KEY()); if(raw){ var o=JSON.parse(raw); for(var k in o) S[k]=o[k]; } }catch(e){} }
-function saveLocal(){ try{ localStorage.setItem(KEY(),JSON.stringify(S)); localStorage.setItem('lumen:theme',JSON.stringify({accent:S.accent,mode:S.mode})); }catch(e){} }
-function save(){ saveLocal(); Cloud.push(); }
-function prune(o,days){ var lim=dkey(new Date(Date.now()-days*864e5)), r={}; for(var k in o) if(k.slice(0,10)>=lim) r[k]=o[k]; return r; }
-
-/* ---------- Cuenta (Firebase, mismo proyecto que Mind Focus y PowerFit) ---------- */
-var Cloud={auth:null,db:null,user:null,wait:false,ref:null,unsub:null,t:null,noAccess:false,loginPending:false,
- init:function(){
-  var self=this;
-  if(!window.firebase||!window.FIREBASE_CONFIG) return; // sin Firebase: funciona solo en este navegador
-  try{ firebase.initializeApp(window.FIREBASE_CONFIG); self.auth=firebase.auth(); self.auth.languageCode='es'; self.db=firebase.firestore(); }catch(e){ console.warn(e); self.auth=null; return; }
-  try{ self.db.enablePersistence({synchronizeTabs:true}).catch(function(){}); }catch(e){}
-  self.wait=true;
-  self.auth.onAuthStateChanged(function(u){
-   self.wait=false; if(self.unsub){ self.unsub(); self.unsub=null; } clearTimeout(self.t);
-   if(!u){ self.user=null; self.ref=null; self.noAccess=false; loadLocal(); applyTheme(); render(); return; }
-   if(self.loginPending){ self.loginPending=false; playSplash(); }
-   self.user={email:u.email,uid:u.uid}; self.noAccess=false; loadLocal(); applyTheme(); U.tab='home';
-   self.ref=self.db.collection('users').doc(u.uid).collection('lumen').doc('data');
-   render();
-   var me=u.uid;
-   self.ensureAccess(u).then(function(ok){ if(!self.user||self.user.uid!==me) return; if(!ok){ self.noAccess=true; render(); return; } self.sub(); });
-  });
- },
- ensureAccess:function(u){
-  // Autorregistro: mismo esquema de Mind Focus y PowerFit; revocado = sin acceso.
-  var em=(u.email||'').toLowerCase(), ref=this.db.collection('invitaciones').doc(em), now=Date.now();
-  return ref.get().then(function(sn){
-   if(!sn.exists) return ref.set({email:em,estado:'activo',uid:u.uid,activado:now,ultimoUso:now,autoregistro:true}).then(function(){return true;});
-   var d=sn.data()||{}; if(d.estado==='revocado') return false;
-   var upd={estado:'activo',uid:u.uid,ultimoUso:now}; if(!d.activado) upd.activado=now;
-   return ref.update(upd).then(function(){return true;},function(){return true;});
-  }).catch(function(e){ console.warn('acceso',e); return true; });
- },
- sub:function(){
-  var self=this, first=true;
-  self.unsub=self.ref.onSnapshot(function(sn){
-   if(first){ first=false; if(!sn.exists){ self.push(true); return; } }
-   if(!sn.exists||sn.metadata.hasPendingWrites) return;
-   var d=sn.data()||{};
-   ['done','ros','name','guided','rate','accent','mode'].forEach(function(k){ if(d[k]!==undefined) S[k]=d[k]; });
-   saveLocal(); applyTheme();
-   var a=document.activeElement; if(!(a&&(a.id==='bq'||a.id==='nm'))) render();
-  },function(e){ console.warn('firestore',e); if(e&&e.code==='permission-denied'){ self.noAccess=true; render(); } else toast('No se pudo leer tu cuenta. Revisa tu conexión.'); });
- },
- push:function(now){
-  if(!this.ref||this.noAccess) return; var self=this; clearTimeout(this.t);
-  this.t=setTimeout(function(){ if(!self.ref) return;
-   self.ref.set({done:prune(S.done,400),ros:prune(S.ros,7),name:S.name,guided:S.guided,rate:S.rate,accent:S.accent,mode:S.mode,upd:Date.now()})
-    .catch(function(){ toast('No se pudo guardar en tu cuenta. Revisa tu conexión.'); }); },now?0:600);
- },
- wipe:function(){ if(this.ref) this.ref.delete().catch(function(){}); }
-};
-loadLocal();
-
-function applyTheme(){
- var c=ACCENTS[S.accent]||ACCENTS.lima, light=S.mode==='light', r=document.documentElement;
- r.setAttribute('data-theme',light?'light':'dark');
- r.style.setProperty('--accent',c[1]); r.style.setProperty('--accent-fg',light?c[2]:c[1]);
- var m=document.querySelector('meta[name=theme-color]'); if(m) m.setAttribute('content',light?'#F3F2EE':'#111315');
- var f=document.getElementById('fav'); if(f) f.setAttribute('href','data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="11" fill="#111315"/><circle cx="24" cy="24" r="15" fill="none" stroke="'+c[1]+'" stroke-width="3.5"/><path d="M24 12v24M17 19h14" stroke="#F2F2EE" stroke-width="4.5" stroke-linecap="round"/></svg>'));
-}
-applyTheme();
-
-/* ---------- Fechas ---------- */
-var DAYS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-var MONTHS=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-function dkey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-var NOW=new Date(), TODAY=dkey(NOW);
-function longDate(d){ var s=DAYS[d.getDay()]+', '+d.getDate()+' de '+MONTHS[d.getMonth()]; return s.charAt(0).toUpperCase()+s.slice(1); }
-function greet(){ var h=new Date().getHours(); return h<12?'Buenos días':h<19?'Buenas tardes':'Buenas noches'; }
-
-/* ---------- Oraciones ---------- */
-var PR={
- pn:'Padre nuestro, que estás en el cielo, santificado sea tu Nombre; venga a nosotros tu reino; hágase tu voluntad en la tierra como en el cielo. Danos hoy nuestro pan de cada día; perdona nuestras ofensas, como también nosotros perdonamos a los que nos ofenden; no nos dejes caer en la tentación, y líbranos del mal. Amén.',
- am:'Dios te salve, María, llena eres de gracia; el Señor es contigo. Bendita tú eres entre todas las mujeres, y bendito es el fruto de tu vientre, Jesús. Santa María, Madre de Dios, ruega por nosotros, pecadores, ahora y en la hora de nuestra muerte. Amén.',
- gl:'Gloria al Padre, y al Hijo, y al Espíritu Santo. Como era en el principio, ahora y siempre, por los siglos de los siglos. Amén.',
- ag:'Ángel de mi guarda, dulce compañía, no me desampares ni de noche ni de día. No me dejes solo, que me perdería. Amén.'
-};
-var BASIC=[['pn','Padre Nuestro'],['am','Ave María'],['gl','Gloria'],['ag','Ángel de la guarda']];
-
-var MYS={
- gozosos:['Gozosos',['La Anunciación del ángel a María','La Visitación de María a su prima Isabel','El Nacimiento del Hijo de Dios en Belén','La Presentación de Jesús en el Templo','El Niño Jesús perdido y hallado en el Templo']],
- dolorosos:['Dolorosos',['La Oración de Jesús en el Huerto','La Flagelación del Señor','La Coronación de espinas','Jesús con la cruz a cuestas camino del Calvario','La Crucifixión y muerte de Nuestro Señor']],
- gloriosos:['Gloriosos',['La Resurrección del Señor','La Ascensión del Señor al cielo','La Venida del Espíritu Santo','La Asunción de María al cielo','La Coronación de María como Reina de cielo y tierra']],
- luminosos:['Luminosos',['El Bautismo de Jesús en el Jordán','Las bodas de Caná','El anuncio del Reino de Dios','La Transfiguración del Señor','La Institución de la Eucaristía']]
-};
-var BYDAY=['gloriosos','gozosos','dolorosos','gloriosos','luminosos','dolorosos','gozosos'];
-var ORD=['1.er','2.º','3.er','4.º','5.º'];
-
-var RUT=[
- ['ofr','Al despertar','Ofrecimiento de obras','1 min'],
- ['lau','Mañana','Laudes','Liturgia de las Horas'],
- ['ang','12:00','Ángelus','3 min'],
- ['ros','Día','Santo Rosario','20 min'],
- ['cor','15:00','Coronilla de la Misericordia','8 min'],
- ['evg','Día','Evangelio del día','5 min'],
- ['exa','Noche','Examen de conciencia','10 min']
-];
-
-/* ---------- Contenido del día (muestra) ---------- */
-var HOY={
- frase:'Dad al César lo que es del César, y a Dios lo que es de Dios.', fraseRef:'Mateo 22, 21',
- evTitulo:'El tributo al César', evRef:'Mt 22, 15-21',
- evResumen:'Los fariseos intentan atrapar a Jesús con una pregunta sobre el impuesto. Él pide una moneda y responde que se dé al César lo suyo y a Dios lo que le pertenece.',
- refTitulo:'¿A quién pertenece mi vida?',
- refTexto:'La moneda lleva la imagen del César; nosotros llevamos la imagen de Dios. Hoy Jesús no nos pide huir del mundo, sino recordar que nuestro corazón le pertenece a Él. Propósito del día: ofrecer a Dios la primera hora de la mañana.',
- lecturas:[['1.ª lectura','Is 45, 1. 4-6'],['Salmo','Sal 95 (96)'],['2.ª lectura','1 Tes 1, 1-5b'],['Evangelio','Mt 22, 15-21']],
- santo:'San Lucas, evangelista'
-};
-
-var BOOKS={
- at:[['Génesis',50],['Éxodo',40],['Levítico',27],['Números',36],['Deuteronomio',34],['Josué',24],['Jueces',21],['Rut',4],['1 Samuel',31],['2 Samuel',24],['Job',42],['Salmos',150],['Proverbios',31],['Eclesiastés',12],['Cantar de los Cantares',8],['Sabiduría',19],['Isaías',66],['Jeremías',52],['Ezequiel',48],['Daniel',14]],
- nt:[['Mateo',28],['Marcos',16],['Lucas',24],['Juan',21],['Hechos',28],['Romanos',16],['1 Corintios',16],['2 Corintios',13],['Gálatas',6],['Efesios',6],['Filipenses',4],['Colosenses',4],['1 Tesalonicenses',5],['Hebreos',13],['Santiago',5],['1 Pedro',5],['1 Juan',5],['Apocalipsis',22]]
-};
-
-/* ---------- UI state ---------- */
-var U={tab:'home',hoyTab:'frase',test:'nt',q:'',confirmReset:false,rosSet:BYDAY[NOW.getDay()]};
-
-/* ---------- Voz (lectura en voz alta) ----------
-   Compatible con Android (Chrome) y iPhone (Safari): lee por frases cortas, arranca en el mismo toque,
-   reintenta si el motor no empezó y elige automáticamente la mejor voz en español. */
-var TTS=('speechSynthesis' in window)&&typeof SpeechSynthesisUtterance!=='undefined', speaking=null, Q=[], QI=0, gen=0, started=false, watch=null;
-window.__lumenUtt=[];
-function voices(){ if(!TTS) return []; try{ return speechSynthesis.getVoices().filter(function(v){ return /^es([-_]|$)/i.test(v.lang||''); }); }catch(e){ return []; } }
-var VPREF=['es-co','es-mx','es-us','es-419','es-es'];
-function pickVoice(){
- var vs=voices(); if(!vs.length) return null;
- if(S.voice){ var m=vs.filter(function(x){ return x.name===S.voice; })[0]; if(m) return m; }
- for(var i=0;i<VPREF.length;i++){ var c=vs.filter(function(x){ return (x.lang||'').replace('_','-').toLowerCase()===VPREF[i]; });
-  if(c.length) return c.filter(function(x){ return x.localService; })[0]||c[0]; }
- return vs.filter(function(x){ return x.localService; })[0]||vs[0];
-}
-function chunks(t){
- var parts=String(t||'').replace(/\s+/g,' ').trim().match(/[^.!?;:]+[.!?;:]*/g)||[], out=[];
- parts.forEach(function(p){ p=p.trim(); if(!p) return;
-  while(p.length>180){ var cut=p.lastIndexOf(',',180); if(cut<60) cut=p.lastIndexOf(' ',180); if(cut<1) cut=180; out.push(p.slice(0,cut+1).trim()); p=p.slice(cut+1).trim(); }
-  if(p) out.push(p); });
- return out;
-}
-function isIOS(){ var u=navigator.userAgent||''; return /iphone|ipad|ipod/i.test(u)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1); }
-function ttsHelp(){
- if(!TTS) return toast('Este navegador no tiene lectura en voz alta. Abre Lumen en Chrome (Android) o Safari (iPhone).',6000);
- if(isIOS()) return toast('No se escucha: quita el modo silencio del iPhone y sube el volumen. Si sigue igual, revisa Ajustes › Accesibilidad › Contenido leído › Voces › Español.',8000);
- toast('No se escucha: sube el volumen multimedia y revisa Ajustes › Idioma › Salida de texto a voz (motor de Google con español instalado).',8000);
-}
-function sayNext(my){
- if(my!==gen) return;
- if(QI>=Q.length){ speaking=null; updSay(); return; }
- var u=new SpeechSynthesisUtterance(Q[QI]), v=pickVoice();
- if(v){ u.voice=v; u.lang=v.lang; } else u.lang='es-ES';
- u.rate=S.rate||1; u.pitch=1; u.volume=1;
- u.onstart=function(){ if(my===gen) started=true; };
- u.onend=function(){ if(my!==gen) return; started=true; QI++; sayNext(my); };
- u.onerror=function(e){ if(my!==gen) return; var er=e&&e.error; if(er==='interrupted'||er==='canceled') return;
-  if(er==='not-allowed'||er==='audio-busy'||er==='synthesis-unavailable'||er==='language-unavailable'||er==='voice-unavailable'){ if(!started){ speaking=null; updSay(); ttsHelp(); return; } }
-  QI++; sayNext(my); };
- window.__lumenUtt.push(u); if(window.__lumenUtt.length>40) window.__lumenUtt.shift(); // evita que el navegador descarte la frase en curso
- try{ speechSynthesis.speak(u); if(speechSynthesis.paused) speechSynthesis.resume(); }catch(e){}
-}
-function speak(text,id){
- if(!TTS){ ttsHelp(); return; }
- if(speaking===id){ stopSpeak(); updSay(); return; }
- var ss=window.speechSynthesis; gen++; var my=gen; clearTimeout(watch);
- try{ if(ss.speaking||ss.pending) ss.cancel(); }catch(e){}
- Q=chunks(text); QI=0; started=false; speaking=id; updSay();
- if(!Q.length){ speaking=null; updSay(); return; }
- sayNext(my); // en el mismo toque (requisito de iPhone)
- watch=setTimeout(function(){ // Android a veces ignora la primera orden: reintenta una vez
-  if(my!==gen||started) return;
-  try{ ss.cancel(); }catch(e){} gen++; my=gen; QI=0; sayNext(my);
-  watch=setTimeout(function(){ if(my===gen&&!started&&!ss.speaking){ gen++; speaking=null; updSay(); ttsHelp(); } },3000);
- },450);
-}
-function stopSpeak(){ gen++; clearTimeout(watch); if(TTS){ try{ speechSynthesis.cancel(); }catch(e){} } speaking=null; }
-if(TTS){ try{ speechSynthesis.getVoices(); }catch(e){} }
-function sayBtn(id,label){ var on=speaking===id; return '<button class="say'+(on?' on':'')+'" data-a="say" data-id="'+id+'" aria-pressed="'+on+'">'+ic(on?'stop':'speaker',16)+'<span>'+(on?'Detener':(label||'Escuchar'))+'</span></button>'; }
-function updSay(){ var bs=document.querySelectorAll('[data-a=say]'); for(var i=0;i<bs.length;i++){ var b=bs[i], on=b.getAttribute('data-id')===speaking; b.classList.toggle('on',on); b.setAttribute('aria-pressed',on); b.innerHTML=ic(on?'stop':'speaker',16)+'<span>'+(on?'Detener':(b.getAttribute('data-l')||'Escuchar'))+'</span>'; } }
-if(TTS && speechSynthesis.addEventListener) speechSynthesis.addEventListener('voiceschanged',function(){ if(U.tab==='me') render(); });
-
-/* ---------- Rutina y racha ---------- */
-function doneToday(){ return S.done[TODAY]||[]; }
-function isDone(id){ return doneToday().indexOf(id)>=0; }
-function setDone(id,on){ var a=doneToday().slice(), i=a.indexOf(id); if(on&&i<0)a.push(id); if(!on&&i>=0)a.splice(i,1); S.done[TODAY]=a; save(); }
-function streak(){ var n=0, d=new Date(); if(!(S.done[dkey(d)]||[]).length) d.setDate(d.getDate()-1);
- while((S.done[dkey(d)]||[]).length){ n++; d.setDate(d.getDate()-1); } return n; }
-
-/* ---------- Rosario ---------- */
-function steps(){ var st=[]; for(var d=0;d<5;d++){ st.push({d:d,k:'pn'}); for(var i=1;i<=10;i++) st.push({d:d,k:'am',n:i}); st.push({d:d,k:'gl'}); } return st; }
-var STEPS=steps();
-function rosKey(){ return TODAY+':'+U.rosSet; }
-function rosI(){ return S.ros[rosKey()]||0; }
-function stepText(s){ var m=MYS[U.rosSet][1][s.d]; return s.k==='pn' ? (ORD[s.d]+' misterio '+MYS[U.rosSet][0].toLowerCase()+': '+m+'. '+PR.pn) : PR[s.k]; }
-
-/* ---------- Pantallas ---------- */
-function vHome(){
- var dn=doneToday().length, set=BYDAY[NOW.getDay()], ri=S.ros[TODAY+':'+set]||0, dec=Math.min(5,Math.floor(ri/12));
- var wk=''; for(var i=6;i>=0;i--){ var d=new Date(); d.setDate(d.getDate()-i); var on=(S.done[dkey(d)]||[]).length>0;
-  wk+='<div><span'+(i===0?' style="color:var(--fg);font-weight:700"':'')+'>'+'DLMMJVS'.charAt(d.getDay())+'</span><i class="dot'+(on?' on':'')+(i===0?' today':'')+'" style="display:block"></i></div>'; }
- return '<header class="between"><span class="row" style="gap:8px">'+logo(30)+'<span style="font-family:var(--f-display);font-weight:700;font-size:24px;letter-spacing:2px">LU<span style="color:var(--accent-fg)">MEN</span></span></span>'
-  +'<button class="icon-btn" data-a="tab" data-v="me" aria-label="Perfil y ajustes">'+ic('user')+'</button></header>'
-  +'<div class="stack" style="gap:4px"><span class="small muted">'+longDate(NOW)+'</span><h1>'+greet()+(S.name?', '+esc(S.name):'')+'</h1></div>'
-  +'<div class="grid2"><div class="tile"><span class="label">Racha de oración</span><span class="row" style="gap:6px;align-items:baseline"><b class="big num">'+streak()+'</b><span class="small muted">días</span></span></div>'
-  +'<div class="tile"><span class="label">Oraciones hoy</span><span class="row" style="gap:6px;align-items:baseline"><b class="big num">'+dn+'</b><span class="small muted">de '+RUT.length+'</span></span></div></div>'
-  +'<button class="hero" data-a="tab" data-v="rosary"><span class="stack" style="gap:6px"><span class="k">Santo Rosario de hoy</span><h3>Misterios '+MYS[set][0]+'</h3><span class="small" style="font-weight:500">'+dec+' de 5 decenas</span></span><span class="go">'+ic('play',20)+'</span></button>'
-  +'<div class="panel"><div class="between"><span class="label ac">Frase del día</span>'+sayBtn('frase')+'</div><p style="font-family:var(--f-display);font-weight:600;font-size:24px;line-height:1.15">'+esc(HOY.frase)+'</p><span class="ref">'+HOY.fraseRef+'</span></div>'
-  +'<div class="week">'+wk+'</div>'
-  +'<section class="stack"><div class="between"><h2>Rutina de hoy</h2><span class="small muted num">'+dn+'/'+RUT.length+'</span></div>'
-  +RUT.map(function(r){ var on=isDone(r[0]); return '<div class="item"><span class="t">'+r[1]+'</span><div class="grow"><b>'+r[2]+'</b><span class="small muted">'+r[3]+'</span></div><button class="check'+(on?' on':'')+'" data-a="done" data-id="'+r[0]+'" aria-pressed="'+on+'" aria-label="'+(on?'Desmarcar ':'Marcar ')+r[2]+'">'+ic('check',16,3)+'</button></div>'; }).join('')
-  +'</section>'
-  +'<section class="stack"><h2>Oraciones básicas</h2>'
-  +BASIC.map(function(b){ return '<details class="panel acc"><summary>'+b[1]+ic('down',18)+'</summary><p style="color:var(--soft);line-height:1.55">'+PR[b[0]]+'</p><div>'+sayBtn('pr-'+b[0])+'</div></details>'; }).join('')
-  +'</section>';
-}
-
-function vRosary(){
- var i=rosI(), set=MYS[U.rosSet];
- var chips='<div class="chips" role="group" aria-label="Misterios">'+Object.keys(MYS).map(function(k){ return '<button class="chip'+(k===U.rosSet?' on':'')+'" data-a="rset" data-v="'+k+'">'+MYS[k][0]+(k===BYDAY[NOW.getDay()]?' · hoy':'')+'</button>'; }).join('')+'</div>';
- var head='<header class="between"><h1>SANTO ROSARIO</h1>'+'</header>'+chips;
- if(i>=STEPS.length){
-  return head+'<div class="empty"><span class="big">Amén</span><h3 style="font-size:24px">Rosario completado</h3><p class="muted small">Misterios '+set[0]+' · '+longDate(NOW)+'</p><button class="btn ghost" data-a="rreset">Rezar de nuevo</button></div>';
- }
- var s=STEPS[i], inDec=i-s.d*12, bars='';
- for(var d=0;d<5;d++){ var p=d<s.d?100:d>s.d?0:Math.round(inDec/12*100); bars+='<i><b style="width:'+p+'%"></b></i>'; }
- var beads='<i class="pn'+(inDec>=1?' on':'')+'"></i>'; for(var k=1;k<=10;k++) beads+='<i class="'+(inDec>k?'on':'')+'"></i>';
- var title=s.k==='pn'?'Padre Nuestro':s.k==='gl'?'Gloria':'Ave María';
- var cnt=s.k==='am'?'<div class="counter"><b class="num">'+s.n+'</b><span>/ 10</span></div>':'<div class="counter"><b style="font-size:56px">'+title.toUpperCase()+'</b></div>';
- return head
-  +'<div class="panel"><span class="label ac">'+set[0]+' · '+ORD[s.d]+' misterio</span><h3 style="font-size:28px">'+set[1][s.d]+'</h3></div>'
-  +'<div class="bars" aria-label="Decena '+(s.d+1)+' de 5">'+bars+'</div>'
-  +'<div class="beads" aria-hidden="true">'+beads+'</div>'
-  +'<div class="stack" style="align-items:center;gap:2px">'+cnt+'<span class="label">'+(s.k==='am'?title:'Decena '+(s.d+1)+' de 5')+'</span></div>'
-  +'<div class="prayer"><p>'+PR[s.k]+'</p><div class="between">'+sayBtn('ros-'+i)+'<label class="row small muted" for="guided" style="gap:8px">Voz guiada <input type="checkbox" id="guided" data-a="guided"'+(S.guided?' checked':'')+' style="width:20px;height:20px;accent-color:var(--accent)"></label></div></div>'
-  +'<div class="ctl"><button class="icon-btn" data-a="rprev" aria-label="Cuenta anterior">'+ic('undo',22)+'</button><button class="btn" data-a="rnext">Siguiente cuenta</button></div>';
-}
-
-function vHoy(){
- var t=U.hoyTab, body='';
- if(t==='frase') body='<div class="quote"><span class="q" aria-hidden="true">“</span><p>'+esc(HOY.frase)+'</p><div class="between"><span class="ref">'+HOY.fraseRef+'</span>'+sayBtn('frase')+'</div></div>'
-  +'<div class="grid2"><button class="btn ghost" data-a="copy">Copiar frase</button><button class="btn" data-a="tab" data-v="rosary">Rezar Rosario</button></div>'
-  +'<div class="tile" style="flex-direction:row;align-items:center;gap:12px"><span class="icon-btn" style="background:var(--surface2);color:var(--accent-fg)">'+ic('flame')+'</span><span class="stack" style="gap:0"><span class="small muted">Santo del día</span><b>'+HOY.santo+'</b></span></div>';
- if(t==='ev') body='<div class="panel"><span class="label ac">Evangelio · '+HOY.evRef+'</span><h3 style="font-size:26px">'+HOY.evTitulo+'</h3><p style="color:var(--soft)">'+HOY.evResumen+'</p><div>'+sayBtn('ev')+'</div></div>'
-  +'<div class="panel" style="gap:0">'+HOY.lecturas.map(function(l){ return '<div class="kv"><span class="muted">'+l[0]+'</span><b>'+l[1]+'</b></div>'; }).join('')+'</div>'
-  +'<button class="btn soft" data-a="evdone">'+(isDone('evg')?'Evangelio leído ✓':'Marcar Evangelio como leído')+'</button>';
- if(t==='ref') body='<div class="panel"><span class="label ac">Reflexión del día</span><h3 style="font-size:28px">'+HOY.refTitulo+'</h3><p style="color:var(--soft);line-height:1.6">'+HOY.refTexto+'</p><div>'+sayBtn('ref')+'</div></div>';
- return '<header class="stack" style="gap:2px"><span class="label">'+longDate(NOW)+'</span><h1>HOY CON DIOS</h1></header>'
-  +'<div class="seg" style="grid-template-columns:repeat(3,minmax(0,1fr))" role="tablist">'
-  +[['frase','Frase'],['ev','Evangelio'],['ref','Reflexión']].map(function(x){ return '<button role="tab" aria-selected="'+(t===x[0])+'" class="'+(t===x[0]?'on':'')+'" data-a="htab" data-v="'+x[0]+'">'+x[1]+'</button>'; }).join('')+'</div>'
-  +body+'<p class="sample">Contenido de muestra. La fuente diaria real se conectará en la fase de publicación.</p>';
-}
-
-function vBible(){
- var q=U.q.trim().toLowerCase(), list=BOOKS[U.test].filter(function(b){ return !q||b[0].toLowerCase().indexOf(q)>=0; });
- return '<header><h1>BIBLIA</h1></header>'
-  +'<label class="field" for="bq">'+ic('search',18)+'<input id="bq" type="search" data-a="bq" placeholder="Buscar libro" value="'+esc(U.q)+'" autocomplete="off"></label>'
-  +'<div class="panel" style="gap:0"><div class="between" style="margin-bottom:6px"><span class="label ac">Lecturas de hoy</span><button class="say" data-a="tab" data-v="hoy">Abrir</button></div>'+HOY.lecturas.map(function(l){ return '<div class="kv"><span class="muted">'+l[0]+'</span><b>'+l[1]+'</b></div>'; }).join('')+'</div>'
-  +'<div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr))">'+[['at','Antiguo Testamento'],['nt','Nuevo Testamento']].map(function(x){ return '<button class="'+(U.test===x[0]?'on':'')+'" data-a="test" data-v="'+x[0]+'">'+x[1]+'</button>'; }).join('')+'</div>'
-  +(list.length?'<div class="books">'+list.map(function(b){ return '<button class="book" data-a="book" data-v="'+esc(b[0])+'"><b>'+b[0]+'</b><span class="small muted">'+b[1]+' capítulos</span></button>'; }).join('')+'</div>':'<div class="empty muted">Ningún libro coincide con “'+esc(U.q)+'”.</div>')
-  +'<p class="sample">El texto bíblico completo se integrará en la fase de publicación.</p>';
-}
-
-function vMe(){
- var vs=voices();
- return '<header><h1>PERFIL</h1></header>'
-  +'<div class="panel"><label class="label" for="nm">Tu nombre</label><input class="inp" id="nm" data-a="name" value="'+esc(S.name)+'" placeholder="¿Cómo te llamas?" autocomplete="given-name"></div>'
-  +'<div class="panel"><span class="label">Apariencia</span>'
-  +'<div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr));background:var(--surface2)"><button class="'+(S.mode==='dark'?'on':'')+'" data-a="mode" data-v="dark">Oscuro</button><button class="'+(S.mode==='light'?'on':'')+'" data-a="mode" data-v="light">Claro</button></div>'
-  +'<span class="small muted">Color de acento</span><div class="swatches">'+Object.keys(ACCENTS).map(function(k){ var c=ACCENTS[k], on=S.accent===k; return '<button class="sw'+(on?' on':'')+'" data-a="accent" data-v="'+k+'" aria-pressed="'+on+'" aria-label="'+c[0]+'"><i style="background:'+c[1]+'">'+(on?ic('check',18,3):'')+'</i>'+c[0]+'</button>'; }).join('')+'</div></div>'
-  +'<div class="panel"><span class="label">Lectura en voz alta</span>'
-  +(TTS?'<label class="small muted" for="vsel">Voz</label><select class="inp" id="vsel" data-a="voice">'+'<option value="">Automática (recomendada)</option>'+(vs.length?vs.map(function(v){ return '<option value="'+esc(v.name)+'"'+(v.name===S.voice?' selected':'')+'>'+esc(v.name)+' ('+v.lang+')</option>'; }).join(''):'')+'</select>'
-   +'<div class="between"><label class="small muted" for="rate">Velocidad</label><span class="small num" id="rateV">'+S.rate.toFixed(1)+'×</span></div><input type="range" id="rate" data-a="rate" min="0.6" max="1.4" step="0.1" value="'+S.rate+'">'
-   +'<div>'+sayBtn('test','Probar voz')+'</div>'
-   :'<p class="small muted">Este navegador no permite lectura en voz alta. Prueba con Chrome o Safari.</p>')
-  +'</div>'
-  +'<div class="panel"><span class="label">Instalar como app</span>'+(Inst.standalone()?'<p class="small muted">Lumen ya está instalada en este dispositivo.</p>':Inst.can()?Inst.body(false):'<p class="small muted">Abre esta página en Chrome (Android) o Safari (iPhone) y usa "Agregar a pantalla de inicio" o "Instalar app".</p>')+'</div>'
-  +(Cloud.user?'<div class="panel"><span class="label">Cuenta</span><p class="small" style="overflow-wrap:anywhere">'+esc(Cloud.user.email)+'</p><div class="grid2"><button class="btn soft" data-a="resetPass">Cambiar contraseña</button><button class="btn soft" data-a="logout">Cerrar sesión</button></div><p class="small muted">Es la misma cuenta de Mind Focus y PowerFit.</p></div>':'')
-  +'<div class="panel"><span class="label">Tus datos</span><p class="small muted">'+(Cloud.user?'Se guardan en tu cuenta y en este dispositivo.':'Se guardan en este dispositivo.')+'</p>'
-  +(U.confirmReset?'<p class="small">¿Borrar racha, rutina y progreso del Rosario?</p><div class="grid2"><button class="btn soft" data-a="resetNo">Cancelar</button><button class="btn danger" data-a="resetYes">Sí, borrar</button></div>':'<button class="btn danger" data-a="reset">Borrar mis datos</button>')
-  +'</div>';
-}
-
-/* ---------- Instalar como app ---------- */
-var Inst={prompt:null,
- standalone:function(){ try{ return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true; }catch(e){ return false; } },
- ios:function(){ var u=navigator.userAgent||''; return /iphone|ipad|ipod/i.test(u)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1); },
- can:function(){ return !this.standalone()&&(!!this.prompt||this.ios()); },
- dismissed:function(){ try{ return Date.now()-(+localStorage.getItem('lumen:installDismiss')||0)<7*864e5; }catch(e){ return false; } },
- body:function(inBar){
-  if(this.prompt) return '<div class="row">'+logo(40)+'<div class="stack" style="gap:2px;flex:1;min-width:0"><b>Instala Lumen</b><span class="muted small">Ábrela desde tu pantalla de inicio, a pantalla completa y más rápido.</span></div></div>'+
-   '<div class="grid2">'+(inBar?'<button class="btn soft" data-a="instNo">Ahora no</button>':'')+'<button class="btn" data-a="instGo"'+(inBar?'':' style="grid-column:1/-1"')+'>Instalar</button></div>';
-  return '<div class="row">'+logo(40)+'<div class="stack" style="gap:2px;flex:1;min-width:0"><b>Instala Lumen en tu iPhone</b><span class="muted small">En Safari:</span></div></div>'+
-   '<ol><li>Toca <b>Compartir</b> (el cuadro con la flecha hacia arriba).</li><li>Elige <b>Agregar a pantalla de inicio</b> y luego <b>Agregar</b>.</li></ol>'+
-   (inBar?'<button class="btn soft" data-a="instNo">Entendido</button>':'');
- },
- show:function(){ var el=document.getElementById('install'); if(!el) return;
-  var sp=document.getElementById('splash');
-  var on=this.can()&&!this.dismissed()&&!needAuth()&&(!sp||sp.classList.contains('out'));
-  if(!on){ el.hidden=true; return; }
-  el.innerHTML=this.body(true); el.hidden=false; }
-};
-window.addEventListener('beforeinstallprompt',function(e){ e.preventDefault(); Inst.prompt=e; Inst.show(); if(U.tab==='me') render(); });
-window.addEventListener('appinstalled',function(){ Inst.prompt=null; document.getElementById('install').hidden=true; toast('Lumen quedó instalada'); if(U.tab==='me') render(); });
-
-function needAuth(){ return !!Cloud.auth&&(!Cloud.user||Cloud.wait); }
-function brandBig(){ return '<span class="row" style="gap:10px;justify-content:center">'+logo(52)+'<span style="font-family:var(--f-display);font-weight:700;font-size:38px;letter-spacing:3px">LU<span style="color:var(--accent-fg)">MEN</span></span></span>'; }
-function vAuth(){
- if(Cloud.wait) return '<div class="stack full" style="align-items:center">'+brandBig()+'<p class="muted">Cargando…</p></div>';
- var m=U.authMode||'login';
- var T={login:['Inicia sesión','Entrar'],register:['Crea tu cuenta','Crear cuenta'],reset:['Recupera tu contraseña','Enviar correo']}[m];
- return '<div class="stack full" style="gap:20px">'+
-  '<div class="stack" style="align-items:center;text-align:center;gap:10px">'+brandBig()+'<p class="muted">Reza, lee y vive tu fe cada día. Todo queda guardado en tu cuenta.</p></div>'+
-  '<form id="authForm" class="panel" novalidate><h2>'+T[0]+'</h2>'+
-  '<label class="stack" style="gap:6px" for="aEmail"><span class="label">Correo</span><input class="inp" id="aEmail" type="email" autocomplete="email" inputmode="email" required style="font-size:16px" value="'+esc(U.authEmail||'')+'"></label>'+
-  (m!=='reset'?'<label class="stack" style="gap:6px" for="aPass"><span class="label">Contraseña</span><input class="inp" id="aPass" type="password" autocomplete="'+(m==='register'?'new-password':'current-password')+'" required minlength="6" style="font-size:16px"></label>':'')+
-  (m==='register'?'<label class="stack" style="gap:6px" for="aPass2"><span class="label">Repite la contraseña</span><input class="inp" id="aPass2" type="password" autocomplete="new-password" required minlength="6" style="font-size:16px"></label>':'')+
-  '<p id="aMsg" class="small" role="status" style="min-height:1em"></p>'+
-  '<button class="btn" type="submit" id="aBtn">'+T[1]+'</button>'+
-  (m==='login'?'<button class="link" type="button" data-a="authMode" data-v="reset" style="align-self:center">¿Olvidaste tu contraseña?</button>':'')+
-  '</form>'+
-  (m==='login'?'<p class="muted small" style="text-align:center">¿No tienes cuenta? <button class="link" data-a="authMode" data-v="register" style="color:var(--accent-fg)">Crear cuenta</button></p><p class="muted small" style="text-align:center">Si ya usas Mind Focus o PowerFit, entra con la misma cuenta.</p>'
-   :'<p class="muted small" style="text-align:center"><button class="link" data-a="authMode" data-v="login" style="color:var(--accent-fg)">Volver a iniciar sesión</button></p>')+
- '</div>';
-}
-function vNoAccess(){ return '<div class="stack full" style="align-items:center;text-align:center;gap:14px">'+brandBig()+'<h2>Sin acceso</h2><p class="muted">Tu cuenta no tiene acceso a Lumen. Escríbenos a través de planificarproyectos.com.</p><button class="btn soft" data-a="logout">Cerrar sesión</button></div>'; }
-function authErr(e){
- var c=(e&&e.code)||'';
- if(/invalid-credential|wrong-password|user-not-found|invalid-login/.test(c)) return 'Correo o contraseña incorrectos.';
- if(c==='auth/email-already-in-use') return 'Ya existe una cuenta con ese correo. Inicia sesión.';
- if(c==='auth/weak-password') return 'La contraseña debe tener al menos 6 caracteres.';
- if(c==='auth/invalid-email'||c==='auth/missing-email') return 'Revisa que el correo esté bien escrito.';
- if(c==='auth/too-many-requests') return 'Demasiados intentos. Espera unos minutos e intenta de nuevo.';
- if(c==='auth/network-request-failed') return 'Sin conexión. Revisa tu internet.';
- return 'No se pudo completar. Intenta de nuevo.';
-}
-var RESET_URL='https://www.planificarproyectos.com/lumen/';
-function authSubmit(){
- var m=U.authMode||'login', em=(document.getElementById('aEmail').value||'').trim(), msg=document.getElementById('aMsg'), btn=document.getElementById('aBtn');
- var p=document.getElementById('aPass'), p2=document.getElementById('aPass2'); U.authEmail=em;
- function show(t,ok){ msg.textContent=t; msg.style.color=ok?'var(--accent-fg)':'#E86A62'; }
- if(!em) return show('Escribe tu correo.');
- if(m==='register'&&p.value!==p2.value) return show('Las contraseñas no coinciden.');
- var label=btn.textContent; btn.disabled=true; btn.textContent='Un momento…'; if(m!=='reset') Cloud.loginPending=true;
- var job=m==='login'?Cloud.auth.signInWithEmailAndPassword(em,p.value)
-  :m==='register'?Cloud.auth.createUserWithEmailAndPassword(em,p.value)
-  :Cloud.auth.sendPasswordResetEmail(em,{url:RESET_URL});
- job.then(function(){ if(m==='reset'){ show('Te enviamos un correo para restablecer tu contraseña.',true); btn.disabled=false; btn.textContent=label; } })
-  .catch(function(e){ Cloud.loginPending=false; show(authErr(e)); btn.disabled=false; btn.textContent=label; });
-}
-
-/* ---------- Render ---------- */
-var TABS=[['home','Inicio','home'],['rosary','Rosario','rosary'],['hoy','Hoy','sun'],['bible','Biblia','book'],['me','Perfil','user']];
-function render(){
- var nav=document.querySelector('nav.tabs');
- if(needAuth()||Cloud.noAccess){ nav.hidden=true; document.getElementById('app').innerHTML='<div class="wrap" style="padding-bottom:24px">'+(Cloud.noAccess?vNoAccess():vAuth())+'</div>'; Inst.show(); return; }
- nav.hidden=false;
- var v={home:vHome,rosary:vRosary,hoy:vHoy,bible:vBible,me:vMe}[U.tab]();
- document.getElementById('app').innerHTML='<div class="wrap">'+v+'</div>';
- document.getElementById('navIn').innerHTML=TABS.map(function(t){
-  if(t[0]==='hoy') return '<button class="hoy" data-a="tab" data-v="hoy" aria-current="'+(U.tab==='hoy'?'page':'false')+'"><span>'+ic('sun',26,2.2)+'</span>Hoy</button>';
-  return '<button class="'+(U.tab===t[0]?'on':'')+'" data-a="tab" data-v="'+t[0]+'" aria-current="'+(U.tab===t[0]?'page':'false')+'">'+ic(t[2],22)+t[1]+'</button>'; }).join('');
- Inst.show();
- var bs=document.querySelectorAll('[data-a=say]'); for(var i=0;i<bs.length;i++){ var s=bs[i].querySelector('span'); if(s&&!bs[i].classList.contains('on')) bs[i].setAttribute('data-l',s.textContent); }
-}
-var tt; function toast(m,ms){ var t=document.getElementById('toast'); t.textContent=m; t.hidden=false; clearTimeout(tt); tt=setTimeout(function(){ t.hidden=true; },ms||2200); }
-
-function sayText(id){
- if(id==='frase') return HOY.frase+'. '+HOY.fraseRef;
- if(id==='ev') return HOY.evTitulo+'. '+HOY.evResumen;
- if(id==='ref') return HOY.refTitulo+'. '+HOY.refTexto;
- if(id==='test') return 'Paz y bien'+(S.name?', '+S.name:'')+'. Así sonará la lectura en voz alta.';
- if(id.indexOf('pr-')===0) return PR[id.slice(3)];
- if(id.indexOf('ros-')===0) return stepText(STEPS[+id.slice(4)]);
- return '';
-}
-
-/* ---------- Eventos ---------- */
-document.addEventListener('click',function(e){
- var el=e.target.closest('[data-a]'); if(!el) return; var a=el.getAttribute('data-a'), v=el.getAttribute('data-v');
- if(a==='tab'){ stopSpeak(); U.tab=v; U.confirmReset=false; render(); window.scrollTo(0,0); return; }
- if(a==='say'){ var id=el.getAttribute('data-id'); speak(sayText(id),id); return; }
- if(a==='done'){ var id2=el.getAttribute('data-id'); setDone(id2,!isDone(id2)); render(); return; }
- if(a==='htab'){ stopSpeak(); U.hoyTab=v; render(); return; }
- if(a==='evdone'){ setDone('evg',true); render(); toast('Evangelio marcado'); return; }
- if(a==='copy'){ var txt=HOY.frase+' ('+HOY.fraseRef+')';
-  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){ toast('Frase copiada'); },function(){ toast(txt); }); } else toast(txt); return; }
- if(a==='rset'){ stopSpeak(); U.rosSet=v; render(); return; }
- if(a==='rnext'||a==='rprev'){
-  var i=rosI(); i=a==='rnext'?Math.min(STEPS.length,i+1):Math.max(0,i-1); S.ros[rosKey()]=i;
-  if(i>=STEPS.length){ setDone('ros',true); toast('Rosario completado'); }
-  save(); stopSpeak(); render();
-  if(S.guided&&i<STEPS.length) speak(stepText(STEPS[i]),'ros-'+i);
-  return; }
- if(a==='rreset'){ S.ros[rosKey()]=0; save(); render(); return; }
- if(a==='authMode'){ U.authMode=v; render(); return; }
- if(a==='logout'){ stopSpeak(); if(Cloud.auth) Cloud.auth.signOut(); return; }
- if(a==='resetPass'){ if(Cloud.auth&&Cloud.user) Cloud.auth.sendPasswordResetEmail(Cloud.user.email,{url:RESET_URL}).then(function(){ toast('Te enviamos un correo a '+Cloud.user.email); },function(e){ toast(authErr(e)); }); return; }
- if(a==='instGo'){ var pr=Inst.prompt; if(!pr) return; pr.prompt(); (pr.userChoice||Promise.resolve({})).then(function(c){ if(c&&c.outcome==='accepted') Inst.prompt=null; else { try{ localStorage.setItem('lumen:installDismiss',Date.now()); }catch(x){} } Inst.show(); if(U.tab==='me') render(); }); return; }
- if(a==='instNo'){ try{ localStorage.setItem('lumen:installDismiss',Date.now()); }catch(x){} Inst.show(); return; }
- if(a==='book'){ toast(v+': lector disponible en la publicación'); return; }
- if(a==='mode'){ S.mode=v; applyTheme(); save(); render(); return; }
- if(a==='accent'){ S.accent=v; applyTheme(); save(); render(); return; }
- if(a==='reset'){ U.confirmReset=true; render(); return; }
- if(a==='resetNo'){ U.confirmReset=false; render(); return; }
- if(a==='resetYes'){ S.done={}; S.ros={}; save(); U.confirmReset=false; render(); toast('Datos borrados'); return; }
-});
-document.addEventListener('submit',function(e){ if(e.target.id==='authForm'){ e.preventDefault(); authSubmit(); } });
-document.addEventListener('change',function(e){
- var a=e.target.getAttribute('data-a');
- if(a==='guided'){ S.guided=e.target.checked; save(); }
- if(a==='voice'){ S.voice=e.target.value; save(); }
- if(a==='rate'){ S.rate=parseFloat(e.target.value)||1; save(); }
- if(a==='name'){ S.name=e.target.value.trim().slice(0,40); save(); }
-});
-document.addEventListener('input',function(e){
- var a=e.target.getAttribute('data-a');
- if(a==='bq'){ U.q=e.target.value; var pos=e.target.selectionStart; render(); var n=document.getElementById('bq'); if(n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(x){} } }
- if(a==='rate'){ var r=document.getElementById('rateV'); if(r) r.textContent=parseFloat(e.target.value).toFixed(1)+'×'; }
-});
-
-var h=(location.hash||'').slice(1); if(['home','rosary','hoy','bible','me'].indexOf(h)>=0) U.tab=h;
-/* ---------- Bienvenida ---------- */
-var splashT0=Date.now(), splashTimer=null;
-function hideSplash(){ var el=document.getElementById('splash'); if(!el) return;
- clearTimeout(splashTimer); splashTimer=setTimeout(function(){ el.classList.add('out'); Inst.show(); }, Math.max(0,2300-(Date.now()-splashT0))); }
-function playSplash(){ var el=document.getElementById('splash'); if(!el) return;
- el.classList.remove('out'); el.classList.add('replay'); void el.offsetWidth; el.classList.remove('replay'); splashT0=Date.now(); hideSplash(); }
-
-/* ---------- Arranque ---------- */
-Cloud.init(); render(); hideSplash();
-if('serviceWorker' in navigator) window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
-})();
-</script>
+<script src="liturgia.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
