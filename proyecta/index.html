@@ -1,0 +1,1617 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Proyecta: modelo financiero inmobiliario para proyectos de vivienda en Colombia. Ventas, costos, crédito, socios, estados financieros y seguimiento.">
+<link rel="canonical" href="https://www.planificarproyectos.com/proyecta/">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Proyecta">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<style>:root{color-scheme:dark;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Proyecta</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#0D0E0D">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: app móvil · barra superior con marca y proyecto activo · pantallas a una columna (2 en escritorio) · navegación fija abajo · una tipografía (Manrope) · énfasis configurable */
+:root{
+  --bg:#0D0E0D; --panel:#171817; --sunk:#212220; --ink:#F1F2EE; --muted:#8D9089; --line:#272826;
+  --acc:#C6F135; --on-acc:#10110F; --acc-ink:#C6F135; --acc-soft:rgba(198,241,53,.12);
+  --chart-pos:#C6F135; --chart-neu:#6E8426;
+  --neg:#FF7362; --neg-soft:rgba(255,115,98,.12); --warn:#F0B63E; --warn-soft:rgba(240,182,62,.12);
+  --band1:rgba(255,255,255,.015); --band2:rgba(198,241,53,.05); --band3:rgba(255,255,255,.035);
+  --font:"Manrope","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --col:#121312;
+  --r:18px; --r-sm:12px; --nav-h:64px;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#F3F4F0; --panel:#FFFFFF; --sunk:#EDEEE9; --ink:#111210; --muted:#676A63; --line:#E4E5E0;
+  --acc:#C6F135; --on-acc:#10110F; --acc-ink:#4C6800; --acc-soft:#EEF8CC; --chart-pos:#8DBA12; --chart-neu:#57730B;
+  --neg:#C63D2B; --neg-soft:#FBE4E0; --warn:#9A6400; --warn-soft:#FAEFD6;
+  --band1:rgba(0,0,0,.015); --band2:rgba(141,186,18,.07); --band3:rgba(0,0,0,.03); --col:#E9EAE5; color-scheme:light}}
+:root[data-theme="light"]{
+  --bg:#F3F4F0; --panel:#FFFFFF; --sunk:#EDEEE9; --ink:#111210; --muted:#676A63; --line:#E4E5E0;
+  --acc:#C6F135; --on-acc:#10110F; --acc-ink:#4C6800; --acc-soft:#EEF8CC; --chart-pos:#8DBA12; --chart-neu:#57730B;
+  --neg:#C63D2B; --neg-soft:#FBE4E0; --warn:#9A6400; --warn-soft:#FAEFD6;
+  --band1:rgba(0,0,0,.015); --band2:rgba(141,186,18,.07); --band3:rgba(0,0,0,.03); --col:#E9EAE5; color-scheme:light}
+:root[data-theme="dark"]{
+  --bg:#0D0E0D; --panel:#171817; --sunk:#212220; --ink:#F1F2EE; --muted:#8D9089; --line:#272826;
+  --neg:#FF7362; --neg-soft:rgba(255,115,98,.12); --warn:#F0B63E; --warn-soft:rgba(240,182,62,.12);
+  --band1:rgba(255,255,255,.015); --band3:rgba(255,255,255,.035); --col:#121312; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.5;font-variant-numeric:tabular-nums;-webkit-tap-highlight-color:transparent;padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 20px)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1120px;margin-inline:auto}
+
+/* Barra superior */
+.appbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:var(--bg)}
+.appbar .wrap{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-block:12px 8px}
+.brand{font-weight:800;font-size:17px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;display:flex;align-items:center;gap:9px}
+.brand span{color:var(--acc-ink)}
+.brand .logo{width:32px;height:32px;flex:none;display:block}
+.projbtn{display:flex;align-items:center;gap:8px;min-width:0;max-width:56%;background:var(--panel);border:0;border-radius:99px;padding:6px 8px 6px 12px;cursor:pointer;font-weight:700;font-size:12.5px}
+.projbtn .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.projbtn .dot{width:8px;height:8px;border-radius:50%;background:var(--acc);flex:none}
+.projbtn .dot.off{background:var(--muted)} .projbtn .dot.busy{background:var(--warn)} .projbtn .dot.err{background:var(--neg)}
+.projbtn svg{width:16px;height:16px;flex:none;color:var(--muted)}
+.banner{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--warn-soft);color:var(--ink);border-radius:var(--r-sm);padding:10px 14px;font-size:13px;margin-top:4px}
+.banner b{color:var(--warn)}
+
+/* Pantallas */
+.screen{display:grid;gap:12px;padding-block:6px 16px;container:scr / inline-size;align-content:start}
+.screen-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;padding-block:6px 2px}
+.screen-head h1{font-size:26px;font-weight:800;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.screen-head p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;margin:10px 0 0}
+.card{background:var(--panel);border-radius:var(--r);padding:18px;min-width:0}
+.card h3{font-size:12px;margin:0 0 4px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;text-wrap:balance}
+.card h4{font-size:14px;margin:0;font-weight:800}
+.card .sub{color:var(--muted);font-size:12.5px;margin:0 0 14px}
+.grid2{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+@container scr (min-width:760px){.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}.span2{grid-column:1/-1}}
+.muted{color:var(--muted)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none;position:sticky;top:calc(env(safe-area-inset-top,0px) + 52px);z-index:5;background:var(--bg);margin-inline:-2px;padding-inline:2px}
+.chips::-webkit-scrollbar{display:none}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:99px;padding:8px 14px;font-weight:700;font-size:13px;white-space:nowrap;cursor:pointer;color:var(--muted)}
+.chip[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}
+
+/* Inicio */
+.hello .date{color:var(--muted);font-size:12.5px;font-weight:600}
+.hello h1{font-size:26px;font-weight:800;margin:2px 0 0;letter-spacing:-.01em}
+.projcard{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.projcard .t{font-weight:800;font-size:16px}
+.projcard .d{color:var(--muted);font-size:12.5px}
+.hero{position:relative;background:var(--acc);color:var(--on-acc);border-radius:22px;padding:18px 20px 20px;display:grid;gap:4px}
+.hero.loss{background:var(--neg);color:#fff}
+.hero .eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;opacity:.75}
+.hero .big{font-size:36px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.hero .mini{display:flex;gap:20px;flex-wrap:wrap;font-size:13px;font-weight:700;margin-top:6px;padding-right:56px}
+.hero .mini span{opacity:.7;font-weight:500;margin-right:4px}
+.hero .go{position:absolute;right:16px;bottom:16px;width:46px;height:46px;border-radius:50%;background:var(--on-acc);color:var(--acc);border:0;display:grid;place-items:center;cursor:pointer}
+.hero.loss .go{background:#fff;color:var(--neg)}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@container scr (min-width:560px){.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@container scr (min-width:900px){.tiles{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.tile{background:var(--panel);border-radius:var(--r-sm);padding:12px 14px;min-width:0}
+.tile .l{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .v{font-size:17px;font-weight:700;white-space:nowrap;margin-top:2px;overflow:hidden;text-overflow:ellipsis}
+.tile .v.bad{color:var(--neg)}
+.alerts{display:grid;gap:6px}
+.alert{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:10px 12px;border-radius:var(--r-sm);font-size:13px;background:var(--sunk)}
+.alert b{font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:99px;margin-top:1px;font-weight:800;white-space:nowrap}
+.alert.crit b{background:var(--neg-soft);color:var(--neg)}
+.alert.warn b{background:var(--warn-soft);color:var(--warn)}
+.alert.ok b{background:var(--acc);color:var(--on-acc)}
+.port{display:grid;gap:6px}
+.port button{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;text-align:left;background:var(--sunk);border:0;border-radius:var(--r-sm);padding:12px 14px;cursor:pointer}
+.port button[aria-current=true]{box-shadow:inset 0 0 0 1.5px var(--acc)}
+.port .n{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.port .k{font-weight:700;text-align:right}
+.port .m{grid-column:1/-1;color:var(--muted);font-size:12px}
+
+/* Gráficos */
+svg text{font-family:var(--font);font-size:10.5px;fill:var(--muted);font-weight:500}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
+.legend span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:var(--c)}
+.chart-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.bars{display:grid;gap:11px}
+.bar{display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr) 58px;gap:12px;align-items:center;font-size:13px}
+.bar .track{height:8px;background:var(--sunk);border-radius:99px;overflow:hidden}
+.bar .fill{height:100%;background:var(--chart-neu);border-radius:99px}
+.bar .fill.util{background:var(--acc)} .bar .fill.neg{background:var(--neg)}
+.bar .amt{text-align:right;font-size:12.5px;font-weight:600}
+@container scr (max-width:420px){.bar{grid-template-columns:minmax(0,108px) minmax(0,1fr) 52px;gap:8px;font-size:12.5px}}
+
+/* Formularios */
+.fields{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+@container scr (min-width:520px){.fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container scr (min-width:860px){.fields{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.fields.tight{grid-template-columns:repeat(2,minmax(0,1fr))}
+@container scr (min-width:860px){.fields.tight{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.f{min-width:0}
+.f label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f .box{display:flex;align-items:center;border-radius:var(--r-sm);background:var(--sunk);box-shadow:inset 0 0 0 1px transparent;transition:box-shadow .15s}
+.f .box:focus-within{box-shadow:inset 0 0 0 1.5px var(--acc)}
+.f input,.f select{flex:1;min-width:0;width:100%;border:0;background:transparent;padding:11px 12px;font-weight:600;font-size:15px;appearance:none;-webkit-appearance:none}
+.f input[type=number]{text-align:right}
+.f select{cursor:pointer;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 17px) 50%,calc(100% - 12px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:30px}
+.f input:focus,.f select:focus{outline:none}
+.f .u{padding-right:12px;font-size:11.5px;color:var(--muted);white-space:nowrap;font-weight:600}
+.f .hint{font-size:11.5px;color:var(--muted);margin-top:4px;text-align:right;min-height:1em}
+.f.sw{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--sunk);border-radius:var(--r-sm);padding:10px 12px;align-self:end;min-height:46px}
+.f.sw label{margin:0;color:var(--ink);font-size:13px;white-space:normal}
+.switch{position:relative;width:44px;height:26px;flex:none}
+.switch input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;width:100%;height:100%;z-index:1}
+.switch i{position:absolute;inset:0;border-radius:99px;background:var(--line);transition:background .15s}
+.switch i::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--ink);transition:transform .15s}
+.switch input:checked+i{background:var(--acc)}
+.switch input:checked+i::after{transform:translateX(18px);background:var(--on-acc)}
+.item{background:var(--sunk);border-radius:var(--r);padding:14px;display:grid;gap:12px}
+.item-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.item-head .tag{flex:none}
+.item .f .box{background:var(--panel)}
+.item .f.sw{background:var(--panel)}
+.list{display:grid;gap:10px}
+.iconbtn{border:0;background:transparent;color:var(--muted);width:34px;height:34px;border-radius:50%;cursor:pointer;display:grid;place-items:center;flex:none}
+.iconbtn:hover{background:var(--panel);color:var(--neg)}
+.iconbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.addbtn{border:1.5px dashed var(--line);background:transparent;border-radius:var(--r-sm);padding:12px;font-weight:700;color:var(--acc-ink);cursor:pointer;width:100%}
+.addbtn:hover{border-color:var(--acc-ink)}
+.pricelist{font-size:12.5px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+.pricelist b{color:var(--ink)}
+.curvegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
+.curvegrid .f label{font-size:10.5px;text-align:center}
+.curvegrid .f input{padding:8px 6px;text-align:center;font-size:13px}
+.readonly .f input,.readonly .f select,.readonly .switch input{pointer-events:none}
+.readonly .addbtn,.readonly .iconbtn{display:none}
+.live{position:sticky;z-index:4;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 8px);margin-top:4px}
+.live .in{max-width:640px;margin:0 auto;background:var(--acc);color:var(--on-acc);border-radius:16px;padding:10px 14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.live .in.loss{background:var(--neg);color:#fff}
+.live .l{font-size:10px;letter-spacing:.07em;text-transform:uppercase;font-weight:800;opacity:.7}
+.live .v{font-size:15px;font-weight:800;white-space:nowrap}
+
+/* Controles */
+.btn{border:1px solid var(--line);background:transparent;padding:9px 16px;border-radius:99px;cursor:pointer;font-weight:700;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--acc-ink);color:var(--acc-ink)}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}
+.btn.pri:hover{color:var(--on-acc);filter:brightness(1.05)}
+.btn.danger{border-color:var(--neg);color:var(--neg)}
+.btn.sm{padding:6px 12px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row.between{justify-content:space-between}
+.seg{display:inline-flex;gap:4px;padding:4px;background:var(--panel);border-radius:99px;max-width:100%;overflow-x:auto}
+.seg button{border:0;background:transparent;padding:8px 16px;cursor:pointer;color:var(--muted);font-weight:700;border-radius:99px;white-space:nowrap;font-size:13px}
+.seg button[aria-pressed=true]{background:var(--acc);color:var(--on-acc)}
+.seg.sunk{background:var(--sunk)}
+.tag{font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:99px;background:var(--sunk);color:var(--muted);font-weight:800;white-space:nowrap}
+.tag.acc{background:var(--acc-soft);color:var(--acc-ink)}
+.empty{color:var(--muted);font-size:13px;padding:16px;border:1px dashed var(--line);border-radius:var(--r-sm)}
+
+/* Tablas */
+.tbl-wrap{overflow-x:auto;border-radius:var(--r-sm);max-width:100%;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:8px 12px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+th{font-weight:700;color:var(--muted);background:var(--panel);position:sticky;top:0;font-size:11.5px;z-index:1}
+td.c0,th.c0{text-align:left;position:sticky;left:0;background:var(--panel);z-index:2;max-width:46vw;overflow:hidden;text-overflow:ellipsis}
+th.c0{z-index:3}
+td{font-weight:500}
+td.c0{font-weight:600}
+tr.tot td{font-weight:800;background:var(--sunk)} tr.tot td.c0{background:var(--sunk)}
+tr.sec td{color:var(--acc-ink);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;padding-top:16px;border-bottom:0}
+td.neg{color:var(--neg)} td.pos{color:var(--acc-ink)}
+th.ph1{box-shadow:inset 0 -2px 0 var(--chart-neu)} th.ph2{box-shadow:inset 0 -2px 0 var(--acc)} th.ph3{box-shadow:inset 0 -2px 0 var(--muted)}
+.matrix td{text-align:center}
+.matrix td.good{background:var(--acc-soft);color:var(--acc-ink)} .matrix td.bad{background:var(--neg-soft);color:var(--neg)} .matrix td.mid{background:var(--warn-soft);color:var(--warn)}
+.matrix td.base{outline:2px solid var(--ink);outline-offset:-2px;font-weight:800}
+.tbl-in td{padding:4px 6px}
+.tbl-in input{width:100%;min-width:92px;border:0;background:var(--sunk);border-radius:8px;padding:7px 8px;text-align:right;font-weight:600}
+.tbl-in input:focus{outline:1.5px solid var(--acc)}
+textarea.paste{width:100%;min-height:96px;font-size:12px;border:0;background:var(--sunk);border-radius:var(--r-sm);padding:10px;resize:vertical}
+.kv{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 16px;font-size:13px}
+.kv span:nth-child(odd){color:var(--muted)}
+.kv span:nth-child(even){font-weight:700;text-align:right}
+.metric{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@container scr (min-width:640px){.metric{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.diff{display:grid;gap:4px;font-size:13px}
+.diff div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:8px 10px;background:var(--sunk);border-radius:10px}
+.diff i{font-style:normal;color:var(--muted)}
+
+/* Hoja inferior */
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:30;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--panel);width:100%;max-width:640px;max-height:86vh;overflow-y:auto;border-radius:22px 22px 0 0;padding:18px max(18px,env(safe-area-inset-left,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-right,0px));display:grid;gap:12px}
+.sheet .grab{width:40px;height:4px;border-radius:99px;background:var(--line);margin:0 auto 4px}
+.sheet h2{margin:0;font-size:20px;font-weight:800}
+
+/* Cuenta */
+.profile{display:flex;align-items:center;gap:14px}
+.avatar{width:56px;height:56px;border-radius:50%;background:var(--acc);color:var(--on-acc);display:grid;place-items:center;font-size:22px;font-weight:800;flex:none;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.profile input{width:100%;border:0;background:transparent;font-size:20px;font-weight:800;padding:2px 0}
+.profile input:focus{outline:none}
+.profile small{color:var(--muted);font-size:12.5px}
+.set{display:grid}
+.set-row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:14px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.set-row:first-child{border-top:0;padding-top:4px}
+.set-row .t{font-weight:700}
+.set-row .d{color:var(--muted);font-size:12.5px}
+.swatches{display:flex;gap:10px;flex-wrap:wrap;padding-top:4px}
+.sw-c{width:36px;height:36px;border-radius:50%;border:0;cursor:pointer;background:var(--c);box-shadow:inset 0 0 0 1px rgba(127,127,127,.25)}
+.sw-c[aria-pressed=true]{box-shadow:0 0 0 3px var(--panel),0 0 0 5px var(--ink)}
+.sw-c.custom{position:relative;overflow:hidden;background:conic-gradient(#ff5f5f,#ffd23f,#7cf03c,#36d1f2,#7b6bff,#ff5fa2,#ff5f5f)}
+.sw-c.custom input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.roles{display:grid;gap:6px;font-size:12.5px}
+.roles div{display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px;padding:8px 10px;border-radius:10px;background:var(--sunk)}
+.roles div.me{box-shadow:inset 0 0 0 1.5px var(--acc)}
+.roles b{font-weight:800}
+.about{color:var(--muted);font-size:12.5px;text-align:center;padding:8px 0}
+
+/* Informe */
+.report{display:grid;gap:14px}
+.report>*{min-width:0}
+.report .kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@container scr (min-width:640px){.report .kpis{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+/* Navegación inferior */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:8;background:var(--panel);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+.nav .in{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));max-width:640px;margin:0 auto;height:var(--nav-h)}
+.nav button{border:0;background:transparent;display:grid;justify-items:center;align-content:center;gap:4px;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;padding:0}
+.nav button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav button[aria-current=page],.nav button[aria-pressed=true]{color:var(--acc-ink)}
+.nav button{position:relative}
+.nav button[aria-pressed=true]::before{content:"";position:absolute;top:6px;width:18px;height:3px;border-radius:99px;background:var(--acc)}
+.nav button[aria-pressed=false]{opacity:.75}
+
+/* Vista web: columnas como pantallas */
+.colcap{display:none}
+body.web{padding-bottom:0;overflow:hidden}
+body.web .wrap{max-width:none}
+body.web .cols{display:grid;grid-template-columns:repeat(var(--n,1),minmax(0,560px));justify-content:center;gap:12px;padding-bottom:12px}
+body.web .cols>.screen{grid-auto-rows:max-content;overflow-y:auto;overscroll-behavior:contain;background:var(--col);border-radius:22px;padding:0 14px 14px;min-width:0;scrollbar-width:thin}
+body.web .colcap{display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:6;background:var(--col);margin:0 -14px;padding:10px 8px 6px 18px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:800;color:var(--muted)}
+body.web .colcap{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+body.web .colcap .cap-t{display:flex;align-items:center;gap:6px}
+body.web .colcap .grip{width:16px;height:16px;fill:currentColor;opacity:.7}
+body.web .colcap .cap-b{display:flex;gap:0}
+body.web .colcap .iconbtn{width:30px;height:30px}
+body.web .colcap .iconbtn:disabled{opacity:.3;cursor:default;background:transparent}
+body.web .screen.dragging{z-index:30;cursor:grabbing;box-shadow:0 24px 60px rgba(0,0,0,.45),inset 0 0 0 1.5px var(--acc);animation:none}
+#dropLine{position:fixed;width:4px;border-radius:4px;background:var(--acc);z-index:31;pointer-events:none}
+body.web .colcap .iconbtn:hover{color:var(--ink);background:var(--panel)}
+body.web .chips{top:42px;background:var(--col)}
+body.web .screen-head h1{font-size:22px}
+body.web .live{bottom:6px}
+body.web #s-cuenta{position:fixed;z-index:25;top:calc(var(--top,60px) + 4px);bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 10px);right:max(16px,env(safe-area-inset-right,0px));width:min(480px,calc(100% - 32px));background:var(--bg);border:1px solid var(--line);box-shadow:0 18px 50px rgba(0,0,0,.35)}
+.scrim{position:fixed;inset:0;z-index:24;background:rgba(0,0,0,.35)}
+@media (prefers-reduced-motion:no-preference){.screen.flash{animation:fl .7s ease}@keyframes fl{0%{box-shadow:inset 0 0 0 2px var(--acc)}100%{box-shadow:inset 0 0 0 2px transparent}}}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 16px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;font-size:13px;font-weight:700;z-index:40;max-width:calc(100% - 32px);text-align:center}
+.auth{position:fixed;inset:0;z-index:60;background:var(--bg);display:grid;place-items:center;overflow-y:auto;padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.auth-card{width:100%;max-width:400px;display:grid;gap:18px}
+.auth-brand{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.auth-brand .logo-lg{width:76px;height:76px}
+.auth-brand .nm{font-weight:800;font-size:22px;letter-spacing:.04em}
+.auth-brand .nm span{color:var(--acc-ink)}
+.auth h2{margin:0;font-size:22px;font-weight:800}
+#authForm{display:grid;gap:12px}
+#authForm input{text-align:left}
+.amsg{min-height:1.2em;margin:0;font-size:13px;color:var(--neg)}
+.amsg.ok{color:var(--acc-ink)}
+.lnk{border:0;background:none;color:var(--acc-ink);font-weight:700;cursor:pointer;padding:4px;justify-self:center;font-size:13.5px}
+body.authing .nav,body.authing .appbar{visibility:hidden}
+.loading{display:grid;place-items:center;gap:10px;padding:80px 0;color:var(--muted)}
+.spin{width:28px;height:28px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--acc);animation:sp 0.8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:no-preference){.fill{transition:width .25s ease}.screen{animation:in .18s ease}@keyframes in{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+</style>
+
+</head>
+<body>
+
+<header class="appbar">
+  <div class="wrap">
+    <div class="brand"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect x="1" y="1" width="62" height="62" rx="15" fill="#141514" stroke="#2B2D2A" stroke-width="1.2"/><g fill="none" stroke="#F1F2EE" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M17 47.5V33.5h8.5v14"/><path d="M25.5 47.5V24.5h9.5v23"/><path d="M14.5 47.5h23"/><path d="M29.5 31h1.5M29.5 37h1.5M21 39h0.5"/></g><g fill="none" stroke="var(--acc)" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"><path d="M44 47.5V16.5"/><path d="M38 22.5l6-6 6 6"/></g></svg><div>PROYECTA</div></div>
+    <button class="projbtn" id="projBtn" aria-label="Cambiar de proyecto"><i class="dot" id="syncDot"></i><span class="nm" id="projName">Cargando…</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></button>
+  </div>
+  <div class="wrap" id="bannerWrap" hidden><div class="banner" id="banner"></div></div>
+</header>
+
+<div class="wrap">
+ <div class="cols" id="cols">
+  <section class="screen" id="s-loading"><div class="loading"><div class="spin"></div><div>Conectando con la base de proyectos…</div></div></section>
+  <section class="screen" id="s-inicio" hidden></section>
+  <section class="screen" id="s-modelo" hidden></section>
+  <section class="screen" id="s-resultados" hidden></section>
+  <section class="screen" id="s-control" hidden></section>
+  <section class="screen" id="s-cuenta" hidden></section>
+ </div>
+</div>
+<div class="scrim" id="scrim" hidden></div>
+<div id="dropLine" hidden></div>
+
+
+<nav class="nav" aria-label="Secciones">
+  <div class="in">
+    <button data-go="inicio" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z"/></svg>Inicio</button>
+    <button data-go="modelo"><svg viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>Modelo</button>
+    <button data-go="resultados"><svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M9 4v16"/></svg>Resultados</button>
+    <button data-go="control"><svg viewBox="0 0 24 24"><path d="M4 20h16M7 16v-4M12 16V6M17 16v-7"/></svg>Control</button>
+    <button data-go="cuenta"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1.4-3.6 4.2-5.5 7.5-5.5s6.1 1.9 7.5 5.5"/></svg>Cuenta</button>
+  </div>
+</nav>
+<div id="sheetHost"></div>
+<div class="auth" id="auth" hidden><div class="auth-card"><div class="auth-brand"><svg class="logo-lg" viewBox="0 0 64 64" aria-hidden="true"><rect x="1" y="1" width="62" height="62" rx="15" fill="#141514" stroke="#2B2D2A" stroke-width="1.2"/><g fill="none" stroke="#F1F2EE" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M17 47.5V33.5h8.5v14"/><path d="M25.5 47.5V24.5h9.5v23"/><path d="M14.5 47.5h23"/><path d="M29.5 31h1.5M29.5 37h1.5M21 39h0.5"/></g><g fill="none" stroke="var(--acc)" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"><path d="M44 47.5V16.5"/><path d="M38 22.5l6-6 6 6"/></g></svg><div class="nm">PROYECTA</div><div class="muted">Modelo financiero inmobiliario</div></div><div class="card" id="authBody" style="display:grid;gap:14px"></div></div></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+/* ===================== MOTOR FINANCIERO PROYECTA ===================== */
+const pc=x=>(+x||0)/100;
+const sum=a=>{let s=0;for(let i=0;i<a.length;i++)s+=a[i];return s};
+const clone=o=>JSON.parse(JSON.stringify(o));
+const uid=()=>Math.random().toString(36).slice(2,9);
+
+const DEFAULT_MACRO={
+  anioBase:2026, smmlv:1750905, topeVIS:135, topeVISEsp:150, topeVIP:90,
+  anios:[2026,2027,2028,2029,2030,2031,2032,2033],
+  inflacion:[6.3,5.5,4.5,4.0,3.5,3.5,3.2,3.0],
+  iccv:[6.5,6.0,5.0,4.5,4.0,4.0,3.5,3.5],
+  incSmmlv:[23.0,8.0,6.5,6.0,5.0,5.0,4.5,4.5],
+  ibr:[12.0,11.0,9.5,8.5,8.0,7.5,7.5,7.5]
+};
+
+const CAPITULOS_BASE=[
+  {id:'c1',nombre:'Preliminares',valor:90000,ini:0,fin:15},
+  {id:'c2',nombre:'Cimentación',valor:260000,ini:0,fin:25},
+  {id:'c3',nombre:'Estructura',valor:820000,ini:10,fin:60},
+  {id:'c4',nombre:'Mampostería',valor:260000,ini:35,fin:75},
+  {id:'c5',nombre:'Instalaciones',valor:380000,ini:30,fin:90},
+  {id:'c6',nombre:'Acabados',valor:720000,ini:55,fin:100},
+  {id:'c7',nombre:'Carpintería y equipos',valor:280000,ini:60,fin:100},
+  {id:'c8',nombre:'Urbanismo y zonas comunes',valor:140000,ini:75,fin:100}
+];
+
+function newProject(kind){
+  const P={
+    general:{nombre:'Torre Aurora (ejemplo)',ciudad:'Medellín',fecha:'2027-01',vehiculo:'fiducia',tasaDesc:15,margenMin:12},
+    etapas:[
+      {id:'e1',nombre:'Etapa 1 · Torre A',tipo:'NoVIS',topeEsp:true,inicioVentas:1,velocidad:9,curva:'lanzamiento',curvaPers:[],incPrecio:0.4,descuento:2,pe:60,mesMinObra:6,mesesObra:22,mesesEsc:4,pisos:18,factorConst:1.32,credPct:65,salaVentas:450000000,fidPreventa:4500000,fidAdmin:6500000},
+      {id:'e2',nombre:'Etapa 2 · Torre B',tipo:'NoVIS',topeEsp:true,inicioVentas:15,velocidad:8,curva:'constante',curvaPers:[],incPrecio:0.4,descuento:2,pe:60,mesMinObra:20,mesesObra:20,mesesEsc:4,pisos:16,factorConst:1.32,credPct:65,salaVentas:120000000,fidPreventa:4500000,fidAdmin:6500000}
+    ],
+    tipologias:[
+      {id:'t1',etapa:'e1',nombre:'Tipo A · 2 alcobas',clase:'apto',unidades:90,area:55,precio:6800000,primaPiso:0.5,pctVista:30,primaVista:3},
+      {id:'t2',etapa:'e1',nombre:'Tipo B · 3 alcobas',clase:'apto',unidades:54,area:72,precio:6600000,primaPiso:0.5,pctVista:30,primaVista:3},
+      {id:'t3',etapa:'e1',nombre:'Parqueaderos',clase:'parq',unidades:110,area:0,precio:38000000,primaPiso:0,pctVista:0,primaVista:0},
+      {id:'t4',etapa:'e1',nombre:'Depósitos',clase:'deposito',unidades:40,area:0,precio:12000000,primaPiso:0,pctVista:0,primaVista:0},
+      {id:'t5',etapa:'e1',nombre:'Locales',clase:'local',unidades:4,area:60,precio:9000000,primaPiso:0,pctVista:0,primaVista:0},
+      {id:'t6',etapa:'e2',nombre:'Tipo A · 2 alcobas',clase:'apto',unidades:80,area:55,precio:7000000,primaPiso:0.5,pctVista:25,primaVista:3},
+      {id:'t7',etapa:'e2',nombre:'Tipo C · 1 alcoba',clase:'apto',unidades:48,area:42,precio:7300000,primaPiso:0.5,pctVista:25,primaVista:3},
+      {id:'t8',etapa:'e2',nombre:'Parqueaderos',clase:'parq',unidades:90,area:0,precio:38000000,primaPiso:0,pctVista:0,primaVista:0}
+    ],
+    ventas:{separacion:2000000,ciPct:30,pctCesantias:15,pctPrimas:10,desistPct:5,desistMes:6,penalidad:10,subsidioPct:0,subsidioSMMLV:30,cajaPct:0,cajaSMMLV:20,rezagoSubsidio:2},
+    costos:{
+      capitulos:clone(CAPITULOS_BASE),imprev:3,indexar:true,
+      disenos:3.5,interventoria:2.5,poliza:0.8,otrosInd:3,servicios:2500000,publicidad:1.2,postventa:1,gerencia:3,comision:2,gastosEscr:0.3,predial:1.0,adminNoVend:250000,
+      lote:{valor:9500000000,forma:'contado',pctInicial:30,cuotas:12,pctArea:12},
+      licencias:{curaduria:180000000,delineacion:2.6,plusvalia:0,cargas:600000000}
+    },
+    impuestos:{ivaMat:40,ivaTasa:19,devIva:true,rezagoDev:6,ica:7,gmf:true,renta:35},
+    financiacion:{spread:4.5,comision:0.5,capitalizar:false,liberacion:1.1,puentePct:0,puenteSpread:6,rendFid:6},
+    socios:[{id:'s1',nombre:'Socio gestor',part:60,aportaLote:false},{id:'s2',nombre:'Propietario del lote',part:40,aportaLote:false}],
+    real:{corte:null,avance:0,metodo:'restante',filas:{ventasU:[],recaudo:[],directos:[],indirectos:[]}}
+  };
+  if(kind==='blank'){
+    P.general.nombre='Nuevo proyecto';
+    P.etapas=[Object.assign(clone(P.etapas[0]),{nombre:'Etapa 1',curva:'constante'})];
+    P.tipologias=[{id:'t1',etapa:'e1',nombre:'Tipo A',clase:'apto',unidades:100,area:60,precio:7800000,primaPiso:0,pctVista:0,primaVista:0}];
+    P.costos.lote.valor=4500000000;P.socios=[{id:'s1',nombre:'Socio A',part:100,aportaLote:false}];
+  }
+  return P;
+}
+
+/* ---- Calendario e índices macro ---- */
+function makeCal(P,M,H){
+  const [y0,m0]=String(P.general.fecha||'2027-01').split('-').map(Number);
+  const year=t=>y0+Math.floor(((m0||1)-1+t)/12);
+  const month=t=>(((m0||1)-1+t)%12+12)%12;
+  const rateY=(arr,y)=>{const i=Math.max(0,Math.min(arr.length-1,y-M.anioBase));return pc(arr[i])};
+  const iccv=[1],infl=[1];
+  for(let t=1;t<H;t++){iccv[t]=iccv[t-1]*Math.pow(1+rateY(M.iccv,year(t)),1/12);infl[t]=infl[t-1]*Math.pow(1+rateY(M.inflacion,year(t)),1/12)}
+  const smCache={};
+  const smmlvY=y=>{if(smCache[y])return smCache[y];let v=M.smmlv;for(let k=M.anioBase+1;k<=y;k++)v*=1+rateY(M.incSmmlv,k);return smCache[y]=v};
+  const ibrM=(t,spread)=>Math.pow(1+rateY(M.ibr,year(t))+pc(spread),1/12)-1;
+  return {year,month,iccv,infl,smmlv:t=>smmlvY(year(t)),ibrM};
+}
+function scurve(n){const F=x=>x*x*(3-2*x),w=[];for(let i=0;i<n;i++)w.push(F((i+1)/n)-F(i/n));return w}
+function spread(arr,a,b,total){if(!total)return;a=Math.max(0,Math.round(a));b=Math.max(a,Math.round(b));const n=b-a+1;for(let m=a;m<=b;m++)arr[m]+=total/n}
+
+/* ---- Una etapa ---- */
+function runEtapa(P,E,M,cal,H){
+  const z=()=>new Array(H).fill(0);
+  const V=P.ventas,C=P.costos,FI=P.financiacion,T=P.impuestos;
+  const tips=P.tipologias.filter(t=>t.etapa===E.id);
+  const apt=tips.filter(t=>t.clase==='apto');
+  const drv=apt.length?apt:tips;
+  const UA=Math.max(1e-9,sum(drv.map(t=>+t.unidades||0)));
+  const pisos=Math.max(1,+E.pisos||1);
+  const isVis=E.tipo==='VIS'||E.tipo==='VIP';
+  const tope=E.tipo==='VIP'?M.topeVIP:(E.topeEsp?M.topeVISEsp:M.topeVIS);
+  const unitBase=t=>(t.clase==='parq'||t.clase==='deposito')?(+t.precio||0):(+t.area||0)*(+t.precio||0)*(1+pc(t.primaPiso)*(pisos-1)/2)*(1+pc(t.pctVista)*pc(t.primaVista));
+  const t0=Math.max(0,Math.round(+E.inicioVentas||0));
+  const vel=t=>{const k=t-t0,b=Math.max(.2,+E.velocidad||1);
+    if(E.curva==='personalizada'&&Array.isArray(E.curvaPers)&&E.curvaPers[k]!=null&&E.curvaPers[k]!=='')return Math.max(0,+E.curvaPers[k]);
+    if(E.curva==='lanzamiento')return b*(k<3?1.8:k<6?1.25:.85);
+    return b};
+  const d=pc(V.desistPct),kD=Math.max(1,Math.round(+V.desistMes||6)),pen=pc(V.penalidad);
+  const nO=Math.max(1,Math.round(+E.mesesObra||1)),nE=Math.max(1,Math.round(+E.mesesEsc||1));
+  // ventas
+  const gross=z(),ret=z(),cohort=[];let inv=UA,cum=0,eq=null,io=null,fo=null,t=t0,capped=false,lastSale=t0;
+  const pe=Math.min(100,Math.max(1,+E.pe||60));
+  while(t<H-90){
+    inv+=ret[t];cum-=ret[t];
+    const pendingRet=ret.slice(t+1).some(x=>x>1e-9);
+    if(inv<=1e-7&&!pendingRet)break;
+    const u=Math.min(vel(t),inv);
+    if(u>1e-9){
+      gross[t]+=u;inv-=u;cum+=u;lastSale=t;
+      const escal=Math.pow(1+pc(E.incPrecio),t-t0)*(1-pc(E.descuento));
+      let val=0,units=0;
+      tips.forEach(tp=>{const share=u/UA*(+tp.unidades||0);let p=unitBase(tp)*escal;
+        if(isVis&&tp.clase==='apto'){const cap=tope*cal.smmlv(t);if(p>cap){p=cap;capped=true}}
+        val+=share*p;if(tp.clase==='apto'||!apt.length)units+=share});
+      const dz=(fo===null||t+kD<=fo)?d:0;
+      if(dz>0&&t+kD<H){ret[t+kD]+=u*dz}
+      cohort.push({s:t,u,val,dz});
+    }
+    if(eq===null&&cum>=UA*pe/100-1e-7){eq=t;io=Math.max(eq+1,Math.round(+E.mesMinObra||0));fo=io+nO-1}
+    t++;
+  }
+  if(eq===null){eq=Math.max(t0,lastSale);io=Math.max(eq+1,Math.round(+E.mesMinObra||0));fo=io+nO-1}
+  const e0=fo+1,e1=fo+nE;
+  // ingresos por cohorte
+  const ciCol=z(),refund=z(),penal=z(),esc=z(),sub=z(),rev=z(),escU=z(),valGross=z(),subRec=z();
+  cohort.forEach(c=>{
+    const {s,u,val,dz}=c;valGross[s]+=val;
+    const CI=val*pc(V.ciPct),sep=Math.min(CI,(+V.separacion||0)*u),rest=CI-sep;
+    const sched={};const add=(m,v)=>{sched[m]=(sched[m]||0)+v};
+    add(s,sep);
+    if(s>=fo){add(s,rest)}else{
+      const ms=[];for(let m=s+1;m<=fo;m++)ms.push(m);
+      const febs=ms.filter(m=>cal.month(m)===1),pri=ms.filter(m=>cal.month(m)===5||cal.month(m)===11);
+      let ces=rest*pc(V.pctCesantias),prm=rest*pc(V.pctPrimas),mon=rest-ces-prm;
+      if(!febs.length){mon+=ces;ces=0}if(!pri.length){mon+=prm;prm=0}
+      febs.forEach(m=>add(m,ces/febs.length));pri.forEach(m=>add(m,prm/pri.length));
+      if(ms.length)ms.forEach(m=>add(m,mon/ms.length));else add(s,mon);
+    }
+    let paidD=0;
+    Object.keys(sched).forEach(k=>{const m=+k,v=sched[m];ciCol[m]+=v*(1-dz);if(dz>0&&m<s+kD){ciCol[m]+=v*dz;paidD+=v*dz}});
+    if(dz>0){refund[s+kD]+=paidD*(1-pen);penal[s+kD]+=paidD*pen}
+    const net=1-dz,saldo=(val-CI)*net;
+    let ms=[];for(let m=e0;m<=e1;m++)if(m>=s+1)ms.push(m);if(!ms.length)ms=[s+1];
+    ms.forEach(m=>{const portion=saldo/ms.length,uu=u*net/ms.length;
+      rev[m]+=val*net/ms.length;escU[m]+=uu;
+      let sb=0;if(isVis){const su=pc(V.subsidioPct)*(+V.subsidioSMMLV||0)*cal.smmlv(m)+pc(V.cajaPct)*(+V.cajaSMMLV||0)*cal.smmlv(m);sb=Math.min(portion,uu*su)}
+      esc[m]+=portion-sb;const lag=m+Math.max(0,Math.round(+V.rezagoSubsidio||0));if(lag<H){sub[lag]+=sb;subRec[m]+=sb}});
+  });
+  // fiducia: lo recaudado antes del inicio de obra queda retenido
+  const fid=z(),ciRel=z(),rend=z(),refCash=z();const rf=Math.pow(1+pc(FI.rendFid),1/12)-1;
+  let held=0,hr=0;
+  for(let m=0;m<H;m++){
+    if(m<io){held+=ciCol[m]-refund[m];hr+=held*rf;fid[m]=held}
+    else{ciRel[m]=ciCol[m]+(m===io?held:0);rend[m]=(m===io?hr:0);refCash[m]=refund[m];}
+  }
+  // costos
+  const AV=sum(tips.filter(t=>t.clase==='apto'||t.clase==='local').map(t=>(+t.unidades||0)*(+t.area||0)));
+  const AC=AV*(+E.factorConst||1);
+  const idx=t=>P.costos.indexar?cal.iccv[t]:1;
+  const dir=z(),chapTot={};let cdBase=0;
+  (C.capitulos||[]).forEach(ch=>{const tot=(+ch.valor||0)*AC;cdBase+=tot;
+    const a=io+Math.floor(pc(ch.ini)*nO),b=Math.max(a,io+Math.ceil(pc(ch.fin)*nO)-1),w=scurve(b-a+1);let tt=0;
+    w.forEach((x,i)=>{const v=tot*x*idx(a+i)*(1+pc(C.imprev));dir[a+i]+=v;tt+=v});chapTot[ch.id]=tt});
+  const CDt=sum(dir);
+  const p0=Math.max(0,t0-3);
+  const dis=z(),intv=z(),pol=z(),otr=z(),serv=z(),lic=z(),sala=z(),pub=z(),com=z(),ger=z(),gEsc=z(),post=z(),admN=z(),fidC=z();
+  spread(dis,p0,io-1,CDt*pc(C.disenos)*.6);spread(dis,io,fo,CDt*pc(C.disenos)*.4);
+  spread(intv,io,fo,CDt*pc(C.interventoria));
+  pol[fo]+=CDt*pc(C.poliza);
+  spread(otr,p0,fo,CDt*pc(C.otrosInd));
+  const uServ=sum(tips.filter(t=>t.clase==='apto'||t.clase==='local').map(t=>+t.unidades||0));
+  serv[Math.max(io,fo-2)]+=uServ*(+C.servicios||0)*cal.infl[Math.max(io,fo-2)];
+  lic[Math.max(0,io-1)]+=cdBase*pc(C.licencias.delineacion);
+  sala[Math.max(0,t0-2)]+=+E.salaVentas||0;
+  const VG=sum(valGross);const lastV=Math.max(t0,lastSale);
+  spread(pub,Math.max(0,t0-2),lastV,VG*pc(C.publicidad));
+  for(let m=0;m<H;m++){com[m]=valGross[m]*pc(C.comision);gEsc[m]=rev[m]*pc(C.gastosEscr)}
+  let lastEsc=e1;for(let m=H-1;m>=0;m--)if(escU[m]>1e-9){lastEsc=m;break}
+  spread(ger,p0,lastEsc,VG*pc(C.gerencia));
+  spread(post,fo+1,fo+12,CDt*pc(C.postventa));
+  let ce=0;for(let m=0;m<=lastEsc;m++){ce+=escU[m];if(m>fo)admN[m]=Math.max(0,UA-ce)*(+C.adminNoVend||0)*cal.infl[m]}
+  spread(fidC,t0,io-1,(io-t0)*(+E.fidPreventa||0));spread(fidC,io,lastEsc,(lastEsc-io+1)*(+E.fidAdmin||0));
+  // crédito constructor
+  const des=z(),intr=z(),intCap=z(),comi=z(),amo=z(),bal=z();
+  const cupo=CDt*pc(E.credPct),lib=cupo/UA*(+FI.liberacion||1);
+  let b=0,drawn=0,first=true;
+  for(let m=0;m<=Math.max(lastEsc,fo)+1&&m<H;m++){
+    const i=b*cal.ibrM(m,FI.spread);
+    if(FI.capitalizar&&m<=fo){intCap[m]=i;b+=i}else intr[m]=i;
+    let dd=0;if(m>=io&&m<=fo&&drawn<cupo){dd=Math.min(cupo-drawn,dir[m]*pc(E.credPct));if(dd>0&&first){comi[m]=cupo*pc(FI.comision);first=false}drawn+=dd}
+    let a=0;if(m>=e0){a=Math.min(b+dd,lib*escU[m]);if(m>=lastEsc)a=b+dd}
+    b=b+dd-a;des[m]=dd;amo[m]=a;bal[m]=b;
+  }
+  // devolución de IVA VIS
+  const devIva=z();
+  if(isVis&&T.devIva){const ivaPag=CDt*pc(T.ivaMat)*pc(T.ivaTasa)/(1+pc(T.ivaTasa));const RV=sum(rev);const tot=Math.min(ivaPag,.04*RV);
+    if(RV>0)for(let m=0;m<H;m++)if(rev[m]){const k=m+Math.max(0,Math.round(+T.rezagoDev||0));if(k<H)devIva[k]+=tot*rev[m]/RV}}
+  return {E,t0,eq,io,fo,e0,e1,lastEsc,lastSale,UA,AV,AC,cdBase,CDt,cupo,capped,chapTot,
+    gross,ret,valGross,ciCol,ciRel,fid,refund,refCash,penal,esc,sub,subRec,rev,escU,rend,
+    dir,dis,intv,pol,otr,serv,lic,sala,pub,com,ger,gEsc,post,admN,fidC,des,intr,intCap,comi,amo,bal,devIva};
+}
+
+/* ---- Proyecto completo ---- */
+function irr(f){
+  if(!f.some(x=>x>1)||!f.some(x=>x<-1))return null;
+  const npv=r=>{let s=0,d=1;for(let i=0;i<f.length;i++){s+=f[i]/d;d*=1+r}return s};
+  const bis=(lo,hi)=>{let flo=npv(lo);for(let k=0;k<80;k++){const m=(lo+hi)/2,fm=npv(m);if(flo*fm<=0)hi=m;else{lo=m;flo=fm}}return (lo+hi)/2};
+  const st=0.004;let p=0,fp=npv(0);if(fp===0)return 0;
+  for(let r=st;r<=1.2;r+=st){const fr=npv(r);if(fp*fr<=0)return bis(p,r);p=r;fp=fr}
+  p=0;fp=npv(0);
+  for(let r=-st;r>=-0.35;r-=st){const fr=npv(r);if(fp*fr<=0)return bis(r,p);p=r;fp=fr}
+  return null;
+}
+const annual=r=>r==null?null:Math.pow(1+r,12)-1;
+
+function runProject(P,M){
+  M=M||DEFAULT_MACRO;const H=300,z=()=>new Array(H).fill(0);
+  const cal=makeCal(P,M,H);
+  const C=P.costos,T=P.impuestos,FI=P.financiacion;
+  const ets=(P.etapas||[]).map(E=>runEtapa(P,E,M,cal,H));
+  const S=k=>{const a=z();ets.forEach(e=>{const x=e[k];for(let i=0;i<H;i++)a[i]+=x[i]});return a};
+  const AVt=sum(ets.map(e=>e.AV))||1;
+  const ioFirst=Math.min(...ets.map(e=>e.io)),lastEsc=Math.max(...ets.map(e=>e.lastEsc));
+  const rev=S('rev'),escU=S('escU');const UAt=sum(ets.map(e=>e.UA));const RevT=sum(rev);
+  // lote
+  const L=+C.lote.valor||0,lote=z();let loteEsp=0,loteCost=0;
+  if(C.lote.forma==='contado'){lote[0]=L;loteCost=L}
+  else if(C.lote.forma==='diferido'){const ini=L*pc(C.lote.pctInicial),n=Math.max(1,Math.round(+C.lote.cuotas||1));lote[0]=ini;for(let m=1;m<=n;m++)lote[m]+=(L-ini)/n;loteCost=L}
+  else if(C.lote.forma==='especie'){loteEsp=L;loteCost=L}
+  else if(C.lote.forma==='area'){for(let m=0;m<H;m++)lote[m]=rev[m]*pc(C.lote.pctArea);loteCost=sum(lote)}
+  // puente
+  const pDes=z(),pInt=z(),pAmo=z(),pBal=z();
+  if(+FI.puentePct>0&&(C.lote.forma==='contado'||C.lote.forma==='diferido')){let b=0;
+    for(let m=0;m<=ioFirst&&m<H;m++){pInt[m]=b*cal.ibrM(m,FI.puenteSpread);let d=m<ioFirst?lote[m]*pc(FI.puentePct):0;let a=m===ioFirst?b:0;b=b+d-a;pDes[m]=d;pAmo[m]=a;pBal[m]=b}}
+  const lic=S('lic');lic[Math.max(0,ioFirst-1)]+=(+C.licencias.plusvalia||0)+(+C.licencias.cargas||0);
+  ets.forEach(e=>{lic[Math.max(0,e.io-1)]+=(+C.licencias.curaduria||0)*e.AV/AVt});
+  const predial=z();let ce=0;for(let m=0;m<=lastEsc;m++){ce+=escU[m];predial[m]=L*pc(C.predial)/12*cal.infl[m]*Math.max(0,1-(ce-escU[m])/Math.max(1e-9,UAt))}
+  // agregados
+  const ciRel=S('ciRel'),fid=S('fid'),esc=S('esc'),sub=S('sub'),refCash=S('refCash'),rend=S('rend'),devIva=S('devIva'),penal=S('penal');
+  const dir=S('dir'),ind=z(),mkt=z(),ger=S('ger'),fidC=S('fidC'),post=z(),gEsc=S('gEsc');
+  ['dis','intv','pol','otr','serv'].forEach(k=>{const a=S(k);for(let i=0;i<H;i++)ind[i]+=a[i]});
+  ['sala','pub','com'].forEach(k=>{const a=S(k);for(let i=0;i<H;i++)mkt[i]+=a[i]});
+  ['post','admN'].forEach(k=>{const a=S(k);for(let i=0;i<H;i++)post[i]+=a[i]});
+  const des=S('des'),intr=S('intr'),intCap=S('intCap'),comi=S('comi'),amo=S('amo'),bal=S('bal');
+  // ICA (se causa sobre ingresos y se paga 2 meses después) y GMF
+  const icaA=z(),icaP=z(),gmf=z();
+  for(let m=0;m<H;m++){icaA[m]=(rev[m]+penal[m]+rend[m]+devIva[m])*(+T.ica||0)/1000;if(m+2<H)icaP[m+2]+=icaA[m]}
+  const ingCash=z(),egrPre=z();
+  for(let m=0;m<H;m++){
+    ingCash[m]=ciRel[m]+esc[m]+sub[m]-refCash[m]+rend[m]+devIva[m];
+    egrPre[m]=lote[m]+dir[m]+ind[m]+lic[m]+mkt[m]+ger[m]+fidC[m]+post[m]+predial[m]+gEsc[m]+icaP[m];
+    const finOut=intr[m]+comi[m]+amo[m]+pInt[m]+pAmo[m];
+    if(T.gmf)gmf[m]=(egrPre[m]+finOut)*0.004;
+  }
+  const imp=z(),egr=z(),proj=z();
+  for(let m=0;m<H;m++){imp[m]=gEsc[m]+icaP[m]+gmf[m];egr[m]=egrPre[m]+gmf[m];proj[m]=ingCash[m]-egr[m]}
+  // estado de resultados mensual
+  const otrosIng=z();for(let m=0;m<H;m++)otrosIng[m]=penal[m]+rend[m]+devIva[m];
+  const capByE=ets.map(e=>{const sh=e.AV/AVt;return loteCost*sh+sum(e.dir)+sum(e.dis)+sum(e.intv)+sum(e.pol)+sum(e.otr)+sum(e.serv)+sum(e.lic)
+    +(+C.licencias.plusvalia+ +C.licencias.cargas+ +C.licencias.curaduria)*sh+sum(e.intr)+sum(e.intCap)+sum(e.comi)+sum(pInt)*sh+sum(predial)*sh});
+  const cogs=z();ets.forEach((e,i)=>{const R=sum(e.rev);if(R>0)for(let m=0;m<H;m++)cogs[m]+=capByE[i]*e.rev[m]/R});
+  const gastos=z();for(let m=0;m<H;m++)gastos[m]=mkt[m]+ger[m]+fidC[m]+post[m]+gEsc[m]+icaA[m]+gmf[m];
+  const uai=z();for(let m=0;m<H;m++)uai[m]=rev[m]+otrosIng[m]-cogs[m]-gastos[m];
+  // renta por año fiscal
+  const yrs={};for(let m=0;m<H;m++){const y=cal.year(m);yrs[y]=(yrs[y]||0)+uai[m]}
+  const yKeys=Object.keys(yrs).map(Number).sort((a,b)=>a-b);let loss=0;const taxY={};
+  yKeys.forEach(y=>{let base=yrs[y];if(base<0){loss+=-base;taxY[y]=0}else{const use=Math.min(loss,base);loss-=use;taxY[y]=(base-use)*pc(T.renta)}});
+  const monthOf=(y,mo)=>{const [y0,m0]=String(P.general.fecha).split('-').map(Number);return (y-y0)*12+(mo-(m0||1))};
+  const rentaExp=z(),rentaPay=z();
+  yKeys.forEach(y=>{if(!taxY[y])return;const dec=Math.min(H-1,Math.max(0,monthOf(y,12)));rentaExp[dec]+=taxY[y];const apr=monthOf(y+1,4);if(apr<H)rentaPay[Math.max(0,apr)]+=taxY[y]});
+  const soc=P.general.vehiculo==='sociedad';
+  // horizonte
+  let N=0;const any=[ingCash,egr,des,amo,pDes,pAmo,rev,soc?rentaPay:z()];
+  for(let m=H-1;m>=0;m--){if(any.some(a=>Math.abs(a[m])>1)){N=m+1;break}}
+  N=Math.max(N,lastEsc+2);
+  // flujo del inversionista
+  const inv=z();for(let m=0;m<H;m++)inv[m]=proj[m]+des[m]-intr[m]-comi[m]-amo[m]+pDes[m]-pInt[m]-pAmo[m]-(soc?rentaPay[m]:0);
+  // política de caja: aportes justo a tiempo, reparto cuando el saldo supera lo que se necesitará después
+  const ap=z(),dist=z(),caja=z();
+  const fmin=new Array(N+1).fill(0);for(let m=N-1;m>=0;m--)fmin[m]=Math.min(0,inv[m]+fmin[m+1]);
+  const req=m=>-fmin[m+1];
+  let B=0;
+  for(let m=0;m<N;m++){B+=inv[m];if(B<0){ap[m]=-B;B=0}const dv=m===N-1?B:Math.max(0,B-req(m));dist[m]=dv;B-=dv;caja[m]=B}
+  // socios
+  const socios=(P.socios&&P.socios.length?P.socios:[{id:'s',nombre:'Inversionista',part:100}]);
+  const partT=sum(socios.map(s=>+s.part||0))||1;
+  const lotSoc=socios.filter(s=>s.aportaLote);const lotPart=sum(lotSoc.map(s=>+s.part||0))||1;
+  const sf=socios.map(s=>({s,w:(+s.part||0)/partT,flow:new Array(N).fill(0),ap:0,dist:0,apOut:0,tax:new Array(N).fill(0)}));
+  sf.forEach(x=>{if(loteEsp&&x.s.aportaLote){const v=loteEsp*(+x.s.part||0)/lotPart;x.flow[0]-=v;x.ap+=v;x.apOut+=v}});
+  if(loteEsp&&!lotSoc.length){sf.forEach(x=>{const v=loteEsp*x.w;x.flow[0]-=v;x.ap+=v;x.apOut+=v})}
+  for(let m=0;m<N;m++){
+    if(ap[m]>0)sf.forEach(x=>{const v=ap[m]*x.w;x.flow[m]-=v;x.ap+=v;x.apOut+=v});
+    if(dist[m]>0){let rem=dist[m];const out=sum(sf.map(x=>x.apOut));
+      if(out>0){const r=Math.min(rem,out);sf.forEach(x=>{const v=r*x.apOut/out;x.flow[m]+=v;x.dist+=v;x.apOut-=v});rem-=r}
+      if(rem>0)sf.forEach(x=>{const v=rem*x.w;x.flow[m]+=v;x.dist+=v})}
+  }
+  if(!soc){yKeys.forEach(y=>{if(!taxY[y])return;const apr=Math.min(N-1,Math.max(0,monthOf(y+1,4)));sf.forEach(x=>{x.tax[apr]+=taxY[y]*x.w})})}
+  const socRes=sf.map(x=>{const after=x.flow.map((v,i)=>v-x.tax[i]);return {id:x.s.id,nombre:x.s.nombre,part:x.w,aportes:x.ap,distribuciones:x.dist,utilidad:x.dist-x.ap,impuesto:sum(x.tax),
+    tir:annual(irr(x.flow)),tirDesp:annual(irr(after)),multiplo:x.ap?x.dist/x.ap:null,flow:x.flow,after}});
+  // equity agregado
+  const eqF=new Array(N).fill(0);for(let m=0;m<N;m++)eqF[m]=dist[m]-ap[m];eqF[0]-=loteEsp;
+  let c=0;const cumEq=eqF.map(v=>c+=v);
+  // balance mensual
+  const capAcc=z();for(let m=0;m<H;m++)capAcc[m]=lote[m]+dir[m]+ind[m]+lic[m]+predial[m]+intr[m]+intCap[m]+comi[m]+pInt[m];capAcc[0]+=loteEsp;
+  const bs=[];let cobro=0,refC=0,revC=0,penC=0,inven=0,icaAc=0,icaPd=0,rentE=0,rentP=0,apC=0,distC=0,uaiC=0;
+  const ciCol=S('ciCol'),refund=S('refund');
+  for(let m=0;m<N;m++){
+    cobro+=ciCol[m]+esc[m]+sub[m];refC+=refund[m];revC+=rev[m];penC+=penal[m];inven+=capAcc[m]-cogs[m];
+    icaAc+=icaA[m];icaPd+=icaP[m];if(soc){rentE+=rentaExp[m];rentP+=rentaPay[m]}apC+=ap[m]+(m===0?loteEsp:0);distC+=dist[m];uaiC+=uai[m];
+    const anticipos=cobro-refC-revC-penC;
+    const activo=caja[m]+fid[m]+inven+(anticipos<0?-anticipos:0);
+    const pasivo=(anticipos>0?anticipos:0)+bal[m]+pBal[m]+(icaAc-icaPd)+(rentE-rentP);
+    const patr=apC-distC+uaiC-(soc?rentE:0);
+    bs.push({caja:caja[m],fid:fid[m],inven,cxc:anticipos<0?-anticipos:0,anticipos:Math.max(0,anticipos),cc:bal[m],puente:pBal[m],ica:icaAc-icaPd,renta:rentE-rentP,aportes:apC,dist:distC,utilAcum:uaiC-(soc?rentE:0),activo,pasivo,patr,dif:activo-pasivo-patr});
+  }
+  // indicadores
+  const sl=a=>a.slice(0,N);
+  const uaiT=sum(uai),rentaT=sum(Object.values(taxY));const utilNeta=uaiT-rentaT;
+  const projF=sl(proj);
+  const dm=Math.pow(1+pc(P.general.tasaDesc),1/12)-1;
+  const vpn=eqF.reduce((a,v,i)=>a+v/Math.pow(1+dm,i),0);
+  const expo=-Math.min(0,...cumEq);
+  const ventasBrutas=sum(S('valGross'));
+  const pnl={rev,otrosIng,cogs,gastos,uai,rentaExp};
+  // años
+  const years=[];for(let m=0;m<N;m++){const y=cal.year(m);if(!years.length||years[years.length-1].y!==y)years.push({y,idx:[]});years[years.length-1].idx.push(m)}
+  const pnlY=years.map(Y=>{const s=k=>Y.idx.reduce((a,i)=>a+pnl[k][i],0);const r={y:Y.y,rev:s('rev'),otros:s('otrosIng'),cogs:s('cogs'),gastos:s('gastos'),uai:s('uai'),renta:taxY[Y.y]||0};r.neta=r.uai-r.renta;return r});
+  const bsY=years.map(Y=>Object.assign({y:Y.y},bs[Y.idx[Y.idx.length-1]]));
+  const tot={lote:loteCost,dir:sum(dir),ind:sum(ind),lic:sum(lic),mkt:sum(mkt),ger:sum(ger),fid:sum(fidC),post:sum(post),predial:sum(predial),imp:sum(icaA)+sum(gmf)+sum(gEsc),fin:sum(intr)+sum(intCap)+sum(comi)+sum(pInt),renta:rentaT};
+  const alerts=[];
+  return {
+    N,H,cal,ets,ioFirst,lastEsc,ventas:RevT,ventasBrutas,uai:uaiT,renta:rentaT,utilNeta,margen:RevT?uaiT/RevT:0,margenNeto:RevT?utilNeta/RevT:0,
+    tirP:annual(irr(projF)),tirI:annual(irr(eqF)),vpn,expo,aportes:sum(ap)+loteEsp,distribuciones:sum(dist),
+    socios:socRes,tot,pnlY,bsY,bs,years,taxY,soc,loteEsp,maxDif:Math.max(...bs.map(b=>Math.abs(b.dif))),
+    rows:{
+      units:sl(S('gross')),ret:sl(S('ret')),valGross:sl(S('valGross')),
+      ciRel:sl(ciRel),fid:sl(fid),esc:sl(esc),sub:sl(sub),refCash:sl(refCash),rend:sl(rend),devIva:sl(devIva),ing:sl(ingCash),
+      lote:sl(lote),dir:sl(dir),ind:sl(ind),lic:sl(lic),mkt:sl(mkt),ger:sl(ger),fidC:sl(fidC),post:sl(post),predial:sl(predial),imp:sl(imp),egr:sl(egr),proj:projF,
+      des:sl(des),intr:sl(intr),comi:sl(comi),amo:sl(amo),bal:sl(bal),pDes:sl(pDes),pInt:sl(pInt),pAmo:sl(pAmo),pBal:sl(pBal),renta:sl(soc?rentaPay:z()),
+      inv:sl(inv),ap:sl(ap),dist:sl(dist),caja:sl(caja),cumEq,
+      rev:sl(rev),escU:sl(escU),cobros:sl(ciCol.map((v,i)=>v+esc[i]+sub[i]-refund[i])),opInd:sl(egr.map((v,i)=>v-lote[i]-dir[i]))
+    }
+  };
+}
+if(typeof module!=='undefined')module.exports={runProject,newProject,DEFAULT_MACRO,CAPITULOS_BASE,irr};
+
+/* ===================== APP PROYECTA ===================== */
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nf=(v,d=0)=>(+v||0).toLocaleString('es-CO',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fM=v=>{const m=(+v||0)/1e6;return (m<0?'−':'')+'$'+nf(Math.abs(m),Math.abs(m)<100&&m!==0?1:0)+' M'};
+const fT=v=>{if(Math.abs(v)<0.05e6)return '·';const m=v/1e6;return (m<0?'−':'')+nf(Math.abs(m),1)};
+const fP=v=>v==null||!isFinite(v)?'—':nf(v*100,1)+' %';
+const fX=v=>v==null||!isFinite(v)?'—':nf(v,2)+'x';
+const fPesos=v=>'$ '+nf(+v||0);
+const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const DIAS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const getPath=(o,p)=>p.split('.').reduce((a,k)=>a==null?a:a[k],o);
+const setPath=(o,p,v)=>{const ks=p.split('.');let a=o;for(let i=0;i<ks.length-1;i++){if(a[ks[i]]==null)a[ks[i]]=/^\d+$/.test(ks[i+1])?[]:{};a=a[ks[i]]}a[ks[ks.length-1]]=v};
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+function mDate(i){const [y,m]=String(ST.P?.general?.fecha||'2027-01').split('-').map(Number);return new Date(y,(m||1)-1+i,1)}
+function mL(i){const d=mDate(i);return MES[d.getMonth()]+'-'+String(d.getFullYear()).slice(2)}
+function fDate(ms){if(!ms)return '—';const d=new Date(ms);return d.getDate()+' '+MES[d.getMonth()]+' '+d.getFullYear()+' · '+d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})}
+function deepFill(base,data){if(Array.isArray(data))return data;if(data&&typeof data==='object'&&base&&typeof base==='object'&&!Array.isArray(base)){const o=Object.assign({},base);Object.keys(data).forEach(k=>o[k]=deepFill(base[k],data[k]));return o}return data===undefined?base:data}
+
+/* ---------- Estado ---------- */
+const prefs=Object.assign({user:'Nicolas',theme:'system',accent:'#C6F135',last:null,screen:'inicio',sub:{modelo:'general',resultados:'flujo',control:'seguimiento'},per:'m'},LS.get('pp.prefs',{}));
+prefs.cols=Array.isArray(prefs.cols)?prefs.cols.filter(c=>['inicio','modelo','resultados','control'].includes(c)):['inicio'];prefs.cols=[...new Set(prefs.cols)];if(!prefs.cols.length)prefs.cols=['inicio'];
+prefs.sub=Object.assign({modelo:'general',resultados:'flujo',control:'seguimiento'},prefs.sub||{});
+const savePrefs=()=>LS.set('pp.prefs',prefs);
+const ST={mode:'local',db:null,user:null,me:null,role:{owner:true,edit:true,write:true},readOnly:false,ready:false,
+  projects:{},pid:null,P:null,R:null,macro:clone(DEFAULT_MACRO),versions:[],unsubV:null,
+  dirty:false,saving:false,again:false,timer:0,sync:'ok',remotePending:null,baseline:'actual',cmpA:'actual',cmpB:null,confirm:null};
+const P_=()=>ST.P;
+
+/* ---------- Almacenamiento ---------- */
+const Local={
+  all(){return LS.get('pp.projects',{})||{}},
+  save(id,doc){const a=this.all();a[id]=doc;LS.set('pp.projects',a)},
+  del(id){const a=this.all();delete a[id];LS.set('pp.projects',a);LS.set('pp.v.'+id,[])},
+  vers(id){return LS.get('pp.v.'+id,[])||[]},
+  saveVers(id,l){LS.set('pp.v.'+id,l)}
+};
+function kpisOf(R){return R?{ventas:R.ventas,uai:R.uai,margen:R.margen,tirI:R.tirI,utilNeta:R.utilNeta}:{}}
+function projDoc(){const P=ST.P,prev=ST.projects[ST.pid]||{};return {nombre:P.general.nombre||'Proyecto',ciudad:P.general.ciudad||'',actualizado:Date.now(),actualizadoPor:ST.me&&ST.me.id||null,creadoPor:prev.creadoPor||ST.me&&ST.me.id||null,creado:prev.creado||Date.now(),kpis:kpisOf(ST.R),data:clone(P)}}
+function setSync(s){ST.sync=s;const d=$('#syncDot');if(!d)return;d.className='dot'+(s==='busy'?' busy':s==='err'?' err':s==='ro'?' off':'');d.title={ok:ST.mode==='db'?'Guardado en la base central':'Guardado en este dispositivo',busy:'Guardando…',err:'No se pudo guardar',ro:'Solo lectura'}[s]||''}
+function markDirty(){if(ST.readOnly)return;ST.dirty=true;clearTimeout(ST.timer);ST.timer=setTimeout(persist,1200);setSync('busy')}
+async function persist(){
+  if(ST.readOnly||!ST.pid)return;
+  if(ST.saving){ST.again=true;return}
+  ST.saving=true;setSync('busy');const doc=projDoc();
+  try{
+    if(ST.mode==='db')await ST.db.collection('projects').doc(ST.pid).set(doc);else if(ST.mode==='fb')await ST.fbCol.doc('p_'+ST.pid).set(doc);else Local.save(ST.pid,doc);
+    ST.projects[ST.pid]=doc;ST.dirty=false;ST.lastSaved=doc.actualizado;setSync('ok');
+  }catch(e){dbError(e)}
+  ST.saving=false;if(ST.again){ST.again=false;persist()}
+}
+function dbError(e){
+  const c=e&&e.code;
+  if(c==='invalid_argument'||c==='permission-denied'){setReadOnly(true);toast('No tienes permiso para guardar cambios en este proyecto')}
+  else if(c==='quota_exceeded'){setSync('err');toast('La base de proyectos está llena. Elimina proyectos o versiones que ya no uses.')}
+  else if(c==='unavailable'){setSync('err');setTimeout(persist,1500+Math.random()*1000)}
+  else{setSync('err');toast('No se pudo guardar. Revisa tu conexión.')}
+}
+function setReadOnly(v){ST.readOnly=v;document.body.classList.toggle('ro',v);setSync(v?'ro':'ok');if(ST.ready)renderScreen()}
+
+async function startDb(){
+  ST.mode='db';
+  ST.db.doc('config/macro').onSnapshot(s=>{if(s.exists){ST.macro=deepFill(clone(DEFAULT_MACRO),s.data());recalc()}},e=>{});
+  let first=true;
+  ST.db.collection('projects').onSnapshot(snap=>{
+    const m={};snap.docs.forEach(d=>m[d.id]=d.data());ST.projects=m;
+    if(first){first=false;const ids=Object.keys(m);
+      if(!ids.length){ST.pid=null;ST.P=null;ready();return}
+      const pick=prefs.last&&m[prefs.last]?prefs.last:ids.sort((a,b)=>(m[b].actualizado||0)-(m[a].actualizado||0))[0];
+      selectProject(pick);ready();return}
+    if(ST.pid&&m[ST.pid]){const d=m[ST.pid];
+      if(d.actualizado>(ST.lastSaved||0)&&d.actualizado!==ST.loadedAt&&!snap.metadata.hasPendingWrites){
+        if(!ST.dirty&&!ST.saving&&!editingNow()){loadData(d);toast('Proyecto actualizado por otra persona')}
+        else{ST.remotePending=d;showBanner()}}}
+    else if(ST.pid&&!m[ST.pid]){const ids=Object.keys(m);if(ids.length)selectProject(ids[0]);else{ST.pid=null;ST.P=null}}
+    if(ST.ready)softRender('inicio');
+    updateAppbar();
+  },e=>{if(!ST.ready){toast('No se pudo abrir la base central; trabajarás en este dispositivo');ST.db=null;startLocal();return}if(e&&e.code==='revoked'){setReadOnly(true)}});
+  setTimeout(()=>{if(!ST.ready){toast('La base central no respondió; trabajarás en este dispositivo');ST.db=null;startLocal()}},15000);
+}
+function startLocal(){
+  ST.mode='local';const m=LS.get('pp.macro',null);if(m)ST.macro=deepFill(clone(DEFAULT_MACRO),m);
+  ST.projects=Local.all();
+  if(!Object.keys(ST.projects).length){const id='p'+Date.now().toString(36);ST.pid=id;ST.P=newProject();ST.R=runProject(ST.P,ST.macro);Local.save(id,projDoc());ST.projects=Local.all()}
+  const ids=Object.keys(ST.projects);selectProject(prefs.last&&ST.projects[prefs.last]?prefs.last:ids[0]);ready();
+}
+function editingNow(){const a=document.activeElement;return a&&a.matches&&a.matches('input,select,textarea')}
+function loadData(doc){ST.P=deepFill(newProject(),clone(doc.data||{}));ST.loadedAt=doc.actualizado;ST.remotePending=null;hideBanner();recalc(true)}
+function selectProject(id){
+  if(ST.dirty)persist();
+  ST.pid=id;prefs.last=id;savePrefs();ST.baseline='actual';ST.cmpA='actual';ST.cmpB=null;
+  const d=ST.projects[id];if(!d)return;
+  ST.P=deepFill(newProject(),clone(d.data||{}));ST.loadedAt=d.actualizado;ST.lastSaved=d.actualizado;ST.dirty=false;
+  subscribeVersions();recalc(true);
+}
+function subscribeVersions(){
+  if(ST.unsubV){ST.unsubV();ST.unsubV=null}
+  if(ST.mode==='db'){ST.versions=[];ST.unsubV=ST.db.collection('projects/'+ST.pid+'/versiones').onSnapshot(s=>{ST.versions=s.docs.map(d=>Object.assign({id:d.id},d.data())).sort((a,b)=>b.fecha-a.fecha);softRender('control')},e=>{})}
+  else if(ST.mode==='fb')ST.versions=((ST.fbVers||{})[ST.pid]||[]).slice().sort((a,b)=>b.fecha-a.fecha);
+  else ST.versions=Local.vers(ST.pid).sort((a,b)=>b.fecha-a.fecha);
+}
+async function createProject(kind,from){
+  if(ST.readOnly)return;
+  const id='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  const P=from?clone(from):newProject(kind);if(from)P.general.nombre=(P.general.nombre||'Proyecto')+' (copia)';
+  const R=runProject(P,ST.macro);
+  const doc={nombre:P.general.nombre,ciudad:P.general.ciudad,actualizado:Date.now(),actualizadoPor:ST.me&&ST.me.id||null,creadoPor:ST.me&&ST.me.id||null,creado:Date.now(),kpis:kpisOf(R),data:P};
+  try{if(ST.mode==='db')await ST.db.collection('projects').doc(id).set(doc);else if(ST.mode==='fb')await ST.fbCol.doc('p_'+id).set(doc);else Local.save(id,doc);
+    ST.projects[id]=doc;selectProject(id);closeSheet();go('modelo');toast('Proyecto creado')}catch(e){dbError(e)}
+}
+async function deleteProject(id){
+  try{if(ST.mode==='db'){const vs=await ST.db.collection('projects/'+id+'/versiones').get();for(const d of vs.docs)await ST.db.doc('projects/'+id+'/versiones/'+d.id).delete();await ST.db.collection('projects').doc(id).delete()}
+    else if(ST.mode==='fb'){for(const v of ((ST.fbVers||{})[id]||[]))await ST.fbCol.doc(v.id).delete();await ST.fbCol.doc('p_'+id).delete()}
+    else Local.del(id);
+    delete ST.projects[id];const ids=Object.keys(ST.projects);
+    if(ids.length)selectProject(ids[0]);else{ST.pid=null;ST.P=null;ST.R=null}
+    closeSheet();renderScreen();toast('Proyecto eliminado')}catch(e){dbError(e)}
+}
+async function saveVersion(tipo,label,nota){
+  const v={label:label||tipo,tipo,nota:nota||'',fecha:Date.now(),autor:ST.me&&ST.me.id||null,data:clone(ST.P),kpis:kpisOf(ST.R)};
+  try{if(ST.mode==='db')await ST.db.collection('projects/'+ST.pid+'/versiones').add(v);
+    else if(ST.mode==='fb'){const vid='v_'+ST.pid+'_'+Date.now().toString(36);await ST.fbCol.doc(vid).set(Object.assign({pid:ST.pid},v))}
+    else{const l=Local.vers(ST.pid);l.push(Object.assign({id:'v'+Date.now().toString(36)},v));Local.saveVers(ST.pid,l);ST.versions=l.sort((a,b)=>b.fecha-a.fecha)}
+    toast('Versión «'+v.label+'» guardada');rr('control')}catch(e){dbError(e)}
+}
+async function deleteVersion(vid){
+  try{if(ST.mode==='db')await ST.db.doc('projects/'+ST.pid+'/versiones/'+vid).delete();
+    else if(ST.mode==='fb')await ST.fbCol.doc(vid).delete();
+    else{const l=Local.vers(ST.pid).filter(v=>v.id!==vid);Local.saveVers(ST.pid,l);ST.versions=l}
+    if(ST.baseline===vid)ST.baseline='actual';toast('Versión eliminada');rr('control')}catch(e){dbError(e)}
+}
+let macroTimer=0;
+function saveMacroSoon(){clearTimeout(macroTimer);macroTimer=setTimeout(async()=>{
+  try{if(ST.mode==='db')await ST.db.doc('config/macro').set(clone(ST.macro));else if(ST.mode==='fb')await ST.fbCol.doc('macro').set(clone(ST.macro));else LS.set('pp.macro',ST.macro);toast('Supuestos macro guardados para todos los proyectos')}
+  catch(e){if(e&&e.code==='invalid_argument')toast('Solo los editores pueden cambiar los supuestos macro');else toast('No se pudieron guardar los supuestos macro')}},1200)}
+
+/* ---------- Recalcular ---------- */
+let raf=0;
+function recalc(full){cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{if(!ST.P){ST.R=null;if(ST.ready)renderScreen();return}
+  ST.R=runProject(ST.P,ST.macro);if(!ST.ready)return;if(full)renderScreen();else refreshScreen();updateAppbar()})}
+function onModelChange(struct,src){markDirty();if(struct){recalc();setTimeout(()=>rr(src||'modelo'),0)}else recalc()}
+
+/* ---------- Apariencia ---------- */
+const ACCENTS=[['Lima','#C6F135'],['Menta','#3EE6A8'],['Cian','#36D1F2'],['Azul','#4C8DFF'],['Violeta','#9B7BFF'],['Rosa','#FF5FA2'],['Coral','#FF6B57'],['Ámbar','#FFB020']];
+const root=document.documentElement;let HOST=root.getAttribute('data-theme');
+const hex2rgb=h=>{h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');const n=parseInt(h,16);return [n>>16&255,n>>8&255,n&255]};
+const rgb2hex=c=>'#'+c.map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,'0')).join('');
+const lum=c=>{const f=v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)};return .2126*f(c[0])+.7152*f(c[1])+.0722*f(c[2])};
+const contrast=(a,b)=>{const x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)};
+const mix=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
+function toward(c,target,bg,ratio){let t=0,x=c;while(contrast(x,bg)<ratio&&t<1){t+=.04;x=mix(c,target,t)}return x}
+function isDark(){const t=root.getAttribute('data-theme');if(t==='dark')return true;if(t==='light')return false;return !matchMedia('(prefers-color-scheme: light)').matches}
+function applyAccent(){
+  const c=hex2rgb(prefs.accent),dark=isDark(),panel=dark?[23,24,23]:[255,255,255];
+  const ink=toward(c,dark?[255,255,255]:[0,0,0],panel,4.5);
+  const chart=dark?toward(c,[255,255,255],panel,3):toward(c,[0,0,0],panel,2.4);
+  const on=contrast(c,[16,17,15])>=contrast(c,[255,255,255])?'#10110F':'#FFFFFF';
+  const set=(k,v)=>root.style.setProperty(k,v);
+  set('--acc',prefs.accent);set('--on-acc',on);set('--acc-ink',rgb2hex(ink));set('--chart-pos',rgb2hex(chart));
+  set('--chart-neu',rgb2hex(dark?mix(chart,panel,.5):mix(chart,[0,0,0],.38)));
+  set('--acc-soft',dark?`rgba(${c.join(',')},.13)`:rgb2hex(mix(c,[255,255,255],.78)));
+  set('--band2',`rgba(${hex2rgb(rgb2hex(chart)).join(',')},${dark?.05:.08})`);
+  const m=$('meta[name=theme-color]');if(m)m.content=dark?'#0D0E0D':'#F3F4F0';
+}
+function applyTheme(){if(prefs.theme==='system'){HOST?root.setAttribute('data-theme',HOST):root.removeAttribute('data-theme')}else root.setAttribute('data-theme',prefs.theme);applyAccent()}
+new MutationObserver(()=>{const t=root.getAttribute('data-theme');if(prefs.theme==='system')HOST=t;else if(t!==prefs.theme){root.setAttribute('data-theme',prefs.theme);return}applyAccent()}).observe(root,{attributes:true,attributeFilter:['data-theme']});
+try{matchMedia('(prefers-color-scheme: light)').addEventListener('change',applyAccent)}catch(e){}
+
+/* ---------- Campos de formulario ---------- */
+const LBL={};
+const lblKey=p=>p.replace(/\.\d+(?=\.|$)/g,'.#');
+const fid=p=>'f-'+p.replace(/\./g,'-');
+function reg(path,label){LBL[lblKey(path)]=label}
+function fNum(path,label,unit,o={}){reg(path,label);const v=getPath(ST.P,path);
+  return `<div class="f"><label for="${fid(path)}" title="${esc(label)}">${esc(label)}</label><div class="box"><input id="${fid(path)}" data-path="${path}" type="number" inputmode="decimal" step="${o.step||'any'}" value="${v==null?'':esc(v)}">${unit?`<span class="u">${unit}</span>`:''}</div>${o.money?`<div class="hint" data-hint="${path}">${fPesos(v)}</div>`:''}</div>`}
+function fText(path,label){reg(path,label);const v=getPath(ST.P,path);return `<div class="f"><label for="${fid(path)}">${esc(label)}</label><div class="box"><input id="${fid(path)}" data-path="${path}" type="text" value="${esc(v)}"></div></div>`}
+function fMonth(path,label){reg(path,label);const v=getPath(ST.P,path);return `<div class="f"><label for="${fid(path)}">${esc(label)}</label><div class="box"><input id="${fid(path)}" data-path="${path}" type="month" value="${esc(v)}" data-struct="1"></div></div>`}
+function fSel(path,label,opts,struct){reg(path,label);const v=getPath(ST.P,path);return `<div class="f"><label for="${fid(path)}">${esc(label)}</label><div class="box"><select id="${fid(path)}" data-path="${path}"${struct?' data-struct="1"':''}>${opts.map(([k,l])=>`<option value="${k}"${String(v)===String(k)?' selected':''}>${esc(l)}</option>`).join('')}</select></div></div>`}
+function fSw(path,label,struct){reg(path,label);const v=!!getPath(ST.P,path);return `<div class="f sw"><label for="${fid(path)}">${esc(label)}</label><span class="switch"><input id="${fid(path)}" data-path="${path}" type="checkbox"${v?' checked':''}${struct?' data-struct="1"':''}><i></i></span></div>`}
+const ICON_DEL='<svg viewBox="0 0 24 24"><path d="M5 7h14M10 11v6M14 11v6M7 7l1 12h8l1-12M9 7V4h6v3"/></svg>';
+const delBtn=(act,i,label)=>`<button class="iconbtn" data-act="${act}" data-i="${i}" aria-label="${esc(label)}" title="${esc(label)}">${ICON_DEL}</button>`;
+const CLASES=[['apto','Apartamento'],['parq','Parqueadero'],['deposito','Depósito'],['local','Local comercial']];
+const TIPOS=[['NoVIS','No VIS'],['VIS','VIS'],['VIP','VIP']];
+const CURVAS=[['constante','Constante'],['lanzamiento','Lanzamiento fuerte'],['personalizada','Mes a mes']];
+const FORMAS=[['contado','Contado'],['diferido','Diferido en cuotas'],['especie','Aporte en especie'],['area','Pago con área (%)']];
+
+/* ---------- Navegación ---------- */
+const SCREENS=['inicio','modelo','resultados','control','cuenta'];
+const COLS=['inicio','modelo','resultados','control'];
+const WEBQ=matchMedia('(min-width:1024px)');ST.web=WEBQ.matches;ST.cuentaOpen=false;
+const RENDER={inicio:()=>renderInicio(),modelo:()=>renderModelo(),resultados:()=>renderResultados(),control:()=>renderControl(),cuenta:()=>renderCuenta()};
+const NAMES={inicio:'Inicio',modelo:'Modelo',resultados:'Resultados',control:'Control',cuenta:'Cuenta'};
+function visible(){return ST.web?prefs.cols.slice():[ST.screen==='cuenta'?'cuenta':ST.screen]}
+function shown(id){const el=$('#s-'+id);return el&&!el.hidden}
+function go(s){if(!SCREENS.includes(s))s='inicio';
+  if(ST.web){if(s==='cuenta'){ST.cuentaOpen=true}else if(!prefs.cols.includes(s)){prefs.cols.push(s);savePrefs()}renderScreen();
+    if(s!=='cuenta'){const el=$('#s-'+s);if(el){el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')}}return}
+  ST.screen=s;prefs.screen=s;savePrefs();window.scrollTo(0,0);renderScreen()}
+function navTap(s){
+  if(!ST.web){go(s);return}
+  if(s==='cuenta'){ST.cuentaOpen=!ST.cuentaOpen;renderScreen();return}
+  if(prefs.cols.includes(s)){if(prefs.cols.length===1){toast('Debe quedar al menos una sección visible');return}prefs.cols=prefs.cols.filter(c=>c!==s)}
+  else prefs.cols.push(s);
+  savePrefs();renderScreen();
+  if(prefs.cols.includes(s)){const el=$('#s-'+s);if(el){el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')}}
+}
+function moveCol(id,d){const i=prefs.cols.indexOf(id),j=i+d;if(i<0||j<0||j>=prefs.cols.length)return;const a=prefs.cols;[a[i],a[j]]=[a[j],a[i]];savePrefs();renderScreen()}
+function navState(){$$('.nav button').forEach(b=>{const k=b.dataset.go;
+  if(ST.web){b.removeAttribute('aria-current');b.setAttribute('aria-pressed',k==='cuenta'?ST.cuentaOpen:prefs.cols.includes(k));b.title=(k==='cuenta'?'Abrir o cerrar ':'Mostrar u ocultar ')+NAMES[k]}
+  else{b.removeAttribute('aria-pressed');b.removeAttribute('title');k===ST.screen?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current')}})}
+function layout(){const ab=$('.appbar').offsetHeight,nv=$('.nav').offsetHeight;root.style.setProperty('--top',ab+'px');
+  const c=$('#cols');if(ST.web)c.style.height=Math.max(320,innerHeight-ab-nv-12)+'px';else c.style.height=''}
+function keepScroll(el,fn){const sel='.tbl-wrap,.chart-x,.chips';const st=el.scrollTop,xs=[...el.querySelectorAll(sel)].map(e=>e.scrollLeft);fn();if(ST.web)el.scrollTop=st;[...el.querySelectorAll(sel)].forEach((e,i)=>{if(xs[i])e.scrollLeft=xs[i]})}
+function renderOne(id){const el=$('#s-'+id);if(!el)return;keepScroll(el,()=>{ST.curW=el.clientWidth;RENDER[id]();
+  if(ST.web&&id!=='cuenta'){const i=prefs.cols.indexOf(id),n=prefs.cols.length;const X='<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+    el.insertAdjacentHTML('afterbegin',`<div class="colcap" title="Arrastra para reordenar"><span class="cap-t"><svg class="grip" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="6" r="1.4"/><circle cx="15" cy="6" r="1.4"/><circle cx="9" cy="12" r="1.4"/><circle cx="15" cy="12" r="1.4"/><circle cx="9" cy="18" r="1.4"/><circle cx="15" cy="18" r="1.4"/></svg>${NAMES[id]}</span><span class="cap-b">${n>1?`<button class="iconbtn" data-act="col-left" data-k="${id}" aria-label="Mover ${NAMES[id]} a la izquierda" title="Mover a la izquierda"${i===0?' disabled':''}><svg viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg></button><button class="iconbtn" data-act="col-right" data-k="${id}" aria-label="Mover ${NAMES[id]} a la derecha" title="Mover a la derecha"${i===n-1?' disabled':''}><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button><button class="iconbtn" data-act="col-hide" data-k="${id}" aria-label="Ocultar ${NAMES[id]}" title="Ocultar columna">${X}</button>`:''}</span></div>`)}
+  if(ST.web&&id==='cuenta')el.insertAdjacentHTML('afterbegin',`<div class="colcap"><span>Cuenta</span><button class="iconbtn" data-act="cuenta-close" aria-label="Cerrar cuenta" title="Cerrar"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>`)});paintNames()}
+function rr(id){if(shown(id))renderOne(id)}
+function softRender(id){if(!ST.ready||!shown(id))return;const a=document.activeElement;if(a&&$('#s-'+id).contains(a)&&a.matches('input,select,textarea'))return;renderOne(id)}
+function renderScreen(){
+  if(!ST.ready)return;
+  $('#s-loading').hidden=true;document.body.classList.toggle('web',ST.web);
+  const vis=visible();
+  COLS.forEach(id=>{const el=$('#s-'+id);el.hidden=!vis.includes(id);el.style.order=ST.web?String(Math.max(0,prefs.cols.indexOf(id))):''});
+  $('#s-cuenta').hidden=ST.web?!ST.cuentaOpen:ST.screen!=='cuenta';
+  $('#scrim').hidden=!(ST.web&&ST.cuentaOpen);
+  $('#cols').style.setProperty('--n',vis.length);
+  layout();
+  vis.forEach(renderOne);if(ST.web&&ST.cuentaOpen)renderOne('cuenta');
+  navState();updateAppbar();
+}
+function refreshScreen(){
+  const a=document.activeElement;const ids=visible().concat(ST.web&&ST.cuentaOpen?['cuenta']:[]);
+  ids.forEach(id=>{const el=$('#s-'+id);const focus=a&&el.contains(a)&&a.matches('input,select,textarea');
+    if(id==='modelo'){updModelo();return}
+    if(id==='cuenta')return;
+    if(id==='control'){const sub=prefs.sub.control;
+      if(sub==='seguimiento'){if(focus)updSeguimiento();else renderOne('control')}
+      else if(sub==='versiones')renderCmp();
+      else{clearTimeout(ST.sensT);ST.sensT=setTimeout(renderSens,500)}
+      return}
+    if(!focus)renderOne(id)});
+}
+ST.sub=()=>prefs.sub;
+function updateAppbar(){$('#projName').textContent=ST.P?ST.P.general.nombre||'Proyecto':(ST.ready?'Sin proyectos':'Cargando…')}
+function showBanner(){$('#bannerWrap').hidden=false;setTimeout(layout,0);$('#banner').innerHTML=`<span><b>Otra persona actualizó este proyecto.</b> Tus cambios sin guardar se perderían si cargas su versión.</span><span class="row"><button class="btn sm" data-act="remote-keep">Conservar los míos</button><button class="btn sm pri" data-act="remote-load">Cargar la nueva</button></span>`}
+function hideBanner(){$('#bannerWrap').hidden=true;if(ST.ready)setTimeout(layout,0)}
+function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2600)}
+function openSheet(html){$('#sheetHost').innerHTML=`<div class="sheet-bg" data-bg="1"><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${html}</div></div>`;paintNames()}
+function closeSheet(){$('#sheetHost').innerHTML=''}
+async function paintNames(){const els=$$('[data-uid]');if(!els.length)return;
+  const ids=[...new Set(els.map(e=>e.dataset.uid).filter(Boolean))];
+  let ps={};if(ST.user&&ids.length){try{ps=await ST.user.profiles(ids)}catch(e){}}
+  els.forEach(e=>{const p=ps[e.dataset.uid];e.textContent=(p&&p.name)||(ST.me&&e.dataset.uid===ST.me.id?'Tú':'Alguien del equipo')})}
+const who=id=>id?`<span data-uid="${esc(id)}">…</span>`:(ST.mode==='db'?'alguien del equipo':'ti');
+
+/* ---------- Gráficos ---------- */
+function nice(span,n=5){const raw=Math.max(span,1)/n,p=Math.pow(10,Math.floor(Math.log10(raw)));const f=raw/p;return (f<1.5?1:f<3?2:f<7?5:10)*p}
+function flowChart(R,fixedW){
+  const avail=fixedW||Math.min(1400,(ST.curW||((document.querySelector('.wrap')||{}).clientWidth)||640)-70);
+  const N=R.N,W=Math.max(560,avail,N*12),H=290,L=58,Rr=10,T=24,B=28,cw=W-L-Rr,ch=H-T-B,bw=cw/N,r=R.rows;
+  const ing=r.ing.map(v=>v/1e6),eg=r.egr.map((v,i)=>(v+r.intr[i]+r.comi[i]+r.pInt[i]+r.renta[i])/1e6),cu=r.cumEq.map(v=>v/1e6);
+  let mx=Math.max(...ing,...cu,0),mn=Math.min(...eg.map(v=>-v),...cu,0);const st=nice(mx-mn);mx=Math.ceil(mx/st)*st;mn=Math.floor(mn/st)*st;
+  const y=v=>T+(mx-v)/(mx-mn)*ch,x=i=>L+i*bw;const foMax=Math.max(...R.ets.map(e=>e.fo));
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:560px" role="img" aria-label="Flujo de caja mensual">`;
+  [[0,R.ioFirst,'var(--band1)','Preventa'],[R.ioFirst,foMax+1,'var(--band2)','Obra'],[foMax+1,N,'var(--band3)','Escrituración']].forEach(([a,b,c,l])=>{if(b>a){const e=x(a)+4>W-110;s+=`<rect x="${x(a)}" y="${T}" width="${(b-a)*bw}" height="${ch}" fill="${c}"/><text x="${e?W-Rr:x(a)+4}" y="${T-8}" text-anchor="${e?'end':'start'}">${l}</text>`}});
+  for(let v=mn;v<=mx+1e-9;v+=st)s+=`<line x1="${L}" x2="${W-Rr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${v===0?1.2:.6}"/><text x="${L-6}" y="${y(v)+3}" text-anchor="end">${nf(v)}</text>`;
+  const g=Math.min(2,bw*.15);
+  for(let i=0;i<N;i++){
+    if(ing[i]>0)s+=`<rect x="${x(i)+g}" y="${y(ing[i])}" width="${bw-2*g}" height="${y(0)-y(ing[i])}" rx="1.5" fill="var(--chart-pos)"><title>${mL(i)} ingresos ${fM(ing[i]*1e6)}</title></rect>`;
+    if(eg[i]>0)s+=`<rect x="${x(i)+g}" y="${y(0)}" width="${bw-2*g}" height="${y(-eg[i])-y(0)}" rx="1.5" fill="var(--chart-neu)"><title>${mL(i)} egresos ${fM(eg[i]*1e6)}</title></rect>`}
+  s+=`<polyline fill="none" stroke="var(--ink)" stroke-width="1.8" stroke-linejoin="round" points="${cu.map((v,i)=>`${x(i)+bw/2},${y(v)}`).join(' ')}"/>`;
+  const iMin=cu.indexOf(Math.min(...cu)),right=x(iMin)>W*.6;
+  s+=`<circle cx="${x(iMin)+bw/2}" cy="${y(cu[iMin])}" r="4" fill="var(--neg)"/><text x="${x(iMin)+bw/2+(right?-8:7)}" y="${y(cu[iMin])+16}" text-anchor="${right?'end':'start'}" style="fill:var(--neg)">Exposición máx. ${fM(cu[iMin]*1e6)}</text>`;
+  const stp=Math.ceil(N/12);for(let i=0;i<N;i+=stp)s+=`<text x="${x(i)+bw/2}" y="${H-8}" text-anchor="middle">${mL(i)}</text>`;
+  return s+'</svg>';
+}
+function absChart(R){
+  const W=420,H=210,L=38,Rr=10,T=14,B=26,cw=W-L-Rr,ch=H-T-B;const n=Math.min(R.N,Math.max(...R.ets.map(e=>e.lastSale))+3);
+  const x=i=>L+i/Math.max(1,n-1)*cw,y=v=>T+(100-v)/100*ch;const cols=['var(--chart-pos)','var(--ink)','var(--chart-neu)','var(--muted)'];
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Absorción de ventas por etapa">`;
+  [0,25,50,75,100].forEach(v=>s+=`<line x1="${L}" x2="${W-Rr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width=".6"/><text x="${L-6}" y="${y(v)+3}" text-anchor="end">${v}%</text>`);
+  R.ets.forEach((e,k)=>{let c=0;const pts=[];for(let i=0;i<n;i++){c+=e.gross[i]-e.ret[i];pts.push(`${x(i)},${y(Math.min(100,c/e.UA*100))}`)}
+    s+=`<polyline fill="none" stroke="${cols[k%4]}" stroke-width="2" points="${pts.join(' ')}"/>`;
+    if(e.eq<n)s+=`<circle cx="${x(e.eq)}" cy="${y(Math.min(100,+e.E.pe||60))}" r="3.5" fill="${cols[k%4]}"/>`});
+  const st=Math.ceil(n/6);for(let i=0;i<n;i+=st)s+=`<text x="${x(i)}" y="${H-6}" text-anchor="middle">${mL(i)}</text>`;
+  return s+'</svg><div class="legend">'+R.ets.map((e,k)=>`<span style="--c:${cols[k%4]}">${esc(e.E.nombre)}</span>`).join('')+'</div>';
+}
+function costBars(R){
+  const t=R.tot,items=[['Costos directos',t.dir],['Lote',t.lote],['Indirectos',t.ind],['Licencias y cargas',t.lic],['Ventas y mercadeo',t.mkt],['Gerencia',t.ger],['Fiducia',t.fid],['Posventa y tenencia',t.post+t.predial],['Impuestos operativos',t.imp],['Financieros',t.fin],['Renta',t.renta]].filter(i=>i[1]>0);
+  const mx=Math.max(...items.map(i=>i[1]),Math.abs(R.utilNeta))||1;
+  return items.map(([l,v])=>`<div class="bar"><span>${l}</span><div class="track"><div class="fill" style="width:${v/mx*100}%"></div></div><span class="amt">${fP(v/R.ventas)}</span></div>`).join('')+
+  `<div class="bar" style="border-top:1px solid var(--line);padding-top:11px"><strong>Utilidad neta</strong><div class="track"><div class="fill ${R.utilNeta<0?'neg':'util'}" style="width:${Math.abs(R.utilNeta)/mx*100}%"></div></div><span class="amt"><strong>${fP(R.margenNeto)}</strong></span></div>`;
+}
+function lineChart(series,n,labels){
+  const W=560,H=220,L=58,Rr=10,T=14,B=26,cw=W-L-Rr,ch=H-T-B;
+  let mx=Math.max(1,...series.flatMap(s=>s.v.filter(v=>v!=null)));const st=nice(mx);mx=Math.ceil(mx/st)*st;
+  const x=i=>L+i/Math.max(1,n-1)*cw,y=v=>T+(mx-v)/mx*ch;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:420px" role="img" aria-label="Curva acumulada">`;
+  for(let v=0;v<=mx+1e-9;v+=st)s+=`<line x1="${L}" x2="${W-Rr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width=".6"/><text x="${L-6}" y="${y(v)+3}" text-anchor="end">${nf(v)}</text>`;
+  series.forEach(se=>{const pts=se.v.map((v,i)=>v==null?null:`${x(i)},${y(v)}`).filter(Boolean);if(pts.length)s+=`<polyline fill="none" stroke="${se.c}" stroke-width="2"${se.dash?' stroke-dasharray="4 4"':''} points="${pts.join(' ')}"/>`});
+  const stp=Math.ceil(n/7);for(let i=0;i<n;i+=stp)s+=`<text x="${x(i)}" y="${H-6}" text-anchor="middle">${labels(i)}</text>`;
+  return `<div class="chart-x">${s}</svg></div><div class="legend">${series.map(se=>`<span style="--c:${se.c}">${se.n}</span>`).join('')}</div>`;
+}
+
+/* ---------- Alertas ---------- */
+function alertsFor(P,R){
+  const a=[],G=P.general;
+  if(!R)return a;
+  if(R.utilNeta<0)a.push(['crit','Pérdida',`El proyecto pierde ${fM(-R.utilNeta)} después de impuestos.`]);
+  else if(R.margen*100<+G.margenMin)a.push(['crit','Margen',`El margen antes de impuestos es ${fP(R.margen)}, bajo el mínimo de ${nf(G.margenMin,1)} %.`]);
+  if(R.tirI!=null&&R.tirI*100<+G.tasaDesc)a.push(['warn','Rentabilidad',`La TIR del inversionista (${fP(R.tirI)}) no alcanza la TIO de ${nf(G.tasaDesc,1)} %.`]);
+  R.ets.forEach(e=>{const mp=e.eq-e.t0+1;if(mp>12)a.push(['warn','Preventa',`${e.E.nombre}: llegar al punto de equilibrio toma ${mp} meses.`]);
+    if(e.lastSale>e.fo)a.push(['warn','Inventario',`${e.E.nombre}: quedan unidades por vender al entregar la obra (última venta ${mL(e.lastSale)}).`]);
+    if(e.capped)a.push(['warn','Tope VIS',`${e.E.nombre}: algunos precios se limitaron al tope de ${e.E.tipo} (${e.E.tipo==='VIP'?ST.macro.topeVIP:(e.E.topeEsp?ST.macro.topeVISEsp:ST.macro.topeVIS)} SMMLV).`]);
+    if(!P.tipologias.some(t=>t.etapa===e.E.id))a.push(['crit','Producto',`${e.E.nombre} no tiene tipologías.`])});
+  if(R.expo/R.ventas>.25)a.push(['warn','Aportes',`Los socios deben aportar hasta ${fM(R.expo)}, ${fP(R.expo/R.ventas)} de las ventas.`]);
+  const lt=R.tot.lote/R.ventas;if(lt>.2)a.push(['warn','Lote',`El lote pesa ${fP(lt)} de las ventas; lo usual es 10–18 %.`]);
+  const sp=sum((P.socios||[]).map(s=>+s.part||0));if(P.socios&&P.socios.length&&Math.abs(sp-100)>.01)a.push(['crit','Socios',`Las participaciones suman ${nf(sp,1)} %, deben sumar 100 %.`]);
+  if(P.costos.lote.forma==='especie'&&!(P.socios||[]).some(s=>s.aportaLote))a.push(['warn','Lote',`El lote es aporte en especie pero ningún socio está marcado como aportante; se repartió entre todos.`]);
+  if(R.maxDif>1000)a.push(['crit','Balance',`El balance proyectado no cuadra por ${fM(R.maxDif)}.`]);
+  const sg=segData();if(sg&&sg.cpi!=null&&sg.cpi<.95)a.push(['warn','Costos',`Al corte, el costo real va ${fP(1/sg.cpi-1)} por encima del valor ganado (CPI ${nf(sg.cpi,2)}).`]);
+  if(!a.length)a.push(['ok','En rango','Margen, TIR, preventa, aportes y balance dentro de los parámetros definidos.']);
+  return a;
+}
+const alertHtml=list=>list.map(([c,t,m])=>`<div class="alert ${c}"><b>${t}</b><div>${esc(m)}</div></div>`).join('');
+
+/* ---------- INICIO ---------- */
+function renderInicio(){
+  const host=$('#s-inicio'),now=new Date(),h=now.getHours();
+  const name=(ST.me&&ST.me.name)||prefs.user||'';
+  let html=`<div class="hello"><div class="date">${DIAS[now.getDay()]}, ${now.getDate()} ${MES[now.getMonth()]}</div><h1>${h<12?'Buenos días':h<19?'Buenas tardes':'Buenas noches'}${name?', '+esc(name.split(' ')[0]):''}</h1></div>`;
+  if(!ST.P){
+    html+=`<div class="card"><h3>Base de proyectos vacía</h3><p class="sub">Todavía no hay proyectos en la base central. Crea el primero para empezar a modelar.</p>
+      ${ST.readOnly?'<p class="muted">Tienes acceso de solo lectura. Pide a un editor que cree el primer proyecto.</p>':'<div class="row"><button class="btn pri" data-act="proj-new" data-kind="example">Crear proyecto de ejemplo</button><button class="btn" data-act="proj-new" data-kind="blank">Proyecto en blanco</button></div>'}</div>`;
+    host.innerHTML=html;return;
+  }
+  const P=ST.P,R=ST.R,G=P.general;
+  html+=`<div class="card projcard"><div style="min-width:0"><div class="t">${esc(G.nombre)}</div><div class="d">${esc(G.ciudad||'Sin ciudad')} · ${P.etapas.length} etapa${P.etapas.length>1?'s':''} · ${G.vehiculo==='sociedad'?'Sociedad':'Fiducia'} · ${nf(sum(R.ets.map(e=>e.UA)))} viviendas</div></div><button class="btn sm" data-act="proj-open">Cambiar</button></div>
+  <div class="hero${R.utilNeta<0?' loss':''}"><div class="eyebrow">Utilidad antes de impuestos · margen ${fP(R.margen)}</div><div class="big">${fM(R.uai)}</div>
+    <div class="mini"><div><span>TIR inv.</span>${fP(R.tirI)}</div><div><span>VPN</span>${fM(R.vpn)}</div><div><span>Neta</span>${fM(R.utilNeta)}</div></div>
+    <button class="go" data-act="go" data-to="resultados" aria-label="Ver resultados"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div>
+  <div class="tiles">${[['Ventas totales',fM(R.ventas)],['TIR proyecto',fP(R.tirP)],['Exposición máx.',fM(R.expo)],['Múltiplo socios',fX(R.aportes?R.distribuciones/R.aportes:null)],['Margen neto',fP(R.margenNeto),R.margenNeto<0],['Duración',(R.N-1)+' meses']].map(([l,v,b])=>`<div class="tile"><div class="l">${l}</div><div class="v${b?' bad':''}">${v}</div></div>`).join('')}</div>
+  <div class="grid2">
+    <div class="card"><h3>Alertas</h3><p class="sub">Se revisan solas con cada cambio.</p><div class="alerts">${alertHtml(alertsFor(P,R))}</div></div>
+    <div class="card"><h3>Hitos por etapa</h3><p class="sub">La obra arranca el mes siguiente al punto de equilibrio.</p><div class="tbl-wrap"><table><thead><tr><th class="c0">Etapa</th><th>Ventas</th><th>Equilibrio</th><th>Obra</th><th>Escrituras</th></tr></thead><tbody>${R.ets.map(e=>`<tr><td class="c0">${esc(e.E.nombre)}</td><td>${mL(e.t0)}</td><td>${mL(e.eq)}</td><td>${mL(e.io)} – ${mL(e.fo)}</td><td>${mL(e.e0)} – ${mL(e.lastEsc)}</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="card span2"><h3>Flujo de caja</h3><p class="sub">Millones de pesos por mes. Línea: caja acumulada de los socios.</p><div class="chart-x">${flowChart(R)}</div><div class="legend"><span style="--c:var(--chart-pos)">Ingresos</span><span style="--c:var(--chart-neu)">Egresos y financieros</span><span style="--c:var(--ink)">Acumulado socios</span></div></div>
+    <div class="card"><h3>Estructura de costos</h3><p class="sub">Cada rubro sobre las ventas totales.</p><div class="bars">${costBars(R)}</div></div>
+    <div class="card"><h3>Absorción de ventas</h3><p class="sub">Viviendas vendidas netas por etapa. El punto marca el equilibrio.</p>${absChart(R)}</div>
+    ${Object.keys(ST.projects).length>1?`<div class="card span2"><h3>Portafolio</h3><p class="sub">Proyectos en la base ${ST.mode==='db'?'central':'de este dispositivo'}. Toca uno para abrirlo.</p><div class="port">${portfolioHtml()}</div></div>`:''}
+  </div>`;
+  host.innerHTML=html;
+}
+function portfolioHtml(){
+  return Object.entries(ST.projects).sort((a,b)=>(b[1].actualizado||0)-(a[1].actualizado||0)).map(([id,d])=>{const k=d.kpis||{};
+    return `<button data-act="proj-select" data-id="${id}" aria-current="${id===ST.pid}"><span class="n">${esc(d.nombre)}</span><span class="k">${fP(k.margen)}</span><span class="m">${esc(d.ciudad||'')} · Ventas ${fM(k.ventas)} · TIR ${fP(k.tirI)} · ${fDate(d.actualizado)} por ${who(d.actualizadoPor)}</span></button>`}).join('');
+}
+
+/* ---------- MODELO ---------- */
+const MSUBS=[['general','General'],['producto','Producto'],['ventas','Ventas'],['costos','Costos'],['impuestos','Impuestos'],['financiacion','Financiación'],['socios','Socios']];
+function chipsHtml(list,cur,act){return `<div class="chips" role="group">${list.map(([k,l])=>`<button class="chip" data-act="${act}" data-k="${k}" aria-pressed="${k===cur}">${l}</button>`).join('')}</div>`}
+function renderModelo(){
+  const host=$('#s-modelo');
+  if(!ST.P){host.innerHTML='<div class="empty">Crea o abre un proyecto para editar sus supuestos.</div>';return}
+  const sub=prefs.sub.modelo;
+  host.innerHTML=`<div class="screen-head"><div><h1>Modelo</h1><p>${ST.readOnly?'Estás viendo el modelo en solo lectura.':'Cada cambio recalcula todo y se guarda solo.'}</p></div></div>${chipsHtml(MSUBS,sub,'msub')}<div id="mbody" class="${ST.readOnly?'readonly':''}" style="display:grid;gap:12px">${modeloSection(sub)}</div><div class="live"><div class="in" id="live"></div></div>`;
+  if(ST.readOnly)$$('#mbody input,#mbody select').forEach(e=>e.disabled=true);
+  updModelo();
+}
+function modeloSection(sub){
+  const P=ST.P,G='general';
+  if(sub==='general')return `<div class="card"><h3>Datos generales</h3><p class="sub">Identificación del proyecto y criterios de evaluación.</p><div class="fields">
+    ${fText('general.nombre','Nombre del proyecto')}${fText('general.ciudad','Ciudad')}${fMonth('general.fecha','Mes 0 del flujo')}
+    ${fSel('general.vehiculo','Vehículo del negocio',[['fiducia','Fiducia (renta en cabeza de los socios)'],['sociedad','Sociedad (renta en el proyecto)']])}
+    ${fNum('general.tasaDesc','Tasa de descuento (TIO)','% E.A.')}${fNum('general.margenMin','Margen mínimo exigido','% ventas')}</div></div>
+    <div class="card"><h3>Resumen del producto</h3><div class="kv" data-calc="resumen"></div></div>`;
+  if(sub==='producto')return P.etapas.map((E,i)=>`<div class="card"><div class="item-head" style="margin-bottom:12px"><h4>${esc(E.nombre)}</h4>${P.etapas.length>1?delBtn('del-etapa',i,'Eliminar etapa'):''}</div>
+    <div class="fields">${fText(`etapas.${i}.nombre`,'Nombre de la etapa')}${fSel(`etapas.${i}.tipo`,'Tipo de vivienda',TIPOS,true)}
+    ${E.tipo==='VIS'?fSw(`etapas.${i}.topeEsp`,'Tope VIS de 150 SMMLV (ciudades con tope especial)'):''}
+    ${fNum(`etapas.${i}.pisos`,'Pisos','pisos')}${fNum(`etapas.${i}.factorConst`,'Área construida / vendible','x')}</div>
+    <div class="label" style="margin:16px 0 8px">Tipologías</div><div class="list">
+    ${P.tipologias.map((t,j)=>t.etapa!==E.id?'':`<div class="item"><div class="item-head"><span class="tag acc">${esc((CLASES.find(c=>c[0]===t.clase)||[])[1]||'')}</span>${delBtn('del-tip',j,'Eliminar tipología')}</div>
+      <div class="fields tight">${fText(`tipologias.${j}.nombre`,'Nombre')}${fSel(`tipologias.${j}.clase`,'Clase',CLASES,true)}${fNum(`tipologias.${j}.unidades`,'Unidades','und')}
+      ${t.clase==='apto'||t.clase==='local'?fNum(`tipologias.${j}.area`,'Área vendible','m²')+fNum(`tipologias.${j}.precio`,'Precio base','$/m²',{money:1})+fNum(`tipologias.${j}.primaPiso`,'Prima por piso','%')+fNum(`tipologias.${j}.pctVista`,'Unidades con vista','%')+fNum(`tipologias.${j}.primaVista`,'Prima por vista','%'):fNum(`tipologias.${j}.precio`,'Precio por unidad','$',{money:1})}</div>
+      <div class="pricelist" data-calc="price" data-j="${j}"></div></div>`).join('')}
+    <button class="addbtn" data-act="add-tip" data-e="${E.id}">+ Agregar tipología</button></div></div>`).join('')+`<button class="addbtn" data-act="add-etapa">+ Agregar etapa</button>`;
+  if(sub==='ventas')return P.etapas.map((E,i)=>`<div class="card"><h4 style="margin-bottom:12px">${esc(E.nombre)}</h4><div class="fields">
+    ${fNum(`etapas.${i}.inicioVentas`,'Mes de inicio de ventas','mes')}${fNum(`etapas.${i}.velocidad`,'Velocidad base','und/mes')}${fSel(`etapas.${i}.curva`,'Curva de ventas',CURVAS,true)}
+    ${fNum(`etapas.${i}.incPrecio`,'Incremento de precio','% mes')}${fNum(`etapas.${i}.descuento`,'Descuento promedio','%')}${fNum(`etapas.${i}.pe`,'Punto de equilibrio','% und')}
+    ${fNum(`etapas.${i}.mesMinObra`,'Mes mínimo de inicio de obra','mes')}${fNum(`etapas.${i}.mesesObra`,'Duración de obra','meses')}${fNum(`etapas.${i}.mesesEsc`,'Ventana de escrituración','meses')}
+    ${fNum(`etapas.${i}.salaVentas`,'Sala de ventas y apto modelo','$',{money:1})}</div>
+    ${E.curva==='personalizada'?`<div class="label" style="margin:16px 0 8px">Unidades por mes</div><p class="sub" style="margin:0 0 8px">Los meses vacíos usan la velocidad base.</p><div class="curvegrid">${Array.from({length:30},(_,k)=>{const p=`etapas.${i}.curvaPers.${k}`;const v=getPath(P,p);return `<div class="f"><label for="${fid(p)}">${mL((+E.inicioVentas||0)+k)}</label><div class="box"><input id="${fid(p)}" data-path="${p}" type="number" inputmode="decimal" value="${v==null?'':esc(v)}"></div></div>`}).join('')}</div>`:''}</div>`).join('')+
+    `<div class="card"><h3>Plan de pagos del comprador</h3><p class="sub">La cuota inicial se paga entre la venta y la entrega. Cesantías en febrero; primas en junio y diciembre.</p><div class="fields">
+    ${fNum('ventas.separacion','Separación','$/und',{money:1})}${fNum('ventas.ciPct','Cuota inicial','% precio')}${fNum('ventas.pctCesantias','Abono con cesantías','% de la CI')}${fNum('ventas.pctPrimas','Abono con primas','% de la CI')}</div></div>
+    <div class="card"><h3>Desistimientos</h3><p class="sub">Una parte de cada venta desiste, se devuelve lo pagado menos la penalidad y la unidad vuelve al inventario.</p><div class="fields">
+    ${fNum('ventas.desistPct','Desistimiento','% ventas')}${fNum('ventas.desistMes','Meses tras la venta','meses')}${fNum('ventas.penalidad','Penalidad retenida','% de lo pagado')}</div></div>
+    <div class="card"><h3>Subsidios (solo etapas VIS y VIP)</h3><p class="sub">Pagan parte del saldo al escriturar, con un rezago. Mi Casa Ya no tiene asignaciones nuevas en 2026: déjalo en 0 % salvo que se reactive.</p><div class="fields">
+    ${fNum('ventas.subsidioPct','Compradores con subsidio nacional','%')}${fNum('ventas.subsidioSMMLV','Monto subsidio nacional','SMMLV')}${fNum('ventas.cajaPct','Compradores con subsidio de caja','%')}${fNum('ventas.cajaSMMLV','Monto subsidio de caja','SMMLV')}${fNum('ventas.rezagoSubsidio','Rezago de pago','meses')}</div></div>`;
+  if(sub==='costos'){const C='costos';return `<div class="card"><h3>Presupuesto de obra por capítulos</h3><p class="sub">Pesos por m² construido a precios del mes 0. Inicio y fin en % del plazo de obra; dentro de esa ventana el gasto sigue una curva S.</p>
+    <div class="tbl-wrap"><table class="tbl-in"><thead><tr><th class="c0">Capítulo</th><th>$/m²</th><th>Inicio %</th><th>Fin %</th><th></th></tr></thead><tbody>
+    ${P.costos.capitulos.map((c,i)=>{reg(`costos.capitulos.${i}.valor`,'Valor $/m²');reg(`costos.capitulos.${i}.nombre`,'Nombre');reg(`costos.capitulos.${i}.ini`,'Inicio %');reg(`costos.capitulos.${i}.fin`,'Fin %');return `<tr><td class="c0"><input style="text-align:left;min-width:130px" data-path="costos.capitulos.${i}.nombre" value="${esc(c.nombre)}" aria-label="Capítulo"></td><td><input type="number" data-path="costos.capitulos.${i}.valor" value="${esc(c.valor)}" aria-label="Valor por m²"></td><td><input type="number" style="min-width:64px" data-path="costos.capitulos.${i}.ini" value="${esc(c.ini)}" aria-label="Inicio"></td><td><input type="number" style="min-width:64px" data-path="costos.capitulos.${i}.fin" value="${esc(c.fin)}" aria-label="Fin"></td><td>${delBtn('del-cap',i,'Eliminar capítulo')}</td></tr>`}).join('')}
+    <tr class="tot"><td class="c0">Total</td><td data-calc="capTot" style="padding-right:14px"></td><td colspan="3" data-calc="capCD" style="text-align:left"></td></tr></tbody></table></div>
+    <button class="addbtn" style="margin-top:10px" data-act="add-cap">+ Agregar capítulo</button>
+    <div class="fields" style="margin-top:14px">${fNum('costos.imprev','Imprevistos','% directo')}${fSw('costos.indexar','Ajustar costos por ICCV (supuestos macro)')}</div></div>
+    <div class="card"><h3>Lote</h3><div class="fields">${fNum('costos.lote.valor','Valor del lote','$',{money:1})}${fSel('costos.lote.forma','Forma de pago',FORMAS,true)}
+      ${P.costos.lote.forma==='diferido'?fNum('costos.lote.pctInicial','Pago inicial','%')+fNum('costos.lote.cuotas','Cuotas mensuales','meses'):''}
+      ${P.costos.lote.forma==='area'?fNum('costos.lote.pctArea','Pago con área','% de las ventas'):''}</div>
+      ${P.costos.lote.forma==='especie'?'<p class="sub" style="margin:10px 0 0">El valor del lote cuenta como aporte del socio marcado como aportante en la pestaña Socios.</p>':''}</div>
+    <div class="card"><h3>Licencias y cargas</h3><div class="fields">${fNum('costos.licencias.curaduria','Expensas de curaduría','$',{money:1})}${fNum('costos.licencias.delineacion','Impuesto de delineación','% presupuesto')}${fNum('costos.licencias.plusvalia','Plusvalía','$',{money:1})}${fNum('costos.licencias.cargas','Cargas y cesiones urbanísticas','$',{money:1})}</div></div>
+    <div class="card"><h3>Indirectos de obra</h3><div class="fields">${fNum('costos.disenos','Diseños y estudios','% directo')}${fNum('costos.interventoria','Interventoría y supervisión','% directo')}${fNum('costos.poliza','Póliza decenal','% directo')}${fNum('costos.otrosInd','Otros indirectos','% directo')}${fNum('costos.servicios','Conexión de servicios públicos','$/und',{money:1})}</div></div>
+    <div class="card"><h3>Ventas y gerencia</h3><div class="fields">${fNum('costos.publicidad','Publicidad','% ventas')}${fNum('costos.comision','Comisiones de venta','% ventas')}${fNum('costos.gerencia','Honorarios de gerencia','% ventas')}${fNum('costos.gastosEscr','Gastos de escrituración del vendedor','% ventas')}</div></div>
+    <div class="card"><h3>Posventa y tenencia</h3><div class="fields">${fNum('costos.postventa','Posventa','% directo')}${fNum('costos.predial','Predial','% avalúo/año')}${fNum('costos.adminNoVend','Administración de no vendidos','$/und/mes',{money:1})}</div></div>
+    <div class="card"><h3>Comisiones fiduciarias</h3>${P.etapas.map((E,i)=>`<div class="label" style="margin:8px 0">${esc(E.nombre)}</div><div class="fields">${fNum(`etapas.${i}.fidPreventa`,'Encargo de preventa','$/mes',{money:1})}${fNum(`etapas.${i}.fidAdmin`,'Administración y pagos','$/mes',{money:1})}</div>`).join('')}</div>`}
+  if(sub==='impuestos')return `<div class="card"><h3>IVA</h3><p class="sub">En vivienda el IVA de materiales es costo. En VIS y VIP se puede pedir devolución hasta el 4 % del precio.</p><div class="fields">${fNum('impuestos.ivaMat','Costo directo gravado con IVA','%')}${fNum('impuestos.ivaTasa','Tarifa de IVA','%')}${fSw('impuestos.devIva','Solicitar devolución de IVA en VIS/VIP')}${fNum('impuestos.rezagoDev','Rezago de la devolución','meses')}</div></div>
+    <div class="card"><h3>Impuestos sobre ingresos y movimientos</h3><div class="fields">${fNum('impuestos.ica','ICA','por mil')}${fSw('impuestos.gmf','Aplicar 4x1000 a los pagos')}</div></div>
+    <div class="card"><h3>Renta</h3><p class="sub">${P.general.vehiculo==='sociedad'?'Con sociedad, el proyecto paga la renta en abril del año siguiente.':'Con fiducia, la utilidad pasa a los socios y cada uno paga su renta. La TIR después de impuestos se ve en Resultados › Socios.'}</p><div class="fields">${fNum('impuestos.renta','Tarifa de renta','%')}</div></div>`;
+  if(sub==='financiacion')return `<div class="card"><h3>Crédito constructor</h3><p class="sub">Tasa = IBR del año (supuestos macro) + spread. Se desembolsa contra avance de obra y se paga con la liberación de cada unidad escriturada.</p><div class="fields">
+    ${P.etapas.map((E,i)=>fNum(`etapas.${i}.credPct`,'Cupo '+E.nombre,'% directo')).join('')}${fNum('financiacion.spread','Spread sobre IBR','puntos')}${fNum('financiacion.comision','Comisión de estructuración','% cupo')}${fNum('financiacion.liberacion','Factor de liberación por unidad','x')}${fSw('financiacion.capitalizar','Capitalizar intereses durante la obra')}</div><p class="sub" style="margin:12px 0 0" data-calc="tasa"></p></div>
+    <div class="card"><h3>Crédito puente para el lote</h3><p class="sub">Financia parte del pago del lote y se cancela al iniciar la primera obra. Aplica a lote de contado o diferido.</p><div class="fields">${fNum('financiacion.puentePct','Financiación del lote','%')}${fNum('financiacion.puenteSpread','Spread sobre IBR','puntos')}</div></div>
+    <div class="card"><h3>Fiducia</h3><p class="sub">Rendimiento de los recursos retenidos en el encargo fiduciario hasta el punto de equilibrio.</p><div class="fields">${fNum('financiacion.rendFid','Rendimiento','% E.A.')}</div></div>`;
+  if(sub==='socios')return `<div class="card"><h3>Socios</h3><p class="sub">Los aportes de caja y las utilidades se reparten por participación. Primero se devuelven aportes; luego se reparten utilidades.</p><div class="list">
+    ${P.socios.map((s,i)=>`<div class="item"><div class="item-head"><strong>${esc(s.nombre)}</strong>${P.socios.length>1?delBtn('del-socio',i,'Eliminar socio'):''}</div><div class="fields tight">${fText(`socios.${i}.nombre`,'Nombre')}${fNum(`socios.${i}.part`,'Participación','%')}${fSw(`socios.${i}.aportaLote`,'Aporta el lote en especie')}</div></div>`).join('')}
+    <button class="addbtn" data-act="add-socio">+ Agregar socio</button></div><p class="sub" style="margin:12px 0 0" data-calc="socSum"></p></div>`;
+  return '';
+}
+function updModelo(){
+  updLive();const P=ST.P,R=ST.R;if(!P||!R)return;
+  $$('[data-calc]').forEach(el=>{const k=el.dataset.calc;
+    if(k==='resumen'){const UA=sum(R.ets.map(e=>e.UA)),AV=sum(R.ets.map(e=>e.AV));el.innerHTML=`<span>Viviendas</span><span>${nf(UA)}</span><span>Área vendible</span><span>${nf(AV)} m²</span><span>Área construida</span><span>${nf(sum(R.ets.map(e=>e.AC)))} m²</span><span>Ventas proyectadas</span><span>${fM(R.ventas)}</span><span>Precio promedio</span><span>${fPesos(AV?R.ventas/AV:0)}/m²</span><span>Costo directo</span><span>${fPesos(R.tot.dir/Math.max(1,sum(R.ets.map(e=>e.AC))))}/m² const.</span>`}
+    if(k==='price'){const t=P.tipologias[+el.dataset.j];if(!t)return;const E=P.etapas.find(e=>e.id===t.etapa)||{};const pisos=Math.max(1,+E.pisos||1);
+      if(t.clase==='parq'||t.clase==='deposito'){el.innerHTML=`Precio unidad <b>${fM(t.precio)}</b>`;return}
+      const b=(+t.area||0)*(+t.precio||0),p1=b,pN=b*(1+pc(t.primaPiso)*(pisos-1)),vis=b*pc(t.primaVista),avg=b*(1+pc(t.primaPiso)*(pisos-1)/2)*(1+pc(t.pctVista)*pc(t.primaVista));
+      let s=`Piso 1 <b>${fM(p1)}</b> · Piso ${pisos} <b>${fM(pN)}</b> · Con vista +<b>${fM(vis)}</b> · Promedio <b>${fM(avg)}</b>`;
+      if(E.tipo&&E.tipo!=='NoVIS'&&t.clase==='apto'){const M=ST.macro,tp=E.tipo==='VIP'?M.topeVIP:(E.topeEsp?M.topeVISEsp:M.topeVIS),cap=tp*M.smmlv;s+=` · Tope ${E.tipo} ${M.anioBase} <b style="color:${pN>cap?'var(--neg)':'inherit'}">${fM(cap)}</b>`}
+      el.innerHTML=s}
+    if(k==='capTot'){const t=sum(P.costos.capitulos.map(c=>+c.valor||0));el.textContent=fPesos(t)}
+    if(k==='capCD')el.textContent='Costo directo total con imprevistos e índice: '+fM(R.tot.dir);
+    if(k==='tasa'){const M=ST.macro;el.textContent=`Tasa resultante ${M.anioBase+1}: IBR ${nf(M.ibr[1],1)} % + ${nf(P.financiacion.spread,1)} = ${nf((+M.ibr[1])+(+P.financiacion.spread),1)} % E.A. Intereses totales: ${fM(R.tot.fin)}.`}
+    if(k==='socSum'){const s=sum(P.socios.map(x=>+x.part||0));el.innerHTML=`Suma de participaciones: <b style="color:${Math.abs(s-100)>.01?'var(--neg)':'inherit'}">${nf(s,1)} %</b>`}
+  });
+}
+function updLive(){const R=ST.R,l=$('#live');if(!R||!l)return;l.classList.toggle('loss',R.utilNeta<0);
+  l.innerHTML=[['Utilidad AI',fM(R.uai)],['Margen',fP(R.margen)],['TIR inv.',fP(R.tirI)]].map(([a,b])=>`<div><div class="l">${a}</div><div class="v">${b}</div></div>`).join('')}
+
+/* ---------- RESULTADOS ---------- */
+const RSUBS=[['flujo','Flujo de caja'],['pyg','Estado de resultados'],['balance','Balance'],['socios','Socios'],['informe','Informe']];
+const FLOWROWS=[
+  ['sec','Ventas'],['units','Viviendas vendidas','u'],['ret','Desistimientos','u'],['valGross','Valor de las ventas'],
+  ['sec','Ingresos'],['ciRel','Cuota inicial disponible'],['fid','Retenido en fiducia','info'],['esc','Saldo por escrituración'],['sub','Subsidios recibidos'],['refCash','Devoluciones por desistimiento','neg'],['rend','Rendimientos fiducia'],['devIva','Devolución de IVA'],['ing','Total ingresos','tot'],
+  ['sec','Egresos'],['lote','Lote'],['dir','Costos directos'],['ind','Indirectos de obra'],['lic','Licencias y cargas'],['mkt','Ventas y mercadeo'],['ger','Gerencia'],['fidC','Comisiones fiduciarias'],['post','Posventa y administración'],['predial','Predial'],['imp','ICA, 4x1000 y escrituración'],['egr','Total egresos','tot'],
+  ['proj','Flujo operativo','tot'],
+  ['sec','Financiación'],['des','Desembolsos crédito constructor'],['intr','Intereses','neg'],['comi','Comisión de estructuración','neg'],['amo','Amortización (liberaciones)','neg'],['bal','Saldo crédito constructor','info'],['pDes','Desembolso crédito puente'],['pInt','Intereses puente','neg'],['pAmo','Pago crédito puente','neg'],['renta','Impuesto de renta','neg'],
+  ['inv','Flujo para socios','tot'],['ap','Aportes de socios'],['dist','Distribuciones a socios','neg'],['caja','Caja retenida','info'],['cumEq','Acumulado socios','tot']];
+const LASTROWS=new Set(['fid','bal','caja','cumEq']);
+function cols(R,per){if(per==='m')return Array.from({length:R.N},(_,i)=>({l:mL(i),idx:[i],ph:i<R.ioFirst?'ph1':i<=Math.max(...R.ets.map(e=>e.fo))?'ph2':'ph3'}));
+  return R.years.map(Y=>({l:String(Y.y),idx:Y.idx,ph:''}))}
+const agg=(a,idx,k)=>LASTROWS.has(k)?a[idx[idx.length-1]]:idx.reduce((s,i)=>s+a[i],0);
+function flowMatrix(R,per){const C=cols(R,per);const rows=[];
+  FLOWROWS.forEach(([k,l,m])=>{if(k==='sec'){rows.push({sec:l});return}let a=R.rows[k];if(m==='neg'||k==='dist')a=a.map(v=>-v);
+    rows.push({k,l,m,total:(m==='info'||k==='cumEq'||k==='caja')?null:sum(a),vals:C.map(c=>agg(a,c.idx,k))})});return {C,rows}}
+function renderResultados(){
+  const host=$('#s-resultados');if(!ST.P){host.innerHTML='<div class="empty">Abre un proyecto para ver sus resultados.</div>';return}
+  const sub=prefs.sub.resultados,R=ST.R;
+  let h=`<div class="screen-head"><div><h1>Resultados</h1><p>Cifras en millones de pesos salvo que se indique.</p></div></div>${chipsHtml(RSUBS,sub,'rsub')}`;
+  if(sub==='flujo'){const {C,rows}=flowMatrix(R,prefs.per);
+    h+=`<div class="row between"><div class="seg" role="group" aria-label="Periodicidad"><button data-act="per" data-k="m" aria-pressed="${prefs.per==='m'}">Mensual</button><button data-act="per" data-k="a" aria-pressed="${prefs.per==='a'}">Anual</button></div><div class="row"><button class="btn sm" data-act="copy-tsv">Copiar</button><button class="btn sm pri" data-act="export-xlsx">Excel</button></div></div>
+    <div class="card" style="padding:6px"><div class="tbl-wrap" style="max-height:66vh"><table><thead><tr><th class="c0">Concepto</th><th>Total</th>${C.map(c=>`<th class="${c.ph}">${c.l}</th>`).join('')}</tr></thead><tbody>
+    ${rows.map(r=>r.sec?`<tr class="sec"><td class="c0">${r.sec}</td><td colspan="${C.length+1}"></td></tr>`:`<tr class="${r.m==='tot'?'tot':''}"><td class="c0">${r.l}</td><td>${r.total==null?'':(r.m==='u'?nf(r.total,0):fT(r.total))}</td>${r.vals.map(v=>`<td class="${v<-1?'neg':''}">${r.m==='u'?(Math.abs(v)>.001?nf(v,v%1?1:0):'·'):fT(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`}
+  if(sub==='pyg'){const Y=R.pnlY,T=k=>sum(Y.map(y=>y[k]));
+    const rws=[['Ingresos por escrituración','rev'],['Otros ingresos','otros'],['Costo de ventas','cogs',1],['Utilidad bruta',null,0,'ub'],['Gastos operacionales','gastos',1],['Utilidad antes de impuestos','uai',0,'tot'],['Impuesto de renta','renta',1],['Utilidad neta','neta',0,'tot']];
+    const val=(y,r)=>r[3]==='ub'?y.rev+y.otros-y.cogs:y[r[1]];
+    h+=`<div class="card" style="padding:6px"><div class="tbl-wrap"><table><thead><tr><th class="c0">Concepto</th>${Y.map(y=>`<th>${y.y}</th>`).join('')}<th>Total</th></tr></thead><tbody>
+    ${rws.map(r=>{const vs=Y.map(y=>val(y,r)*(r[2]?-1:1));return `<tr class="${r[3]==='tot'||r[3]==='ub'?'tot':''}"><td class="c0">${r[0]}</td>${vs.map(v=>`<td class="${v<-1?'neg':''}">${fT(v)}</td>`).join('')}<td>${fT(sum(vs))}</td></tr>`}).join('')}
+    <tr><td class="c0">Margen neto</td>${Y.map(y=>`<td>${y.rev?fP(y.neta/y.rev):'·'}</td>`).join('')}<td>${fP(R.margenNeto)}</td></tr></tbody></table></div></div>
+    <div class="card"><p class="sub" style="margin:0">La utilidad se reconoce al escriturar: el costo de ventas sale del costo total capitalizable de cada etapa en proporción a lo escriturado. ${R.soc?'La renta la paga el proyecto en abril del año siguiente.':'Con fiducia la renta mostrada la pagan los socios en su declaración; no sale del flujo del proyecto.'}</p></div>`}
+  if(sub==='balance'){const Y=R.bsY;
+    const rws=[['sec','Activo'],['Caja disponible','caja'],['Efectivo en fiducia','fid'],['Inventario de obra','inven'],['Cuentas por cobrar','cxc'],['Total activo','activo','tot'],['sec','Pasivo'],['Anticipos de clientes','anticipos'],['Crédito constructor','cc'],['Crédito puente','puente'],['ICA por pagar','ica'],['Renta por pagar','renta'],['Total pasivo','pasivo','tot'],['sec','Patrimonio'],['Aportes de socios','aportes'],['Distribuciones','dist','neg'],['Utilidades acumuladas','utilAcum'],['Total patrimonio','patr','tot']];
+    h+=`<div class="card" style="padding:6px"><div class="tbl-wrap"><table><thead><tr><th class="c0">Al cierre de</th>${Y.map(y=>`<th>dic-${String(y.y).slice(2)}</th>`).join('')}</tr></thead><tbody>
+    ${rws.map(r=>r[0]==='sec'?`<tr class="sec"><td class="c0">${r[1]}</td><td colspan="${Y.length}"></td></tr>`:`<tr class="${r[2]==='tot'?'tot':''}"><td class="c0">${r[0]}</td>${Y.map(y=>{const v=y[r[1]]*(r[2]==='neg'?-1:1);return `<td class="${v<-1?'neg':''}">${fT(v)}</td>`}).join('')}</tr>`).join('')}
+    <tr><td class="c0">Cuadre (activo − pasivo − patrimonio)</td>${Y.map(y=>`<td class="${Math.abs(y.dif)>1000?'neg':'pos'}">${Math.abs(y.dif)>1000?fT(y.dif):'✓ 0'}</td>`).join('')}</tr></tbody></table></div></div>`}
+  if(sub==='socios'){
+    h+=`<div class="grid2">${R.socios.map(s=>`<div class="card"><div class="row between" style="margin-bottom:12px"><h4>${esc(s.nombre)}</h4><span class="tag acc">${fP(s.part)}</span></div><div class="kv">
+      <span>Aportes${(ST.P.socios.find(x=>x.id===s.id)||{}).aportaLote&&R.loteEsp?' (incluye lote)':''}</span><span>${fM(s.aportes)}</span><span>Distribuciones</span><span>${fM(s.distribuciones)}</span><span>Utilidad antes de impuestos</span><span>${fM(s.utilidad)}</span>
+      <span>${R.soc?'Renta (pagada por la sociedad)':'Renta a cargo del socio'}</span><span>${R.soc?'—':fM(s.impuesto)}</span><span>TIR antes de impuestos</span><span>${fP(s.tir)}</span><span>TIR después de impuestos</span><span>${fP(R.soc?s.tir:s.tirDesp)}</span><span>Múltiplo</span><span>${fX(s.multiplo)}</span></div></div>`).join('')}</div>
+      <div class="card" style="padding:6px"><div class="tbl-wrap"><table><thead><tr><th class="c0">Flujo neto por año</th>${R.years.map(Y=>`<th>${Y.y}</th>`).join('')}<th>Total</th></tr></thead><tbody>${R.socios.map(s=>{const vs=R.years.map(Y=>Y.idx.reduce((a,i)=>a+(s.flow[i]||0),0));return `<tr><td class="c0">${esc(s.nombre)}</td>${vs.map(v=>`<td class="${v<-1?'neg':''}">${fT(v)}</td>`).join('')}<td>${fT(sum(vs))}</td></tr>`}).join('')}</tbody></table></div></div>`}
+  if(sub==='informe'){h+=`<div class="row"><button class="btn pri" data-act="export-report">Descargar informe</button><button class="btn" data-act="export-xlsx">Descargar Excel</button></div><div class="card report">${reportBody(false)}</div>`}
+  host.innerHTML=h;
+}
+
+/* ---------- CONTROL ---------- */
+const CSUBS=[['seguimiento','Seguimiento'],['versiones','Versiones'],['sensibilidad','Sensibilidad']];
+const TIPOSV=[['Factibilidad','Factibilidad'],['Comité','Comité'],['Seguimiento','Seguimiento'],['Otra','Otra']];
+function baseResult(){if(ST.baseline==='actual')return ST.R;const v=ST.versions.find(x=>x.id===ST.baseline);if(!v)return ST.R;
+  if(!v._R)v._R=runProject(deepFill(newProject(),clone(v.data)),ST.macro);return v._R}
+function segData(){
+  const P=ST.P;if(!P||!P.real||P.real.corte==null||P.real.corte==='')return null;
+  const B=baseResult();if(!B)return null;const c=Math.min(+P.real.corte,B.N-1),F=P.real.filas||{};
+  const real=k=>{let s=0;for(let m=0;m<=c;m++)s+=+((F[k]||[])[m])||0;return s};
+  const pv=(a)=>{let s=0;for(let m=0;m<=c;m++)s+=a[m]||0;return s};
+  const r=B.rows;const out={c,B};
+  const dirPV=pv(r.dir),dirAC=real('directos'),dirBAC=sum(r.dir),EV=pc(P.real.avance)*dirBAC;
+  out.cpi=dirAC>0?EV/dirAC:null;out.spi=dirPV>0?EV/dirPV:null;out.progPlan=dirBAC?dirPV/dirBAC:0;out.EV=EV;
+  const eacDir=P.real.metodo==='desempeno'&&out.cpi?dirBAC/out.cpi:dirAC+(dirBAC-dirPV);
+  const indPV=pv(r.opInd),indAC=real('indirectos'),indBAC=sum(r.opInd),eacInd=P.real.metodo==='desempeno'&&indPV>0?indAC+(indBAC-indPV)*(indAC/indPV):indAC+(indBAC-indPV);
+  const uPV=pv(r.units),uAC=real('ventasU'),uBAC=sum(B.ets.map(e=>e.UA));
+  const recPV=pv(r.cobros),recAC=real('recaudo');
+  let last3=0;for(let m=Math.max(0,c-2);m<=c;m++)last3+=+((F.ventasU||[])[m])||0;const vel=last3/Math.min(3,c+1);
+  out.finVentas=vel>0?c+Math.ceil(Math.max(0,uBAC-uAC)/vel):null;
+  out.rows=[['Viviendas vendidas',uPV,uAC,uBAC,uBAC,'u'],['Recaudo de clientes',recPV,recAC,sum(r.cobros),null,'$'],['Costos directos',dirPV,dirAC,dirBAC,eacDir,'$'],['Otros egresos',indPV,indAC,indBAC,eacInd,'$']];
+  return out;
+}
+function renderControl(){
+  const host=$('#s-control');if(!ST.P){host.innerHTML='<div class="empty">Abre un proyecto para hacer seguimiento.</div>';return}
+  const sub=prefs.sub.control,P=ST.P;
+  let h=`<div class="screen-head"><div><h1>Control</h1><p>Seguimiento, versiones del modelo y análisis de sensibilidad.</p></div></div>${chipsHtml(CSUBS,sub,'csub')}`;
+  if(sub==='seguimiento'){const B=baseResult(),c=P.real.corte;
+    const opts=[['actual','Modelo actual']].concat(ST.versions.map(v=>[v.id,`${v.label} · ${fDate(v.fecha).split(' · ')[0]}`]));
+    h+=`<div class="card ${ST.readOnly?'readonly':''}"><h3>Configuración</h3><p class="sub">Compara lo ejecutado contra una línea base y proyecta a terminación.</p><div class="fields">
+      <div class="f"><label for="segBase">Línea base</label><div class="box"><select id="segBase" data-act-change="base">${opts.map(([k,l])=>`<option value="${k}"${k===ST.baseline?' selected':''}>${esc(l)}</option>`).join('')}</select></div></div>
+      ${fSel('real.corte','Mes de corte',[['','Sin datos reales']].concat(Array.from({length:B.N},(_,i)=>[String(i),mL(i)])),true)}
+      ${fNum('real.avance','Avance físico de obra al corte','%')}${fSel('real.metodo','Proyección a terminación',[['restante','Lo que falta según presupuesto'],['desempeno','Ajustada por desempeño (CPI)']])}</div></div>`;
+    if(c!=null&&c!==''){
+      h+=`<div class="card ${ST.readOnly?'readonly':''}"><h3>Ejecución real</h3><p class="sub">Valores en pesos por mes. Para traerlos del ERP, exporta a Excel y pega abajo las columnas: mes (aaaa-mm), viviendas, recaudo, directos, otros egresos.</p>
+      <div class="tbl-wrap" style="max-height:52vh"><table class="tbl-in"><thead><tr><th class="c0">Mes</th><th>Viviendas</th><th>Recaudo</th><th>Directos</th><th>Otros egresos</th></tr></thead><tbody>
+      ${Array.from({length:+c+1},(_,m)=>`<tr><td class="c0">${mL(m)}</td>${['ventasU','recaudo','directos','indirectos'].map(k=>{const p=`real.filas.${k}.${m}`;const v=getPath(P,p);return `<td><input type="number" inputmode="decimal" data-path="${p}" value="${v==null?'':esc(v)}" aria-label="${k} ${mL(m)}"></td>`}).join('')}</tr>`).join('')}</tbody></table></div>
+      <details style="margin-top:12px"><summary class="btn sm" style="display:inline-block;list-style:none">Pegar desde Excel o ERP</summary><div style="display:grid;gap:8px;margin-top:10px"><textarea class="paste" id="pasteArea" placeholder="2027-01	5	850000000	0	320000000"></textarea><div><button class="btn sm pri" data-act="paste-import">Importar</button></div></div></details></div>
+      <div id="segOut" style="display:grid;gap:12px"></div>`}
+    else h+=`<div class="empty">Elige el mes de corte para registrar lo ejecutado.</div>`;
+    host.innerHTML=h;if(ST.readOnly)$$('#s-control input,#s-control select:not(#segBase)').forEach(e=>e.disabled=true);updSeguimiento();return}
+  if(sub==='versiones'){
+    h+=`<div class="card"><h3>Guardar versión</h3><p class="sub">Congela el modelo actual con todos sus supuestos para compararlo después.</p><div class="fields">
+      <div class="f"><label for="vTipo">Tipo</label><div class="box"><select id="vTipo">${TIPOSV.map(([k,l])=>`<option>${l}</option>`).join('')}</select></div></div>
+      <div class="f"><label for="vLabel">Nombre</label><div class="box"><input id="vLabel" placeholder="Ej. Comité de octubre"></div></div>
+      <div class="f"><label for="vNota">Nota</label><div class="box"><input id="vNota" placeholder="Qué cambió"></div></div></div>
+      <div style="margin-top:12px"><button class="btn pri" data-act="ver-save"${ST.readOnly?' disabled':''}>Guardar versión</button></div></div>
+      <div class="card"><h3>Versiones de ${esc(P.general.nombre)}</h3><div class="list">${ST.versions.length?ST.versions.map(v=>{const k=v.kpis||{};return `<div class="item"><div class="item-head"><div style="min-width:0"><strong>${esc(v.label)}</strong> <span class="tag acc">${esc(v.tipo)}</span>${ST.baseline===v.id?' <span class="tag">Línea base</span>':''}<div class="muted" style="font-size:12px">${fDate(v.fecha)} · ${who(v.autor)}${v.nota?' · '+esc(v.nota):''}</div></div></div>
+        <div class="kv"><span>Utilidad AI</span><span>${fM(k.uai)}</span><span>Margen</span><span>${fP(k.margen)}</span><span>TIR inversionista</span><span>${fP(k.tirI)}</span></div>
+        <div class="row">${ST.confirm==='v'+v.id?`<span class="muted">¿Eliminar esta versión?</span><button class="btn sm danger" data-act="ver-del" data-id="${v.id}">Sí, eliminar</button><button class="btn sm" data-act="cancel">Cancelar</button>`:`<button class="btn sm" data-act="ver-cmp" data-id="${v.id}">Comparar con actual</button><button class="btn sm" data-act="ver-base" data-id="${v.id}">Usar como línea base</button>${ST.readOnly?'':`<button class="btn sm" data-act="ver-restore" data-id="${v.id}">Restaurar</button><button class="btn sm danger" data-act="ask" data-k="v${v.id}">Eliminar</button>`}`}</div></div>`}).join(''):'<div class="empty">Aún no hay versiones. Guarda la de factibilidad antes del comité.</div>'}</div></div>
+      <div class="card" id="cmpCard"><h3>Comparar versiones</h3><div class="fields" style="margin-bottom:12px">${['A','B'].map(x=>{const cur=x==='A'?ST.cmpA:(ST.cmpB||'actual');return `<div class="f"><label for="cmp${x}">Versión ${x}</label><div class="box"><select id="cmp${x}" data-act-change="cmp${x}">${[['actual','Modelo actual']].concat(ST.versions.map(v=>[v.id,v.label+' · '+fDate(v.fecha).split(' · ')[0]])).map(([k,l])=>`<option value="${k}"${k===cur?' selected':''}>${esc(l)}</option>`).join('')}</select></div></div>`}).join('')}</div><div id="cmpOut"></div></div>`;
+    host.innerHTML=h;renderCmp();return}
+  if(sub==='sensibilidad'){h+=`<div id="sensOut" style="display:grid;gap:12px">${ST.sensHtml&&ST.sensKey===JSON.stringify(ST.P)+JSON.stringify(ST.macro)?ST.sensHtml:'<div class="loading"><div class="spin"></div><div>Calculando escenarios…</div></div>'}</div>`;host.innerHTML=h;setTimeout(renderSens,30);return}
+}
+function renderControlOut(){if(prefs.sub.control==='seguimiento')updSeguimiento()}
+function updSeguimiento(){
+  const out=$('#segOut');if(!out)return;const d=segData();if(!d){out.innerHTML='';return}
+  const pct=(a,b)=>b?fP(a/b-1):'—';
+  out.innerHTML=`<div class="metric">${[['Avance físico',fP(pc(ST.P.real.avance))+' real · '+fP(d.progPlan)+' plan'],['CPI (costo)',d.cpi==null?'—':nf(d.cpi,2)],['SPI (plazo)',d.spi==null?'—':nf(d.spi,2)],['Fin de ventas estimado',d.finVentas==null?'—':mL(d.finVentas)]].map(([l,v])=>`<div class="tile"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('')}</div>
+  <div class="card" style="padding:6px"><div class="tbl-wrap"><table><thead><tr><th class="c0">Rubro al ${mL(d.c)}</th><th>Presupuesto</th><th>Real</th><th>Variación</th><th>Presupuesto total</th><th>Proyección final</th><th>Desviación final</th></tr></thead><tbody>
+  ${d.rows.map(([l,pv,ac,bac,eac,u])=>{const f=u==='u'?(v=>nf(v,0)):fT;return `<tr><td class="c0">${l}</td><td>${f(pv)}</td><td>${f(ac)}</td><td class="${u==='$'&&l!=='Recaudo de clientes'?(ac>pv?'neg':'pos'):(ac<pv?'neg':'pos')}">${pct(ac,pv)}</td><td>${f(bac)}</td><td>${eac==null?'—':f(eac)}</td><td class="${eac!=null&&eac>bac&&u==='$'?'neg':''}">${eac==null?'—':pct(eac,bac)}</td></tr>`}).join('')}</tbody></table></div></div>
+  <div class="card"><h3>Costos directos acumulados</h3><p class="sub">Millones de pesos. Plan de la línea base frente a lo real y la proyección.</p>${(()=>{const B=d.B.rows,n=d.B.N;let a=0,b=0;const plan=B.dir.map(v=>(a+=v)/1e6);const F=ST.P.real.filas.directos||[];const real=Array.from({length:n},(_,m)=>m<=d.c?(b+=+F[m]||0)/1e6:null);
+    const eac=d.rows[2][4];const proj=Array.from({length:n},(_,m)=>m<d.c?null:m===d.c?b/1e6:(b+(eac-b)*(plan[m]-plan[d.c])/Math.max(1e-9,plan[n-1]-plan[d.c]))/1e6*1);
+    return lineChart([{n:'Plan',c:'var(--chart-neu)',v:plan},{n:'Real',c:'var(--chart-pos)',v:real},{n:'Proyección',c:'var(--ink)',v:proj,dash:1}],n,mL)})()}</div>`;
+}
+function flatten(o,p='',out={}){if(Array.isArray(o)){o.forEach((v,i)=>flatten(v,p+i+'.',out))}else if(o&&typeof o==='object'){Object.keys(o).forEach(k=>{if(k==='real'&&!p)return;flatten(o[k],p+k+'.',out)})}else out[p.slice(0,-1)]=o;return out}
+function pathLabel(path,P){
+  const parts=path.split('.');const base=LBL[lblKey(path)]||parts[parts.length-1];
+  if(parts[0]==='etapas'){const E=P.etapas[+parts[1]];return (E?E.nombre:'Etapa '+(+parts[1]+1))+' · '+(parts[2]==='curvaPers'?'Ventas '+mL((+E?.inicioVentas||0)+(+parts[3])):base)}
+  if(parts[0]==='tipologias'){const t=P.tipologias[+parts[1]];const E=t&&P.etapas.find(e=>e.id===t.etapa);return (t?t.nombre:'Tipología')+(E?' ('+E.nombre+')':'')+' · '+base}
+  if(parts[0]==='socios'){const s=P.socios[+parts[1]];return (s?s.nombre:'Socio')+' · '+base}
+  if(parts[1]==='capitulos'){const c=P.costos.capitulos[+parts[2]];return 'Capítulo '+(c?c.nombre:'')+' · '+base}
+  return base}
+function verData(id){if(id==='actual')return {P:ST.P,R:ST.R,label:'Modelo actual'};const v=ST.versions.find(x=>x.id===id);if(!v)return null;if(!v._R)v._R=runProject(deepFill(newProject(),clone(v.data)),ST.macro);return {P:deepFill(newProject(),clone(v.data)),R:v._R,label:v.label}}
+function renderCmp(){
+  const out=$('#cmpOut');if(!out)return;const A=verData(ST.cmpA),B=verData(ST.cmpB||'actual');if(!A||!B){out.innerHTML='';return}
+  const rows=[['Ventas',r=>r.ventas,fM],['Utilidad antes de impuestos',r=>r.uai,fM],['Utilidad neta',r=>r.utilNeta,fM],['Margen antes de impuestos',r=>r.margen,fP],['TIR proyecto',r=>r.tirP,fP],['TIR inversionista',r=>r.tirI,fP],['VPN',r=>r.vpn,fM],['Exposición máxima',r=>r.expo,fM],['Duración (meses)',r=>r.N-1,v=>nf(v)]];
+  const fa=flatten(A.P),fb=flatten(B.P);const keys=[...new Set([...Object.keys(fa),...Object.keys(fb)])].filter(k=>String(fa[k]??'')!==String(fb[k]??'')&&!/\.id$|\.etapa$/.test(k));
+  const show=v=>v==null||v===''?'—':typeof v==='boolean'?(v?'Sí':'No'):typeof v==='number'?nf(v,Math.abs(v)<100&&v%1?2:0):esc(v);
+  out.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th class="c0">Indicador</th><th>${esc(A.label)}</th><th>${esc(B.label)}</th><th>Diferencia</th></tr></thead><tbody>${rows.map(([l,g,f])=>{const a=g(A.R),b=g(B.R);const dlt=(a==null||b==null)?null:b-a;return `<tr><td class="c0">${l}</td><td>${f(a)}</td><td>${f(b)}</td><td class="${dlt>0?'pos':dlt<0?'neg':''}">${dlt==null?'—':(dlt>0?'+':'')+f(dlt)}</td></tr>`}).join('')}</tbody></table></div>
+  <div class="label" style="margin:16px 0 8px">Supuestos que cambiaron (${keys.length})</div><div class="diff">${keys.length?keys.slice(0,80).map(k=>`<div><span>${esc(pathLabel(k,fb[k]!==undefined?B.P:A.P))}</span><span><i>${show(fa[k])}</i> → <b>${show(fb[k])}</b></span></div>`).join(''):'<div><span class="muted">Sin diferencias en los supuestos.</span><span></span></div>'}${keys.length>80?`<div><span class="muted">y ${keys.length-80} cambios más</span><span></span></div>`:''}</div>`;
+}
+function scaled(fn){const P=clone(ST.P);fn(P);return runProject(P,ST.macro)}
+const SENSV=[
+  ['Precio de venta',(P,f)=>P.tipologias.forEach(t=>t.precio*=f)],
+  ['Costo directo',(P,f)=>P.costos.capitulos.forEach(c=>c.valor*=f)],
+  ['Velocidad de ventas',(P,f)=>P.etapas.forEach(e=>{e.velocidad*=f;if(Array.isArray(e.curvaPers))e.curvaPers=e.curvaPers.map(v=>v===''||v==null?v:v*f)})],
+  ['Valor del lote',(P,f)=>P.costos.lote.valor*=f],
+  ['Incremento de precio',(P,f)=>P.etapas.forEach(e=>e.incPrecio*=f)],
+  ['Indirectos',(P,f)=>{['disenos','interventoria','otrosInd','poliza'].forEach(k=>P.costos[k]*=f)}],
+  ['Duración de obra',(P,f)=>P.etapas.forEach(e=>e.mesesObra=Math.round(e.mesesObra*f))],
+  ['Spread del crédito',(P,f)=>P.financiacion.spread*=f]];
+function renderSens(){
+  const out=$('#sensOut');if(!out||!ST.P)return;const key=JSON.stringify(ST.P)+JSON.stringify(ST.macro);if(ST.sensKey===key&&ST.sensHtml){out.innerHTML=ST.sensHtml;return}const P=ST.P,R=ST.R,steps=[-10,-5,0,5,10];
+  let m=`<thead><tr><th class="c0">Precio \\ Costo</th>${steps.map(s=>`<th>${s>0?'+':''}${s} %</th>`).join('')}</tr></thead><tbody>`;
+  steps.slice().reverse().forEach(sp=>{m+=`<tr><td class="c0">${sp>0?'+':''}${sp} %</td>`;steps.forEach(sc=>{const r=sp===0&&sc===0?R:scaled(Q=>{SENSV[0][1](Q,1+sp/100);SENSV[1][1](Q,1+sc/100)});const g=r.margen*100,mn=+P.general.margenMin;m+=`<td class="${g>=mn?'good':g>=mn-3?'mid':'bad'}${sp===0&&sc===0?' base':''}">${fP(r.margen)}</td>`});m+='</tr>'});
+  const base=R.uai;const d=SENSV.map(([l,fn])=>{const lo=scaled(Q=>fn(Q,.9)).uai-base,hi=scaled(Q=>fn(Q,1.1)).uai-base;return {l,lo,hi,m:Math.max(Math.abs(lo),Math.abs(hi))}}).sort((a,b)=>b.m-a.m);
+  const mx=Math.max(...d.map(v=>v.m))||1,W=640,rowH=30,L=140,pad=74,cw=(W-L-2*pad)/2,H=d.length*rowH+30,cx=L+pad+cw;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:520px" role="img" aria-label="Sensibilidad de la utilidad"><line x1="${cx}" x2="${cx}" y1="4" y2="${H-22}" stroke="var(--line)"/>`;
+  d.forEach((v,i)=>{const yy=8+i*rowH;[v.lo,v.hi].forEach(val=>{const w=Math.abs(val)/mx*cw;s+=`<rect x="${val<0?cx-w:cx}" y="${yy}" width="${w}" height="${rowH-12}" rx="3" fill="${val<0?'var(--neg)':'var(--chart-pos)'}"><title>${fM(val)}</title></rect>`});
+    s+=`<text x="0" y="${yy+13}" style="fill:var(--ink);font-size:12px">${v.l}</text>`;const mn=Math.min(v.lo,v.hi),mxv=Math.max(v.lo,v.hi);
+    s+=`<text x="${cx-Math.abs(mn)/mx*cw-4}" y="${yy+13}" text-anchor="end">${mn<0?fM(mn):''}</text><text x="${cx+Math.abs(mxv)/mx*cw+4}" y="${yy+13}">${mxv>0?'+'+fM(mxv):''}</text>`});
+  s+=`<text x="${cx}" y="${H-6}" text-anchor="middle">Cambio en utilidad antes de impuestos (base ${fM(base)})</text></svg>`;
+  const pes=scaled(Q=>{SENSV[0][1](Q,.93);SENSV[2][1](Q,.7);SENSV[1][1](Q,1.07)}),opt=scaled(Q=>{SENSV[0][1](Q,1.05);SENSV[2][1](Q,1.2);SENSV[1][1](Q,.97)});
+  const er=(n,r)=>`<tr><td class="c0">${n}</td><td class="${r.uai<0?'neg':''}">${fM(r.uai)}</td><td>${fP(r.margen)}</td><td>${fP(r.tirI)}</td><td>${fM(r.ventas)}</td><td>${fM(r.expo)}</td><td>${r.N-1} m</td></tr>`;
+  out.innerHTML=`<div class="card"><h3>Margen según precio y costo directo</h3><p class="sub">Verde cumple el margen mínimo, amarillo queda hasta 3 puntos abajo, rojo no cumple. El recuadro es el caso actual.</p><div class="tbl-wrap"><table class="matrix">${m}</tbody></table></div></div>
+  <div class="card"><h3>Qué mueve la utilidad</h3><p class="sub">Efecto de mover cada supuesto ±10 %, de mayor a menor impacto.</p><div class="chart-x">${s}</div></div>
+  <div class="card"><h3>Escenarios automáticos</h3><p class="sub">Pesimista: precio −7 %, velocidad −30 %, costo directo +7 %. Optimista: precio +5 %, velocidad +20 %, costo directo −3 %.</p><div class="tbl-wrap"><table><thead><tr><th class="c0">Escenario</th><th>Utilidad AI</th><th>Margen</th><th>TIR inv.</th><th>Ventas</th><th>Exposición</th><th>Duración</th></tr></thead><tbody>${er('Pesimista',pes)}${er('<strong>Base</strong>',R)}${er('Optimista',opt)}</tbody></table></div></div>`;
+  ST.sensKey=key;ST.sensHtml=out.innerHTML;
+}
+
+/* ---------- CUENTA ---------- */
+function roleName(){if(ST.mode==='fb')return 'Tu cuenta';if(ST.mode!=='db')return 'Este dispositivo';if(ST.role.owner)return 'Propietario';if(ST.role.edit)return 'Editor';if(ST.readOnly||ST.role.write===false)return 'Solo lectura';return 'Colaborador'}
+function canMacro(){return ST.mode!=='db'||ST.role.edit||ST.role.owner}
+function renderCuenta(){
+  const host=$('#s-cuenta'),M=ST.macro,me=ST.me;const nm=(me&&me.name)||prefs.user||'';const rn=roleName();
+  const cur=prefs.accent.toUpperCase(),hit=ACCENTS.find(a=>a[1]===cur);
+  const mr=(k,l,u)=>`<tr><td class="c0">${l}</td>${M.anios.map((y,i)=>`<td><input type="number" step="any" data-mpath="${k}.${i}" value="${esc(M[k][i])}" aria-label="${l} ${y}"${canMacro()?'':' disabled'}></td>`).join('')}</tr>`;
+  host.innerHTML=`<div class="screen-head"><div><h1>Cuenta</h1><p>Tu perfil, permisos y preferencias.</p></div></div>
+  <div class="card profile"><div class="avatar">${me&&me.avatarUrl&&me.id?`<img src="${esc(me.avatarUrl)}" alt="">`:esc((nm||'?').charAt(0).toUpperCase())}</div><div style="flex:1;min-width:0">${ST.mode==='fb'?`<input id="userName" aria-label="Tu nombre" placeholder="Tu nombre" value="${esc((me&&me.name)||'')}">`:me&&me.name?`<div style="font-size:20px;font-weight:800">${esc(me.name)}</div>`:`<input id="userName" aria-label="Tu nombre" placeholder="Tu nombre" value="${esc(prefs.user)}">`}<small>${ST.mode==='fb'?esc(ST.fbEmail||''):esc(rn)}${ST.mode==='db'?' · base central de proyectos':''}</small></div>${ST.mode==='fb'?'<button class="btn sm" data-act="logout">Cerrar sesión</button>':''}</div>
+  ${ST.mode==='fb'?`<div class="card"><p class="sub" style="margin:0">Tus proyectos, versiones y supuestos macro se guardan en tu cuenta y se sincronizan entre tus dispositivos. Solo tú puedes verlos. Es la misma cuenta de Mind Focus y PowerFit.</p></div>`:''}
+  <div class="label"${ST.mode==='fb'?' hidden':''}>Permisos</div>
+  <div class="card"${ST.mode==='fb'?' hidden':''}><p class="sub">${ST.mode==='db'?'Los permisos siguen el nivel con que te compartieron la app. El propietario los cambia en el menú Compartir.':'Estás trabajando sin conexión a la base central: todo se guarda solo en este dispositivo.'}</p>
+  <div class="roles">${[['Propietario','Todo, incluido compartir la app.'],['Editor','Crea y edita proyectos, versiones y supuestos macro.'],['Colaborador','Crea y edita proyectos y versiones.'],['Solo lectura','Consulta resultados, informes y versiones.']].map(([r,d])=>`<div class="${r===rn?'me':''}"><b>${r}</b><span>${d}</span></div>`).join('')}</div></div>
+  <div class="label">Apariencia</div>
+  <div class="card set"><div class="set-row"><div><div class="t">Modo</div><div class="d">Sistema sigue la configuración del dispositivo.</div></div><div class="seg sunk" role="group" aria-label="Modo de color">${[['system','Sistema'],['dark','Oscuro'],['light','Claro']].map(([k,l])=>`<button data-act="theme" data-k="${k}" aria-pressed="${prefs.theme===k}">${l}</button>`).join('')}</div></div>
+  <div class="set-row" style="display:grid;justify-content:stretch"><div><div class="t">Color de énfasis</div><div class="d">${hit?hit[0]:'Personalizado '+cur}</div></div><div class="swatches">${ACCENTS.map(([n,c])=>`<button class="sw-c" style="--c:${c}" data-act="accent" data-k="${c}" aria-label="${n}" title="${n}" aria-pressed="${c===cur}"></button>`).join('')}<label class="sw-c custom" title="Personalizado" aria-pressed="${!hit}"><input type="color" id="accCustom" value="${esc(prefs.accent)}" aria-label="Color personalizado"></label></div></div></div>
+  <div class="label">Supuestos macro de la empresa</div>
+  <div class="card"><p class="sub">Aplican a todos los proyectos. ${canMacro()?'Los cambios se guardan para todo el equipo.':'Solo los editores pueden cambiarlos.'} Referencia: SMMLV 2026 de $1.750.905 (Decreto 1469 de 2025); inflación anual a sep-2026 de 6,29 %; tasa del Banco de la República en 12,25 % desde el 13-oct-2026. Las proyecciones son supuestos editables, no pronósticos oficiales.</p>
+  <div class="fields tight" style="margin-bottom:12px">${[['anioBase','Año base',''],['smmlv','SMMLV del año base','$'],['topeVIS','Tope VIS','SMMLV'],['topeVISEsp','Tope VIS especial','SMMLV'],['topeVIP','Tope VIP','SMMLV']].map(([k,l,u])=>`<div class="f"><label>${l}</label><div class="box"><input type="number" data-mpath="${k}" value="${esc(M[k])}"${canMacro()?'':' disabled'}>${u?`<span class="u">${u}</span>`:''}</div></div>`).join('')}</div>
+  <div class="tbl-wrap"><table class="tbl-in"><thead><tr><th class="c0">% anual</th>${M.anios.map(y=>`<th>${y}</th>`).join('')}</tr></thead><tbody>${mr('inflacion','Inflación')}${mr('iccv','Costos de construcción (ICCV)')}${mr('incSmmlv','Incremento SMMLV')}${mr('ibr','IBR E.A.')}</tbody></table></div>
+  ${canMacro()?'<div style="margin-top:12px"><button class="btn sm" data-act="macro-reset">Volver a los valores de referencia</button></div>':''}</div>
+  <div class="label">Datos</div>
+  <div class="card set"><div class="set-row"><div><div class="t">Almacenamiento</div><div class="d">${ST.mode==='db'?'Base central compartida con tu equipo.':'Solo en este dispositivo.'}</div></div><span class="tag acc">${ST.mode==='db'?'Central':'Local'}</span></div>
+  <div class="set-row"><div><div class="t">Proyectos en la base</div><div class="d">${Object.keys(ST.projects).length} proyecto(s)</div></div><button class="btn sm" data-act="proj-open">Administrar</button></div>
+  <div class="set-row"><div><div class="t">Proyecto de ejemplo</div><div class="d">Crea una copia del ejemplo para practicar.</div></div><button class="btn sm" data-act="proj-new" data-kind="example"${ST.readOnly?' disabled':''}>Crear</button></div></div>
+  <p class="about">Proyecta · prototipo 0.5<br>Modelo financiero inmobiliario para Colombia.</p>`;
+}
+
+/* ---------- Hoja de proyectos ---------- */
+function openProjects(){
+  const list=Object.entries(ST.projects).sort((a,b)=>(b[1].actualizado||0)-(a[1].actualizado||0));
+  openSheet(`<h2>Proyectos</h2><p class="muted" style="margin:0">${ST.mode==='db'?'Base central compartida con tu equipo.':'Guardados en este dispositivo.'}</p>
+  <div class="port">${list.length?portfolioHtml():'<div class="empty">No hay proyectos.</div>'}</div>
+  ${ST.readOnly?'':`<div class="row"><button class="btn pri" data-act="proj-new" data-kind="blank">Nuevo en blanco</button><button class="btn" data-act="proj-new" data-kind="example">Nuevo de ejemplo</button>${ST.P?'<button class="btn" data-act="proj-dup">Duplicar actual</button>':''}</div>
+  ${ST.P?`<div class="row" id="delRow">${ST.confirm==='proj'?`<span class="muted">¿Eliminar «${esc(ST.P.general.nombre)}» y sus versiones para todo el equipo?</span><button class="btn sm danger" data-act="proj-del">Sí, eliminar</button><button class="btn sm" data-act="cancel-sheet">Cancelar</button>`:`<button class="btn sm danger" data-act="ask-proj">Eliminar proyecto actual</button>`}</div>`:''}`}`);
+}
+
+/* ---------- Exportar ---------- */
+let DL;async function downloads(){if(DL!==undefined)return DL;DL=null;try{if(window.claude&&window.claude.use)DL=await window.claude.use('downloads')}catch(e){}return DL}
+async function saveFile(filename,data){const d=await downloads();
+  if(!d){if(window.claude){toast('La descarga no está disponible en esta vista');return false}
+    try{const blob=data instanceof Blob?data:new Blob([data],{type:filename.endsWith('.html')?'text/html':'application/octet-stream'});const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);return true}catch(e){toast('No se pudo descargar el archivo');return false}}
+  try{await d.save({filename,data});return true}catch(e){if(e&&e.code!=='declined')toast(e.code==='rate_limited'?'Ya hay una descarga pendiente':'No se pudo descargar el archivo');return false}}
+function loadXLSX(){return window.XLSX?Promise.resolve(window.XLSX):new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=()=>res(window.XLSX);s.onerror=()=>rej(new Error('xlsx'));document.head.appendChild(s)})}
+const fname=ext=>(ST.P.general.nombre||'proyecto').replace(/[^\wáéíóúñÁÉÍÓÚÑ -]/g,'').trim().replace(/\s+/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.'+ext;
+async function exportXlsx(){
+  toast('Preparando Excel…');let X;try{X=await loadXLSX()}catch(e){toast('No se pudo cargar el generador de Excel');return}
+  const R=ST.R,P=ST.P,wb=X.utils.book_new(),M=v=>Math.round(v);
+  const res=[['Proyecta',P.general.nombre],['Ciudad',P.general.ciudad],['Generado',new Date().toLocaleString('es-CO')],[],['Indicador','Valor'],['Ventas',M(R.ventas)],['Utilidad antes de impuestos',M(R.uai)],['Impuesto de renta',M(R.renta)],['Utilidad neta',M(R.utilNeta)],['Margen antes de impuestos',R.margen],['TIR proyecto (E.A.)',R.tirP],['TIR inversionista (E.A.)',R.tirI],['VPN a la TIO',M(R.vpn)],['Exposición máxima',M(R.expo)],['Duración (meses)',R.N-1],[],['Alertas'],...alertsFor(P,R).map(a=>[a[1],a[2]])];
+  X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet(res),'Resumen');
+  const sup=[['Supuesto','Valor']];const fl=flatten(P);Object.keys(fl).forEach(k=>sup.push([pathLabel(k,P),fl[k]]));X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet(sup),'Supuestos');
+  const fm=flowMatrix(R,'m');const fs=[['Concepto','Total',...fm.C.map(c=>c.l)]];fm.rows.forEach(r=>{if(r.sec)fs.push([r.sec.toUpperCase()]);else fs.push([r.l,r.total==null?'':M(r.total),...r.vals.map(v=>r.m==='u'?+v.toFixed(2):M(v))])});X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet(fs),'Flujo mensual');
+  const fa=flowMatrix(R,'a');const fas=[['Concepto','Total',...fa.C.map(c=>c.l)]];fa.rows.forEach(r=>{if(r.sec)fas.push([r.sec.toUpperCase()]);else fas.push([r.l,r.total==null?'':M(r.total),...r.vals.map(v=>r.m==='u'?+v.toFixed(2):M(v))])});X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet(fas),'Flujo anual');
+  const py=[['Concepto',...R.pnlY.map(y=>y.y)],['Ingresos por escrituración',...R.pnlY.map(y=>M(y.rev))],['Otros ingresos',...R.pnlY.map(y=>M(y.otros))],['Costo de ventas',...R.pnlY.map(y=>-M(y.cogs))],['Gastos operacionales',...R.pnlY.map(y=>-M(y.gastos))],['Utilidad antes de impuestos',...R.pnlY.map(y=>M(y.uai))],['Impuesto de renta',...R.pnlY.map(y=>-M(y.renta))],['Utilidad neta',...R.pnlY.map(y=>M(y.neta))]];X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet(py),'Estado de resultados');
+  const bk=[['caja','Caja disponible'],['fid','Efectivo en fiducia'],['inven','Inventario de obra'],['cxc','Cuentas por cobrar'],['activo','Total activo'],['anticipos','Anticipos de clientes'],['cc','Crédito constructor'],['puente','Crédito puente'],['ica','ICA por pagar'],['renta','Renta por pagar'],['pasivo','Total pasivo'],['aportes','Aportes'],['dist','Distribuciones'],['utilAcum','Utilidades acumuladas'],['patr','Total patrimonio']];
+  X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet([['Al cierre de',...R.bsY.map(y=>y.y)],...bk.map(([k,l])=>[l,...R.bsY.map(y=>M(k==='dist'?-y[k]:y[k]))])]),'Balance');
+  X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet([['Socio','Participación','Aportes','Distribuciones','Utilidad','Renta socio','TIR antes','TIR después','Múltiplo'],...R.socios.map(s=>[s.nombre,s.part,M(s.aportes),M(s.distribuciones),M(s.utilidad),M(s.impuesto),s.tir,R.soc?s.tir:s.tirDesp,s.multiplo])]),'Socios');
+  X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet([['Etapa','Capítulo','Valor total indexado'],...R.ets.flatMap(e=>P.costos.capitulos.map(c=>[e.E.nombre,c.nombre,M(e.chapTot[c.id]||0)]))]),'Presupuesto');
+  const out=X.write(wb,{bookType:'xlsx',type:'array'});
+  if(await saveFile(fname('xlsx'),new Uint8Array(out)))toast('Excel descargado');
+}
+function reportBody(standalone){
+  const P=ST.P,R=ST.R,G=P.general;const k=[['Ventas',fM(R.ventas)],['Utilidad antes de impuestos',fM(R.uai)],['Margen antes de impuestos',fP(R.margen)],['Utilidad neta',fM(R.utilNeta)],['TIR proyecto',fP(R.tirP)],['TIR inversionista',fP(R.tirI)],['VPN a la TIO',fM(R.vpn)],['Exposición máxima',fM(R.expo)]];
+  const tile=([l,v])=>standalone?`<div class="k"><div class="l">${l}</div><div class="v">${v}</div></div>`:`<div class="tile"><div class="l">${l}</div><div class="v">${v}</div></div>`;
+  return `<div><div class="${standalone?'eyebrow':'muted'}" style="font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:800">Informe para comité · ${new Date().toLocaleDateString('es-CO',{day:'numeric',month:'long',year:'numeric'})}</div><h2 style="margin:4px 0 0;font-size:24px">${esc(G.nombre)}</h2><div class="muted">${esc(G.ciudad)} · ${P.etapas.length} etapa(s) · ${nf(sum(R.ets.map(e=>e.UA)))} viviendas · ${G.vehiculo==='sociedad'?'Sociedad':'Fiducia'}</div></div>
+  <div class="kpis">${k.map(tile).join('')}</div>
+  <div><h3>Alertas</h3>${standalone?'<ul>'+alertsFor(P,R).map(a=>`<li><b>${a[1]}:</b> ${esc(a[2])}</li>`).join('')+'</ul>':'<div class="alerts">'+alertHtml(alertsFor(P,R))+'</div>'}</div>
+  <div><h3>Cronograma por etapa</h3><div class="tbl-wrap"><table><thead><tr><th class="c0">Etapa</th><th>Ventas</th><th>Equilibrio</th><th>Obra</th><th>Escrituras</th></tr></thead><tbody>${R.ets.map(e=>`<tr><td class="c0">${esc(e.E.nombre)}</td><td>${mL(e.t0)}</td><td>${mL(e.eq)}</td><td>${mL(e.io)} – ${mL(e.fo)}</td><td>${mL(e.e0)} – ${mL(e.lastEsc)}</td></tr>`).join('')}</tbody></table></div></div>
+  <div><h3>Estado de resultados (millones)</h3><div class="tbl-wrap"><table><thead><tr><th class="c0">Concepto</th>${R.pnlY.map(y=>`<th>${y.y}</th>`).join('')}<th>Total</th></tr></thead><tbody>${[['Ingresos','rev',1],['Costo de ventas','cogs',-1],['Gastos','gastos',-1],['Utilidad AI','uai',1],['Renta','renta',-1],['Utilidad neta','neta',1]].map(([l,k,s])=>`<tr><td class="c0">${l}</td>${R.pnlY.map(y=>`<td>${fT(y[k]*s)}</td>`).join('')}<td>${fT(sum(R.pnlY.map(y=>y[k]))*s)}</td></tr>`).join('')}</tbody></table></div></div>
+  <div><h3>Flujo de caja</h3><div class="chart-x">${flowChart(R,standalone?900:0)}</div></div>
+  <div><h3>Socios</h3><div class="tbl-wrap"><table><thead><tr><th class="c0">Socio</th><th>Part.</th><th>Aportes</th><th>Distribuciones</th><th>TIR antes</th><th>TIR después</th></tr></thead><tbody>${R.socios.map(s=>`<tr><td class="c0">${esc(s.nombre)}</td><td>${fP(s.part)}</td><td>${fM(s.aportes)}</td><td>${fM(s.distribuciones)}</td><td>${fP(s.tir)}</td><td>${fP(R.soc?s.tir:s.tirDesp)}</td></tr>`).join('')}</tbody></table></div></div>
+  <div><h3>Estructura de costos</h3>${standalone?'<table><tbody>'+[['Lote',R.tot.lote],['Directos',R.tot.dir],['Indirectos',R.tot.ind],['Licencias',R.tot.lic],['Ventas y mercadeo',R.tot.mkt],['Gerencia',R.tot.ger],['Financieros',R.tot.fin],['Renta',R.tot.renta]].map(([l,v])=>`<tr><td class="c0">${l}</td><td>${fM(v)}</td><td>${fP(v/R.ventas)}</td></tr>`).join('')+'</tbody></table>':'<div class="bars">'+costBars(R)+'</div>'}</div>`;
+}
+async function exportReport(){
+  const cs=getComputedStyle(root),acc=prefs.accent;
+  const html=`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Informe ${esc(ST.P.general.nombre)}</title><style>
+  body{font-family:Manrope,Segoe UI,Roboto,Arial,sans-serif;color:#111210;background:#fff;margin:0;padding:32px;max-width:960px;margin-inline:auto;font-variant-numeric:tabular-nums;font-size:13px}
+  h2{font-size:26px}h3{font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin:26px 0 8px;border-bottom:2px solid ${acc};padding-bottom:6px}
+  .muted{color:#676A63}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:18px}.k{background:#F3F4F0;border-radius:10px;padding:10px 12px}.k .l{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#676A63;font-weight:700}.k .v{font-size:17px;font-weight:800}
+  table{border-collapse:collapse;width:100%;font-size:12px}th,td{padding:6px 8px;border-bottom:1px solid #E4E5E0;text-align:right;white-space:nowrap}th{color:#676A63}td.c0,th.c0{text-align:left}
+  svg text{font-family:inherit;font-size:10px;fill:#676A63}.legend{display:none}@media print{body{padding:0}}
+  </style><style>:root{--chart-pos:${cs.getPropertyValue('--chart-pos')};--chart-neu:${cs.getPropertyValue('--chart-neu')};--ink:#111210;--line:#E4E5E0;--neg:#C63D2B;--muted:#676A63;--band1:rgba(0,0,0,.015);--band2:rgba(0,0,0,.04);--band3:rgba(0,0,0,.03)}</style></head><body>${reportBody(true)}<p class="muted" style="margin-top:28px">Generado con Proyecta. Cifras en pesos colombianos; tablas en millones.</p></body></html>`;
+  if(await saveFile(fname('html'),html))toast('Informe descargado. Ábrelo en el navegador para imprimirlo o guardarlo en PDF.');
+}
+function tsvFlow(){const fm=flowMatrix(ST.R,prefs.per);return [['Concepto','Total',...fm.C.map(c=>c.l)].join('\t'),...fm.rows.filter(r=>!r.sec).map(r=>[r.l,r.total==null?'':Math.round(r.total),...r.vals.map(v=>r.m==='u'?v.toFixed(2):Math.round(v))].join('\t'))].join('\n')}
+
+/* ---------- Acciones ---------- */
+function newId(p){return p+Math.random().toString(36).slice(2,7)}
+document.addEventListener('click',async e=>{
+  const bg=e.target.closest('[data-bg]');if(bg&&e.target===bg){closeSheet();return}
+  const nav=e.target.closest('.nav button');if(nav){navTap(nav.dataset.go);return}
+  if(e.target.id==='scrim'){ST.cuentaOpen=false;renderScreen();return}
+  if(e.target.closest('#projBtn')){ST.confirm=null;openProjects();return}
+  const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,i=+b.dataset.i,P=ST.P;
+  const W=()=>{if(ST.readOnly){toast('Tienes acceso de solo lectura');return false}return true};
+  switch(a){
+    case 'go':go(b.dataset.to);break;
+    case 'msub':prefs.sub.modelo=b.dataset.k;savePrefs();rr('modelo');break;
+    case 'rsub':prefs.sub.resultados=b.dataset.k;savePrefs();rr('resultados');break;
+    case 'csub':prefs.sub.control=b.dataset.k;savePrefs();ST.confirm=null;rr('control');break;
+    case 'per':prefs.per=b.dataset.k;savePrefs();rr('resultados');break;
+    case 'col-hide':navTap(b.dataset.k);break;
+    case 'col-left':moveCol(b.dataset.k,-1);break;
+    case 'col-right':moveCol(b.dataset.k,1);break;
+    case 'cuenta-close':ST.cuentaOpen=false;renderScreen();break;
+    case 'add-etapa':if(!W())break;{const last=P.etapas[P.etapas.length-1];const E=Object.assign(clone(last),{id:newId('e'),nombre:'Etapa '+(P.etapas.length+1),inicioVentas:(+last.inicioVentas||0)+12,mesMinObra:(+last.mesMinObra||0)+12,curvaPers:[]});P.etapas.push(E);P.tipologias.push({id:newId('t'),etapa:E.id,nombre:'Tipo A',clase:'apto',unidades:80,area:55,precio:7000000,primaPiso:0.5,pctVista:20,primaVista:3});onModelChange(1)}break;
+    case 'del-etapa':if(!W())break;{const E=P.etapas[i];P.etapas.splice(i,1);P.tipologias=P.tipologias.filter(t=>t.etapa!==E.id);onModelChange(1)}break;
+    case 'add-tip':if(!W())break;P.tipologias.push({id:newId('t'),etapa:b.dataset.e,nombre:'Nueva tipología',clase:'apto',unidades:20,area:55,precio:7000000,primaPiso:0,pctVista:0,primaVista:0});onModelChange(1);break;
+    case 'del-tip':if(!W())break;P.tipologias.splice(i,1);onModelChange(1);break;
+    case 'add-cap':if(!W())break;P.costos.capitulos.push({id:newId('c'),nombre:'Nuevo capítulo',valor:0,ini:0,fin:100});onModelChange(1);break;
+    case 'del-cap':if(!W())break;P.costos.capitulos.splice(i,1);onModelChange(1);break;
+    case 'add-socio':if(!W())break;P.socios.push({id:newId('s'),nombre:'Nuevo socio',part:0,aportaLote:false});onModelChange(1);break;
+    case 'del-socio':if(!W())break;P.socios.splice(i,1);onModelChange(1);break;
+    case 'proj-open':ST.confirm=null;openProjects();break;
+    case 'proj-select':closeSheet();if(b.dataset.id!==ST.pid){selectProject(b.dataset.id);toast('Abriste '+(ST.P.general.nombre))}break;
+    case 'proj-new':if(!W())break;createProject(b.dataset.kind==='blank'?'blank':'example');break;
+    case 'proj-dup':if(!W())break;createProject(null,ST.P);break;
+    case 'ask-proj':ST.confirm='proj';openProjects();break;
+    case 'cancel-sheet':ST.confirm=null;openProjects();break;
+    case 'proj-del':if(!W())break;ST.confirm=null;deleteProject(ST.pid);break;
+    case 'remote-load':if(ST.remotePending)loadData(ST.remotePending);break;
+    case 'remote-keep':ST.remotePending=null;hideBanner();persist();break;
+    case 'copy-tsv':{const t=tsvFlow();try{await navigator.clipboard.writeText(t);toast('Flujo copiado. Pégalo en Excel.')}catch(err){toast('No se pudo copiar; usa Descargar Excel')}}break;
+    case 'export-xlsx':exportXlsx();break;
+    case 'export-report':exportReport();break;
+    case 'ver-save':if(!W())break;saveVersion($('#vTipo').value,$('#vLabel').value.trim(),$('#vNota').value.trim());break;
+    case 'ver-cmp':ST.cmpA=b.dataset.id;ST.cmpB='actual';rr('control');setTimeout(()=>{const c=$('#cmpCard');if(c)c.scrollIntoView({behavior:'smooth'})},50);break;
+    case 'ver-base':ST.baseline=b.dataset.id;prefs.sub.control='seguimiento';rr('control');toast('Línea base cambiada');break;
+    case 'ver-restore':if(!W())break;{const v=ST.versions.find(x=>x.id===b.dataset.id);if(v){const real=clone(ST.P.real);ST.P=deepFill(newProject(),clone(v.data));ST.P.real=real;markDirty();recalc(true);toast('Restauraste «'+v.label+'». Tu seguimiento real se conservó.')}}break;
+    case 'ask':ST.confirm=b.dataset.k;rr('control');break;
+    case 'cancel':ST.confirm=null;rr('control');break;
+    case 'ver-del':if(!W())break;ST.confirm=null;deleteVersion(b.dataset.id);break;
+    case 'paste-import':if(!W())break;importPaste();break;
+    case 'theme':prefs.theme=b.dataset.k;savePrefs();applyTheme();rr('cuenta');break;
+    case 'accent':prefs.accent=b.dataset.k;savePrefs();applyAccent();rr('cuenta');break;
+    case 'logout':if(FB.auth){FB.auth.signOut()}break;
+    case 'macro-reset':ST.macro=clone(DEFAULT_MACRO);saveMacroSoon();recalc(true);break;
+  }
+});
+document.addEventListener('input',e=>{
+  const el=e.target;
+  if(el.id==='userName'){if(ST.mode==='fb'&&FB.profRef){ST.me.name=el.value;clearTimeout(FB.nt);FB.nt=setTimeout(()=>FB.profRef.set({nombre:el.value.trim(),upd:Date.now()},{merge:true}).catch(()=>toast('No se pudo guardar tu nombre')),800)}else{prefs.user=el.value;savePrefs()}return}
+  if(el.id==='accCustom'){prefs.accent=el.value.toUpperCase();savePrefs();applyAccent();return}
+  if(el.dataset.mpath){if(!canMacro())return;const v=parseFloat(el.value);setPath(ST.macro,el.dataset.mpath,isNaN(v)?0:v);recalc();saveMacroSoon();return}
+  if(el.dataset.path){if(ST.readOnly||!ST.P)return;let v;if(el.type==='checkbox')v=el.checked;else if(el.type==='number')v=el.value===''?'':parseFloat(el.value);else v=el.value;
+    if(el.dataset.path==='real.corte')v=el.value===''?null:+el.value;
+    setPath(ST.P,el.dataset.path,v);const h=document.querySelector(`[data-hint="${el.dataset.path}"]`);if(h)h.textContent=fPesos(v);
+    if(el.dataset.path==='general.nombre')updateAppbar();
+    const src=(el.closest('.screen')||{id:'s-modelo'}).id.slice(2);
+    onModelChange(el.dataset.struct==='1'&&el.tagName==='SELECT'||el.dataset.struct==='1'&&el.type==='checkbox',src)}
+});
+document.addEventListener('change',e=>{const el=e.target;
+  if(el.dataset.path&&el.dataset.struct==='1'&&el.type==='month')rr((el.closest('.screen')||{id:'s-modelo'}).id.slice(2));
+  if(el.id==='accCustom')rr('cuenta');
+  const k=el.dataset.actChange;if(!k)return;
+  if(k==='base'){ST.baseline=el.value;updSeguimiento()}
+  if(k==='cmpA'){ST.cmpA=el.value;renderCmp()}
+  if(k==='cmpB'){ST.cmpB=el.value;renderCmp()}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('#sheetHost').innerHTML)closeSheet();else if(ST.web&&ST.cuentaOpen){ST.cuentaOpen=false;renderScreen()}}});
+WEBQ.addEventListener('change',()=>{ST.web=WEBQ.matches;if(!ST.web&&ST.cuentaOpen){ST.cuentaOpen=false}renderScreen();if(ST.web)webHint()});
+addEventListener('resize',()=>{if(ST.ready)layout()});
+function webHint(){if(prefs.webHint2)return;prefs.webHint2=1;savePrefs();setTimeout(()=>toast('Toca las secciones de abajo para sumarlas como columnas. Arrastra el encabezado de una columna para reordenarla.'),600)}
+/* Arrastrar columnas para reordenarlas */
+let DRAG=null;
+document.addEventListener('pointerdown',e=>{if(!ST.web||e.button>0)return;const cap=e.target.closest('.colcap');if(!cap||e.target.closest('button'))return;
+  const sec=cap.closest('.screen');if(!sec||sec.id==='s-cuenta'||prefs.cols.length<2)return;
+  DRAG={id:sec.id.slice(2),sec,cap,x0:e.clientX,moved:false,idx:prefs.cols.indexOf(sec.id.slice(2))};try{cap.setPointerCapture(e.pointerId)}catch(err){}});
+document.addEventListener('pointermove',e=>{if(!DRAG)return;const dx=e.clientX-DRAG.x0;
+  if(!DRAG.moved&&Math.abs(dx)<5)return;DRAG.moved=true;DRAG.sec.classList.add('dragging');DRAG.sec.style.transform=`translateX(${dx}px)`;
+  const others=prefs.cols.filter(c=>c!==DRAG.id);const rects=others.map(c=>$('#s-'+c).getBoundingClientRect());
+  let idx=0;rects.forEach(r=>{if(e.clientX>r.left+r.width/2)idx++});DRAG.idx=idx;
+  const line=$('#dropLine'),top=rects.length?rects[0].top:0,h=rects.length?rects[0].height:0;
+  const x=idx===0?rects[0].left-7:rects[idx-1].right+5;line.hidden=false;line.style.left=x+'px';line.style.top=top+'px';line.style.height=h+'px'});
+function endDrag(){if(!DRAG)return;const d=DRAG;DRAG=null;$('#dropLine').hidden=true;d.sec.classList.remove('dragging');d.sec.style.transform='';
+  if(!d.moved)return;const others=prefs.cols.filter(c=>c!==d.id);others.splice(d.idx,0,d.id);
+  if(others.join()!==prefs.cols.join()){prefs.cols=others;savePrefs();renderScreen()}}
+document.addEventListener('pointerup',endDrag);document.addEventListener('pointercancel',endDrag);
+function importPaste(){
+  const txt=($('#pasteArea')||{}).value||'';const P=ST.P;const F=P.real.filas;let n=0;
+  txt.split(/\r?\n/).forEach(line=>{const c=line.split(/\t|;/).map(s=>s.trim());if(c.length<2)return;
+    const mm=c[0].match(/(\d{4})[-\/](\d{1,2})/);if(!mm)return;const [y0,m0]=String(P.general.fecha).split('-').map(Number);const idx=(+mm[1]-y0)*12+(+mm[2]-m0);if(idx<0)return;
+    const num=s=>{if(s==null||s==='')return '';const t=String(s).replace(/\$|\s/g,'');const v=parseFloat(/,\d{1,2}$/.test(t)?t.replace(/\./g,'').replace(',','.'):t.replace(/[.,](?=\d{3}(\D|$))/g,''));return isNaN(v)?'':v};
+    ['ventasU','recaudo','directos','indirectos'].forEach((k,j)=>{if(c[j+1]!==undefined){F[k]=F[k]||[];F[k][idx]=num(c[j+1])}});
+    if(P.real.corte==null||idx>P.real.corte)P.real.corte=idx;n++});
+  if(!n){toast('No encontré filas con mes (aaaa-mm) en la primera columna');return}
+  markDirty();recalc(true);toast(n+' meses importados');
+}
+
+/* ---------- Inicio de la app ---------- */
+function ready(){ST.ready=true;if(ST.P&&!ST.R)ST.R=runProject(ST.P,ST.macro);
+  if(ST.readOnly)setSync('ro');ST.screen=SCREENS.includes(prefs.screen)?prefs.screen:'inicio';renderScreen();if(ST.web)webHint()}
+function initLabels(){const save=ST.P;ST.P=newProject();MSUBS.forEach(([k])=>modeloSection(k));ST.P=save}
+async function init(){
+  applyTheme();initLabels();
+  if(window.claude&&typeof window.claude.use==='function'){
+    let db=null,user=null;
+    try{[db,user]=await Promise.all([window.claude.use('db'),window.claude.use('user')])}catch(e){}
+    ST.user=user;
+    if(user){try{ST.me=await user.me();const [o,ed,w]=await Promise.all([user.isOwner(),user.canEdit(),user.can('data.write')]);ST.role={owner:o,edit:ed,write:w};if(w===false&&!o)ST.readOnly=true}catch(e){}}
+    if(db){ST.db=db;startDb()}else startLocal();
+    return;
+  }
+  if(window.firebase&&window.FIREBASE_CONFIG){startFirebase();return}
+  startLocal();
+}
+/* ---------- Firebase (cuentas de Planificar Proyectos) ---------- */
+const FB={};
+const SITE_URL='https://www.planificarproyectos.com/proyecta/';
+function startFirebase(){
+  try{firebase.initializeApp(window.FIREBASE_CONFIG);FB.auth=firebase.auth();FB.auth.languageCode='es';FB.db=firebase.firestore();try{FB.db.enablePersistence({synchronizeTabs:true}).catch(()=>{})}catch(e){}}
+  catch(e){console.warn(e);startLocal();return}
+  FB.auth.onAuthStateChanged(async u=>{
+    if(FB.unsub){FB.unsub();FB.unsub=null}if(FB.unsubP){FB.unsubP();FB.unsubP=null}
+    if(!u){ST.ready=false;ST.pid=null;ST.P=null;ST.R=null;ST.projects={};ST.mode='local';closeSheet();showAuth('login');return}
+    hideAuth();
+    const ok=await ensureAccess(u);
+    if(!ok){showNoAccess(u);return}
+    startFb(u);
+  });
+}
+function ensureAccess(u){
+  // Mismo esquema de Mind Focus y PowerFit: autorregistro como "activo"; "revocado" = sin acceso.
+  const em=(u.email||'').toLowerCase(),ref=FB.db.collection('invitaciones').doc(em),now=Date.now();
+  return ref.get().then(sn=>{
+    if(!sn.exists)return ref.set({email:em,estado:'activo',uid:u.uid,activado:now,ultimoUso:now,autoregistro:true}).then(()=>true);
+    const d=sn.data()||{};if(d.estado==='revocado')return false;
+    const upd={estado:'activo',uid:u.uid,ultimoUso:now};if(!d.activado)upd.activado=now;
+    return ref.update(upd).then(()=>true,()=>true);
+  }).catch(e=>{console.warn('acceso',e);return true});
+}
+function startFb(u){
+  ST.mode='fb';ST.fbEmail=u.email||'';ST.me={id:u.uid,name:'',email:u.email};ST.readOnly=false;
+  ST.fbCol=FB.db.collection('users').doc(u.uid).collection('proyecta');
+  FB.profRef=FB.db.collection('users').doc(u.uid).collection('perfil').doc('datos');
+  FB.unsubP=FB.profRef.onSnapshot(sn=>{const d=sn.exists?sn.data():null;if(d&&typeof d.nombre==='string'&&d.nombre!==ST.me.name){ST.me.name=d.nombre;if(ST.ready){softRender('inicio');softRender('cuenta')}}},()=>{});
+  let first=true;
+  FB.unsub=ST.fbCol.onSnapshot(snap=>{
+    const projects={},vers={};let macro=null;
+    snap.docs.forEach(d=>{const id=d.id,b=d.data()||{};
+      if(id.indexOf('p_')===0)projects[id.slice(2)]=b;
+      else if(id.indexOf('v_')===0){(vers[b.pid]=vers[b.pid]||[]).push(Object.assign({},b,{id}))}
+      else if(id==='macro')macro=b});
+    ST.fbVers=vers;if(macro)ST.macro=deepFill(clone(DEFAULT_MACRO),macro);
+    if(first){first=false;ST.projects=projects;
+      if(!Object.keys(projects).length){
+        const loc=Local.all(),lids=Object.keys(loc);
+        if(lids.length){lids.forEach(id=>ST.fbCol.doc('p_'+id).set(clone(loc[id])).catch(()=>{}));ST.projects=loc;setTimeout(()=>toast('Subimos a tu cuenta los proyectos de este navegador'),800)}
+        else{const id='p'+Date.now().toString(36),P=newProject(),Rx=runProject(P,ST.macro);
+          const doc={nombre:P.general.nombre,ciudad:P.general.ciudad,actualizado:Date.now(),actualizadoPor:u.uid,creadoPor:u.uid,creado:Date.now(),kpis:kpisOf(Rx),data:P};
+          ST.fbCol.doc('p_'+id).set(doc).catch(()=>{});ST.projects={[id]:doc}}
+      }
+      const ids=Object.keys(ST.projects);
+      selectProject(prefs.last&&ST.projects[prefs.last]?prefs.last:ids.sort((a,b)=>(ST.projects[b].actualizado||0)-(ST.projects[a].actualizado||0))[0]);
+      ready();return}
+    ST.projects=Object.assign({},projects);
+    if(ST.pid&&!ST.projects[ST.pid]&&ST.dirty)ST.projects[ST.pid]=projDoc();
+    ST.versions=((vers[ST.pid])||[]).slice().sort((a,b)=>b.fecha-a.fecha);
+    if(ST.pid&&projects[ST.pid]){const d=projects[ST.pid];
+      if(d.actualizado>(ST.lastSaved||0)&&d.actualizado!==ST.loadedAt&&!snap.metadata.hasPendingWrites){
+        if(!ST.dirty&&!ST.saving&&!editingNow()){loadData(d);toast('Proyecto actualizado desde otro dispositivo')}
+        else{ST.remotePending=d;showBanner()}}}
+    if(ST.ready){softRender('inicio');if(prefs.sub.control==='versiones')softRender('control')}
+    updateAppbar();
+  },e=>{console.warn('firestore',e);if(e&&e.code==='permission-denied')showNoAccess(u);else toast('No se pudieron leer tus proyectos. Revisa tu conexión.')});
+}
+function showAuth(mode){
+  const a=$('#auth');a.hidden=false;document.body.classList.add('authing');$('#s-loading').hidden=true;
+  const m=mode||'login';ST.authMode=m;
+  const T={login:['Inicia sesión','Entrar'],register:['Crea tu cuenta','Crear cuenta'],reset:['Recupera tu contraseña','Enviar enlace']}[m];
+  $('#authBody').innerHTML=`<h2>${T[0]}</h2>
+   <form id="authForm" novalidate>
+    <div class="f"><label for="aEmail">Correo</label><div class="box"><input id="aEmail" type="email" autocomplete="email" required value="${esc(ST.authEmail||'')}" style="text-align:left"></div></div>
+    ${m!=='reset'?`<div class="f"><label for="aPass">Contraseña</label><div class="box"><input id="aPass" type="password" autocomplete="${m==='register'?'new-password':'current-password'}" required minlength="6" style="text-align:left"></div></div>`:''}
+    ${m==='register'?`<div class="f"><label for="aPass2">Repite la contraseña</label><div class="box"><input id="aPass2" type="password" autocomplete="new-password" required minlength="6" style="text-align:left"></div></div>`:''}
+    <p id="aMsg" class="amsg" role="status"></p>
+    <button class="btn pri" type="submit" id="aBtn" style="width:100%;padding:13px">${T[1]}</button>
+   </form>
+   ${m==='login'?`<button class="lnk" data-auth="reset">¿Olvidaste tu contraseña?</button><p class="muted" style="text-align:center;margin:0">¿No tienes cuenta? <button class="lnk" data-auth="register">Crear cuenta</button></p><p class="muted" style="text-align:center;margin:0;font-size:12.5px">Si ya usas Mind Focus o PowerFit, entra con la misma cuenta.</p>`
+    :`<p class="muted" style="text-align:center;margin:0"><button class="lnk" data-auth="login">Volver a iniciar sesión</button></p>`}`;
+}
+function hideAuth(){$('#auth').hidden=true;document.body.classList.remove('authing');if(!ST.ready)$('#s-loading').hidden=false}
+function showNoAccess(u){const a=$('#auth');a.hidden=false;document.body.classList.add('authing');
+  $('#authBody').innerHTML=`<h2>Sin acceso</h2><p class="muted" style="margin:0">El acceso de ${esc(u&&u.email||'esta cuenta')} a las apps de Planificar Proyectos está desactivado. Escríbele al administrador para reactivarlo.</p><button class="btn" data-act="logout" style="width:100%;padding:13px">Cerrar sesión</button>`}
+function authErr(e){const c=(e&&e.code)||'';
+  if(/invalid-credential|wrong-password|user-not-found|invalid-login/.test(c))return 'Correo o contraseña incorrectos.';
+  if(c==='auth/email-already-in-use')return 'Ya existe una cuenta con ese correo. Inicia sesión.';
+  if(c==='auth/weak-password')return 'La contraseña debe tener al menos 6 caracteres.';
+  if(c==='auth/invalid-email'||c==='auth/missing-email')return 'Revisa que el correo esté bien escrito.';
+  if(c==='auth/too-many-requests')return 'Demasiados intentos. Espera unos minutos e intenta de nuevo.';
+  if(c==='auth/network-request-failed')return 'Sin conexión. Revisa tu internet.';
+  return 'No se pudo completar. Intenta de nuevo.'}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-auth]');if(b){e.preventDefault();ST.authEmail=($('#aEmail')||{}).value||ST.authEmail;showAuth(b.dataset.auth)}});
+document.addEventListener('submit',e=>{if(e.target.id!=='authForm')return;e.preventDefault();
+  const m=ST.authMode||'login',em=($('#aEmail').value||'').trim(),msg=$('#aMsg'),btn=$('#aBtn'),p=$('#aPass'),p2=$('#aPass2');ST.authEmail=em;
+  const show=(t,ok)=>{msg.textContent=t;msg.className='amsg'+(ok?' ok':'')};
+  if(!em)return show('Escribe tu correo.');
+  if(m!=='reset'&&(!p.value||p.value.length<6))return show('La contraseña debe tener al menos 6 caracteres.');
+  if(m==='register'&&p.value!==p2.value)return show('Las contraseñas no coinciden.');
+  const label=btn.textContent;btn.disabled=true;btn.textContent='Un momento…';
+  const job=m==='login'?FB.auth.signInWithEmailAndPassword(em,p.value):m==='register'?FB.auth.createUserWithEmailAndPassword(em,p.value):FB.auth.sendPasswordResetEmail(em,{url:SITE_URL});
+  job.then(()=>{if(m==='reset'){show('Te enviamos un correo para restablecer tu contraseña.',true);btn.disabled=false;btn.textContent=label}})
+     .catch(err=>{show(authErr(err));btn.disabled=false;btn.textContent=label});
+});
+init();
+
+</script>
+<script>if('serviceWorker' in navigator&&location.protocol==='https:'){addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}</script>
+</body>
+</html>
