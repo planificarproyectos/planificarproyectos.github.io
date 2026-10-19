@@ -12,7 +12,7 @@ var IP={
  book:'M5 4h12a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2zM5 18a2 2 0 0 1 2-2h12M12 7v6M9.5 9.5h5', user:'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0',
  check:'M5 12l5 5 9-10', back:'M15 6l-6 6 6 6', undo:'M4 4v6h6M5 15a8 8 0 1 0 2-8L4 10', speaker:'M4 9h4l5-4v14l-5-4H4zM16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12',
  stop:'M7 7h10v10H7z', pause:'M8 5v14M16 5v14', search:'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4', down:'M6 9l6 6 6-6',
- sun:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4', chevR:'M9 6l6 6-6 6', chevL:'M15 6l-6 6 6 6', copy:'M8 8h12v12H8zM4 16V4h12'
+ sun:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4', lock:'M6 11h12v10H6zM8 11V7a4 4 0 0 1 8 0v4', chevR:'M9 6l6 6-6 6', chevL:'M15 6l-6 6 6 6', copy:'M8 8h12v12H8zM4 16V4h12'
 };
 function ic(n,s,w){ s=s||20; w=w||2;
  if(n==='play') return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>';
@@ -206,11 +206,27 @@ if(TTS){ try{ speechSynthesis.getVoices(); }catch(e){} }
 
 function sayBtn(id,label){ var on=speaking===id; return '<button class="say'+(on?' on':'')+'" data-a="say" data-id="'+id+'" data-l="'+esc(label||'Escuchar')+'" aria-pressed="'+on+'">'+ic(on?'stop':'speaker',16)+'<span>'+(on?'Detener':(label||'Escuchar'))+'</span></button>'; }
 function updSay(){ var bs=document.querySelectorAll('[data-a=say]'); for(var i=0;i<bs.length;i++){ var b=bs[i], on=b.getAttribute('data-id')===speaking; b.classList.toggle('on',on); b.setAttribute('aria-pressed',on); b.innerHTML=ic(on?'stop':'speaker',16)+'<span>'+(on?'Detener':(b.getAttribute('data-l')||'Escuchar'))+'</span>'; }
- updMass(); updRos(); syncWake(); }
+ updMass(); updRos(); syncWake(); if(POCKET) pocketNow(); }
+/* Modo bolsillo: pantalla negra que ignora toques; se desbloquea manteniendo presionado */
+var POCKET=false, pkT=null;
+function pocketNow(){ var t='';
+ if(M.playing){ var ps=massParts(); t=(ps[M.idx]||{}).h||'Misa'; }
+ else if(R.playing){ var st=STEPS[rosI()]; t=st?stepTitle(st):'Rosario'; }
+ else if(speaking) t='Escuchando';
+ else t='En pausa';
+ var el=$('pkNow'); if(el) el.textContent=t; }
+function pocketOn(){ var o=$('pocket'); if(!o) return; POCKET=true; o.hidden=false; pocketNow(); syncWake(); }
+function pocketOff(){ var o=$('pocket'); if(o) o.hidden=true; POCKET=false; o.classList.remove('hold'); syncWake(); }
+(function(){ var o=document.getElementById('pocket'); if(!o) return;
+ function stop(e){ e.preventDefault(); e.stopPropagation(); }
+ ['click','dblclick','contextmenu','touchmove','wheel'].forEach(function(ev){ o.addEventListener(ev,stop,{passive:false}); });
+ o.addEventListener('pointerdown',function(e){ stop(e); o.classList.add('hold'); clearTimeout(pkT); pkT=setTimeout(function(){ pocketOff(); if(navigator.vibrate) try{ navigator.vibrate(30); }catch(x){} },2000); });
+ ['pointerup','pointercancel','pointerleave'].forEach(function(ev){ o.addEventListener(ev,function(e){ clearTimeout(pkT); o.classList.remove('hold'); }); });
+})();
 /* Pantalla encendida mientras se escucha (Wake Lock) */
 var WL=null, wlBusy=false;
 function syncWake(){
- var want=!!speaking||M.playing||R.playing;
+ var want=!!speaking||M.playing||R.playing||POCKET;
  if(!('wakeLock' in navigator)) return;
  if(want&&!WL&&!wlBusy&&document.visibilityState==='visible'){ wlBusy=true;
   navigator.wakeLock.request('screen').then(function(l){ wlBusy=false; WL=l; l.addEventListener('release',function(){ if(WL===l) WL=null; }); if(!(speaking||M.playing||R.playing)){ l.release().catch(function(){}); } })
@@ -488,7 +504,7 @@ function vHoy(){
  if(!info) return head+loading();
  head+='<div class="panel" style="gap:6px">'+litBadge(info)+'<b style="font-size:18px;line-height:1.3">'+esc(info.cel.n)+'</b>'+(info.commem?'<span class="small muted">Santo del día: '+esc(info.commem.n)+'</span>':'')+'</div>';
  if(!mass) return head+loading(err?'No se pudieron cargar las lecturas. Revisa tu conexión.':'Preparando las lecturas…');
- var out=head+'<div class="stack" style="gap:8px"><button class="btn playbig" id="massBtn" data-a="massPlay"></button>'+(('wakeLock' in navigator)?'<p class="small muted" style="text-align:center">La pantalla se mantendrá encendida mientras escuchas. Si la bloqueas o sales de Lumen, el audio se detiene.</p>':'')+'<div class="between small"><span class="muted" id="massProg"></span>'+(M.idx>0?'<button class="link" data-a="massRestart">Empezar desde el inicio</button>':'')+'</div></div>';
+ var out=head+'<div class="stack" style="gap:8px"><div class="row" style="gap:8px"><button class="btn playbig" id="massBtn" data-a="massPlay" style="flex:1"></button><button class="icon-btn lockbtn" data-a="pocket" aria-label="Modo bolsillo: bloquear pantalla">'+ic('lock',24)+'</button></div>'+(('wakeLock' in navigator)?'<p class="small muted" style="text-align:center">La pantalla se mantendrá encendida mientras escuchas. Si la bloqueas o sales de Lumen, el audio se detiene.</p>':'')+'<div class="between small"><span class="muted" id="massProg"></span>'+(M.idx>0?'<button class="link" data-a="massRestart">Empezar desde el inicio</button>':'')+'</div></div>';
  mass.forEach(function(s){
   out+='<section class="stack"><h2>'+esc(s.title)+'</h2>';
   s.parts.forEach(function(p){
@@ -515,7 +531,7 @@ function vRosary(){
   +'<div class="panel"><span class="label ac">'+set[0]+' · '+mys+'</span><h3 style="font-size:26px">'+esc(myst)+'</h3></div>'
   +strip
   +'<div class="stack" style="align-items:center;gap:2px">'+cnt+'<span class="label">'+(s.k==='am'?'Ave María':'Cuenta '+(i+1)+' de '+STEPS.length)+'</span></div>'
-  +'<div class="prayer"><p>'+fmt(stepText(s))+'</p><div class="between">'+sayBtn('ros-'+i)+'<button class="say" id="rosBtn" data-a="rosPlay"></button></div></div>'
+  +'<div class="prayer"><p>'+fmt(stepText(s))+'</p><div class="between">'+sayBtn('ros-'+i)+'<span class="row" style="gap:6px"><button class="say" id="rosBtn" data-a="rosPlay"></button><button class="say" data-a="pocket" aria-label="Modo bolsillo">'+ic('lock',16)+'</button></span></div></div>'
   +'<div class="ctl"><button class="icon-btn" data-a="rprev" aria-label="Cuenta anterior">'+ic('undo',22)+'</button><button class="btn" data-a="rnext">Siguiente cuenta</button></div>';
 }
 
@@ -554,6 +570,12 @@ function vPray(){
   +(rut?'<button class="btn'+(isDone(id)?' soft':'')+'" data-a="done" data-id="'+id+'">'+(isDone(id)?'Rezada hoy ✓':'Marcar como rezada')+'</button>':'');
 }
 
+function pinGuide(){
+ var ios=isIOS();
+ var st=ios?['Ajustes › Accesibilidad › <b>Acceso guiado</b>: actívalo y crea un código.','Abre Lumen y presiona <b>tres veces</b> el botón lateral › <b>Iniciar</b>.','Para salir: tres veces el botón lateral y escribe tu código.']
+  :['Ajustes › Seguridad (o Seguridad y privacidad) › Más ajustes › <b>Fijar aplicaciones</b>: actívalo.','Abre Lumen, ve a <b>Recientes</b>, toca el ícono de Lumen › <b>Fijar</b>.','Para salir: mantén presionados Atrás y Recientes (o desliza hacia arriba y mantén).'];
+ return '<div class="panel"><p class="small muted">Toca el candado '+ic('lock',14)+' en Misa o Rosario: la pantalla queda negra y no responde a toques. Para salir, mantén presionado 2 segundos.</p>'
+  +'<details class="guide"><summary>Bloquear también los botones del celular</summary><ol>'+st.map(function(x){ return '<li>'+x+'</li>'; }).join('')+'</ol></details></div>'; }
 function voiceGuide(){
  var ios=isIOS();
  var steps=ios?['Abre Ajustes › Accesibilidad › Contenido leído › Voces › Español.','Descarga una voz <b>Mejorada</b> o <b>Premium</b> (por ejemplo Paulina o Mónica).','Vuelve a Lumen, elígela arriba en <b>Voz</b> y toca <b>Probar voz</b>.','Si no suena nada, quita el modo silencio del iPhone.']
@@ -576,6 +598,7 @@ function vMe(){
    +(U.confirmReset?'<div class="panel"><b>¿Borrar racha, rutina y progreso del Rosario?</b><span class="small muted">No se puede deshacer.</span><div class="grid2"><button class="btn soft" data-a="resetNo">Cancelar</button><button class="btn danger" data-a="resetYes">Sí, borrar</button></div></div>'
      :card('reset','trash','Borrar mis datos',u?'Racha, rutina y progreso del Rosario. No se puede deshacer':'Se borran de este dispositivo','danger'))
   +'</section>'
+  +'<section class="stack"><h2>Modo bolsillo</h2>'+pinGuide()+'</section>'
   +'<section class="stack"><h2>Apariencia</h2><div class="panel"><b class="small">Color de énfasis</b><div class="swatches" role="radiogroup" aria-label="Color de énfasis">'+Object.keys(ACCENTS).map(function(k){ var c=ACCENTS[k], on=S.accent===k; return '<button class="sw'+(on?' on':'')+'" role="radio" data-a="accent" data-v="'+k+'" aria-checked="'+on+'"><i style="background:'+c[1]+'">'+(on?ic('check',18,3):'')+'</i>'+c[0]+'</button>'; }).join('')+'</div></div>'
    +'<div class="panel"><div class="between"><div class="stack" style="gap:2px"><b>Modo oscuro</b><span class="small muted">'+(dark?'Activado':'Desactivado')+' · no depende del celular</span></div><button class="switch" role="switch" aria-checked="'+dark+'" aria-label="Modo oscuro" data-a="dark"></button></div></div></section>'
   +'<section class="stack"><h2>Lectura en voz alta</h2><div class="panel">'
@@ -625,6 +648,7 @@ document.addEventListener('click',function(e){
  if(a==='pback'){ go('home'); return; }
  if(a==='copy'){ if(!LIT.frase) return; var txt=LIT.frase.t+' ('+LIT.frase.ref+')';
   if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){ toast('Frase copiada'); },function(){ toast(txt,5000); }); } else toast(txt,5000); return; }
+ if(a==='pocket'){ pocketOn(); return; }
  if(a==='massPlay'){ if(M.playing) M.stop(); else M.play(M.idx); return; }
  if(a==='massFrom'){ M.play(+v); return; }
  if(a==='mprev'||a==='mnext'){ var b0=U.mdate?new Date(U.mdate):new Date(); b0.setDate(b0.getDate()+(a==='mprev'?-1:1)); setMassDate(b0); return; }
