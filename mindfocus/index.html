@@ -337,6 +337,9 @@ body:not(.v-home) header.top{margin-bottom:12px}
 .chips button span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .chips button .x{color:var(--bad);font-weight:700;margin-left:2px}
 .chips button.sel{outline:2px solid var(--accent)}
+.tsearch{position:relative;flex:1 1 150px;min-width:0}.tsearch input{width:100%;min-height:40px!important;padding:0 34px 0 12px;font-size:14px}.tsearch button{position:absolute;right:2px;top:50%;transform:translateY(-50%);min-height:32px!important;width:32px;padding:0;background:transparent;color:var(--muted)}
+.tsearch input::-webkit-search-cancel-button,.tsearch input::-webkit-search-decoration{-webkit-appearance:none;display:none}
+.tile.new{grid-column:1/-1;background:var(--surface2)!important;color:var(--ink)!important}
 .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .tile{position:relative;justify-content:flex-start;text-align:left;min-height:58px;padding:10px 12px 10px 18px;border-radius:14px;background:var(--field);font-size:.9rem;line-height:1.25;overflow:hidden}
 .tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;background:var(--tc)}
@@ -613,7 +616,7 @@ a.card{text-decoration:none}
       </section>
 
       <section class="panel" aria-labelledby="tileTitle">
-        <div class="phead"><h2 id="tileTitle">Actividades</h2><span class="label" id="tileHint">Un toque para empezar</span></div>
+        <div class="phead"><h2 id="tileTitle">Actividades</h2><div class="tsearch"><input id="tileQ" type="search" placeholder="Buscar actividad…" autocomplete="off" aria-label="Buscar actividad"><button type="button" id="tileQx" hidden aria-label="Borrar búsqueda">✕</button></div></div>
         <div class="tiles" id="tiles"></div>
         <button type="button" class="ghost more" id="tilesMore"></button>
       </section>
@@ -1604,7 +1607,7 @@ else{
 }
 
 // ================= INICIO RÁPIDO + NAVEGACIÓN INFERIOR =================
-let cur=lsGet("mf_actual",null),favs=lsGet("mf_favs",[]),mode={t:"switch"},favEditing=false,showAllTiles=false,curRemote=false;
+let tileQ="",cur=lsGet("mf_actual",null),favs=lsGet("mf_favs",[]),mode={t:"switch"},favEditing=false,showAllTiles=false,curRemote=false;
 function onCfg(d){
   cur=d.actual||null;lsSet("mf_actual",cur);curRemote=true;
   if("pomo" in d){const r=d.pomo||null;if(JSON.stringify(r)!==JSON.stringify(pomo)){pomo=r;lsSet("bitacora_pomo",pomo);if(!pomo)try{localStorage.removeItem("bitacora_pomo")}catch(e){}if(typeof tickPomo==="function")setTimeout(tickPomo,0)}}
@@ -1648,6 +1651,7 @@ function startPomoWith(ch){
   tickPomo();renderHome();scrollTo({top:0,behavior:"smooth"});toast("Pomodoro en marcha: "+ch.act);
 }
 async function choose(ch){
+  if(tileQ){tileQ="";$("tileQ").value=""}
   const m=mode;setMode({t:"switch"});
   if(m.t==="switch")return startAct(ch);
   if(m.t==="pomo"){await stopPomoIfAny();if(cur)await finishCur(Date.now());return startPomoWith(ch)}
@@ -1690,10 +1694,11 @@ function renderHome(){
   if(!fc.children.length)fc.innerHTML='<p class="status" style="margin:0">Cuando una actividad esté en curso, toca «☆ Favorito» para tenerla aquí. Lo que repites seguido aparece solo.</p>';
   $("favEdit").textContent=favEditing?"Listo":"Editar";$("favEdit").hidden=!favs.length&&!favEditing;
   // actividades
-  const u=usage(),sorted=[...cats].sort((a,b)=>(u[b.id]||0)-(u[a.id]||0)),N=showAllTiles?sorted.length:Math.min(12,sorted.length);
-  const tg=$("tiles");tg.innerHTML="";
+  const u=usage(),all=[...cats].sort((a,b)=>(u[b.id]||0)-(u[a.id]||0)),q=nk(tileQ),sorted=q?all.filter(c=>nk(c.n).includes(q)):all,N=(showAllTiles||q)?sorted.length:Math.min(12,sorted.length);
+  const tg=$("tiles");tg.innerHTML="";$("tileQx").hidden=!tileQ;
+  if(q&&!sorted.length){const nb=document.createElement("button");nb.type="button";nb.className="tile new";nb.style.setProperty("--tc","var(--surface2)");nb.textContent="Sin coincidencias · Crear «"+tileQ.trim()+"»";nb.onclick=()=>{const t=tileQ.trim();tileQ="";$("tileQ").value="";choose({act:t,cat:classify(t)})};tg.appendChild(nb)}
   for(const c of sorted.slice(0,N)){const b=document.createElement("button");b.type="button";b.className="tile"+(run&&cur.cat===c.id&&cur.act===c.n?" cur":"");b.style.setProperty("--tc",catColor(c));b.textContent=c.n;b.onclick=()=>choose({act:c.n,cat:c.id});tg.appendChild(b)}
-  $("tilesMore").hidden=sorted.length<=12;$("tilesMore").textContent=showAllTiles?"Ver menos":"Ver todas ("+sorted.length+")";
+  $("tilesMore").hidden=!!q||sorted.length<=12;$("tilesMore").textContent=showAllTiles?"Ver menos":"Ver todas ("+sorted.length+")";
   // huecos de hoy
   const gaps=dayGaps(ymd(new Date()),10).slice(-5).reverse(),gb=$("gapChips");gb.innerHTML="";
   for(const g of gaps){const b=document.createElement("button");b.type="button";b.textContent=hm12(hmT(g.a))+" – "+hm12(hmT(g.b))+" · "+fmtH((g.b-g.a)/60000);b.onclick=()=>setMode({t:"gap",a:g.a,b:g.b});gb.appendChild(b)}
@@ -1720,6 +1725,7 @@ $("nowNoteBtn").onclick=()=>{const b=$("nowNoteBox");b.hidden=!b.hidden;if(!b.hi
 $("nowNote").addEventListener("change",async()=>{if(!cur)return;cur.desc=$("nowNote").value.trim();await saveCur();toast("Nota guardada")});
 $("nowFav").onclick=async()=>{if(!cur)return;const i=favs.findIndex(f=>nk(f.act)===nk(cur.act));if(i>=0)favs.splice(i,1);else favs.push({act:cur.act,cat:cur.cat});await saveFavs();renderHome();toast(i>=0?"Quitado de favoritos":"Guardado en favoritos")};
 $("favEdit").onclick=()=>{favEditing=!favEditing;renderHome()};
+$("tileQ").addEventListener("input",()=>{tileQ=$("tileQ").value;renderHome()});$("tileQx").onclick=()=>{tileQ="";$("tileQ").value="";renderHome();$("tileQ").focus()};
 $("tilesMore").onclick=()=>{showAllTiles=!showAllTiles;renderHome()};
 document.querySelectorAll("#pastChips button").forEach(b=>b.onclick=()=>{const v=b.dataset.past;if(v==="since"&&!lastEnd()){toast("Aún no tienes registros previos.");return}setMode({t:"past",min:v==="since"?"since":+v})});
 $("pomoGo").onclick=async()=>{if(cur){const ch={act:cur.act,cat:cur.cat};await finishCur(Date.now());startPomoWith(ch)}else setMode({t:"pomo"})};
