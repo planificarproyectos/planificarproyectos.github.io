@@ -388,6 +388,17 @@ body .panel,body .datenav,body .authcard,body .consent{background:var(--surface)
 .panel{border-radius:20px;padding:16px;gap:12px}
 body input,body select,body textarea{background:var(--surface2);border-radius:14px;border:1px solid transparent;min-height:48px;color:var(--ink)}
 body input:focus,body select:focus{border-color:transparent;outline:2px solid var(--accent-fg)}
+/* proporciones móviles en todos los anchos */
+.form{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.form input,.form select{min-width:0;width:100%;font-size:15px}
+input[type="time"],input[type="date"]{font-size:15px;min-width:0}
+input[type="time"]::-webkit-datetime-edit,input[type="date"]::-webkit-datetime-edit{font-size:15px}
+.entry{grid-template-columns:78px 22px minmax(0,1fr)}
+.entry>.body{padding-bottom:4px}
+.entry>.acts{grid-column:3;grid-row:2;padding-top:0}
+.datenav{width:100%}
+.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+.maintabs button{min-width:0;flex:1 1 0}
 /* botones */
 button{border-radius:14px;font-weight:700}
 button.primary,#saveBtn{background:var(--accent);color:var(--accent-ink);border-radius:16px;min-height:52px;padding:0 18px;font-weight:700}
@@ -1635,6 +1646,8 @@ function usage(){const n={},since=addDays(ymd(new Date()),-30);for(const e of en
 function freqActs(){const n={},since=addDays(ymd(new Date()),-30);
   for(const e of entries){if(e.fecha<since||!e.actividad)continue;const c=catById(e.categoria);if(c.missing||e.actividad.trim().toLowerCase()===c.n.toLowerCase())continue;const k=e.actividad.trim()+"|"+e.categoria;n[k]=(n[k]||0)+1}
   return Object.entries(n).filter(([k,v])=>v>=2).sort((a,b)=>b[1]-a[1]).map(([k])=>{const i=k.lastIndexOf("|");return{act:k.slice(0,i),cat:k.slice(i+1)}})}
+function nk(s){return String(s||"").trim().toLowerCase()}
+function dedupeFavs(){const seen=new Set();const out=favs.filter(f=>{const k=nk(f.act);if(!k||seen.has(k))return false;seen.add(k);return true});if(out.length!==favs.length){favs=out;saveFavs()}}
 function chipBtn(ch,extra){const b=document.createElement("button");b.type="button";const c=catById(ch.cat);b.innerHTML=`<i style="background:${catColor(c)}"></i><span>${esc(ch.act)}</span>${extra||""}`;b.title=ch.act+" · "+c.n;return b}
 function renderHome(){
   if(!$("viewHome"))return;
@@ -1642,16 +1655,16 @@ function renderHome(){
   const run=!!cur,pomoOn=typeof pomo!=="undefined"&&!!pomo;
   $("nowIdle").hidden=run||pomoOn;$("nowRun").hidden=!run||pomoOn;$("nowCard").classList.toggle("run",run&&!pomoOn);
   if(run){const c=catById(cur.cat);$("nowAct").textContent=cur.act;$("nowCat").innerHTML=`<i style="background:${catColor(c)}"></i>${esc(c.n)}`;$("nowCard").style.setProperty("--nowc",catColor(c));
-    $("nowSince").textContent="Desde las "+hm12(hmT(cur.start));const isFav=favs.some(f=>f.act===cur.act&&f.cat===cur.cat);$("nowFav").textContent=isFav?"★ Favorito":"☆ Favorito";
+    $("nowSince").textContent="Desde las "+hm12(hmT(cur.start));const isFav=favs.some(f=>nk(f.act)===nk(cur.act));$("nowFav").textContent=isFav?"★ Favorito":"☆ Favorito";
     if(document.activeElement!==$("nowNote"))$("nowNote").value=cur.desc||""}
   else{const le=lastEnd();$("nowLast").textContent=le?"Tu último registro terminó a las "+hm12(hmT(le))+(Date.now()-le>60000?" (hace "+fmtH((Date.now()-le)/60000)+").":".")+" Toca una actividad para empezar a contar.":"Toca una actividad para empezar a contar."}
   $("pomoGo").hidden=pomoOn;$("pomoGo").textContent=run?"◷ Pomodoro con «"+cur.act+"»":"◷ Iniciar pomodoro";
   $("sleepBtn").hidden=run&&cur.cat==="sueno";$("wakeBtn").classList.toggle("primary",run&&cur.cat==="sueno");
   // favoritos y frecuentes
-  const fc=$("favChips");fc.innerHTML="";
+  dedupeFavs();const fc=$("favChips");fc.innerHTML="";
   favs.forEach((f,i)=>{const b=chipBtn(f,favEditing?'<span class="x">✕</span>':"");b.prepend(Object.assign(document.createElement("span"),{textContent:"★"}));
     b.onclick=async()=>{if(favEditing){favs.splice(i,1);await saveFavs();renderHome();return}choose(f)};fc.appendChild(b)});
-  if(!favEditing)freqActs().filter(f=>!favs.some(x=>x.act===f.act&&x.cat===f.cat)).slice(0,6).forEach(f=>{const b=chipBtn(f);b.onclick=()=>choose(f);fc.appendChild(b)});
+  if(!favEditing){const seenF=new Set(favs.map(x=>nk(x.act)));freqActs().filter(f=>{const k=nk(f.act);if(seenF.has(k))return false;seenF.add(k);return true}).slice(0,6).forEach(f=>{const b=chipBtn(f);b.onclick=()=>choose(f);fc.appendChild(b)})}
   if(!fc.children.length)fc.innerHTML='<p class="status" style="margin:0">Cuando una actividad esté en curso, toca «☆ Favorito» para tenerla aquí. Lo que repites seguido aparece solo.</p>';
   $("favEdit").textContent=favEditing?"Listo":"Editar";$("favEdit").hidden=!favs.length&&!favEditing;
   // actividades
@@ -1683,7 +1696,7 @@ setInterval(tickNow,1000);
 $("nowStop").onclick=async()=>{await finishCur(Date.now());renderHome()};
 $("nowNoteBtn").onclick=()=>{const b=$("nowNoteBox");b.hidden=!b.hidden;if(!b.hidden)$("nowNote").focus()};
 $("nowNote").addEventListener("change",async()=>{if(!cur)return;cur.desc=$("nowNote").value.trim();await saveCur();toast("Nota guardada")});
-$("nowFav").onclick=async()=>{if(!cur)return;const i=favs.findIndex(f=>f.act===cur.act&&f.cat===cur.cat);if(i>=0)favs.splice(i,1);else favs.push({act:cur.act,cat:cur.cat});await saveFavs();renderHome();toast(i>=0?"Quitado de favoritos":"Guardado en favoritos")};
+$("nowFav").onclick=async()=>{if(!cur)return;const i=favs.findIndex(f=>nk(f.act)===nk(cur.act));if(i>=0)favs.splice(i,1);else favs.push({act:cur.act,cat:cur.cat});await saveFavs();renderHome();toast(i>=0?"Quitado de favoritos":"Guardado en favoritos")};
 $("favEdit").onclick=()=>{favEditing=!favEditing;renderHome()};
 $("tilesMore").onclick=()=>{showAllTiles=!showAllTiles;renderHome()};
 document.querySelectorAll("#pastChips button").forEach(b=>b.onclick=()=>{const v=b.dataset.past;if(v==="since"&&!lastEnd()){toast("Aún no tienes registros previos.");return}setMode({t:"past",min:v==="since"?"since":+v})});
