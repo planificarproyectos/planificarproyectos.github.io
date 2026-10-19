@@ -277,7 +277,9 @@ function loadPrayer(id){
   return {h:x.h,text:x.text(),say:x.say?x.say():null};
  })).then(function(parts){ PRAY_CACHE[id]={t:p.t,parts:parts}; return PRAY_CACHE[id]; });
 }
-function prayerSay(pr){ return pr.t+'. '+pr.parts.map(function(x){ return (x.h?x.h+'. ':'')+(x.say||x.text); }).join(' '); }
+function normT(t){ return String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zñ ]/g,' ').replace(/\s+/g,' ').trim(); }
+function withTitle(h,text){ if(!h) return text; return normT(text).indexOf(normT(h))===0?text:h+'. '+text; }
+function prayerSay(pr){ var parts=pr.parts.map(function(x){ return withTitle(x.h,x.say||x.text); }).join(' '); return withTitle(pr.t,parts); }
 
 var RUT=[
  ['ofr','Al despertar','Ofrecimiento del día','1 min'],
@@ -354,7 +356,7 @@ var M={idx:0,playing:false,
  play:function(i){ var ps=massParts(); if(!ps.length) return;
   if(i>=ps.length){ M.playing=false; M.idx=0; if(!U.mdate) setDone('misa',true); updSay(); toast('Misa completa. Pueden ir en paz.'); return; }
   M.idx=i; M.playing=true; var p=ps[i];
-  speak(p.h+'. '+p.text,'misa:'+i,function(){ setTimeout(function(){ if(M.playing&&!speaking) M.play(i+1); },900); });
+  speak(withTitle(p.h,p.text),'misa:'+i,function(){ setTimeout(function(){ if(M.playing&&!speaking) M.play(i+1); },900); });
   M.playing=true; updMass();
   var el=document.querySelector('[data-part="'+i+'"]'); if(el){ if(el.tagName==='DETAILS') el.open=true; try{ el.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){} }
  },
