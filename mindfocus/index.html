@@ -396,6 +396,10 @@ input[type="time"]::-webkit-datetime-edit,input[type="date"]::-webkit-datetime-e
 .entry{grid-template-columns:78px 22px minmax(0,1fr)}
 .entry>.body{padding-bottom:4px}
 .entry>.acts{grid-column:3;grid-row:2;padding-top:0}
+.hello{flex:1 1 100%;order:2;font-size:15px;color:var(--muted);margin:-4px 0 2px}.hello b{color:var(--ink);font-weight:700}
+.hello.nudge{display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:var(--surface);border-radius:14px;padding:10px 12px;font-size:13px}.hello.nudge span{flex:1 1 100%}
+.hello.nudge button{min-height:36px;padding:0 14px;border-radius:12px;font-size:13px}
+.namerow{display:flex;gap:8px;margin-top:6px}.namerow input{flex:1 1 auto;min-width:0}.namerow button{min-height:48px;padding:0 16px}
 /* registros compactos */
 .entry{position:relative;grid-template-columns:78px 22px minmax(0,1fr)!important;gap:0 10px}
 .entry>.t,.entry>.body{padding-block:8px 8px!important}
@@ -1771,6 +1775,7 @@ function setMfTheme(patch,save){const t=Object.assign({},window.MF_THEME||{},pat
  acc.querySelector('[aria-labelledby="accTitle"]').remove();acc.querySelector('[aria-labelledby="looksTitle"]').remove();
  const top=document.createElement("div");top.className="stack";top.innerHTML=
   '<div class="panel"><div class="prof"><span class="av">'+icn("user",26,2.2)+'</span><div class="stack" style="gap:2px;min-width:0"><b id="accEmail2"></b><span class="status" id="accRole"></span></div></div></div>'+
+  '<div class="panel"><label class="label" for="nameIn">Tu nombre</label><div class="namerow"><input id="nameIn" maxlength="30" placeholder="¿Cómo te llamas?" autocomplete="given-name"><button type="button" class="primary" id="nameSave">Guardar</button></div><p class="status" id="nameMsg" style="margin:6px 0 0">Aparece arriba, en todas las pantallas.</p></div>'+
   '<div class="acckpis"><div><b class="num" id="akReg">0</b><span>Registros</span></div><div><b class="num" id="akHrs">0</b><span>Horas</span></div><div><b class="num" id="akStk">0</b><span>Días de racha</span></div></div>'+
   '<section class="stack"><h2>Ajustes</h2>'+
   '<button class="card" data-c="pwdBtn">'+icn("key")+'<span class="grow"><b>Cambiar contraseña</b><span>Te enviamos un correo para crear una nueva</span></span><span class="chev2">'+icn("chev",20)+'</span></button>'+
@@ -1806,6 +1811,24 @@ function colorTiles(){const cs=getComputedStyle(document.documentElement);docume
 {const _rh=renderHome;renderHome=function(){_rh();colorTiles()}}
 {const _rt=renderTheme;renderTheme=function(){_rt();colorTiles()}}
 renderTheme();
+// nombre de la persona (arriba) + aviso si falta
+let userName=lsGet("mf_name",""),nudgeOff=false;
+{const hd=document.querySelector("header.top"),br=hd.querySelector(".brand"),h=document.createElement("div");h.id="hello";h.className="hello";h.hidden=true;br.after(h)}
+function renderHello(){
+  const h=$("hello");if(!h)return;h.textContent="";h.className="hello";
+  if(userName){h.hidden=false;h.append("Hola, ");const b=document.createElement("b");b.textContent=userName;h.append(b);return}
+  if(curRemote&&!nudgeOff){h.hidden=false;h.className="hello nudge";
+    const t=document.createElement("span");t.textContent="Configura tu nombre para personalizar Mind Focus.";
+    const g=document.createElement("button");g.type="button";g.className="primary";g.textContent="Configurar";g.onclick=()=>{setView("acc");setTimeout(()=>{const i=$("nameIn");i.scrollIntoView({block:"center"});i.focus()},60)};
+    const x=document.createElement("button");x.type="button";x.className="ghost";x.textContent="Ahora no";x.onclick=()=>{nudgeOff=true;renderHello()};
+    h.append(t,g,x);return}
+  h.hidden=true;
+}
+{const _oc=onCfg;onCfg=function(d){_oc(d);if(typeof d.nombre==="string"){userName=d.nombre;lsSet("mf_name",userName)}renderHello();if($("nameIn")&&document.activeElement!==$("nameIn"))$("nameIn").value=userName}}
+$("nameSave").onclick=async()=>{const v=$("nameIn").value.trim().slice(0,30);userName=v;lsSet("mf_name",v);renderHello();
+  try{if(cfgDoc)await cfgDoc.set({nombre:v},{merge:true});$("nameMsg").textContent=v?"Listo, guardado en tu cuenta.":"Nombre quitado."}catch(e){$("nameMsg").textContent="No se pudo guardar en tu cuenta. Intenta de nuevo."}};
+$("nameIn").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("nameSave").click()}});
+$("nameIn").value=userName;renderHello();
 {const _sv=setView;setView=function(v){_sv(v);if(view==="acc")renderAccTop()}}
 // bienvenida: al abrir/refrescar y al iniciar sesión
 let splashT0=Date.now(),splashTm=null,loginPending=false;
