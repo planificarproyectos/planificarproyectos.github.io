@@ -231,12 +231,14 @@ nav.tabs button.on{color:var(--accent-fg);font-weight:700}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script src="../wellness-soporte.js"></script>
 <script>
 (function(){
 'use strict';
 
 /* ---------- Íconos ---------- */
 var IP = {
+  chat:'M21 12a8 8 0 0 1-11.6 7.1L4 20l1-5A8 8 0 1 1 21 12z', bulb:'M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z',
   home:'M3 11l9-7 9 7v9h-6v-6H9v6H3z', dumb:'M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12',
   grid:'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z', chart:'M4 20V10M10 20V4M16 20v-7M22 20H2',
   back:'M15 6l-6 6 6 6', close:'M6 6l12 12M18 6L6 18', check:'M5 12l5 5 9-10', plus:'M12 5v14M5 12h14',
@@ -1050,6 +1052,8 @@ function vAccount(){
    '<button class="card" data-a="resetPass">'+ic('key',22)+'<span class="grow"><b>Cambiar contraseña</b><span class="muted small">Te enviamos un correo para crear una nueva</span></span>'+ic('chevR',20)+'</button>'+
    '<button class="card" data-a="exportCsv"'+(tot.s?'':' disabled style="opacity:.5"')+'>'+ic('download',22)+'<span class="grow"><b>Descargar mi historial</b><span class="muted small">Archivo CSV para abrir en Excel</span></span>'+ic('chevR',20)+'</button>'+
    (Inst.standalone()?'<div class="card">'+ic('check',22)+'<span class="grow"><b>App instalada</b><span class="muted small">Estás usando PowerFit como app</span></span></div>':Inst.can()?'<div class="panel">'+Inst.body(false)+'</div>':'')+
+   '<a class="card" target="_blank" rel="noopener" style="text-decoration:none" href="'+esc((window.wellnessWA||function(a,t){return "https://wa.me/573204451740"})('PowerFit','soporte',u.email))+'">'+ic('chat',22)+'<span class="grow"><b>Contactar soporte</b><span class="muted small">Escríbenos por WhatsApp si algo no funciona</span></span>'+ic('chevR',20)+'</a>'+
+   '<a class="card" target="_blank" rel="noopener" style="text-decoration:none" href="'+esc((window.wellnessWA||function(a,t){return "https://wa.me/573204451740"})('PowerFit','recomendacion',u.email))+'">'+ic('bulb',22)+'<span class="grow"><b>Enviar recomendaciones</b><span class="muted small">Cuéntanos qué mejorarías, por WhatsApp</span></span>'+ic('chevR',20)+'</a>'+
    '<button class="card" data-a="logout">'+ic('out',22)+'<span class="grow"><b>Cerrar sesión</b><span class="muted small">Tus datos quedan guardados en tu cuenta</span></span>'+ic('chevR',20)+'</button>'+
    del+'</section>'+vEquip()+vTheme();
   if(S.isAdmin) h+=vAdmin();

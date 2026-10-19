@@ -5,6 +5,7 @@ var L=window.Liturgia;
 
 /* ---------- Íconos ---------- */
 var IP={
+ chat:'M21 12a8 8 0 0 1-11.6 7.1L4 20l1-5A8 8 0 1 1 21 12z', bulb:'M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z',
  key:'M15 7a4 4 0 1 1-3.9 5H7v3H4v-3H2v-3h9.1A4 4 0 0 1 15 7z', out:'M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10', trash:'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13', dl:'M12 4v11M7 10l5 5 5-5M5 20h14',
  home:'M3 11l9-7 9 7v9h-6v-6H9v6H3z', rosary:'M12 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12zM12 14v8M9 18h6',
  church:'M12 2v4M10 4h4M5 21V11l7-5 7 5v10M9 21v-5a3 3 0 0 1 6 0v5M3 21h18',
@@ -567,6 +568,8 @@ function vMe(){
   +'<section class="stack"><h2>Ajustes</h2>'
    +(u?card('resetPass','key','Cambiar contraseña','Te enviamos un correo para crear una nueva'):'')
    +(Inst.standalone()?'<div class="card">'+ic('check',22)+'<span class="grow"><b>App instalada</b><span>Estás usando Lumen como app</span></span></div>':Inst.can()?'<div class="panel">'+Inst.body(false)+'</div>':'<div class="card">'+ic('dl',22)+'<span class="grow"><b>Instalar app</b><span>Android: Chrome › ⋮ › Instalar app. iPhone: Safari › Compartir › Agregar a pantalla de inicio</span></span></div>')
+   +'<a class="card" target="_blank" rel="noopener" href="'+esc((window.wellnessWA||function(a,t){return "https://wa.me/573204451740"})('Lumen','soporte',u&&u.email))+'">'+ic('chat',22)+'<span class="grow"><b>Contactar soporte</b><span>Escríbenos por WhatsApp si algo no funciona</span></span>'+ic('chevR',20)+'</a>'
+   +'<a class="card" target="_blank" rel="noopener" href="'+esc((window.wellnessWA||function(a,t){return "https://wa.me/573204451740"})('Lumen','recomendacion',u&&u.email))+'">'+ic('bulb',22)+'<span class="grow"><b>Enviar recomendaciones</b><span>Cuéntanos qué mejorarías, por WhatsApp</span></span>'+ic('chevR',20)+'</a>'
    +(u?card('logout','out','Cerrar sesión','Tus datos quedan guardados en tu cuenta'):'')
    +(U.confirmReset?'<div class="panel"><b>¿Borrar racha, rutina y progreso del Rosario?</b><span class="small muted">No se puede deshacer.</span><div class="grid2"><button class="btn soft" data-a="resetNo">Cancelar</button><button class="btn danger" data-a="resetYes">Sí, borrar</button></div></div>'
      :card('reset','trash','Borrar mis datos',u?'Racha, rutina y progreso del Rosario. No se puede deshacer':'Se borran de este dispositivo','danger'))
