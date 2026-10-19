@@ -151,9 +151,27 @@ function ttsHelp(){
  if(isIOS()) return toast('No se escucha: quita el modo silencio del iPhone y sube el volumen. Si sigue igual, revisa Ajustes › Accesibilidad › Contenido leído › Voces › Español.',8000);
  toast('No se escucha: sube el volumen multimedia y revisa Ajustes › Idioma › Salida de texto a voz (motor de Google con español instalado).',8000);
 }
+function speakRoot(){ var id=speaking||'';
+ if(/^misa:/.test(id)) return document.querySelector('[data-part="'+id.slice(5)+'"]');
+ if(/^(ros-|rosa:)/.test(id)) return document.querySelector('.prayer');
+ if(/^pray-/.test(id)) return document.querySelector('#app .wrap');
+ if(id==='frase') return document.querySelector('.quote');
+ if(/^cap-/.test(id)) return document.querySelector('.reader');
+ return null; }
+function clearMark(){ var ms=document.querySelectorAll('mark.speakmark'); for(var i=0;i<ms.length;i++){ var m=ms[i], par=m.parentNode; while(m.firstChild) par.insertBefore(m.firstChild,m); par.removeChild(m); par.normalize(); } }
+function markChunk(ch){
+ try{ clearMark(); var root=speakRoot(); if(!root||!ch) return;
+  var key=ch.replace(/^[\s.,;:¡¿]+/,'').slice(0,24); if(key.length<3) return;
+  var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null), n;
+  while((n=w.nextNode())){ var k=n.nodeValue.indexOf(key); if(k<0) continue;
+   var end=Math.min(n.nodeValue.length,k+ch.trim().length), r=document.createRange(); r.setStart(n,k); r.setEnd(n,end);
+   var mk=document.createElement('mark'); mk.className='speakmark'; r.surroundContents(mk); break; }
+ }catch(e){}
+}
 function sayNext(my){
  if(my!==gen) return;
- if(QI>=Q.length){ speaking=null; updSay(); var cb=TTS_DONE; TTS_DONE=null; if(cb) cb(); return; }
+ if(QI>=Q.length){ clearMark(); speaking=null; updSay(); var cb=TTS_DONE; TTS_DONE=null; if(cb) cb(); return; }
+ markChunk(Q[QI]);
  var u=new SpeechSynthesisUtterance(Q[QI]), v=pickVoice();
  if(v){ u.voice=v; u.lang=v.lang; } else u.lang='es-ES';
  u.rate=S.rate||1; u.pitch=1; u.volume=1;
@@ -182,7 +200,7 @@ function speak(text,id,done){
   watch=setTimeout(function(){ if(my===gen&&!started&&!ss.speaking){ gen++; speaking=null; updSay(); ttsHelp(); } },3000);
  },450);
 }
-function stopSpeak(){ TTS_DONE=null; gen++; clearTimeout(watch); if(TTS){ try{ speechSynthesis.cancel(); }catch(e){} } speaking=null; }
+function stopSpeak(){ clearMark(); TTS_DONE=null; gen++; clearTimeout(watch); if(TTS){ try{ speechSynthesis.cancel(); }catch(e){} } speaking=null; }
 if(TTS){ try{ speechSynthesis.getVoices(); }catch(e){} }
 
 function sayBtn(id,label){ var on=speaking===id; return '<button class="say'+(on?' on':'')+'" data-a="say" data-id="'+id+'" data-l="'+esc(label||'Escuchar')+'" aria-pressed="'+on+'">'+ic(on?'stop':'speaker',16)+'<span>'+(on?'Detener':(label||'Escuchar'))+'</span></button>'; }
@@ -403,6 +421,24 @@ function rosarySvg(cur){
  return {svg:out+'</svg>',x:curX};
 }
 
+/* ---------- Respuestas del pueblo ---------- */
+var WHOLE=/^(Acto penitencial|Señor, ten piedad|Gloria|Credo|Santo|Padre Nuestro|Cordero de Dios|Comunión espiritual)$/;
+var SPLITS=[['Santa María, Madre de Dios','Amén.'],['Danos hoy nuestro pan','Amén.'],['Como era en el principio','Amén.'],['Ruega por nosotros, santa Madre de Dios','Amén.']];
+var RESP=['Y con tu espíritu.','Te alabamos, Señor.','Gloria a ti, Señor Jesús.','Gloria a ti, Señor.','Lo tenemos levantado hacia el Señor.','Es justo y necesario.','Bendito seas por siempre, Señor.',
+ 'El Señor reciba de tus manos este sacrificio, para alabanza y gloria de su nombre, para nuestro bien y el de toda su santa Iglesia.','Señor, no soy digno de que entres en mi casa, pero una palabra tuya bastará para sanarme.',
+ 'Anunciamos tu muerte, proclamamos tu resurrección. ¡Ven, Señor Jesús!','Demos gracias a Dios, aleluya, aleluya.','Demos gracias a Dios.','Te rogamos, óyenos.','Tuyo es el reino, tuyo el poder y la gloria, por siempre, Señor.','Aleluya, aleluya, aleluya.','Honor y gloria a ti, Señor Jesús.','Amén.'];
+function fmt(text,whole){
+ var t=esc(text);
+ if(whole) return '<span class="resp">'+t+'</span>';
+ var marks=[];
+ SPLITS.forEach(function(sp){ var a=esc(sp[0]), i=0, k;
+  while((k=t.indexOf(a,i))>=0){ var e=t.indexOf(esc(sp[1]),k); e=e<0?t.length:e+sp[1].length; marks.push([k,e]); i=e; } });
+ RESP.forEach(function(r){ var a=esc(r), i=0, k; while((k=t.indexOf(a,i))>=0){ var e=k+a.length; if(!marks.some(function(m){ return k<m[1]&&e>m[0]; })) marks.push([k,e]); i=e; } });
+ marks.sort(function(x,y){ return x[0]-y[0]; });
+ var out='', pos=0; marks.forEach(function(m){ if(m[0]<pos) return; out+=t.slice(pos,m[0])+'<span class="resp">'+t.slice(m[0],m[1])+'</span>'; pos=m[1]; });
+ return out+t.slice(pos);
+}
+
 /* ---------- Pantallas ---------- */
 var LCOL={green:'#3E9B4F',purple:'#7A4FC0',white:'#F2F2EE',red:'#D23B3B',rose:'#E68AB3',black:'#222'};
 function litBadge(info){ return '<span class="row small" style="gap:8px"><i class="ldot" style="background:'+(LCOL[info.cel.c]||'#999')+'"></i><span class="muted">'+esc(info.colorName)+' · '+esc(info.seasonName||'')+' · Ciclo '+info.cycle+(info.sunday?'':' · Año '+info.wcyc)+'</span></span>'; }
@@ -455,7 +491,7 @@ function vHoy(){
   s.parts.forEach(function(p){
    var isR=!!p.ref, body;
    if(p.verses&&p.verses.length) body='<p class="verses">'+p.verses.map(function(v){ return '<sup>'+v.v+'</sup>'+esc(v.t); }).join(' ')+'</p>';
-   else body='<p class="ptext">'+esc(p.missing?p.text.replace(/^[^.]*\.\s*/,''):p.text)+'</p>';
+   else body='<p class="ptext">'+(p.missing?esc(p.text.replace(/^[^.]*\.\s*/,'')):fmt(p.text,WHOLE.test(p.h)))+'</p>';
    out+='<details class="part'+(p.gospel?' gos':'')+'" data-part="'+p.i+'"'+(isR?' open':'')+'><summary><span class="stack" style="gap:2px;min-width:0"><b>'+esc(p.h)+'</b>'+(p.ref?'<span class="small ref">'+esc(p.ref)+'</span>':'')+'</span><button class="pbtn" data-a="massFrom" data-v="'+p.i+'" aria-label="Escuchar desde '+esc(p.h)+'">'+ic('play',14)+'</button></summary>'+body+'</details>';
   });
   out+='</section>';
@@ -476,7 +512,7 @@ function vRosary(){
   +'<div class="panel"><span class="label ac">'+set[0]+' · '+mys+'</span><h3 style="font-size:26px">'+esc(myst)+'</h3></div>'
   +strip
   +'<div class="stack" style="align-items:center;gap:2px">'+cnt+'<span class="label">'+(s.k==='am'?'Ave María':'Cuenta '+(i+1)+' de '+STEPS.length)+'</span></div>'
-  +'<div class="prayer"><p>'+esc(stepText(s))+'</p><div class="between">'+sayBtn('ros-'+i)+'<button class="say" id="rosBtn" data-a="rosPlay"></button></div></div>'
+  +'<div class="prayer"><p>'+fmt(stepText(s))+'</p><div class="between">'+sayBtn('ros-'+i)+'<button class="say" id="rosBtn" data-a="rosPlay"></button></div></div>'
   +'<div class="ctl"><button class="icon-btn" data-a="rprev" aria-label="Cuenta anterior">'+ic('undo',22)+'</button><button class="btn" data-a="rnext">Siguiente cuenta</button></div>';
 }
 
@@ -511,7 +547,7 @@ function vPray(){
  if(!pr){ loadPrayer(id).then(render,function(){ toast('No se pudo cargar la oración. Revisa tu conexión.'); }); return back+loading(); }
  var rut=RUT.some(function(r){ return r[0]===id; });
  return back+'<div>'+sayBtn('pray-'+id)+'</div>'
-  +pr.parts.map(function(p){ return '<div class="panel" style="gap:8px">'+(p.h?'<span class="label ac">'+esc(p.h)+'</span>':'')+'<p class="ptext">'+esc(p.text)+'</p></div>'; }).join('')
+  +pr.parts.map(function(p){ return '<div class="panel" style="gap:8px">'+(p.h?'<span class="label ac">'+esc(p.h)+'</span>':'')+'<p class="ptext">'+fmt(p.text)+'</p></div>'; }).join('')
   +(rut?'<button class="btn'+(isDone(id)?' soft':'')+'" data-a="done" data-id="'+id+'">'+(isDone(id)?'Rezada hoy ✓':'Marcar como rezada')+'</button>':'');
 }
 
