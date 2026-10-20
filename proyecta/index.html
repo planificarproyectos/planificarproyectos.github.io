@@ -917,11 +917,16 @@ function fDate(ms){if(!ms)return '—';const d=new Date(ms);return d.getDate()+'
 function deepFill(base,data){if(Array.isArray(data))return data;if(data&&typeof data==='object'&&base&&typeof base==='object'&&!Array.isArray(base)){const o=Object.assign({},base);Object.keys(data).forEach(k=>o[k]=deepFill(base[k],data[k]));return o}return data===undefined?base:data}
 
 /* ---------- Estado ---------- */
-const prefs={user:'',theme:'system',accent:'#C6F135',last:null,screen:'inicio',sub:{modelo:'general',resultados:'flujo',control:'seguimiento'},per:'m',cols:['inicio'],desk:false};
+const prefs={user:'',theme:'system',accent:'#C6F135',last:null,screen:'inicio',sub:{modelo:'general',resultados:'flujo',control:'seguimiento'},per:'m',cols:['inicio'],colOrder:['inicio','modelo','resultados','control','comparar'],desk:false};
 function normPrefs(){prefs.cols=Array.isArray(prefs.cols)?prefs.cols.filter(c=>COLS.includes(c)):['inicio'];prefs.cols=[...new Set(prefs.cols)];if(!prefs.cols.length)prefs.cols=['inicio'];
+  const o=Array.isArray(prefs.colOrder)?prefs.colOrder.filter(c=>COLS.includes(c)):[];prefs.colOrder=[...new Set([...(o.length?o:prefs.cols),...COLS])];syncColOrder();
   prefs.sub=Object.assign({modelo:'general',resultados:'flujo',control:'seguimiento'},prefs.sub||{});prefs.desk=!!prefs.desk}
+/* Columnas en computador: colOrder guarda el lugar de todas las secciones, abiertas o cerradas; cols son las abiertas.
+   syncColOrder pasa el orden de las abiertas a sus casillas sin mover las cerradas; showCol reabre una sección en su lugar */
+function syncColOrder(){const o=prefs.colOrder,idx=o.map((c,i)=>prefs.cols.includes(c)?i:-1).filter(i=>i>=0);idx.forEach((i,k)=>o[i]=prefs.cols[k])}
+function showCol(s){if(!prefs.colOrder.includes(s))prefs.colOrder.push(s);prefs.cols=prefs.colOrder.filter(c=>c===s||prefs.cols.includes(c))}
 /* Ajustes que se aplican al instante en los demás dispositivos; la navegación (pantalla, subpestaña, proyecto abierto) solo se toma al abrir la app */
-const LIVE_PREFS=['theme','accent','desk','per','cols','webHint2'];
+const LIVE_PREFS=['theme','accent','desk','per','cols','colOrder','webHint2'];
 /* Los ajustes se guardan en la cuenta (documento "ajustes" junto a los proyectos), nunca en el navegador */
 function savePrefs(){if(ST.mode!=='fb'||!ST.fbCol)return;clearTimeout(ST.prefT);
   ST.prefT=setTimeout(()=>{const d=clone(prefs);ST.prefsSent=JSON.stringify(LIVE_PREFS.map(k=>prefs[k]));ST.fbCol.doc('ajustes').set(Object.assign(d,{upd:Date.now()})).catch(()=>{})},400)}
@@ -1115,18 +1120,18 @@ const NAMES={inicio:'Inicio',modelo:'Modelo',resultados:'Resultados',control:'Co
 function visible(){return ST.web?prefs.cols.slice():[ST.screen==='cuenta'?'cuenta':ST.screen]}
 function shown(id){const el=$('#s-'+id);return el&&!el.hidden}
 function go(s){if(!SCREENS.includes(s))s='inicio';
-  if(ST.web){if(s==='cuenta'){ST.cuentaOpen=true}else if(!prefs.cols.includes(s)){prefs.cols.push(s);savePrefs()}renderScreen();
+  if(ST.web){if(s==='cuenta'){ST.cuentaOpen=true}else if(!prefs.cols.includes(s)){showCol(s);savePrefs()}renderScreen();
     if(s!=='cuenta'){const el=$('#s-'+s);if(el){el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')}}return}
   ST.screen=s;prefs.screen=s;savePrefs();window.scrollTo(0,0);renderScreen()}
 function navTap(s){
   if(!ST.web){go(s);return}
   if(s==='cuenta'){ST.cuentaOpen=!ST.cuentaOpen;renderScreen();return}
   if(prefs.cols.includes(s)){if(prefs.cols.length===1){toast('Debe quedar al menos una sección visible');return}prefs.cols=prefs.cols.filter(c=>c!==s)}
-  else prefs.cols.push(s);
+  else showCol(s);
   savePrefs();renderScreen();
   if(prefs.cols.includes(s)){const el=$('#s-'+s);if(el){el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')}}
 }
-function moveCol(id,d){const i=prefs.cols.indexOf(id),j=i+d;if(i<0||j<0||j>=prefs.cols.length)return;const a=prefs.cols;[a[i],a[j]]=[a[j],a[i]];savePrefs();renderScreen()}
+function moveCol(id,d){const i=prefs.cols.indexOf(id),j=i+d;if(i<0||j<0||j>=prefs.cols.length)return;const a=prefs.cols;[a[i],a[j]]=[a[j],a[i]];syncColOrder();savePrefs();renderScreen()}
 function navState(){$$('.nav button').forEach(b=>{const k=b.dataset.go;
   if(ST.web){b.removeAttribute('aria-current');b.setAttribute('aria-pressed',k==='cuenta'?ST.cuentaOpen:prefs.cols.includes(k));b.title=(k==='cuenta'?'Abrir o cerrar ':'Mostrar u ocultar ')+NAMES[k]}
   else{b.removeAttribute('aria-pressed');b.removeAttribute('title');k===ST.screen?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current')}})}
@@ -1998,7 +2003,7 @@ document.addEventListener('pointermove',e=>{if(!DRAG)return;const dx=e.clientX-D
   const x=idx===0?rects[0].left-7:rects[idx-1].right+5;line.hidden=false;line.style.left=x+'px';line.style.top=top+'px';line.style.height=h+'px'});
 function endDrag(){if(!DRAG)return;const d=DRAG;DRAG=null;$('#dropLine').hidden=true;d.sec.classList.remove('dragging');d.sec.style.transform='';
   if(!d.moved)return;const others=prefs.cols.filter(c=>c!==d.id);others.splice(d.idx,0,d.id);
-  if(others.join()!==prefs.cols.join()){prefs.cols=others;savePrefs();renderScreen()}}
+  if(others.join()!==prefs.cols.join()){prefs.cols=others;syncColOrder();savePrefs();renderScreen()}}
 document.addEventListener('pointerup',endDrag);document.addEventListener('pointercancel',endDrag);
 function importPaste(){
   const txt=($('#pasteArea')||{}).value||'';const P=ST.P;const F=P.real.filas;let n=0;
