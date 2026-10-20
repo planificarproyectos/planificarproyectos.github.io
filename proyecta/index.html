@@ -377,6 +377,10 @@ body.desk .instbar{left:auto;right:20px;bottom:20px;transform:none}
 .cmpt tr.sec td{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--muted);padding-top:14px}
 .cmpt td.best{color:var(--acc-ink);font-weight:800}
 .cmpt .win{display:inline-block;margin-left:5px;font-size:11px}
+.rank{display:grid;gap:22px}
+@container scr (min-width:760px){.rank{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.cmpt th.c0,.cmpt td.c0{position:sticky;left:0;z-index:2;background:var(--panel)}
+.cmpt th.c0{z-index:3}
 .hsc{font-size:16px}.hsc.ok{color:var(--acc-ink)}.hsc.warn{color:var(--warn)}.hsc.crit{color:var(--neg)}
 /* Inicio: bloques y tablero técnico */
 .blk{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--muted);display:flex;align-items:center;gap:10px;margin-top:10px}
@@ -1588,12 +1592,14 @@ function renderSens(){
 }
 
 /* ---------- COMPARAR ---------- */
-/* Cada proyecto conserva su color por casilla (hasta 4): quitar uno no repinta a los demás */
+/* Con hasta 4 proyectos cada uno conserva su color por casilla (quitar uno no repinta a los demás).
+   Con más de 4 los gráficos cambian a ranking y a líneas grises con el proyecto abierto resaltado */
 const CMP_COLS=['var(--chart-pos)','var(--ink)','var(--muted)','var(--chart-neu)'];
+const byUpd=ids=>ids.sort((a,b)=>(ST.projects[b].actualizado||0)-(ST.projects[a].actualizado||0));
 function cmpSlots(){
-  let s=Array.isArray(prefs.cmp)?prefs.cmp.slice(0,4):null;
-  if(!s){s=[];Object.keys(ST.projects).sort((a,b)=>(ST.projects[b].actualizado||0)-(ST.projects[a].actualizado||0)).slice(0,3).forEach(id=>s.push(id))}
-  while(s.length<4)s.push(null);return s.map(id=>id&&ST.projects[id]?id:null);
+  let s=Array.isArray(prefs.cmp)?prefs.cmp.map(id=>id&&ST.projects[id]?id:null):byUpd(Object.keys(ST.projects));
+  if(s.length>4&&s.filter(Boolean).length<=4)s=s.filter(Boolean);
+  while(s.length<4)s.push(null);return s;
 }
 const CMPC={};
 function cmpResult(id){if(id===ST.pid&&ST.P&&ST.R)return {P:ST.P,R:ST.R};const d=ST.projects[id];if(!d)return null;const key=(d.actualizado||0)+'|'+JSON.stringify(ST.macro);
@@ -1639,28 +1645,37 @@ function cmpBars(L){
     s+=`<text x="${Lp+i*g+g/2}" y="${H-10}" text-anchor="middle" style="fill:var(--ink)">${l}</text>`});
   return s+'</svg>';
 }
+/* Más de 4 proyectos: un ranking por indicador, un solo color y el proyecto abierto resaltado */
+function cmpRank(L){
+  const ms=[['Margen antes de impuestos',r=>r.margen,1],['Margen neto',r=>r.margenNeto,1],['TIR inversionista',r=>r.tirI,1],['Exposición sobre ventas',r=>r.expo/(r.ventas||1),-1]];
+  return `<div class="rank">${ms.map(([l,f,dir])=>{const rows=L.map(p=>({p,v:f(p.R)})).filter(x=>x.v!=null&&isFinite(x.v)).sort((a,b)=>dir*(b.v-a.v));
+    const mx=Math.max(...rows.map(x=>Math.abs(x.v)))||1;
+    return `<div><div class="sut"><b>${l}</b><span>${dir>0?'Mayor es mejor':'Menor es mejor'}</span></div><div class="bars">${rows.map(({p,v})=>`<div class="bar" title="${esc(p.d.nombre)}: ${fP(v)}"><span${p.id===ST.pid?' style="font-weight:800"':''}>${esc(p.d.nombre||'Proyecto')}</span><div class="track"><div class="fill${v<0?' neg':p.id===ST.pid?' util':''}" style="width:${Math.abs(v)/mx*100}%"></div></div><span class="amt">${fP(v)}</span></div>`).join('')}</div></div>`}).join('')}</div>`;
+}
 function cmpCash(L){
+  const many=L.length>4,col=p=>many?(p.id===ST.pid?'var(--chart-pos)':'var(--muted)'):CMP_COLS[p.slot];
+  if(many)L=L.slice().sort((a,b)=>(a.id===ST.pid)-(b.id===ST.pid));
   const n=Math.max(...L.map(p=>p.R.rows.cumEq.length)),W=640,H=240,Lp=58,Rr=10,T=14,B=26,cw=W-Lp-Rr,ch=H-T-B;
   const ser=L.map(p=>p.R.rows.cumEq.map(v=>v/1e6));let mx=Math.max(0,...ser.flat()),mn=Math.min(0,...ser.flat());const st=nice(mx-mn||1);mx=Math.ceil(mx/st)*st;mn=Math.floor(mn/st)*st;
   const x=i=>Lp+i/Math.max(1,n-1)*cw,y=v=>T+(mx-v)/((mx-mn)||1)*ch;
   let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:480px" role="img" aria-label="Caja acumulada de los socios por proyecto">`;
   for(let v=mn;v<=mx+1e-9;v+=st)s+=`<line x1="${Lp}" x2="${W-Rr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${Math.abs(v)<1e-9?1.2:.6}"/><text x="${Lp-6}" y="${y(v)+3}" text-anchor="end">${nf(v)}</text>`;
   const stp=Math.max(6,Math.ceil(n/8/6)*6);for(let i=0;i<n;i+=stp)s+=`<text x="${x(i)}" y="${H-6}" text-anchor="middle">Mes ${i}</text>`;
-  L.forEach((p,k)=>{const v=ser[k],iMin=v.indexOf(Math.min(...v));
-    s+=`<polyline fill="none" stroke="${CMP_COLS[p.slot]}" stroke-width="2" stroke-linejoin="round" points="${v.map((a,i)=>`${x(i)},${y(a)}`).join(' ')}"><title>${esc(p.d.nombre)}</title></polyline>`;
-    s+=`<circle cx="${x(iMin)}" cy="${y(v[iMin])}" r="4" fill="${CMP_COLS[p.slot]}" stroke="var(--panel)" stroke-width="2"><title>${esc(p.d.nombre)} · exposición máxima ${fM(v[iMin]*1e6)} en el mes ${iMin}</title></circle>`});
+  L.forEach((p,k)=>{const v=ser[k],iMin=v.indexOf(Math.min(...v)),hi=!many||p.id===ST.pid;
+    s+=`<polyline fill="none" stroke="${col(p)}" stroke-width="${hi?2:1.2}"${hi?'':' opacity=".55"'} stroke-linejoin="round" points="${v.map((a,i)=>`${x(i)},${y(a)}`).join(' ')}"><title>${esc(p.d.nombre)}</title></polyline>`;
+    if(hi)s+=`<circle cx="${x(iMin)}" cy="${y(v[iMin])}" r="4" fill="${col(p)}" stroke="var(--panel)" stroke-width="2"><title>${esc(p.d.nombre)} · exposición máxima ${fM(v[iMin]*1e6)} en el mes ${iMin}</title></circle>`});
   return s+'</svg>';
 }
 function renderComparar(){
   const host=$('#s-comparar'),ids=Object.keys(ST.projects);
-  let h=`<div class="screen-head"><div><h1>Comparar</h1><p>Elige de 2 a 4 proyectos para verlos lado a lado.</p></div></div>`;
+  let h=`<div class="screen-head"><div><h1>Comparar</h1><p>Elige los proyectos que quieras ver lado a lado, o todos.</p></div></div>`;
   if(ids.length<2){host.innerHTML=h+`<div class="card"><h3>Necesitas al menos 2 proyectos</h3><p class="sub">Crea otro proyecto o un ejemplo para comparar.</p><div class="row">${ST.readOnly?'':exBtns('','Ejemplo ')}</div></div>`;return}
-  const slots=cmpSlots();
-  h+=`<div class="card"><h3>Proyectos</h3><p class="sub">Toca un proyecto para sumarlo o quitarlo. Máximo 4.</p><div class="cmpsel">${ids.sort((a,b)=>(ST.projects[b].actualizado||0)-(ST.projects[a].actualizado||0)).map(id=>{const k=slots.indexOf(id);
-    return `<button class="chip" data-act="cmp-toggle" data-id="${id}" aria-pressed="${k>=0}">${k>=0?`<i style="background:${CMP_COLS[k]}"></i>`:''}${esc(ST.projects[id].nombre||'Proyecto')}</button>`}).join('')}</div></div>`;
+  const slots=cmpSlots(),nSel=slots.filter(Boolean).length,many=nSel>4;
+  h+=`<div class="card"><div class="between"><h3>Proyectos · ${nSel} de ${ids.length}</h3><div class="row"><button class="btn sm" data-act="cmp-all"${nSel===ids.length?' disabled':''}>Todos</button><button class="btn sm" data-act="cmp-none"${nSel?'':' disabled'}>Ninguno</button></div></div><p class="sub">Toca un proyecto para sumarlo o quitarlo.${many?' Con más de 4, los gráficos resaltan el proyecto abierto.':''}</p><div class="cmpsel">${byUpd(ids).map(id=>{const k=slots.indexOf(id);
+    return `<button class="chip" data-act="cmp-toggle" data-id="${id}" aria-pressed="${k>=0}">${k>=0&&!many?`<i style="background:${CMP_COLS[k]}"></i>`:''}${esc(ST.projects[id].nombre||'Proyecto')}</button>`}).join('')}</div></div>`;
   const L=slots.map((id,slot)=>{if(!id)return null;const c=cmpResult(id);return c&&c.R?{id,slot,d:ST.projects[id],P:c.P,R:c.R}:null}).filter(Boolean);
   if(L.length<2){host.innerHTML=h+`<div class="empty">Elige al menos 2 proyectos.</div>`;return}
-  const head=`<tr><th class="c0">Indicador</th>${L.map(p=>`<th class="cmph"><span class="cmpn"><i style="background:${CMP_COLS[p.slot]}"></i>${esc(p.d.nombre||'Proyecto')}</span><small>${esc(p.d.ciudad||'')} · ${tipoDe(p.P)}</small>${p.id===ST.pid?'<small class="cur">Abierto</small>':`<button class="lnk" data-act="proj-select" data-id="${p.id}">Abrir</button>`}</th>`).join('')}</tr>`;
+  const head=`<tr><th class="c0">Indicador</th>${L.map(p=>`<th class="cmph"><span class="cmpn">${many?'':`<i style="background:${CMP_COLS[p.slot]}"></i>`}${esc(p.d.nombre||'Proyecto')}</span><small>${esc(p.d.ciudad||'')} · ${tipoDe(p.P)}</small>${p.id===ST.pid?'<small class="cur">Abierto</small>':`<button class="lnk" data-act="proj-select" data-id="${p.id}">Abrir</button>`}</th>`).join('')}</tr>`;
   const body=CMP_ROWS.map(r=>{if(r.length===1)return `<tr class="sec"><td class="c0" colspan="${L.length+1}">${r[0]}</td></tr>`;
     const [l,g,f,dir]=r,vs=L.map(p=>{const v=g(p.P,p.R);return v==null||!isFinite(v)?null:v});const ok=vs.filter(v=>v!=null);
     const best=dir&&ok.length>1&&Math.max(...ok)!==Math.min(...ok)?(dir>0?Math.max(...ok):Math.min(...ok)):null;
@@ -1668,11 +1683,14 @@ function renderComparar(){
   const hl=L.map(p=>healthData(p.P,p.R)),sc=hl.map(d=>Math.round(sum(d.map(x=>x[1]==='ok'?100:x[1]==='warn'?60:20))/d.length));
   const pill=s=>`<span class="pill ${s}"><svg viewBox="0 0 24 24" aria-hidden="true">${STICO[s]}</svg>${STAT[s]}</span>`;
   const health=`<tr><td class="c0"><b>Puntaje general</b></td>${sc.map(v=>{const s=v>=85?'ok':v>=60?'warn':'crit';return `<td><b class="hsc ${s}">${v}</b></td>`}).join('')}</tr>`+hl[0].map((row,i)=>`<tr><td class="c0">${row[0]}</td>${hl.map(d=>`<td title="${esc(d[i][2])}">${pill(d[i][1])}</td>`).join('')}</tr>`).join('');
-  const legend=`<div class="legend">${L.map(p=>`<span style="--c:${CMP_COLS[p.slot]}">${esc(p.d.nombre||'Proyecto')}</span>`).join('')}</div>`;
+  const open=L.find(p=>p.id===ST.pid);
+  const legend=many?`<div class="legend">${open?`<span style="--c:var(--chart-pos)">${esc(open.d.nombre)} (abierto)</span>`:''}<span style="--c:var(--muted)">${open?'Otros proyectos':'Proyectos'} · pasa el cursor para ver el nombre</span></div>`
+    :`<div class="legend">${L.map(p=>`<span style="--c:${CMP_COLS[p.slot]}">${esc(p.d.nombre||'Proyecto')}</span>`).join('')}</div>`;
   h+=`<div class="grid2">
     <div class="card span2"><h3>Indicadores</h3><p class="sub">El ✓ marca el mejor valor de cada fila. Los resultados se calculan con los supuestos macro actuales.</p><div class="tbl-wrap"><table class="cmpt"><thead>${head}</thead><tbody>${body}</tbody></table></div></div>
-    <div class="card"><h3>Márgenes, TIR y exposición</h3><p class="sub">Porcentajes. En exposición, menos es mejor.</p><div class="chart-x">${cmpBars(L)}</div>${legend}</div>
-    <div class="card"><h3>Caja acumulada de los socios</h3><p class="sub">Millones de pesos desde el mes 0 de cada proyecto. El punto marca la exposición máxima.</p><div class="chart-x">${cmpCash(L)}</div>${legend}</div>
+    ${many?`<div class="card span2"><h3>Ranking de márgenes, TIR y exposición</h3><p class="sub">De mejor a peor en cada indicador.${open?' El proyecto abierto va resaltado.':''}</p>${cmpRank(L)}</div>`
+      :`<div class="card"><h3>Márgenes, TIR y exposición</h3><p class="sub">Porcentajes. En exposición, menos es mejor.</p><div class="chart-x">${cmpBars(L)}</div>${legend}</div>`}
+    <div class="card${many?' span2':''}"><h3>Caja acumulada de los socios</h3><p class="sub">Millones de pesos desde el mes 0 de cada proyecto. El punto marca la exposición máxima.</p><div class="chart-x">${cmpCash(L)}</div>${legend}</div>
     <div class="card span2"><h3>Semáforo de salud</h3><p class="sub">Mismos criterios del semáforo de Inicio, donde puedes ver el detalle de cada proyecto.</p><div class="tbl-wrap"><table class="cmpt"><thead>${head}</thead><tbody>${health}</tbody></table></div></div>
   </div>`;
   host.innerHTML=h;
@@ -1826,8 +1844,10 @@ document.addEventListener('click',async e=>{
     case 'rsub':prefs.sub.resultados=b.dataset.k;savePrefs();rr('resultados');break;
     case 'csub':prefs.sub.control=b.dataset.k;savePrefs();ST.confirm=null;rr('control');break;
     case 'cmp-toggle':{const s=cmpSlots(),id=b.dataset.id,i=s.indexOf(id);
-      if(i>=0)s[i]=null;else{const j=s.indexOf(null);if(j<0){toast('Puedes comparar hasta 4 proyectos');break}s[j]=id}
+      if(i>=0)s[i]=null;else{const j=s.indexOf(null);if(j<0)s.push(id);else s[j]=id}
       prefs.cmp=s;savePrefs();rr('comparar');break}
+    case 'cmp-all':prefs.cmp=byUpd(Object.keys(ST.projects));savePrefs();rr('comparar');break;
+    case 'cmp-none':prefs.cmp=[];savePrefs();rr('comparar');break;
     case 'per':prefs.per=b.dataset.k;savePrefs();rr('resultados');break;
     case 'col-hide':navTap(b.dataset.k);break;
     case 'col-left':moveCol(b.dataset.k,-1);break;
