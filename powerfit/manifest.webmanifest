@@ -5,7 +5,7 @@
   "lang": "es",
   "start_url": "./",
   "scope": "./",
-  "id": "./",
+  "id": "/powerfit/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#111315",
