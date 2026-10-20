@@ -469,7 +469,7 @@ const CAPITULOS_BASE=[
 
 function newProject(kind){
   const P={
-    general:{nombre:'Torre Aurora (ejemplo)',ciudad:'Medellín',fecha:'2027-01',vehiculo:'fiducia',tasaDesc:15,margenMin:12},
+    general:{nombre:'Torre Aurora (ejemplo No VIS)',ciudad:'Medellín',fecha:'2027-01',vehiculo:'fiducia',tasaDesc:15,margenMin:12},
     etapas:[
       {id:'e1',nombre:'Etapa 1 · Torre A',tipo:'NoVIS',topeEsp:true,inicioVentas:1,velocidad:9,curva:'lanzamiento',curvaPers:[],incPrecio:0.4,descuento:2,pe:60,mesMinObra:6,mesesObra:22,mesesEsc:4,pisos:18,factorConst:1.32,credPct:65,salaVentas:450000000,fidPreventa:4500000,fidAdmin:6500000},
       {id:'e2',nombre:'Etapa 2 · Torre B',tipo:'NoVIS',topeEsp:true,inicioVentas:15,velocidad:8,curva:'constante',curvaPers:[],incPrecio:0.4,descuento:2,pe:60,mesMinObra:20,mesesObra:20,mesesEsc:4,pisos:16,factorConst:1.32,credPct:65,salaVentas:120000000,fidPreventa:4500000,fidAdmin:6500000}
@@ -502,8 +502,35 @@ function newProject(kind){
     P.tipologias=[{id:'t1',etapa:'e1',nombre:'Tipo A',clase:'apto',unidades:100,area:60,precio:7800000,primaPiso:0,pctVista:0,primaVista:0}];
     P.costos.lote.valor=4500000000;P.socios=[{id:'s1',nombre:'Socio A',part:100,aportaLote:false}];
   }
+  if(kind==='vis'||kind==='vip')socialExample(P,kind);
   return P;
 }
+/* Ejemplos de vivienda de interés social: precios bajo el tope, subsidios, obra más económica y ventas más rápidas */
+function socialExample(P,kind){
+  const vip=kind==='vip',f=vip?.66:.76;
+  Object.assign(P.general,vip?{nombre:'Ciudadela Los Nogales (ejemplo VIP)',ciudad:'Soacha',tasaDesc:13,margenMin:9}:{nombre:'Conjunto Arrayanes (ejemplo VIS)',ciudad:'Mosquera',tasaDesc:14,margenMin:10});
+  const et={tipo:vip?'VIP':'VIS',topeEsp:false,incPrecio:0.3,descuento:1,pe:60,credPct:vip?70:60,factorConst:1.22,fidPreventa:3500000,fidAdmin:5500000};
+  P.etapas=[
+    Object.assign(clone(P.etapas[0]),et,{nombre:vip?'Etapa 1 · Torres 1 y 2':'Etapa 1 · Torre 1',inicioVentas:1,velocidad:vip?18:14,curva:'lanzamiento',mesMinObra:5,mesesObra:vip?16:18,mesesEsc:5,pisos:vip?10:12,salaVentas:vip?180000000:250000000}),
+    Object.assign(clone(P.etapas[1]),et,{nombre:vip?'Etapa 2 · Torres 3 y 4':'Etapa 2 · Torre 2',inicioVentas:vip?12:14,velocidad:vip?16:12,curva:'constante',mesMinObra:16,mesesObra:vip?15:17,mesesEsc:5,pisos:vip?10:12,salaVentas:60000000})];
+  const apto=(id,e,n,u,a,p)=>({id,etapa:e,nombre:n,clase:'apto',unidades:u,area:a,precio:p,primaPiso:vip?0:0.3,pctVista:0,primaVista:0});
+  P.tipologias=vip?[
+    apto('t1','e1','Tipo A · 2 alcobas',140,40,4150000),apto('t2','e1','Tipo B · 2 alcobas + estudio',100,43,3900000),
+    apto('t3','e2','Tipo A · 2 alcobas',120,40,4200000),apto('t4','e2','Tipo B · 2 alcobas + estudio',80,43,3950000)]:[
+    apto('t1','e1','Tipo A · 2 alcobas',120,48,4600000),apto('t2','e1','Tipo B · 3 alcobas',72,56,4350000),
+    {id:'t3',etapa:'e1',nombre:'Parqueaderos',clase:'parq',unidades:60,area:0,precio:22000000,primaPiso:0,pctVista:0,primaVista:0},
+    apto('t4','e2','Tipo A · 2 alcobas',100,48,4700000),apto('t5','e2','Tipo B · 3 alcobas',60,56,4450000),
+    {id:'t6',etapa:'e2',nombre:'Parqueaderos',clase:'parq',unidades:50,area:0,precio:22000000,primaPiso:0,pctVista:0,primaVista:0}];
+  Object.assign(P.ventas,vip?{separacion:500000,ciPct:15,pctCesantias:30,pctPrimas:10,desistPct:12,subsidioPct:75,subsidioSMMLV:30,cajaPct:55,cajaSMMLV:20,rezagoSubsidio:3}
+    :{separacion:1000000,ciPct:20,pctCesantias:25,pctPrimas:10,desistPct:9,subsidioPct:55,subsidioSMMLV:20,cajaPct:40,cajaSMMLV:15,rezagoSubsidio:3});
+  P.costos.capitulos.forEach(c=>c.valor=Math.round(c.valor*f/1000)*1000);
+  Object.assign(P.costos,{disenos:2.5,interventoria:2,otrosInd:2.5,publicidad:0.8,gerencia:2.5,comision:1.2,adminNoVend:150000});
+  P.costos.lote.valor=vip?3600000000:5500000000;
+  P.costos.licencias=Object.assign(P.costos.licencias,{curaduria:vip?110000000:140000000,cargas:vip?250000000:400000000});
+  P.impuestos.devIva=true;
+}
+const EJEMPLOS=[['example','No VIS'],['vis','VIS'],['vip','VIP']];
+const exBtns=(cls,pre,dis)=>EJEMPLOS.map(([k,l])=>`<button class="btn${cls}" data-act="proj-new" data-kind="${k}"${dis?' disabled':''}>${pre}${l}</button>`).join('');
 
 /* ---- Calendario e índices macro ---- */
 function makeCal(P,M,H){
@@ -1233,7 +1260,7 @@ function renderInicio(){
   let html=`<div class="hello"><div class="date">${DIAS[now.getDay()]}, ${now.getDate()} ${MES[now.getMonth()]}</div><h1>${h<12?'Buenos días':h<19?'Buenas tardes':'Buenas noches'}${name?', '+esc(name.split(' ')[0]):''}</h1></div>`;
   if(!ST.P){
     html+=`<div class="card"><h3>Base de proyectos vacía</h3><p class="sub">Todavía no hay proyectos en la base central. Crea el primero para empezar a modelar.</p>
-      ${ST.readOnly?'<p class="muted">Tienes acceso de solo lectura. Pide a un editor que cree el primer proyecto.</p>':'<div class="row"><button class="btn pri" data-act="proj-new" data-kind="example">Crear proyecto de ejemplo</button><button class="btn" data-act="proj-new" data-kind="blank">Proyecto en blanco</button></div>'}</div>`;
+      ${ST.readOnly?'<p class="muted">Tienes acceso de solo lectura. Pide a un editor que cree el primer proyecto.</p>':'<div class="row"><button class="btn pri" data-act="proj-new" data-kind="blank">Proyecto en blanco</button>'+exBtns('',"Ejemplo ")+'</div>'}</div>`;
     host.innerHTML=html;return;
   }
   const P=ST.P,R=ST.R,G=P.general;
@@ -1557,7 +1584,7 @@ function renderCuenta(){
   <div class="label">Datos</div>
   <div class="card set"><div class="set-row"><div><div class="t">Almacenamiento</div><div class="d">${ST.mode==='fb'?'En tu cuenta, sincronizado entre tus dispositivos. Solo tú puedes verlo.':ST.mode==='db'?'Base central compartida con tu equipo.':'Solo en este dispositivo.'}</div></div><span class="tag acc">${ST.mode==='fb'?'Cuenta':ST.mode==='db'?'Central':'Local'}</span></div>
   <div class="set-row"><div><div class="t">Proyectos</div><div class="d">${nProj} proyecto(s)</div></div><button class="btn sm" data-act="proj-open">Administrar</button></div>
-  <div class="set-row"><div><div class="t">Proyecto de ejemplo</div><div class="d">Crea una copia del ejemplo para practicar.</div></div><button class="btn sm" data-act="proj-new" data-kind="example"${ST.readOnly?' disabled':''}>Crear</button></div></div>
+  <div class="set-row"><div><div class="t">Proyectos de ejemplo</div><div class="d">Crea una copia de un ejemplo No VIS, VIS o VIP para practicar.</div></div><div class="row">${exBtns(' sm','',ST.readOnly)}</div></div></div>
   <a class="acard hl" target="_blank" rel="noopener" href="${esc(window.WELLNESS_APPS_URL||'https://www.planificarproyectos.com/wellness-apps/')}">${wic('apps')}<span class="grow"><b>Conoce más Wellness Apps</b><span>Mind Focus, PowerFit y Lumen en un solo lugar</span></span>${wic('chev',20)}</a>
   <p class="about">${ST.mode==='fb'?'Una cuenta para Mind Focus, PowerFit, Lumen y Proyecta':'Tus datos se guardan en este dispositivo'}<br>Proyecta · prototipo 0.5</p>`;
 }
@@ -1577,7 +1604,7 @@ function openProjects(){
   const list=Object.entries(ST.projects).sort((a,b)=>(b[1].actualizado||0)-(a[1].actualizado||0));
   openSheet(`<h2>Proyectos</h2><p class="muted" style="margin:0">${ST.mode==='db'?'Base central compartida con tu equipo.':'Guardados en este dispositivo.'}</p>
   <div class="port">${list.length?portfolioHtml():'<div class="empty">No hay proyectos.</div>'}</div>
-  ${ST.readOnly?'':`<div class="row"><button class="btn pri" data-act="proj-new" data-kind="blank">Nuevo en blanco</button><button class="btn" data-act="proj-new" data-kind="example">Nuevo de ejemplo</button>${ST.P?'<button class="btn" data-act="proj-dup">Duplicar actual</button>':''}</div>
+  ${ST.readOnly?'':`<div class="row"><button class="btn pri" data-act="proj-new" data-kind="blank">Nuevo en blanco</button>${exBtns('','Ejemplo ')}${ST.P?'<button class="btn" data-act="proj-dup">Duplicar actual</button>':''}</div>
   ${ST.P?`<div class="row" id="delRow">${ST.confirm==='proj'?`<span class="muted">¿Eliminar «${esc(ST.P.general.nombre)}» y sus versiones para todo el equipo?</span><button class="btn sm danger" data-act="proj-del">Sí, eliminar</button><button class="btn sm" data-act="cancel-sheet">Cancelar</button>`:`<button class="btn sm danger" data-act="ask-proj">Eliminar proyecto actual</button>`}</div>`:''}`}`);
 }
 
@@ -1660,7 +1687,7 @@ document.addEventListener('click',async e=>{
     case 'del-socio':if(!W())break;P.socios.splice(i,1);onModelChange(1);break;
     case 'proj-open':ST.confirm=null;openProjects();break;
     case 'proj-select':closeSheet();if(b.dataset.id!==ST.pid){selectProject(b.dataset.id);toast('Abriste '+(ST.P.general.nombre))}break;
-    case 'proj-new':if(!W())break;createProject(b.dataset.kind==='blank'?'blank':'example');break;
+    case 'proj-new':if(!W())break;createProject(['blank','vis','vip'].includes(b.dataset.kind)?b.dataset.kind:'example');break;
     case 'proj-dup':if(!W())break;createProject(null,ST.P);break;
     case 'ask-proj':ST.confirm='proj';openProjects();break;
     case 'cancel-sheet':ST.confirm=null;openProjects();break;
