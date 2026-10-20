@@ -21,8 +21,9 @@
 <script src="../wellness-soporte.js"></script>
 <style>:root{color-scheme:dark;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Proyecta</title>
-<script>/* Única excepción a "nada en el navegador": el tema (claro, oscuro o sistema) se recuerda aquí para abrir sin destello */
-try{var pjT=localStorage.getItem('proyecta:theme');if(pjT==='dark'||pjT==='light'){document.documentElement.setAttribute('data-theme',pjT);document.documentElement.setAttribute('data-early','')}}catch(e){}</script>
+<script>/* Arranca siempre en oscuro hasta que llega el tema de la cuenta; nada se guarda en el navegador */
+document.documentElement.setAttribute('data-theme','dark');document.documentElement.setAttribute('data-early','');
+try{localStorage.removeItem('proyecta:theme')}catch(e){}</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="theme-color" content="#0D0E0D">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -916,7 +917,7 @@ function fDate(ms){if(!ms)return '—';const d=new Date(ms);return d.getDate()+'
 function deepFill(base,data){if(Array.isArray(data))return data;if(data&&typeof data==='object'&&base&&typeof base==='object'&&!Array.isArray(base)){const o=Object.assign({},base);Object.keys(data).forEach(k=>o[k]=deepFill(base[k],data[k]));return o}return data===undefined?base:data}
 
 /* ---------- Estado ---------- */
-const prefs={user:'',theme:(()=>{try{const t=localStorage.getItem('proyecta:theme');return t==='dark'||t==='light'?t:'system'}catch(e){return 'system'}})(),accent:'#C6F135',last:null,screen:'inicio',sub:{modelo:'general',resultados:'flujo',control:'seguimiento'},per:'m',cols:['inicio'],desk:false};
+const prefs={user:'',theme:'system',accent:'#C6F135',last:null,screen:'inicio',sub:{modelo:'general',resultados:'flujo',control:'seguimiento'},per:'m',cols:['inicio'],desk:false};
 function normPrefs(){prefs.cols=Array.isArray(prefs.cols)?prefs.cols.filter(c=>COLS.includes(c)):['inicio'];prefs.cols=[...new Set(prefs.cols)];if(!prefs.cols.length)prefs.cols=['inicio'];
   prefs.sub=Object.assign({modelo:'general',resultados:'flujo',control:'seguimiento'},prefs.sub||{});prefs.desk=!!prefs.desk}
 /* Ajustes que se aplican al instante en los demás dispositivos; la navegación (pantalla, subpestaña, proyecto abierto) solo se toma al abrir la app */
@@ -1068,9 +1069,12 @@ function applyAccent(){
   set('--band2',`rgba(${hex2rgb(rgb2hex(chart)).join(',')},${dark?.05:.08})`);
   const m=$('meta[name=theme-color]');if(m)m.content=dark?'#0D0E0D':'#F3F4F0';
 }
-function applyTheme(){if(prefs.theme==='system'){HOST?root.setAttribute('data-theme',HOST):root.removeAttribute('data-theme')}else root.setAttribute('data-theme',prefs.theme);applyAccent();
-  try{localStorage.setItem('proyecta:theme',prefs.theme)}catch(e){}}
-new MutationObserver(()=>{const t=root.getAttribute('data-theme');if(prefs.theme==='system')HOST=t;else if(t!==prefs.theme){root.setAttribute('data-theme',prefs.theme);return}applyAccent()}).observe(root,{attributes:true,attributeFilter:['data-theme']});
+/* Hasta que llega el tema de la cuenta (o se abre sin cuenta) la app se mantiene en oscuro */
+let THEME_LIVE=false;
+function liveTheme(){if(!THEME_LIVE){THEME_LIVE=true;applyTheme()}}
+function applyTheme(){if(!THEME_LIVE){root.setAttribute('data-theme','dark');applyAccent();return}
+  if(prefs.theme==='system'){HOST?root.setAttribute('data-theme',HOST):root.removeAttribute('data-theme')}else root.setAttribute('data-theme',prefs.theme);applyAccent()}
+new MutationObserver(()=>{if(!THEME_LIVE){applyAccent();return}const t=root.getAttribute('data-theme');if(prefs.theme==='system')HOST=t;else if(t!==prefs.theme){root.setAttribute('data-theme',prefs.theme);return}applyAccent()}).observe(root,{attributes:true,attributeFilter:['data-theme']});
 try{matchMedia('(prefers-color-scheme: light)').addEventListener('change',applyAccent)}catch(e){}
 
 /* ---------- Campos de formulario ---------- */
@@ -2008,7 +2012,7 @@ function importPaste(){
 }
 
 /* ---------- Inicio de la app ---------- */
-function ready(){ST.ready=true;if(loginPending){loginPending=false;playSplash()}else hideSplash();if(ST.P&&!ST.R)ST.R=runProject(ST.P,ST.macro);
+function ready(){ST.ready=true;liveTheme();if(loginPending){loginPending=false;playSplash()}else hideSplash();if(ST.P&&!ST.R)ST.R=runProject(ST.P,ST.macro);
   if(ST.readOnly)setSync('ro');ST.screen=SCREENS.includes(prefs.screen)?prefs.screen:'inicio';renderScreen();if(ST.web)webHint()}
 function initLabels(){const save=ST.P;ST.P=newProject();MSUBS.forEach(([k])=>modeloSection(k));ST.P=save}
 async function init(){
@@ -2071,7 +2075,7 @@ function startFb(u){
       // Ajustes de la cuenta; si no hay, se suben los que una versión anterior dejó en este navegador
       if(ajustes)applyRemotePrefs(ajustes,true);
       else if(LEGACY['pp.prefs']){applyRemotePrefs(LEGACY['pp.prefs'],true);savePrefs()}
-      applyTheme();applyDesk();
+      THEME_LIVE=true;applyTheme();applyDesk();
       // Proyectos, versiones y supuestos que versiones anteriores guardaron solo en este navegador: se suben a la cuenta y se borran del navegador
       const loc=LEGACY['pp.projects']||{},lids=Object.keys(loc).filter(id=>!projects[id]);
       if(lids.length){lids.forEach(id=>{ST.fbCol.doc('p_'+id).set(clone(loc[id])).catch(()=>{});ST.projects[id]=loc[id];
