@@ -343,6 +343,37 @@ body.authing .nav,body.authing .appbar{visibility:hidden}
 @keyframes sp{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:no-preference){.fill{transition:width .25s ease}.screen{animation:in .18s ease}@keyframes in{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}}
 @media (prefers-reduced-motion:reduce){.spin{animation:none}}
+/* Inicio: bloques y tablero técnico */
+.blk{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--muted);display:flex;align-items:center;gap:10px;margin-top:10px}
+.blk::after{content:"";flex:1;height:1px;background:var(--line)}
+.hscore{display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:var(--r-sm);background:var(--sunk);margin-bottom:10px}
+.hscore b{font-size:34px;font-weight:800;line-height:1;font-variant-numeric:proportional-nums}
+.hscore span{display:grid;font-size:12px;color:var(--muted)}
+.hscore strong{font-size:14px;color:var(--ink)}
+.hscore.ok b{color:var(--acc-ink)}.hscore.warn b{color:var(--warn)}.hscore.crit b{color:var(--neg)}
+.hrows{display:grid}
+.hrow{border-top:1px solid var(--line)}
+.hrow:first-child{border-top:0}
+.hrow summary{display:grid;grid-template-columns:100px minmax(0,1fr);grid-template-areas:"p n" "p v";column-gap:12px;align-items:center;padding:8px 0;cursor:pointer;list-style:none}
+.hrow summary::-webkit-details-marker{display:none}
+.hc{margin:0 0 10px 112px;font-size:12px;color:var(--muted)}
+.hrow .pill{grid-area:p}
+.hn{grid-area:n;font-weight:700;font-size:13px}
+.hv{grid-area:v;font-size:12px;color:var(--muted);min-width:0}
+.pill{display:inline-flex;align-items:center;gap:4px;justify-self:start;font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:800;padding:3px 9px 3px 7px;border-radius:99px;white-space:nowrap}
+.pill svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.pill.ok{background:var(--acc);color:var(--on-acc)}.pill.warn{background:var(--warn-soft);color:var(--warn)}.pill.crit{background:var(--neg-soft);color:var(--neg)}
+.su{display:grid;gap:20px}
+@container scr (min-width:760px){.su{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.sut{display:flex;justify-content:space-between;font-size:13px;margin-bottom:10px}
+.sut span{color:var(--muted);font-weight:600}
+.mixt{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tiles.m2,.grid2 .tiles.m2{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:14px}
+.tiles.m2 .tile{background:var(--sunk)}
+#iTorn svg{display:block;max-width:880px;margin-inline:auto}
+.bar.mix>span:first-child{display:grid;line-height:1.25;min-width:0}
+.bar.mix b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar.mix small{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* Modo Escritorio: pestañas arriba e indicadores fijos */
 .dtabs{display:none}
 body.desk{padding-bottom:28px}
@@ -1061,6 +1092,107 @@ function costBars(R){
   return items.map(([l,v])=>`<div class="bar"><span>${l}</span><div class="track"><div class="fill" style="width:${v/mx*100}%"></div></div><span class="amt">${fP(v/R.ventas)}</span></div>`).join('')+
   `<div class="bar" style="border-top:1px solid var(--line);padding-top:11px"><strong>Utilidad neta</strong><div class="track"><div class="fill ${R.utilNeta<0?'neg':'util'}" style="width:${Math.abs(R.utilNeta)/mx*100}%"></div></div><span class="amt"><strong>${fP(R.margenNeto)}</strong></span></div>`;
 }
+/* ---------- Inicio: tablero técnico ---------- */
+const cum=a=>{let c=0;return a.map(v=>c+=v)};
+const STAT={ok:'En rango',warn:'Atención',crit:'Crítico'};
+const STICO={ok:'<path d="m5 12 5 5 9-10"/>',warn:'<path d="M12 6v8M12 18h.01"/>',crit:'<path d="M7 7l10 10M17 7 7 17"/>'};
+const lvl=(v,okMax,warnMax)=>v<=okMax?'ok':v<=warnMax?'warn':'crit';
+const worst=(...a)=>a.includes('crit')?'crit':a.includes('warn')?'warn':'ok';
+const fM2=v=>'$'+nf(v)+'/m²';
+function todayIdx(){const [y,m]=String(ST.P.general.fecha||'2027-01').split('-').map(Number),d=new Date();return (d.getFullYear()-y)*12+d.getMonth()+1-(m||1)}
+function healthData(P,R){
+  const G=P.general,mn=+G.margenMin||0,tio=+G.tasaDesc||0,v=R.ventas||1,r=R.rows;
+  const mg=R.margen*100,tir=R.tirI==null?-Infinity:R.tirI*100;
+  const pre=Math.max(...R.ets.map(e=>e.eq-e.t0+1)),inv=R.ets.some(e=>e.lastSale>e.fo);
+  const ex=R.expo/v,deuda=Math.max(0,...r.bal.map((b,i)=>b+r.pBal[i]))/v;
+  const sg=segData(),dirS=R.tot.dir/v,lt=R.tot.lote/v,cpi=sg&&sg.cpi!=null?sg.cpi:null,dur=R.N-1;
+  return [
+    ['Rentabilidad',worst(mg>=mn?'ok':mg>=mn-3?'warn':'crit',tir>=tio?'ok':tir>=tio-3?'warn':'crit'),`Margen ${fP(R.margen)} · TIR inv. ${fP(R.tirI)}`,`Margen mínimo ${nf(mn,1)} % y TIO ${nf(tio,1)} %, definidos en Modelo › General`],
+    ['Comercial',worst(lvl(pre,9,12),inv?'warn':'ok'),`${pre} meses al punto de equilibrio${inv?' · inventario al entregar la obra':''}`,'En rango: equilibrio en 9 meses o menos y sin inventario al entregar la obra'],
+    ['Aportes de socios',lvl(ex,.15,.25),`Exposición máxima ${fP(ex)} de las ventas`,'En rango hasta 15 % de las ventas; atención hasta 25 %'],
+    ['Endeudamiento',lvl(deuda,.4,.55),`Pico de deuda ${fP(deuda)} de las ventas`,'En rango hasta 40 % de las ventas; atención hasta 55 %'],
+    ['Costos',worst(lvl(dirS,.6,.66),lvl(lt,.18,.22),cpi==null?'ok':cpi>=.98?'ok':cpi>=.95?'warn':'crit'),`Directo ${fP(dirS)} · lote ${fP(lt)} de las ventas${cpi==null?'':' · CPI '+nf(cpi,2)}`,'En rango: costo directo hasta 60 % y lote hasta 18 % de las ventas; CPI de 0,98 o más'],
+    ['Tiempos',lvl(dur,48,60),`${dur} meses de principio a fin`,'En rango hasta 48 meses; atención hasta 60']];
+}
+function healthCard(P,R){
+  const d=healthData(P,R),sc=Math.round(sum(d.map(x=>x[1]==='ok'?100:x[1]==='warn'?60:20))/d.length),st=sc>=85?'ok':sc>=60?'warn':'crit';
+  return `<div class="card"><h3>Semáforo de salud</h3><p class="sub">Seis dimensiones con referencias generales del sector. Toca una para ver el criterio.</p>
+  <div class="hscore ${st}"><b>${sc}</b><span><strong>${STAT[st]}</strong>Puntaje general sobre 100</span></div>
+  <div class="hrows">${d.map(([n,s,v,t])=>`<details class="hrow"><summary><span class="pill ${s}"><svg viewBox="0 0 24 24" aria-hidden="true">${STICO[s]}</svg>${STAT[s]}</span><span class="hn">${n}</span><span class="hv">${esc(v)}</span></summary><p class="hc">${esc(t)}</p></details>`).join('')}</div></div>`;
+}
+function ganttChart(R){
+  const N=R.N,W=Math.max(640,Math.min(1400,(ST.curW||640)-40)),L=118,Rr=12,T=24,rowH=34,B=26,H=T+R.ets.length*rowH+B,cw=W-L-Rr,x=i=>L+i/N*cw;
+  const ph=[['Preventa','var(--chart-neu)',e=>[e.t0,e.io]],['Obra','var(--chart-pos)',e=>[e.io,e.fo+1]],['Escrituración','var(--muted)',e=>[e.e0,e.lastEsc+1]]];
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:520px" role="img" aria-label="Cronograma por etapa">`;
+  const stp=Math.ceil(N/8);for(let i=0;i<=N;i+=stp)s+=`<line x1="${x(i)}" x2="${x(i)}" y1="${T-4}" y2="${H-B}" stroke="var(--line)" stroke-width=".6"/><text x="${x(i)}" y="${H-8}" text-anchor="middle">${mL(i)}</text>`;
+  R.ets.forEach((e,k)=>{const y=T+k*rowH,cy=y+rowH/2,nm=e.E.nombre||'Etapa';
+    s+=`<text x="0" y="${cy+4}" style="fill:var(--ink);font-size:11.5px">${esc(nm.length>19?nm.slice(0,18)+'…':nm)}</text>`;
+    ph.forEach(([n,c,f])=>{const [a,b]=f(e);if(b>a)s+=`<rect x="${x(a)+1}" y="${y+8}" width="${Math.max(2,x(b)-x(a)-2)}" height="${rowH-16}" rx="4" fill="${c}"><title>${esc(nm)} · ${n}: ${mL(a)} – ${mL(b-1)} (${b-a} meses)</title></rect>`});
+    s+=`<path d="M${x(e.eq+.5)} ${cy-7}l7 7-7 7-7-7z" fill="var(--ink)" stroke="var(--panel)" stroke-width="2"><title>${esc(nm)} · punto de equilibrio ${mL(e.eq)}</title></path>`});
+  const td=todayIdx();if(td>=0&&td<=N)s+=`<line x1="${x(td+.5)}" x2="${x(td+.5)}" y1="${T-10}" y2="${H-B}" stroke="var(--ink)" stroke-width="1.2"/><text x="${x(td+.5)}" y="${T-13}" text-anchor="middle" style="fill:var(--ink);font-weight:700">Hoy</text>`;
+  return s+`</svg>`;
+}
+function sCurve(R){const r=R.rows,pct=a=>{const t=sum(a)||1;return cum(a).map(v=>Math.max(0,Math.min(100,v/t*100)))};
+  return lineChart([{n:'Avance de obra',c:'var(--ink)',v:pct(r.dir)},{n:'Ventas',c:'var(--chart-pos)',v:pct(r.units.map((u,i)=>u-r.ret[i]))},{n:'Recaudo',c:'var(--chart-neu)',v:pct(r.cobros)}],R.N,mL)}
+function debtInfo(R){const r=R.rows,d=r.bal.map((b,i)=>b+r.pBal[i]);const mx=Math.max(0,...d);return {d,mx,at:d.indexOf(mx)}}
+function debtChart(R){const r=R.rows,{d}=debtInfo(R);
+  return lineChart([{n:'Saldo de créditos',c:'var(--ink)',v:d.map(v=>v/1e6)},{n:'Capital de socios invertido',c:'var(--chart-pos)',v:r.cumEq.map(v=>Math.max(0,-v)/1e6)}],R.N,mL)}
+function payback(R){const r=R.rows;let a=R.loteEsp,d=0;for(let m=0;m<R.N;m++){a+=r.ap[m];d+=r.dist[m];if(a>0&&d>=a-1)return m}return null}
+function returnChart(R){const r=R.rows;
+  return lineChart([{n:'Aportes acumulados',c:'var(--ink)',v:cum(r.ap.map((v,i)=>v+(i===0?R.loteEsp:0))).map(v=>v/1e6)},{n:'Distribuciones acumuladas',c:'var(--chart-pos)',v:cum(r.dist).map(v=>v/1e6)}],R.N,mL)}
+function waterfall(R){
+  const t=R.tot,v=R.ventas;const st=[['Lote',t.lote],['Directos',t.dir],['Indirectos',t.ind+t.lic],['Comercial',t.mkt+t.ger+t.fid],['Posventa',t.post+t.predial],['Impuestos',t.imp],['Financieros',t.fin]].filter(x=>x[1]>0);
+  const res=v-sum(st.map(x=>x[1]))-R.uai;if(Math.abs(res)>v*.002)st.push([res>0?'Otros':'Otros ingr.',res]);
+  const items=[{l:'Ventas',tot:v}];st.forEach(([l,c])=>items.push({l,d:-c}));items.push({l:'Utilidad AI',tot:R.uai});if(R.renta>0){items.push({l:'Renta',d:-R.renta});items.push({l:'Neta',tot:R.utilNeta})}
+  let lv=0;items.forEach(it=>{if(it.tot!=null){it.a=0;it.b=it.tot;lv=it.tot}else{it.a=lv;it.b=lv+it.d;lv=it.b}});
+  const W=Math.max(640,Math.min(1400,(ST.curW||640)-40)),H=262,L=52,Rr=8,T=24,B=42,cw=W-L-Rr,ch=H-T-B,n=items.length,slot=cw/n,bw=Math.min(44,slot*.62);
+  let mx=Math.max(...items.map(i=>Math.max(i.a,i.b))),mn=Math.min(0,...items.map(i=>Math.min(i.a,i.b)));const sp=nice((mx-mn)/1e6)*1e6;mx=Math.ceil(mx/sp)*sp;mn=Math.floor(mn/sp)*sp;
+  const y=val=>T+(mx-val)/((mx-mn)||1)*ch,cx=i=>L+i*slot+slot/2;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:540px" role="img" aria-label="Cascada de la utilidad">`;
+  for(let g=mn;g<=mx+1;g+=sp)s+=`<line x1="${L}" x2="${W-Rr}" y1="${y(g)}" y2="${y(g)}" stroke="var(--line)" stroke-width="${g===0?1.2:.6}"/><text x="${L-6}" y="${y(g)+3}" text-anchor="end">${nf(g/1e6)}</text>`;
+  items.forEach((it,i)=>{const top=y(Math.max(it.a,it.b)),h=Math.max(1.5,Math.abs(y(it.a)-y(it.b)));
+    const c=it.tot!=null?(it.tot<0?'var(--neg)':'var(--chart-pos)'):(it.d>0?'var(--chart-pos)':'var(--chart-neu)');
+    s+=`<rect x="${cx(i)-bw/2}" y="${top}" width="${bw}" height="${h}" rx="3" fill="${c}"><title>${it.l}: ${fM(it.tot!=null?it.tot:it.d)} · ${fP((it.tot!=null?it.tot:it.d)/v)} de las ventas</title></rect>`;
+    if(i<n-1&&items[i+1].tot==null)s+=`<line x1="${cx(i)+bw/2}" x2="${cx(i+1)-bw/2}" y1="${y(it.b)}" y2="${y(it.b)}" stroke="var(--muted)" stroke-width=".8"/>`;
+    if(it.tot!=null)s+=`<text x="${cx(i)}" y="${Math.min(y(it.b),y(0))-6}" text-anchor="middle" style="fill:var(--ink);font-weight:700">${fM(it.tot)}</text>`;
+    s+=`<text x="${cx(i)}" y="${H-(i%2?6:22)}" text-anchor="middle"${it.tot!=null?' style="fill:var(--ink);font-weight:700"':''}>${it.l}</text>`});
+  return s+'</svg>';
+}
+function srcUses(R){
+  const r=R.rows,S=sum;
+  const src=[['Clientes',S(r.ing)],['Crédito constructor',S(r.des)],['Crédito puente',S(r.pDes)],['Aportes de socios',R.aportes]].filter(x=>x[1]>0);
+  const use=[['Lote',S(r.lote)+R.loteEsp],['Costos directos',S(r.dir)],['Indirectos y licencias',S(r.ind)+S(r.lic)],['Comercial y gerencia',S(r.mkt)+S(r.ger)+S(r.fidC)],['Posventa y predial',S(r.post)+S(r.predial)],['Impuestos',S(r.imp)+S(r.renta)],['Intereses y comisiones',S(r.intr)+S(r.comi)+S(r.pInt)],['Pago de créditos',S(r.amo)+S(r.pAmo)],['Distribuciones a socios',R.distribuciones]].filter(x=>x[1]>0);
+  const ts=S(src.map(x=>x[1]))||1,tu=S(use.map(x=>x[1]))||1,mx=Math.max(...src.map(x=>x[1]),...use.map(x=>x[1]))||1;
+  const rows=(l,t,cls)=>l.map(([n,v])=>`<div class="bar" title="${esc(n)}: ${fM(v)}"><span>${n}</span><div class="track"><div class="fill${cls}" style="width:${v/mx*100}%"></div></div><span class="amt">${fP(v/t)}</span></div>`).join('');
+  return `<div class="su"><div><div class="sut"><b>Fuentes</b><span>${fM(ts)}</span></div><div class="bars">${rows(src,ts,' util')}</div></div><div><div class="sut"><b>Usos</b><span>${fM(tu)}</span></div><div class="bars">${rows(use,tu,'')}</div></div></div>`;
+}
+function mixBars(P){
+  const et=Object.fromEntries((P.etapas||[]).map(e=>[e.id,e]));
+  const val=t=>(+t.unidades||0)*((t.clase==='parq'||t.clase==='deposito')?(+t.precio||0):(+t.area||0)*(+t.precio||0));
+  const l=(P.tipologias||[]).map(t=>({n:t.nombre||'Tipología',u:+t.unidades||0,v:val(t),e:et[t.etapa]})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v);
+  if(!l.length)return '<p class="muted">Agrega tipologías en Modelo › Producto.</p>';
+  const tot=sum(l.map(x=>x.v)),mx=l[0].v,byT={};l.forEach(x=>{const k=!x.e?'Sin etapa':x.e.tipo==='NoVIS'?'No VIS':x.e.tipo;byT[k]=(byT[k]||0)+x.v});
+  return `<div class="mixt">${Object.entries(byT).map(([k,v])=>`<span class="tag">${k} · ${fP(v/tot)}</span>`).join('')}</div><div class="bars">${l.map(x=>`<div class="bar mix" title="${esc(x.n)}: ${fM(x.v)} a precio de lista"><span><b>${esc(x.n)}</b><small>${nf(x.u)} u · ${esc(x.e?x.e.nombre:'')}</small></span><div class="track"><div class="fill util" style="width:${x.v/mx*100}%"></div></div><span class="amt">${fP(x.v/tot)}</span></div>`).join('')}</div>`;
+}
+function m2Card(R){
+  const AV=sum(R.ets.map(e=>e.AV))||1,AC=sum(R.ets.map(e=>e.AC))||1,t=R.tot,u=R.uai/AV;
+  const parts=[['Lote',t.lote],['Costos directos',t.dir],['Indirectos y otros',t.ind+t.lic+t.mkt+t.ger+t.fid+t.post+t.predial+t.imp],['Financieros',t.fin]].map(([n,v])=>[n,v/AV]);
+  const mx=Math.max(...parts.map(p=>p[1]),Math.abs(u))||1;
+  return `<div class="tiles m2">${[['Precio / m² vendible',fM2(R.ventas/AV)],['Costo / m² vendible',fM2((R.ventas-R.uai)/AV)],['Utilidad AI / m²',fM2(u),u<0],['Directo / m² construido',fM2(t.dir/AC)]].map(([l,v,b])=>`<div class="tile"><div class="l">${l}</div><div class="v${b?' bad':''}">${v}</div></div>`).join('')}</div>
+  <div class="bars">${parts.map(([n,v])=>`<div class="bar"><span>${n}</span><div class="track"><div class="fill" style="width:${v/mx*100}%"></div></div><span class="amt">${nf(v/1e3)} mil</span></div>`).join('')}<div class="bar" style="border-top:1px solid var(--line);padding-top:11px"><strong>Utilidad AI</strong><div class="track"><div class="fill ${u<0?'neg':'util'}" style="width:${Math.abs(u)/mx*100}%"></div></div><span class="amt"><strong>${nf(u/1e3)} mil</strong></span></div></div>`;
+}
+function tornadoSvg(R){
+  const base=R.uai;const d=SENSV.map(([l,fn])=>{const lo=scaled(Q=>fn(Q,.9)).uai-base,hi=scaled(Q=>fn(Q,1.1)).uai-base;return {l,lo,hi,m:Math.max(Math.abs(lo),Math.abs(hi))}}).sort((a,b)=>b.m-a.m);
+  const mx=Math.max(...d.map(v=>v.m))||1,W=640,rowH=30,L=140,pad=74,cw=(W-L-2*pad)/2,H=d.length*rowH+30,cx=L+pad+cw;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:520px" role="img" aria-label="Sensibilidad de la utilidad"><line x1="${cx}" x2="${cx}" y1="4" y2="${H-22}" stroke="var(--line)"/>`;
+  d.forEach((v,i)=>{const yy=8+i*rowH;[v.lo,v.hi].forEach(val=>{const w=Math.abs(val)/mx*cw;s+=`<rect x="${val<0?cx-w:cx}" y="${yy}" width="${w}" height="${rowH-12}" rx="3" fill="${val<0?'var(--neg)':'var(--chart-pos)'}"><title>${fM(val)}</title></rect>`});
+    s+=`<text x="0" y="${yy+13}" style="fill:var(--ink);font-size:12px">${v.l}</text>`;const mn=Math.min(v.lo,v.hi),mxv=Math.max(v.lo,v.hi);
+    s+=`<text x="${cx-Math.abs(mn)/mx*cw-4}" y="${yy+13}" text-anchor="end">${mn<0?fM(mn):''}</text><text x="${cx+Math.abs(mxv)/mx*cw+4}" y="${yy+13}">${mxv>0?'+'+fM(mxv):''}</text>`});
+  return s+`<text x="${cx}" y="${H-6}" text-anchor="middle">Cambio en utilidad antes de impuestos (base ${fM(base)})</text></svg>`;
+}
+/* El tornado recalcula el modelo varias veces: se guarda y se dibuja un momento después del resto */
+function tornadoCached(){const key=JSON.stringify(ST.P)+JSON.stringify(ST.macro);if(ST.tornKey!==key){ST.tornKey=key;ST.tornSvg=tornadoSvg(ST.R)}return ST.tornSvg}
+
 function lineChart(series,n,labels){
   const W=560,H=220,L=58,Rr=10,T=14,B=26,cw=W-L-Rr,ch=H-T-B;
   let mx=Math.max(1,...series.flatMap(s=>s.v.filter(v=>v!=null)));const st=nice(mx);mx=Math.ceil(mx/st)*st;
@@ -1111,14 +1243,30 @@ function renderInicio(){
     <button class="go" data-act="go" data-to="resultados" aria-label="Ver resultados"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div>
   <div class="tiles">${[['Ventas totales',fM(R.ventas)],['TIR proyecto',fP(R.tirP)],['Exposición máx.',fM(R.expo)],['Múltiplo socios',fX(R.aportes?R.distribuciones/R.aportes:null)],['Margen neto',fP(R.margenNeto),R.margenNeto<0],['Duración',(R.N-1)+' meses']].map(([l,v,b])=>`<div class="tile"><div class="l">${l}</div><div class="v${b?' bad':''}">${v}</div></div>`).join('')}</div>
   <div class="grid2">
+    <div class="blk span2">Salud del proyecto</div>
+    ${healthCard(P,R)}
     <div class="card"><h3>Alertas</h3><p class="sub">Se revisan solas con cada cambio.</p><div class="alerts">${alertHtml(alertsFor(P,R))}</div></div>
-    <div class="card"><h3>Hitos por etapa</h3><p class="sub">La obra arranca el mes siguiente al punto de equilibrio.</p><div class="tbl-wrap"><table><thead><tr><th class="c0">Etapa</th><th>Ventas</th><th>Equilibrio</th><th>Obra</th><th>Escrituras</th></tr></thead><tbody>${R.ets.map(e=>`<tr><td class="c0">${esc(e.E.nombre)}</td><td>${mL(e.t0)}</td><td>${mL(e.eq)}</td><td>${mL(e.io)} – ${mL(e.fo)}</td><td>${mL(e.e0)} – ${mL(e.lastEsc)}</td></tr>`).join('')}</tbody></table></div></div>
-    <div class="card span2"><h3>Flujo de caja</h3><p class="sub">Millones de pesos por mes. Línea: caja acumulada de los socios.</p><div class="chart-x">${flowChart(R)}</div><div class="legend"><span style="--c:var(--chart-pos)">Ingresos</span><span style="--c:var(--chart-neu)">Egresos y financieros</span><span style="--c:var(--ink)">Acumulado socios</span></div></div>
+    <div class="blk span2">Económico</div>
+    <div class="card span2"><h3>Cascada de utilidad</h3><p class="sub">Millones de pesos. De las ventas a la utilidad, restando cada grupo de costos.</p><div class="chart-x">${waterfall(R)}</div><div class="legend"><span style="--c:var(--chart-pos)">Totales</span><span style="--c:var(--chart-neu)">Costos y gastos</span></div></div>
     <div class="card"><h3>Estructura de costos</h3><p class="sub">Cada rubro sobre las ventas totales.</p><div class="bars">${costBars(R)}</div></div>
+    <div class="card"><h3>Economía por m²</h3><p class="sub">Cuánto del precio de cada m² vendible se va en cada rubro. Barras en miles de pesos por m².</p>${m2Card(R)}</div>
+    <div class="blk span2">Financiero</div>
+    <div class="card span2"><h3>Flujo de caja</h3><p class="sub">Millones de pesos por mes. Línea: caja acumulada de los socios.</p><div class="chart-x">${flowChart(R)}</div><div class="legend"><span style="--c:var(--chart-pos)">Ingresos</span><span style="--c:var(--chart-neu)">Egresos y financieros</span><span style="--c:var(--ink)">Acumulado socios</span></div></div>
+    <div class="card"><h3>Deuda y apalancamiento</h3><p class="sub">Millones de pesos. ${(()=>{const di=debtInfo(R);return di.mx>0?`Pico de deuda ${fM(di.mx)} en ${mL(di.at)}, ${fP(di.mx/R.ventas)} de las ventas.`:'El proyecto no usa créditos.'})()}</p>${debtChart(R)}</div>
+    <div class="card"><h3>Retorno a socios</h3><p class="sub">Millones de pesos. ${(()=>{const pb=payback(R);return (pb==null?'Los socios no recuperan su capital.':`Recuperan el capital en ${mL(pb)}.`)+` Múltiplo ${fX(R.aportes?R.distribuciones/R.aportes:null)} · TIR ${fP(R.tirI)}.`})()}</p>${returnChart(R)}</div>
+    <div class="card span2"><h3>Fuentes y usos</h3><p class="sub">De dónde sale el dinero del proyecto y en qué se usa, en todo el horizonte.</p>${srcUses(R)}</div>
+    <div class="blk span2">Comercial</div>
     <div class="card"><h3>Absorción de ventas</h3><p class="sub">Viviendas vendidas netas por etapa. El punto marca el equilibrio.</p>${absChart(R)}</div>
-    ${Object.keys(ST.projects).length>1?`<div class="card span2"><h3>Portafolio</h3><p class="sub">Proyectos en la base ${ST.mode==='db'?'central':'de este dispositivo'}. Toca uno para abrirlo.</p><div class="port">${portfolioHtml()}</div></div>`:''}
+    <div class="card"><h3>Mezcla de producto</h3><p class="sub">Participación de cada tipología en las ventas a precio de lista base.</p>${mixBars(P)}</div>
+    <div class="card span2"><h3>Qué mueve la utilidad</h3><p class="sub">Efecto de mover cada supuesto ±10 %, de mayor a menor impacto.</p><div class="chart-x" id="iTorn">${ST.tornSvg||'<div class="loading" style="padding:24px 0">Calculando…</div>'}</div></div>
+    <div class="blk span2">Tiempos</div>
+    <div class="card span2"><h3>Cronograma</h3><p class="sub">Fases por etapa. El rombo marca el punto de equilibrio.</p><div class="chart-x">${ganttChart(R)}</div><div class="legend"><span style="--c:var(--chart-neu)">Preventa</span><span style="--c:var(--chart-pos)">Obra</span><span style="--c:var(--muted)">Escrituración</span><span style="--c:var(--ink)">Equilibrio y hoy</span></div></div>
+    <div class="card"><h3>Curva S</h3><p class="sub">Porcentaje acumulado. Si la línea de ventas va por encima de la obra, las ventas financian la construcción.</p>${sCurve(R)}</div>
+    <div class="card"><h3>Hitos por etapa</h3><p class="sub">La obra arranca el mes siguiente al punto de equilibrio.</p><div class="tbl-wrap"><table><thead><tr><th class="c0">Etapa</th><th>Ventas</th><th>Equilibrio</th><th>Obra</th><th>Escrituras</th></tr></thead><tbody>${R.ets.map(e=>`<tr><td class="c0">${esc(e.E.nombre)}</td><td>${mL(e.t0)}</td><td>${mL(e.eq)}</td><td>${mL(e.io)} – ${mL(e.fo)}</td><td>${mL(e.e0)} – ${mL(e.lastEsc)}</td></tr>`).join('')}</tbody></table></div></div>
+    ${Object.keys(ST.projects).length>1?`<div class="blk span2">Portafolio</div><div class="card span2"><h3>Portafolio</h3><p class="sub">Proyectos en la base ${ST.mode==='db'?'central':'de este dispositivo'}. Toca uno para abrirlo.</p><div class="port">${portfolioHtml()}</div></div>`:''}
   </div>`;
   host.innerHTML=html;
+  clearTimeout(ST.tornT);ST.tornT=setTimeout(()=>{const el=$('#iTorn');if(el&&ST.R)el.innerHTML=tornadoCached()},300);
 }
 function portfolioHtml(){
   return Object.entries(ST.projects).sort((a,b)=>(b[1].actualizado||0)-(a[1].actualizado||0)).map(([id,d])=>{const k=d.kpis||{};
@@ -1351,13 +1499,7 @@ function renderSens(){
   const out=$('#sensOut');if(!out||!ST.P)return;const key=JSON.stringify(ST.P)+JSON.stringify(ST.macro);if(ST.sensKey===key&&ST.sensHtml){out.innerHTML=ST.sensHtml;return}const P=ST.P,R=ST.R,steps=[-10,-5,0,5,10];
   let m=`<thead><tr><th class="c0">Precio \\ Costo</th>${steps.map(s=>`<th>${s>0?'+':''}${s} %</th>`).join('')}</tr></thead><tbody>`;
   steps.slice().reverse().forEach(sp=>{m+=`<tr><td class="c0">${sp>0?'+':''}${sp} %</td>`;steps.forEach(sc=>{const r=sp===0&&sc===0?R:scaled(Q=>{SENSV[0][1](Q,1+sp/100);SENSV[1][1](Q,1+sc/100)});const g=r.margen*100,mn=+P.general.margenMin;m+=`<td class="${g>=mn?'good':g>=mn-3?'mid':'bad'}${sp===0&&sc===0?' base':''}">${fP(r.margen)}</td>`});m+='</tr>'});
-  const base=R.uai;const d=SENSV.map(([l,fn])=>{const lo=scaled(Q=>fn(Q,.9)).uai-base,hi=scaled(Q=>fn(Q,1.1)).uai-base;return {l,lo,hi,m:Math.max(Math.abs(lo),Math.abs(hi))}}).sort((a,b)=>b.m-a.m);
-  const mx=Math.max(...d.map(v=>v.m))||1,W=640,rowH=30,L=140,pad=74,cw=(W-L-2*pad)/2,H=d.length*rowH+30,cx=L+pad+cw;
-  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:520px" role="img" aria-label="Sensibilidad de la utilidad"><line x1="${cx}" x2="${cx}" y1="4" y2="${H-22}" stroke="var(--line)"/>`;
-  d.forEach((v,i)=>{const yy=8+i*rowH;[v.lo,v.hi].forEach(val=>{const w=Math.abs(val)/mx*cw;s+=`<rect x="${val<0?cx-w:cx}" y="${yy}" width="${w}" height="${rowH-12}" rx="3" fill="${val<0?'var(--neg)':'var(--chart-pos)'}"><title>${fM(val)}</title></rect>`});
-    s+=`<text x="0" y="${yy+13}" style="fill:var(--ink);font-size:12px">${v.l}</text>`;const mn=Math.min(v.lo,v.hi),mxv=Math.max(v.lo,v.hi);
-    s+=`<text x="${cx-Math.abs(mn)/mx*cw-4}" y="${yy+13}" text-anchor="end">${mn<0?fM(mn):''}</text><text x="${cx+Math.abs(mxv)/mx*cw+4}" y="${yy+13}">${mxv>0?'+'+fM(mxv):''}</text>`});
-  s+=`<text x="${cx}" y="${H-6}" text-anchor="middle">Cambio en utilidad antes de impuestos (base ${fM(base)})</text></svg>`;
+  const s=tornadoCached();
   const pes=scaled(Q=>{SENSV[0][1](Q,.93);SENSV[2][1](Q,.7);SENSV[1][1](Q,1.07)}),opt=scaled(Q=>{SENSV[0][1](Q,1.05);SENSV[2][1](Q,1.2);SENSV[1][1](Q,.97)});
   const er=(n,r)=>`<tr><td class="c0">${n}</td><td class="${r.uai<0?'neg':''}">${fM(r.uai)}</td><td>${fP(r.margen)}</td><td>${fP(r.tirI)}</td><td>${fM(r.ventas)}</td><td>${fM(r.expo)}</td><td>${r.N-1} m</td></tr>`;
   out.innerHTML=`<div class="card"><h3>Margen según precio y costo directo</h3><p class="sub">Verde cumple el margen mínimo, amarillo queda hasta 3 puntos abajo, rojo no cumple. El recuadro es el caso actual.</p><div class="tbl-wrap"><table class="matrix">${m}</tbody></table></div></div>
