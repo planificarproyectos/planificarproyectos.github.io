@@ -5,7 +5,7 @@
   "lang": "es",
   "start_url": "./",
   "scope": "./",
-  "id": "./",
+  "id": "/proyecta/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#0D0E0D",
