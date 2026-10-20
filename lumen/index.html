@@ -199,6 +199,18 @@ mark.qhit{background:color-mix(in srgb,var(--accent) 30%,transparent);color:inhe
 .reader{display:flex;flex-direction:column;gap:2px}
 .reader p{margin:0;line-height:1.7;color:var(--soft);font-size:16px}
 .book{color:var(--fg)}
+/* Reproductor flotante: pausar, reanudar, volver o detener lo que suena al cambiar de sección */
+#afloat{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(116px + env(safe-area-inset-bottom,0px));z-index:45;display:flex;align-items:center;gap:2px;width:max-content;max-width:calc(100% - 32px);background:var(--accent);color:var(--accent-ink);border-radius:99px;padding:6px;box-shadow:0 10px 28px rgba(0,0,0,.35)}
+#afloat[hidden]{display:none}
+#afloat button{background:none;border:0;color:inherit;font:inherit;cursor:pointer;padding:0}
+#afloat .af-pp{width:44px;height:44px;border-radius:50%;background:var(--accent-ink);color:var(--accent);display:grid;place-items:center;flex:none}
+#afloat .af-go{display:grid;text-align:left;padding:0 10px;min-width:0;line-height:1.2}
+#afloat .af-go small{font-size:10.5px;font-weight:700;opacity:.75;text-transform:uppercase;letter-spacing:.06em}
+#afloat .af-go b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:58vw}
+#afloat .af-x{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;flex:none;opacity:.8}
+#afloat .af-x:hover{opacity:1}
+body.afon .toast{bottom:calc(182px + env(safe-area-inset-bottom,0px))}
+body.afon .installbar{bottom:calc(180px + env(safe-area-inset-bottom,0px))}
 /* Animación de inicio (misma mecánica que Mind Focus) */
 #splash{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .45s ease,visibility .45s}
 #splash.out{opacity:0;visibility:hidden}

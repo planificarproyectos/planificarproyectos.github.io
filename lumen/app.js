@@ -5,6 +5,7 @@ var L=window.Liturgia;
 
 /* ---------- Íconos ---------- */
 var IP={
+ x:'M6 6l12 12M18 6 6 18',
  apps:'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
  chat:'M21 12a8 8 0 0 1-11.6 7.1L4 20l1-5A8 8 0 1 1 21 12z', bulb:'M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z',
  key:'M15 7a4 4 0 1 1-3.9 5H7v3H4v-3H2v-3h9.1A4 4 0 0 1 15 7z', out:'M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10', trash:'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13', dl:'M12 4v11M7 10l5 5 5-5M5 20h14',
@@ -172,7 +173,7 @@ function markChunk(ch){
 }
 function sayNext(my){
  if(my!==gen) return;
- if(QI>=Q.length){ clearMark(); speaking=null; updSay(); var cb=TTS_DONE; TTS_DONE=null; if(cb) cb(); return; }
+ if(QI>=Q.length){ var fin=speaking; clearMark(); speaking=null; if(AUD&&AUD.kind==='say'&&AUD.id===fin) AUD=null; updSay(); var cb=TTS_DONE; TTS_DONE=null; if(cb) cb(); return; }
  markChunk(Q[QI]);
  var u=new SpeechSynthesisUtterance(Q[QI]), v=pickVoice();
  if(v){ u.voice=v; u.lang=v.lang; } else u.lang='es-ES';
@@ -185,15 +186,16 @@ function sayNext(my){
  window.__lumenUtt.push(u); if(window.__lumenUtt.length>40) window.__lumenUtt.shift(); // evita que el navegador descarte la frase en curso
  try{ speechSynthesis.speak(u); if(speechSynthesis.paused) speechSynthesis.resume(); }catch(e){}
 }
-function speak(text,id,done){
+function speak(text,id,done,from){
  if(!/^misa:/.test(id||'')) M.playing=false;
  if(!/^rosa:/.test(id||'')) R.playing=false;
  if(!TTS){ ttsHelp(); return; }
- if(speaking===id){ stopSpeak(); updSay(); return; }
+ if(speaking===id){ stopSpeak(); if(AUD&&AUD.id===id&&AUD.kind==='say') AUD=null; updSay(); return; }
  TTS_DONE=done||null;
  var ss=window.speechSynthesis; gen++; var my=gen; clearTimeout(watch);
  try{ if(ss.speaking||ss.pending) ss.cancel(); }catch(e){}
- Q=chunks(text); QI=0; started=false; speaking=id; updSay();
+ audStart(text,id);
+ Q=chunks(text); QI=Math.max(0,Math.min(from||0,Q.length-1)); started=false; speaking=id; updSay();
  if(!Q.length){ speaking=null; updSay(); return; }
  sayNext(my); // en el mismo toque (requisito de iPhone)
  watch=setTimeout(function(){ // Android a veces ignora la primera orden: reintenta una vez
@@ -207,7 +209,58 @@ if(TTS){ try{ speechSynthesis.getVoices(); }catch(e){} }
 
 function sayBtn(id,label){ var on=speaking===id; return '<button class="say'+(on?' on':'')+'" data-a="say" data-id="'+id+'" data-l="'+esc(label||'Escuchar')+'" aria-pressed="'+on+'">'+ic(on?'stop':'speaker',16)+'<span>'+(on?'Detener':(label||'Escuchar'))+'</span></button>'; }
 function updSay(){ var bs=document.querySelectorAll('[data-a=say]'); for(var i=0;i<bs.length;i++){ var b=bs[i], on=b.getAttribute('data-id')===speaking; b.classList.toggle('on',on); b.setAttribute('aria-pressed',on); b.innerHTML=ic(on?'stop':'speaker',16)+'<span>'+(on?'Detener':(b.getAttribute('data-l')||'Escuchar'))+'</span>'; }
- updMass(); updRos(); syncWake(); if(POCKET) pocketNow(); }
+ updMass(); updRos(); syncWake(); if(POCKET) pocketNow(); updFloat(); }
+
+/* ---------- Reproductor flotante ----------
+   Recuerda lo último que se escucha (Misa, Rosario o una lectura) y, al cambiar de sección, muestra un botón flotante
+   del color de énfasis para pausar, reanudar, volver a esa sección o detener. La Misa y el Rosario reanudan desde la
+   parte en curso; las demás lecturas, desde la frase donde se pausó. */
+var AUD=null;
+function audActive(){ return !!speaking||M.playing||R.playing; }
+function audStart(text,id){ if(id==='test') return;
+ var keep=AUD&&AUD.id===id?AUD:null, kind=/^misa:/.test(id)?'misa':/^rosa:/.test(id)?'rosa':'say';
+ var tab=kind==='misa'?'misa':kind==='rosa'?'rosary':/^cap-/.test(id)?'bible':/^pray-/.test(id)?'pray':'home';
+ var label='Lectura';
+ if(id==='frase') label='Frase del día';
+ else if(/^cap-/.test(id)){ var a=id.slice(4).split(':'); label=((IDX[+a[0]-1]||[])[0]||'Biblia')+' '+a[1]; }
+ else if(/^pray-/.test(id)) label=((PRAY[id.slice(5)]||{}).t)||'Oración';
+ AUD={kind:kind,id:id,text:text,tab:keep?keep.tab:tab,label:label,bk:keep?keep.bk:U.bk,ch:keep?keep.ch:U.ch,pid:keep?keep.pid:U.pid,qi:0,paused:false}; }
+function audLabel(){
+ if(AUD.kind==='misa'){ var p=massParts()[M.idx]; return 'Misa · '+((p&&p.h)||'Parte '+(M.idx+1)); }
+ if(AUD.kind==='rosa'){ var st=STEPS[rosI()]; return 'Rosario · '+(st?stepTitle(st):'Completado'); }
+ return AUD.label; }
+function audHere(){ if(!AUD) return false;
+ if(AUD.tab==='bible') return U.tab==='bible'&&U.bk===AUD.bk&&U.ch===AUD.ch;
+ if(AUD.tab==='pray') return U.tab==='pray'&&U.pid===AUD.pid;
+ return U.tab===AUD.tab; }
+function updFloat(){
+ if(AUD&&AUD.kind==='say'&&!speaking&&!AUD.paused) AUD=null;
+ var el=$('afloat');
+ if(!el){ el=document.createElement('div'); el.id='afloat'; el.hidden=true; el.setAttribute('role','region'); el.setAttribute('aria-label','Reproductor de Lumen'); document.body.appendChild(el); }
+ var show=!!AUD&&!audHere()&&!needAuth();
+ document.body.classList.toggle('afon',show);
+ if(!show){ el.hidden=true; return; }
+ var on=audActive();
+ el.innerHTML='<button class="af-pp" data-a="afToggle" aria-label="'+(on?'Pausar':'Reanudar')+'">'+ic(on?'pause':'play',20,2.6)+'</button>'+
+  '<button class="af-go" data-a="afGo" aria-label="Ir a lo que suena"><small>'+(on?'Escuchando':'En pausa')+'</small><b>'+esc(audLabel())+'</b></button>'+
+  '<button class="af-x" data-a="afStop" aria-label="Detener">'+ic('x',18,2.4)+'</button>';
+ el.hidden=false; }
+function audToggle(){ if(!AUD) return;
+ if(audActive()){
+  if(AUD.kind==='misa') M.stop();
+  else if(AUD.kind==='rosa'){ R.playing=false; stopSpeak(); updSay(); }
+  else { AUD.qi=QI; AUD.paused=true; stopSpeak(); updSay(); }
+  return; }
+ if(AUD.kind==='misa') M.play(M.idx);
+ else if(AUD.kind==='rosa') R.play();
+ else speak(AUD.text,AUD.id,null,AUD.qi); }
+function audGo(){ if(!AUD) return;
+ if(AUD.tab==='bible'){ U.bk=AUD.bk; U.ch=AUD.ch; }
+ if(AUD.tab==='pray') U.pid=AUD.pid;
+ go(AUD.tab); }
+function audStop(){ if(!AUD) return;
+ if(AUD.kind==='misa') M.stop(); else { R.playing=false; stopSpeak(); }
+ AUD=null; updSay(); }
 /* Modo bolsillo: pantalla negra que ignora toques; se desbloquea manteniendo presionado */
 var POCKET=false, pkT=null;
 function pocketNow(){ var t='';
@@ -235,7 +288,7 @@ function syncWake(){
  else if(!want&&WL){ var l=WL; WL=null; l.release().catch(function(){}); }
 }
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState!=='visible') return;
- setTimeout(function(){ var ss=window.speechSynthesis; if((M.playing||R.playing||speaking)&&ss&&!ss.speaking&&!ss.pending){ gen++; M.playing=false; R.playing=false; speaking=null; updSay(); toast('El audio se detuvo al salir de Lumen. Toca ▶ para continuar donde ibas.',5000); } else syncWake(); },700); });
+ setTimeout(function(){ var ss=window.speechSynthesis; if((M.playing||R.playing||speaking)&&ss&&!ss.speaking&&!ss.pending){ if(AUD&&AUD.kind==='say'){ AUD.qi=QI; AUD.paused=true; } gen++; M.playing=false; R.playing=false; speaking=null; updSay(); toast('El audio se detuvo al salir de Lumen. Toca ▶ para continuar donde ibas.',5000); } else syncWake(); },700); });
 
 /* ---------- Oraciones ---------- */
 var PR={
@@ -365,13 +418,13 @@ function viewMass(){ return U.mdate?SEL.mass:LIT.mass; }
 function loadSel(d){ var key=dkey(d); if(SEL.key===key) return;
  SEL={key:key,info:L.day(new Date(d.getFullYear(),d.getMonth(),d.getDate())),mass:null,err:false};
  buildMass(SEL.info).then(function(m){ if(SEL.key!==key) return; SEL.mass=m; render(); },function(){ if(SEL.key===key){ SEL.err=true; render(); } }); }
-function setMassDate(d){ M.stop(); M.idx=0; if(d&&dkey(d)===dkey(new Date())) d=null; U.mdate=d; render(); try{ window.scrollTo(0,0); }catch(e){} }
+function setMassDate(d){ M.stop(); M.idx=0; if(AUD&&AUD.kind==='misa') AUD=null; if(d&&dkey(d)===dkey(new Date())) d=null; U.mdate=d; render(); try{ window.scrollTo(0,0); }catch(e){} }
 function massParts(m){ var a=[]; (m===undefined?viewMass():m||[]).forEach(function(s){ s.parts.forEach(function(p){ a.push(p); }); }); return a; }
 
 /* ---------- Reproductor de la Misa ---------- */
 var M={idx:0,playing:false,
  play:function(i){ var ps=massParts(); if(!ps.length) return;
-  if(i>=ps.length){ M.playing=false; M.idx=0; if(!U.mdate) setDone('misa',true); updSay(); toast('Misa completa. Pueden ir en paz.'); return; }
+  if(i>=ps.length){ M.playing=false; M.idx=0; AUD=null; if(!U.mdate) setDone('misa',true); updSay(); toast('Misa completa. Pueden ir en paz.'); return; }
   M.idx=i; M.playing=true; var p=ps[i];
   speak(withTitle(p.h,p.text),'misa:'+i,function(){ setTimeout(function(){ if(M.playing&&!speaking) M.play(i+1); },900); });
   M.playing=true; updMass();
@@ -414,7 +467,7 @@ function stepText(s){
 var R={playing:false,
  play:function(){ var i=rosI(); if(i>=STEPS.length) return;
   R.playing=true; speak(stepText(STEPS[i]),'rosa:'+i,function(){ if(!R.playing) return; var k=rosI()+1; S.ros[rosKey()]=k; save();
-   if(k>=STEPS.length){ R.playing=false; setDone('ros',true); toast('Rosario completado'); }
+   if(k>=STEPS.length){ R.playing=false; AUD=null; setDone('ros',true); toast('Rosario completado'); }
    if(U.tab==='rosary') render(); setTimeout(function(){ if(R.playing&&!speaking) R.play(); },600); });
   R.playing=true; updRos(); }
 };
@@ -686,17 +739,20 @@ document.addEventListener('click',function(e){
   if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){ toast('Frase copiada'); },function(){ toast(txt,5000); }); } else toast(txt,5000); return; }
  if(a==='pocket'){ pocketOn(); return; }
  if(a==='massPlay'){ if(M.playing) M.stop(); else M.play(M.idx); return; }
+ if(a==='afToggle'){ audToggle(); return; }
+ if(a==='afGo'){ audGo(); return; }
+ if(a==='afStop'){ audStop(); return; }
  if(a==='massFrom'){ M.play(+v); return; }
  if(a==='mprev'||a==='mnext'){ var b0=U.mdate?new Date(U.mdate):new Date(); b0.setDate(b0.getDate()+(a==='mprev'?-1:1)); setMassDate(b0); return; }
  if(a==='mtoday'){ setMassDate(null); return; }
- if(a==='massRestart'){ M.stop(); M.idx=0; render(); return; }
- if(a==='rset'){ R.playing=false; stopSpeak(); U.rosSet=v; render(); return; }
+ if(a==='massRestart'){ M.stop(); M.idx=0; if(AUD&&AUD.kind==='misa') AUD=null; render(); return; }
+ if(a==='rset'){ R.playing=false; stopSpeak(); if(AUD&&AUD.kind==='rosa') AUD=null; U.rosSet=v; render(); return; }
  if(a==='rosPlay'){ if(R.playing){ R.playing=false; stopSpeak(); updSay(); } else R.play(); return; }
  if(a==='rnext'||a==='rprev'){
   var i=rosI(); i=a==='rnext'?Math.min(STEPS.length,i+1):Math.max(0,i-1); S.ros[rosKey()]=i;
   if(i>=STEPS.length){ setDone('ros',true); toast('Rosario completado'); }
   save(); var wasPlaying=R.playing; R.playing=false; stopSpeak(); render(); if(wasPlaying&&i<STEPS.length) R.play(); return; }
- if(a==='rosRestart'){ R.playing=false; stopSpeak(); S.ros[rosKey()]=0; save(); render(); return; }
+ if(a==='rosRestart'){ R.playing=false; stopSpeak(); if(AUD&&AUD.kind==='rosa') AUD=null; S.ros[rosKey()]=0; save(); render(); return; }
  if(a==='rreset'){ S.ros[rosKey()]=0; save(); render(); return; }
  if(a==='goread'){ var src=U.tab==='misa'?viewMass():LIT.mass; var pp=massParts(src).filter(function(x){ return x.i===+v; })[0]; if(pp&&pp.verses&&pp.verses.length){ var f=pp.verses[0], same=pp.verses.filter(function(x){ return x.c===f.c; }); goCita({b:pp.book,c:f.c,v1:f.v,v2:same[same.length-1].v},U.tab==='misa'?'misa':null); } return; }
  if(a==='gohit'){ goCita({b:+el.getAttribute('data-b'),c:+el.getAttribute('data-c'),v1:+v,v2:+v}); return; }
