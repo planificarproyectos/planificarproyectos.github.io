@@ -840,17 +840,31 @@ const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','di
 const DIAS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 const getPath=(o,p)=>p.split('.').reduce((a,k)=>a==null?a:a[k],o);
 const setPath=(o,p,v)=>{const ks=p.split('.');let a=o;for(let i=0;i<ks.length-1;i++){if(a[ks[i]]==null)a[ks[i]]=/^\d+$/.test(ks[i+1])?[]:{};a=a[ks[i]]}a[ks[ks.length-1]]=v};
-const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+/* Nada se guarda en el dispositivo: todo vive en la cuenta y se sincroniza entre dispositivos.
+   LS solo existe en memoria mientras la app está abierta. LEGACY lee una vez lo que versiones anteriores dejaron
+   en este navegador para subirlo a la cuenta; después se borra. */
+const MEM={};
+const LS={get(k,d){return k in MEM?clone(MEM[k]):d},set(k,v){MEM[k]=clone(v)}};
+const LEGACY=(()=>{const o={};try{Object.keys(localStorage).filter(k=>k.startsWith('pp.')).forEach(k=>{try{o[k]=JSON.parse(localStorage.getItem(k))}catch(e){}})}catch(e){}return o})();
+function clearLegacy(){try{Object.keys(localStorage).filter(k=>k.startsWith('pp.')).forEach(k=>localStorage.removeItem(k))}catch(e){}}
 function mDate(i){const [y,m]=String(ST.P?.general?.fecha||'2027-01').split('-').map(Number);return new Date(y,(m||1)-1+i,1)}
 function mL(i){const d=mDate(i);return MES[d.getMonth()]+'-'+String(d.getFullYear()).slice(2)}
 function fDate(ms){if(!ms)return '—';const d=new Date(ms);return d.getDate()+' '+MES[d.getMonth()]+' '+d.getFullYear()+' · '+d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})}
 function deepFill(base,data){if(Array.isArray(data))return data;if(data&&typeof data==='object'&&base&&typeof base==='object'&&!Array.isArray(base)){const o=Object.assign({},base);Object.keys(data).forEach(k=>o[k]=deepFill(base[k],data[k]));return o}return data===undefined?base:data}
 
 /* ---------- Estado ---------- */
-const prefs=Object.assign({user:'Nicolas',theme:'system',accent:'#C6F135',last:null,screen:'inicio',sub:{modelo:'general',resultados:'flujo',control:'seguimiento'},per:'m'},LS.get('pp.prefs',{}));
-prefs.cols=Array.isArray(prefs.cols)?prefs.cols.filter(c=>['inicio','modelo','resultados','control'].includes(c)):['inicio'];prefs.cols=[...new Set(prefs.cols)];if(!prefs.cols.length)prefs.cols=['inicio'];
-prefs.sub=Object.assign({modelo:'general',resultados:'flujo',control:'seguimiento'},prefs.sub||{});
-const savePrefs=()=>LS.set('pp.prefs',prefs);
+const prefs={user:'',theme:'system',accent:'#C6F135',last:null,screen:'inicio',sub:{modelo:'general',resultados:'flujo',control:'seguimiento'},per:'m',cols:['inicio'],desk:false};
+function normPrefs(){prefs.cols=Array.isArray(prefs.cols)?prefs.cols.filter(c=>['inicio','modelo','resultados','control'].includes(c)):['inicio'];prefs.cols=[...new Set(prefs.cols)];if(!prefs.cols.length)prefs.cols=['inicio'];
+  prefs.sub=Object.assign({modelo:'general',resultados:'flujo',control:'seguimiento'},prefs.sub||{});prefs.desk=!!prefs.desk}
+/* Ajustes que se aplican al instante en los demás dispositivos; la navegación (pantalla, subpestaña, proyecto abierto) solo se toma al abrir la app */
+const LIVE_PREFS=['theme','accent','desk','per','cols','webHint2'];
+/* Los ajustes se guardan en la cuenta (documento "ajustes" junto a los proyectos), nunca en el navegador */
+function savePrefs(){if(ST.mode!=='fb'||!ST.fbCol)return;clearTimeout(ST.prefT);
+  ST.prefT=setTimeout(()=>{const d=clone(prefs);ST.prefsSent=JSON.stringify(LIVE_PREFS.map(k=>prefs[k]));ST.fbCol.doc('ajustes').set(Object.assign(d,{upd:Date.now()})).catch(()=>{})},400)}
+function applyRemotePrefs(d,first){
+  if(first){Object.assign(prefs,d);delete prefs.upd;normPrefs();return true}
+  if(JSON.stringify(LIVE_PREFS.map(k=>d[k]))===JSON.stringify(LIVE_PREFS.map(k=>prefs[k])))return false;
+  LIVE_PREFS.forEach(k=>{if(d[k]!==undefined)prefs[k]=clone(d[k])});normPrefs();return true}
 const ST={mode:'local',db:null,user:null,me:null,role:{owner:true,edit:true,write:true},readOnly:false,ready:false,
   projects:{},pid:null,P:null,R:null,macro:clone(DEFAULT_MACRO),versions:[],unsubV:null,
   dirty:false,saving:false,again:false,timer:0,sync:'ok',remotePending:null,baseline:'actual',cmpA:'actual',cmpB:null,confirm:null};
@@ -866,8 +880,8 @@ const Local={
 };
 function kpisOf(R){return R?{ventas:R.ventas,uai:R.uai,margen:R.margen,tirI:R.tirI,utilNeta:R.utilNeta}:{}}
 function projDoc(){const P=ST.P,prev=ST.projects[ST.pid]||{};return {nombre:P.general.nombre||'Proyecto',ciudad:P.general.ciudad||'',actualizado:Date.now(),actualizadoPor:ST.me&&ST.me.id||null,creadoPor:prev.creadoPor||ST.me&&ST.me.id||null,creado:prev.creado||Date.now(),kpis:kpisOf(ST.R),data:clone(P)}}
-function setSync(s){ST.sync=s;const d=$('#syncDot');if(!d)return;d.className='dot'+(s==='busy'?' busy':s==='err'?' err':s==='ro'?' off':'');d.title={ok:ST.mode==='db'?'Guardado en la base central':'Guardado en este dispositivo',busy:'Guardando…',err:'No se pudo guardar',ro:'Solo lectura'}[s]||''}
-function markDirty(){if(ST.readOnly)return;ST.dirty=true;clearTimeout(ST.timer);ST.timer=setTimeout(persist,1200);setSync('busy')}
+function setSync(s){ST.sync=s;const d=$('#syncDot');if(!d)return;d.className='dot'+(s==='busy'?' busy':s==='err'?' err':s==='ro'?' off':'');d.title={ok:ST.mode==='db'?'Guardado en la base central':ST.mode==='fb'?'Guardado en tu cuenta y sincronizado':'Sin guardar',busy:'Guardando…',err:'No se pudo guardar',ro:'Solo lectura'}[s]||''}
+function markDirty(){if(ST.readOnly)return;ST.dirty=true;clearTimeout(ST.timer);ST.timer=setTimeout(persist,700);setSync('busy')}
 async function persist(){
   if(ST.readOnly||!ST.pid)return;
   if(ST.saving){ST.again=true;return}
@@ -1303,7 +1317,7 @@ function renderInicio(){
     <div class="card span2"><h3>Cronograma</h3><p class="sub">Fases por etapa. El rombo marca el punto de equilibrio.</p><div class="chart-x">${ganttChart(R)}</div><div class="legend"><span style="--c:var(--chart-neu)">Preventa</span><span style="--c:var(--chart-pos)">Obra</span><span style="--c:var(--muted)">Escrituración</span><span style="--c:var(--ink)">Equilibrio y hoy</span></div></div>
     <div class="card"><h3>Curva S</h3><p class="sub">Porcentaje acumulado. Si la línea de ventas va por encima de la obra, las ventas financian la construcción.</p>${sCurve(R)}</div>
     <div class="card"><h3>Hitos por etapa</h3><p class="sub">La obra arranca el mes siguiente al punto de equilibrio.</p><div class="tbl-wrap"><table><thead><tr><th class="c0">Etapa</th><th>Ventas</th><th>Equilibrio</th><th>Obra</th><th>Escrituras</th></tr></thead><tbody>${R.ets.map(e=>`<tr><td class="c0">${esc(e.E.nombre)}</td><td>${mL(e.t0)}</td><td>${mL(e.eq)}</td><td>${mL(e.io)} – ${mL(e.fo)}</td><td>${mL(e.e0)} – ${mL(e.lastEsc)}</td></tr>`).join('')}</tbody></table></div></div>
-    ${Object.keys(ST.projects).length>1?`<div class="blk span2">Portafolio</div><div class="card span2"><h3>Portafolio</h3><p class="sub">Proyectos en la base ${ST.mode==='db'?'central':'de este dispositivo'}. Toca uno para abrirlo.</p><div class="port">${portfolioHtml()}</div></div>`:''}
+    ${Object.keys(ST.projects).length>1?`<div class="blk span2">Portafolio</div><div class="card span2"><h3>Portafolio</h3><p class="sub">Proyectos ${ST.mode==='db'?'en la base central':'en tu cuenta'}. Toca uno para abrirlo.</p><div class="port">${portfolioHtml()}</div></div>`:''}
   </div>`;
   host.innerHTML=html;
   clearTimeout(ST.tornT);ST.tornT=setTimeout(()=>{const el=$('#iTorn');if(el&&ST.R)el.innerHTML=tornadoCached()},300);
@@ -1615,7 +1629,7 @@ addEventListener('appinstalled',()=>{ST.instP=null;toast('Proyecta quedó instal
 /* ---------- Hoja de proyectos ---------- */
 function openProjects(){
   const list=Object.entries(ST.projects).sort((a,b)=>(b[1].actualizado||0)-(a[1].actualizado||0));
-  openSheet(`<h2>Proyectos</h2><p class="muted" style="margin:0">${ST.mode==='db'?'Base central compartida con tu equipo.':'Guardados en este dispositivo.'}</p>
+  openSheet(`<h2>Proyectos</h2><p class="muted" style="margin:0">${ST.mode==='db'?'Base central compartida con tu equipo.':'Guardados en tu cuenta y sincronizados en todos tus dispositivos.'}</p>
   <div class="port">${list.length?portfolioHtml():'<div class="empty">No hay proyectos.</div>'}</div>
   ${ST.readOnly?'':`<div class="row"><button class="btn pri" data-act="proj-new" data-kind="blank">Nuevo en blanco</button>${exBtns('','Ejemplo ')}${ST.P?'<button class="btn" data-act="proj-dup">Duplicar actual</button>':''}</div>
   ${ST.P?`<div class="row" id="delRow">${ST.confirm==='proj'?`<span class="muted">¿Eliminar «${esc(ST.P.general.nombre)}» y sus versiones para todo el equipo?</span><button class="btn sm danger" data-act="proj-del">Sí, eliminar</button><button class="btn sm" data-act="cancel-sheet">Cancelar</button>`:`<button class="btn sm danger" data-act="ask-proj">Eliminar proyecto actual</button>`}</div>`:''}`}`);
@@ -1819,14 +1833,16 @@ async function init(){
     return;
   }
   if(window.firebase&&window.FIREBASE_CONFIG){startFirebase();return}
-  startLocal();
+  showOffline();
 }
+/* Sin conexión con la base no se trabaja: así nada queda guardado solo en este dispositivo */
+function showOffline(){$('#s-loading').hidden=false;$('#s-loading').innerHTML=`<div class="card" style="max-width:460px;margin:60px auto;text-align:center;display:grid;gap:10px"><h3>Sin conexión con tu cuenta</h3><p class="sub" style="margin:0">Proyecta guarda todo en tu cuenta para verlo igual en todos tus dispositivos. Revisa tu conexión a internet e inténtalo de nuevo.</p><button class="btn pri" onclick="location.reload()">Reintentar</button></div>`}
 /* ---------- Firebase (cuentas de Planificar Proyectos) ---------- */
 const FB={};
 const SITE_URL='https://www.planificarproyectos.com/proyecta/';
 function startFirebase(){
-  try{firebase.initializeApp(window.FIREBASE_CONFIG);FB.auth=firebase.auth();FB.auth.languageCode='es';FB.db=firebase.firestore();try{FB.db.enablePersistence({synchronizeTabs:true}).catch(()=>{})}catch(e){}}
-  catch(e){console.warn(e);startLocal();return}
+  try{firebase.initializeApp(window.FIREBASE_CONFIG);FB.auth=firebase.auth();FB.auth.languageCode='es';FB.db=firebase.firestore()}
+  catch(e){console.warn(e);showOffline();return}
   FB.auth.onAuthStateChanged(async u=>{
     if(FB.unsub){FB.unsub();FB.unsub=null}if(FB.unsubP){FB.unsubP();FB.unsubP=null}
     if(!u){ST.ready=false;ST.pid=null;ST.P=null;ST.R=null;ST.projects={};ST.mode='local';closeSheet();showAuth('login');return}
@@ -1853,25 +1869,42 @@ function startFb(u){
   FB.unsubP=FB.profRef.onSnapshot(sn=>{const d=sn.exists?sn.data():null;if(d&&typeof d.nombre==='string'&&d.nombre!==ST.me.name){ST.me.name=d.nombre;if(ST.ready){softRender('inicio');softRender('cuenta')}}},()=>{});
   let first=true;
   FB.unsub=ST.fbCol.onSnapshot(snap=>{
-    const projects={},vers={};let macro=null;
+    const projects={},vers={};let macro=null,ajustes=null;
     snap.docs.forEach(d=>{const id=d.id,b=d.data()||{};
       if(id.indexOf('p_')===0)projects[id.slice(2)]=b;
       else if(id.indexOf('v_')===0){(vers[b.pid]=vers[b.pid]||[]).push(Object.assign({},b,{id}))}
-      else if(id==='macro')macro=b});
-    ST.fbVers=vers;if(macro)ST.macro=deepFill(clone(DEFAULT_MACRO),macro);
+      else if(id==='macro')macro=b;
+      else if(id==='ajustes')ajustes=b});
+    ST.fbVers=vers;
+    const macroChanged=!!macro&&JSON.stringify(deepFill(clone(DEFAULT_MACRO),macro))!==JSON.stringify(ST.macro);
+    if(macro)ST.macro=deepFill(clone(DEFAULT_MACRO),macro);
     if(first){first=false;ST.projects=projects;
-      if(!Object.keys(projects).length){
-        const loc=Local.all(),lids=Object.keys(loc);
-        if(lids.length){lids.forEach(id=>ST.fbCol.doc('p_'+id).set(clone(loc[id])).catch(()=>{}));ST.projects=loc;setTimeout(()=>toast('Subimos a tu cuenta los proyectos de este navegador'),800)}
-        else{const id='p'+Date.now().toString(36),P=newProject(),Rx=runProject(P,ST.macro);
-          const doc={nombre:P.general.nombre,ciudad:P.general.ciudad,actualizado:Date.now(),actualizadoPor:u.uid,creadoPor:u.uid,creado:Date.now(),kpis:kpisOf(Rx),data:P};
-          ST.fbCol.doc('p_'+id).set(doc).catch(()=>{});ST.projects={[id]:doc}}
-      }
+      // Ajustes de la cuenta; si no hay, se suben los que una versión anterior dejó en este navegador
+      if(ajustes)applyRemotePrefs(ajustes,true);
+      else if(LEGACY['pp.prefs']){applyRemotePrefs(LEGACY['pp.prefs'],true);savePrefs()}
+      applyTheme();applyDesk();
+      // Proyectos, versiones y supuestos que versiones anteriores guardaron solo en este navegador: se suben a la cuenta y se borran del navegador
+      const loc=LEGACY['pp.projects']||{},lids=Object.keys(loc).filter(id=>!projects[id]);
+      if(lids.length){lids.forEach(id=>{ST.fbCol.doc('p_'+id).set(clone(loc[id])).catch(()=>{});ST.projects[id]=loc[id];
+          (LEGACY['pp.v.'+id]||[]).forEach(v=>ST.fbCol.doc('v_'+id+'_'+(v.id||Date.now().toString(36))).set(Object.assign({},v,{pid:id})).catch(()=>{}))});
+        setTimeout(()=>toast('Subimos a tu cuenta los proyectos que estaban solo en este navegador'),800)}
+      if(!macro&&LEGACY['pp.macro']){ST.macro=deepFill(clone(DEFAULT_MACRO),LEGACY['pp.macro']);ST.fbCol.doc('macro').set(clone(ST.macro)).catch(()=>{})}
+      clearLegacy();
+      if(!Object.keys(ST.projects).length){
+        const id='p'+Date.now().toString(36),P=newProject(),Rx=runProject(P,ST.macro);
+        const doc={nombre:P.general.nombre,ciudad:P.general.ciudad,actualizado:Date.now(),actualizadoPor:u.uid,creadoPor:u.uid,creado:Date.now(),kpis:kpisOf(Rx),data:P};
+        ST.fbCol.doc('p_'+id).set(doc).catch(()=>{});ST.projects={[id]:doc}}
       const ids=Object.keys(ST.projects);
       selectProject(prefs.last&&ST.projects[prefs.last]?prefs.last:ids.sort((a,b)=>(ST.projects[b].actualizado||0)-(ST.projects[a].actualizado||0))[0]);
       ready();return}
+    // Ajustes cambiados en otro dispositivo (tema, color, Modo Escritorio, columnas, periodicidad)
+    if(ajustes&&!snap.metadata.hasPendingWrites&&applyRemotePrefs(ajustes,false)){applyTheme();applyDesk();if(ST.ready)renderScreen()}
+    // Supuestos macro cambiados en otro dispositivo: se recalculan todos los resultados
+    if(macroChanged&&ST.ready){ST.sensKey=null;ST.tornKey=null;recalc(true)}
     ST.projects=Object.assign({},projects);
     if(ST.pid&&!ST.projects[ST.pid]&&ST.dirty)ST.projects[ST.pid]=projDoc();
+    // Proyecto abierto eliminado desde otro dispositivo
+    else if(ST.pid&&!ST.projects[ST.pid]&&ST.ready&&!snap.metadata.hasPendingWrites){const ids=Object.keys(ST.projects);if(ids.length)selectProject(ids[0]);else{ST.pid=null;ST.P=null;ST.R=null;renderScreen()}toast('El proyecto abierto se eliminó desde otro dispositivo')}
     ST.versions=((vers[ST.pid])||[]).slice().sort((a,b)=>b.fecha-a.fecha);
     if(ST.pid&&projects[ST.pid]){const d=projects[ST.pid];
       if(d.actualizado>(ST.lastSaved||0)&&d.actualizado!==ST.loadedAt&&!snap.metadata.hasPendingWrites){
