@@ -219,6 +219,9 @@ h1,h2,h3,h4{font-family:Poppins,sans-serif;font-weight:600;line-height:1.05;lett
 .lead2-form input:focus,.lead2-form select:focus,.lead2-form textarea:focus{outline:none;border-color:var(--green-ink)}
 .lead2-form textarea{min-height:90px;resize:vertical}
 .lead2-form .btn{justify-content:center;width:100%}
+.lead2-note{font-size:.78rem;line-height:1.5;color:var(--muted);text-align:center}
+.lead2-note a{color:var(--green-ink);font-weight:600}
+.lead2-note.err{color:#b42318}
 
 /* Aliados */
 .aliados{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:clamp(14px,2vw,24px);margin-top:clamp(24px,3vw,44px)}
@@ -624,12 +627,14 @@ h1,h2,h3,h4{font-family:Poppins,sans-serif;font-weight:600;line-height:1.05;lett
           <a class="chip-btn" href="mailto:planificarproyectos@gmail.com"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>planificarproyectos@gmail.com</a>
         </div>
       </div>
-      <form class="lead2-form" action="mailto:planificarproyectos@gmail.com" method="post" enctype="text/plain">
-        <label>Nombre *<input name="Nombre" required></label>
-        <label>Teléfono *<input name="Telefono" required></label>
-        <label>Correo *<input type="email" name="Correo" required></label>
+      <form class="lead2-form" id="lead-form" novalidate>
+        <label>Nombre *<input name="Nombre" autocomplete="name" required></label>
+        <label>Teléfono *<input type="tel" name="Telefono" autocomplete="tel" required></label>
+        <label>Correo *<input type="email" name="Correo" autocomplete="email" required></label>
         <label>Tipo de proyecto<select name="Interes"><option>Vivienda</option><option>Comercial</option><option>Gerencia de obra</option><option>Presupuesto / Planificación</option></select></label>
-        <button class="btn btn-primary" type="submit">Enviar <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <label>Cuéntanos de tu proyecto<textarea name="Mensaje" placeholder="Ubicación, área aproximada, qué necesitas…"></textarea></label>
+        <button class="btn btn-primary" type="submit">Enviar por WhatsApp <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <p class="lead2-note" id="lead-note" aria-live="polite">Se abrirá WhatsApp con tus datos listos para enviar. ¿Prefieres correo? <a href="mailto:planificarproyectos@gmail.com" id="lead-mail">Envíalo por correo</a>.</p>
       </form>
     </div>
   </div>
@@ -692,6 +697,21 @@ document.querySelectorAll('.hero,.lead2-grid').forEach(el=>{let tx=null,ty=null,
  addEventListener('scroll',spy,{passive:true});addEventListener('resize',()=>place(cur));
  links.forEach(a=>a.addEventListener('click',()=>{cur=a;place(a)}));
  document.fonts&&document.fonts.ready.then(()=>place(cur));spy();
+})();
+
+/* Formulario de contacto: arma el mensaje y lo abre en WhatsApp (o en el correo) */
+(()=>{const f=document.getElementById('lead-form');if(!f)return;
+ const note=document.getElementById('lead-note'),base=note.innerHTML;
+ const texto=()=>{const d=new FormData(f),v=k=>String(d.get(k)||'').trim();
+  let t='Hola, quiero cotizar un proyecto con Planificar Proyectos.\n\nNombre: '+v('Nombre')+'\nTeléfono: '+v('Telefono')+'\nCorreo: '+v('Correo')+'\nTipo de proyecto: '+v('Interes');
+  if(v('Mensaje'))t+='\n\n'+v('Mensaje');return t};
+ const valido=()=>{if(f.checkValidity()){note.classList.remove('err');note.innerHTML=base;return true}
+  const bad=f.querySelector(':invalid');note.classList.add('err');
+  note.textContent=bad.type==='email'&&bad.value?'Revisa el correo: parece incompleto.':'Completa los campos marcados con *.';bad.focus();return false};
+ f.addEventListener('submit',e=>{e.preventDefault();if(!valido())return;
+  window.open('https://wa.me/573204451740?text='+encodeURIComponent(texto()),'_blank','noopener')});
+ note.addEventListener('click',e=>{if(e.target.id!=='lead-mail')return;e.preventDefault();if(!valido())return;
+  location.href='mailto:planificarproyectos@gmail.com?subject='+encodeURIComponent('Cotización de proyecto – '+new FormData(f).get('Nombre').trim())+'&body='+encodeURIComponent(texto())});
 })();
 
 /* App instalable */
