@@ -342,6 +342,20 @@ h1,h2,h3,h4{font-family:Poppins,sans-serif;font-weight:600;line-height:1.05;lett
 
 /* Portada móvil: edificio centrado */
 @media (max-width:820px){.hero-bg img{object-position:88% center}}
+/* Animación de inicio (misma mecánica que las apps) */
+#splash{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;transition:opacity .45s ease,visibility .45s;animation:pp-auto .01s linear 6s forwards}
+#splash.out{opacity:0;visibility:hidden}
+#splash svg{width:min(30vw,128px);height:auto;overflow:visible}
+#splash .lg{fill:var(--green);fill-opacity:0;stroke:var(--green-ink);stroke-width:26;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;animation:pp-draw 1.1s cubic-bezier(.55,0,.25,1) .05s forwards,pp-fill .45s ease-out 1s forwards}
+#splash .fl{fill:var(--green);transform-box:fill-box;transform-origin:50% 50%;opacity:0;animation:pp-flash .7s ease-out 1.3s both}
+#splash .word{font-family:Poppins,sans-serif;font-weight:600;font-size:clamp(24px,6.5vw,36px);letter-spacing:-.03em;line-height:1;color:var(--text);animation:pp-word .5s ease-out 1.4s both}
+#splash .word span{color:var(--green-ink)}
+@keyframes pp-draw{to{stroke-dashoffset:0}}
+@keyframes pp-fill{to{fill-opacity:1}}
+@keyframes pp-flash{0%{opacity:0;transform:scale(.2)}1%{opacity:.85;transform:scale(.2)}100%{opacity:0;transform:scale(2.6)}}
+@keyframes pp-word{from{opacity:0;transform:translateY(12px);letter-spacing:.2em}to{opacity:1;transform:none;letter-spacing:-.03em}}
+@keyframes pp-auto{to{opacity:0;visibility:hidden}}
+@media (prefers-reduced-motion:reduce){#splash *{animation:none!important;stroke-dashoffset:0!important;fill-opacity:1!important;opacity:1!important}#splash .fl{opacity:0!important}}
 </style>
 <script type="application/ld+json">
 {
@@ -461,6 +475,14 @@ h1,h2,h3,h4{font-family:Poppins,sans-serif;font-weight:600;line-height:1.05;lett
 </script>
 </head>
 <body>
+
+<div id="splash" role="img" aria-label="Planificar Proyectos">
+  <svg viewBox="0 0 1653 1909" aria-hidden="true">
+    <circle class="fl" cx="826" cy="954" r="330"/>
+    <path class="lg" pathLength="1" fill-rule="evenodd" d="M0,478L826,0L910,49L910,573L167,1003L167,1335L371,1453L371,1120L1115,692L1115,263L1198,215L1653,478L1653,1432L826,1909L743,1860L743,1335L1486,907L1486,573L1282,456L1282,788L538,1217L538,1637L455,1686L0,1432ZM167,573L743,241L743,478L167,810ZM910,1432L1486,1099L1486,1335L910,1667Z"/>
+  </svg>
+  <div class="word">Planificar<span>.</span>Proyectos</div>
+</div>
 
 <header class="nav" id="nav">
   <div class="nav-inner">
@@ -674,6 +696,9 @@ h1,h2,h3,h4{font-family:Poppins,sans-serif;font-weight:600;line-height:1.05;lett
 <a class="wa" href="https://wa.me/573204451740?text=Hola%2C%20quiero%20cotizar%20un%20proyecto%20con%20Planificar%20Proyectos" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp"><svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.4-.5c.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5 2.5 1 3 .8 3.6.7.5-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3zM12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.5 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18.2c-1.5 0-3-.4-4.2-1.1l-.3-.2-3.1.8.8-3-.2-.3C4.2 15.1 3.8 13.6 3.8 12c0-4.5 3.7-8.2 8.2-8.2s8.2 3.7 8.2 8.2-3.7 8.2-8.2 8.2z"/></svg></a>
 
 <script>
+/* Animación de inicio: dura al menos 2,3 s desde que se empezó a cargar la página */
+(()=>{const el=document.getElementById('splash');if(!el)return;const t0=performance.timing&&performance.timing.navigationStart||Date.now();
+  setTimeout(()=>el.classList.add('out'),Math.max(0,2300-(Date.now()-t0)))})();
 document.getElementById('y').textContent=new Date().getFullYear();
 const nav=document.getElementById('nav');
 const onScroll=()=>nav.classList.toggle('scrolled',scrollY>40);addEventListener('scroll',onScroll);onScroll();
