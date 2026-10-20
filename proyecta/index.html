@@ -441,6 +441,13 @@ body.desk{padding-bottom:28px}
 body.desk .nav,body.desk .screen-head,body.desk .screen>.chips,body.desk .live{display:none}
 body.desk .wrap{max-width:1400px}
 body.desk .dtabs{display:block}
+/* Modo Escritorio en computador: Inicio en dos columnas, cada gráfico o tarjeta en su mitad (el celular no cambia) */
+@media (min-width:1024px){
+  body.desk #s-inicio{grid-template-columns:repeat(2,minmax(0,1fr))}
+  body.desk #s-inicio>:is(.hello,.tiles,.grid2,.empty),body.desk #s-inicio>.card:not(.projcard){grid-column:1/-1}
+  body.desk #s-inicio .grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  body.desk #s-inicio .grid2>.span2:not(.blk){grid-column:auto}
+}
 .dtabs .dt1{border-bottom:1px solid var(--line)}
 .appbar .dtabs .wrap{display:block;padding-block:0}
 .appbar .dtabs .t1{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
@@ -1356,6 +1363,8 @@ const alertHtml=list=>list.map(([c,t,m])=>`<div class="alert ${c}"><b>${t}</b><d
 /* ---------- INICIO ---------- */
 function renderInicio(){
   const host=$('#s-inicio'),now=new Date(),h=now.getHours();
+  // En Modo Escritorio con dos columnas, los gráficos que se ajustan al ancho se dibujan para media pantalla
+  if(ST.desk&&innerWidth>=1024&&ST.curW)ST.curW=Math.floor((ST.curW-12)/2);
   const name=(ST.me&&ST.me.name)||prefs.user||'';
   let html=`<div class="hello"><div class="date">${DIAS[now.getDay()]}, ${now.getDate()} ${MES[now.getMonth()]}</div><h1>${h<12?'Buenos días':h<19?'Buenas tardes':'Buenas noches'}${name?', '+esc(name.split(' ')[0]):''}</h1></div>`;
   if(!ST.P){
