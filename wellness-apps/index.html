@@ -183,11 +183,11 @@ setTimeout(function(){if(document.body.classList.contains('loading'))render(auth
 <script>document.getElementById('y').textContent=new Date().getFullYear();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
 <div class="installbar" id="install" role="dialog" aria-label="Instalar Wellness Apps" hidden></div>
 <script>
-/* Aviso de instalar app: en Chrome y Android con el instalador del navegador; en iPhone con instrucciones. "Ahora no" espera 7 días */
+/* Aviso de instalar app: en Chrome y Android con el instalador del navegador; en iPhone con instrucciones. "Ahora no" espera 12 horas */
 (()=>{const el=document.getElementById('install');let prompt=null;
   const standalone=()=>{try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){return false}};
   const ios=()=>/iphone|ipad|ipod/i.test(navigator.userAgent||'')||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-  const dismissed=()=>{try{return Date.now()-(+localStorage.getItem('wellness:installDismiss')||0)<7*864e5}catch(e){return false}};
+  const dismissed=()=>{try{return Date.now()-(+localStorage.getItem('wellness:installDismiss')||0)<12*36e5}catch(e){return false}};
   const show=()=>{if(standalone()||!(prompt||ios())||dismissed()){el.hidden=true;return}
     const head=`<div class="ir"><img src="icon-192.png" alt=""><div><b>Instala Wellness Apps${prompt?'':' en tu iPhone'}</b><span>${prompt?'Ábrela desde tu pantalla de inicio, a pantalla completa y más rápido.':'En Safari:'}</span></div></div>`;
     el.innerHTML=prompt?head+'<div class="btns"><button class="btn soft" data-i="no">Ahora no</button><button class="btn" data-i="go">Instalar</button></div>'

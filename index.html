@@ -753,7 +753,7 @@ document.querySelectorAll('.hero,.lead2-grid').forEach(el=>{let tx=null,ty=null,
  addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;setTimeout(show,1500)});
  if(ios&&safari){box.classList.add('is-ios');setTimeout(show,2500)}
  box.querySelector('.yes').addEventListener('click',async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice.catch(()=>{});deferred=null;hide()});
- box.querySelector('.no').addEventListener('click',()=>{try{localStorage.setItem('pp-install-later',Date.now()+30*864e5)}catch(e){}hide()});
+ box.querySelector('.no').addEventListener('click',()=>{try{localStorage.setItem('pp-install-later',Date.now()+12*36e5)}catch(e){}hide()});
  addEventListener('appinstalled',hide);
 })();
 </script>

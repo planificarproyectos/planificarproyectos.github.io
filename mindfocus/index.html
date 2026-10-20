@@ -1871,7 +1871,7 @@ const Inst={prompt:null,
   standalone(){try{return matchMedia("(display-mode: standalone)").matches||navigator.standalone===true}catch(e){return false}},
   ios(){const u=navigator.userAgent||"";return /iphone|ipad|ipod/i.test(u)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)},
   can(){return !this.standalone()&&(!!this.prompt||this.ios())},
-  dismissed(){try{return Date.now()-(+localStorage.getItem("mf:installDismiss")||0)<7*864e5}catch(e){return false}},
+  dismissed(){try{return Date.now()-(+localStorage.getItem("mf:installDismiss")||0)<12*36e5}catch(e){return false}},
   body(){const head='<div class="ir"><img src="icon-192.png" alt=""><div class="stack" style="gap:2px;min-width:0">';
     if(this.prompt)return head+'<b>Instala Mind Focus</b><span>Ábrela desde tu pantalla de inicio, a pantalla completa y más rápido.</span></div></div><div class="btns"><button data-i="no">Ahora no</button><button class="primary" data-i="go">Instalar</button></div>';
     return head+'<b>Instala Mind Focus en tu iPhone</b><span>En Safari:</span></div></div><ol><li>Toca <b>Compartir</b> (el cuadro con la flecha hacia arriba).</li><li>Elige <b>Agregar a pantalla de inicio</b> y luego <b>Agregar</b>.</li></ol><button data-i="no">Entendido</button>'},

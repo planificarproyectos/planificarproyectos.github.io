@@ -1379,7 +1379,7 @@ var Inst={prompt:null,
   standalone:function(){ try{ return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true; }catch(e){ return false; } },
   ios:function(){ var u=navigator.userAgent||''; return /iphone|ipad|ipod/i.test(u)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1); },
   can:function(){ return !this.standalone()&&(!!this.prompt||this.ios()); },
-  dismissed:function(){ try{ return Date.now()-(+localStorage.getItem('powerfit:installDismiss')||0)<7*864e5; }catch(e){ return false; } },
+  dismissed:function(){ try{ return Date.now()-(+localStorage.getItem('powerfit:installDismiss')||0)<12*36e5; }catch(e){ return false; } },
   body:function(inBar){
     if(this.prompt) return '<div class="row">'+logo(40)+'<div class="stack" style="gap:2px;flex:1;min-width:0"><b>Instala PowerFit</b><span class="muted small">Ábrela desde tu pantalla de inicio, a pantalla completa y más rápido.</span></div></div>'+
       '<div class="btns">'+(inBar?'<button class="btn soft" data-a="instNo">Ahora no</button>':'')+'<button class="btn" data-a="instGo"'+(inBar?'':' style="grid-column:1/-1"')+'>Instalar</button></div>';

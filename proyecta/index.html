@@ -1830,14 +1830,14 @@ async function wipeData(){
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();ST.instP=e;if(ST.ready)rr('cuenta');instBar()});
 addEventListener('appinstalled',()=>{ST.instP=null;toast('Proyecta quedó instalada');if(ST.ready)rr('cuenta');instBar()});
 /* Aviso de instalar app: en Chrome y Android con el instalador del navegador; en iPhone con instrucciones.
-   "Ahora no" se recuerda 7 días en la cuenta, no en el navegador */
+   "Ahora no" se recuerda 12 horas en la cuenta, no en el navegador */
 /* Animación de inicio: dura al menos 2,3 s y se repite al iniciar sesión */
 let splashT0=Date.now(),splashTm=null,loginPending=false;
 function hideSplash(){const el=$('#splash');if(!el)return;clearTimeout(splashTm);splashTm=setTimeout(()=>{el.classList.add('out');instBar()},Math.max(0,2300-(Date.now()-splashT0)))}
 function playSplash(){const el=$('#splash');if(!el)return;el.classList.remove('out');el.classList.add('replay');void el.offsetWidth;el.classList.remove('replay');splashT0=Date.now();hideSplash()}
 const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent||'')||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 function instBar(){const el=$('#instbar');if(!el)return;
-  const sp=$('#splash'),on=!isStandalone()&&(!!ST.instP||isIOS())&&ST.ready&&(!sp||sp.classList.contains('out'))&&!(Date.now()-(+prefs.instNo||0)<7*864e5);
+  const sp=$('#splash'),on=!isStandalone()&&(!!ST.instP||isIOS())&&ST.ready&&(!sp||sp.classList.contains('out'))&&!(Date.now()-(+prefs.instNo||0)<12*36e5);
   if(!on){el.hidden=true;return}
   const head=`<div class="ir"><img src="icon-192.png" alt=""><div><b>Instala Proyecta${ST.instP?'':' en tu iPhone'}</b><span>${ST.instP?'Ábrela como app, en su propia ventana y más rápido.':'En Safari:'}</span></div></div>`;
   el.innerHTML=ST.instP?head+'<div class="btns"><button class="btn" data-act="inst-no">Ahora no</button><button class="btn pri" data-act="install">Instalar</button></div>'
