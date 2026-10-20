@@ -447,6 +447,10 @@ body.desk .dtabs{display:block}
   body.desk #s-inicio>:is(.hello,.tiles,.grid2,.empty),body.desk #s-inicio>.card:not(.projcard){grid-column:1/-1}
   body.desk #s-inicio .grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
   body.desk #s-inicio .grid2>.span2:not(.blk){grid-column:auto}
+  body.desk #s-inicio .grid2.mason{align-items:start}
+  body.desk #s-inicio .mcol{display:grid;gap:12px;align-content:start;min-width:0}
+  body.desk #s-inicio .mcol>.blk{display:none}
+  body.desk #s-inicio .mcol>.card[data-topic]::before{content:attr(data-topic);display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;font-weight:800;color:var(--muted);margin-bottom:6px}
 }
 .dtabs .dt1{border-bottom:1px solid var(--line)}
 .appbar .dtabs .wrap{display:block;padding-block:0}
@@ -1402,7 +1406,20 @@ function renderInicio(){
     ${Object.keys(ST.projects).length>1?`<div class="blk span2">Portafolio</div><div class="card span2"><h3>Portafolio</h3><p class="sub">Proyectos ${ST.mode==='db'?'en la base central':'en tu cuenta'}. Toca uno para abrirlo.</p><div class="port">${portfolioHtml()}</div></div>`:''}
   </div>`;
   host.innerHTML=html;
-  clearTimeout(ST.tornT);ST.tornT=setTimeout(()=>{const el=$('#iTorn');if(el&&ST.R)el.innerHTML=tornadoCached()},300);
+  masonInicio();
+  clearTimeout(ST.tornT);ST.tornT=setTimeout(()=>{const el=$('#iTorn');if(el&&ST.R){el.innerHTML=tornadoCached();masonInicio()}},300);
+}
+/* Modo Escritorio: Inicio en mosaico de dos columnas sin huecos. Cada tarjeta, en orden, va a la columna más corta.
+   Los títulos de bloque se ocultan y cada tarjeta muestra su tema (Salud, Económico…) como etiqueta */
+function masonInicio(){
+  const g=$('#s-inicio .grid2');if(!g)return;
+  const items=[...g.querySelectorAll(':scope>.mcol>*')].concat([...g.children].filter(e=>!e.classList.contains('mcol')));
+  items.forEach((e,i)=>{if(e.dataset.o==null)e.dataset.o=i});items.sort((a,b)=>a.dataset.o-b.dataset.o);
+  g.querySelectorAll(':scope>.mcol').forEach(c=>c.remove());g.classList.remove('mason');items.forEach(e=>g.appendChild(e));
+  if(!(ST.desk&&innerWidth>=1024))return;
+  let topic='';items.forEach(e=>{if(e.classList.contains('blk'))topic=e.textContent;else if(topic)e.dataset.topic=topic});
+  const cols=[0,1].map(()=>{const c=document.createElement('div');c.className='mcol';g.appendChild(c);return c});g.classList.add('mason');
+  items.forEach(e=>{if(e.classList.contains('blk')){cols[0].appendChild(e);return}const c=cols[0].offsetHeight<=cols[1].offsetHeight?cols[0]:cols[1];c.appendChild(e)});
 }
 function portfolioHtml(){
   return Object.entries(ST.projects).sort((a,b)=>(b[1].actualizado||0)-(a[1].actualizado||0)).map(([id,d])=>{const k=d.kpis||{};
