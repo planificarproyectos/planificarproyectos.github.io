@@ -343,6 +343,19 @@ body.authing .nav,body.authing .appbar{visibility:hidden}
 @keyframes sp{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:no-preference){.fill{transition:width .25s ease}.screen{animation:in .18s ease}@keyframes in{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}}
 @media (prefers-reduced-motion:reduce){.spin{animation:none}}
+/* Deslizadores para mouse: barra visible y flechas en zonas con desplazamiento horizontal */
+@media (hover:hover) and (pointer:fine){
+  html body :is(.chips,.seg,.tbl-wrap,.chart-x,#dt1,#dsub){scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+  html body :is(.chips,.seg,.tbl-wrap,.chart-x,#dt1,#dsub):hover{scrollbar-color:var(--muted) transparent}
+  .chips::-webkit-scrollbar,.seg::-webkit-scrollbar,.tbl-wrap::-webkit-scrollbar,.chart-x::-webkit-scrollbar,.dtabs .t1::-webkit-scrollbar,.dtabs .t2::-webkit-scrollbar{display:block;height:8px}
+  .chips::-webkit-scrollbar-thumb,.seg::-webkit-scrollbar-thumb,.tbl-wrap::-webkit-scrollbar-thumb,.chart-x::-webkit-scrollbar-thumb,.dtabs .t1::-webkit-scrollbar-thumb,.dtabs .t2::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
+  html body .chips{padding-bottom:6px}
+}
+.hsb{position:fixed;z-index:30;width:30px;height:30px;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--ink);display:grid;place-items:center;box-shadow:0 4px 14px rgba(0,0,0,.18);cursor:pointer;opacity:0;pointer-events:none;transition:opacity .15s}
+.hsb.on{opacity:1;pointer-events:auto}
+.hsb:hover{background:var(--acc);color:var(--on-acc);border-color:var(--acc)}
+.hsb svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+@media (prefers-reduced-motion:reduce){.hsb{transition:none}}
 /* Inicio: bloques y tablero técnico */
 .blk{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--muted);display:flex;align-items:center;gap:10px;margin-top:10px}
 .blk::after{content:"";flex:1;height:1px;background:var(--line)}
@@ -1747,6 +1760,23 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('#sheetHost').
 WEBQ.addEventListener('change',()=>{applyDesk();if(!ST.web&&ST.cuentaOpen){ST.cuentaOpen=false}renderScreen();if(ST.web)webHint()});
 DESKQ.addEventListener('change',()=>{applyDesk();renderScreen()});
 addEventListener('resize',()=>{if(ST.ready)layout()});
+/* Deslizadores para mouse: flechas flotantes sobre la zona que se puede desplazar en horizontal y rueda vertical en las tiras de pestañas */
+(()=>{const FINE=matchMedia('(hover:hover) and (pointer:fine)'),SEL='.chips,.seg,.tbl-wrap,.chart-x,#dt1,#dsub',STRIP='.chips,.seg,#dt1,#dsub';
+  const mk=d=>{const b=document.createElement('button');b.type='button';b.className='hsb';b.tabIndex=-1;b.setAttribute('aria-hidden','true');b.dataset.d=d;
+    b.innerHTML=`<svg viewBox="0 0 24 24"><path d="${d<0?'m15 6-6 6 6 6':'m9 6 6 6-6 6'}"/></svg>`;document.body.appendChild(b);return b};
+  const L=mk(-1),R=mk(1);let cur=null;
+  const hide=()=>{L.classList.remove('on');R.classList.remove('on')};
+  const place=()=>{if(!cur||!cur.isConnected||!FINE.matches)return hide();const r=cur.getBoundingClientRect(),max=cur.scrollWidth-cur.clientWidth;
+    const vt=Math.max(r.top,0),vb=Math.min(r.bottom,innerHeight);if(max<4||vb-vt<20)return hide();
+    const y=Math.round((vt+vb)/2-15);L.style.top=R.style.top=y+'px';L.style.left=Math.round(r.left+4)+'px';R.style.left=Math.round(r.right-34)+'px';
+    L.classList.toggle('on',cur.scrollLeft>2);R.classList.toggle('on',cur.scrollLeft<max-2)};
+  document.addEventListener('mouseover',e=>{if(e.target.closest('.hsb'))return;const s=e.target.closest(SEL);if(s!==cur)cur=s;place()});
+  document.documentElement.addEventListener('mouseleave',()=>{cur=null;hide()});
+  [L,R].forEach(b=>b.addEventListener('click',()=>{if(cur)cur.scrollBy({left:+b.dataset.d*Math.max(120,cur.clientWidth*.7),behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'})}));
+  addEventListener('scroll',place,{passive:true,capture:true});addEventListener('resize',place);
+  document.addEventListener('wheel',e=>{if(!FINE.matches||e.shiftKey||Math.abs(e.deltaX)>Math.abs(e.deltaY))return;const s=e.target.closest(STRIP);
+    if(!s||s.scrollWidth-s.clientWidth<4)return;const before=s.scrollLeft;s.scrollLeft+=e.deltaY;if(s.scrollLeft!==before)e.preventDefault()},{passive:false});
+})();
 function webHint(){if(prefs.webHint2)return;prefs.webHint2=1;savePrefs();setTimeout(()=>toast('Toca las secciones de abajo para sumarlas como columnas. Arrastra el encabezado de una columna para reordenarla.'),600)}
 /* Arrastrar columnas para reordenarlas */
 let DRAG=null;
