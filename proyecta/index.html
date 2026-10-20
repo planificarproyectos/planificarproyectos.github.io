@@ -18,6 +18,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script src="../wellness-soporte.js"></script>
 <style>:root{color-scheme:dark;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Proyecta</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -260,6 +261,29 @@ textarea.paste{width:100%;min-height:96px;font-size:12px;border:0;background:var
 .roles div{display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px;padding:8px 10px;border-radius:10px;background:var(--sunk)}
 .roles div.me{box-shadow:inset 0 0 0 1.5px var(--acc)}
 .roles b{font-weight:800}
+.profile .pname{font-size:18px;font-weight:800;overflow-wrap:anywhere}.profile small{color:var(--muted);overflow-wrap:anywhere}
+.avatar svg{display:block}
+.namecard{display:grid;gap:8px}.namecard small{color:var(--muted)}.lbl{font-size:12.5px;font-weight:700;color:var(--muted)}
+.namecard.need{background:var(--acc);color:var(--on-acc)}.namecard.need .lbl,.namecard.need small{color:inherit;opacity:.75}
+.namecard.need input{background:rgba(0,0,0,.12);color:inherit}.namecard.need .btn.pri{background:var(--on-acc);color:var(--acc);border-color:var(--on-acc)}
+.namerow{display:flex;gap:8px}.namerow input{flex:1;min-width:0;font:inherit;font-size:15px;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:var(--sunk);color:var(--ink)}
+.acckpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.acckpis div{background:var(--panel);border-radius:var(--r-sm);padding:12px 14px;display:grid;gap:2px;min-width:0}
+.acckpis b{font-size:20px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.acckpis span{font-size:11.5px;color:var(--muted)}
+.astack{display:grid;gap:8px}
+.acard{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--panel);border:0;border-radius:var(--r-sm);padding:14px 16px;cursor:pointer;color:var(--ink);text-decoration:none;font:inherit}
+.acard>svg:first-child{flex:none;color:var(--acc-ink)}.acard>svg:last-child{flex:none;color:var(--muted)}
+.acard .grow{flex:1;display:grid;gap:2px;min-width:0}.acard .grow span{font-size:12.5px;color:var(--muted)}
+.acard:hover{filter:brightness(1.06)}.acard.static{cursor:default}.acard.static:hover{filter:none}
+.acard.danger>svg:first-child,.acard.danger b{color:var(--neg)}
+.acard.hl{box-shadow:inset 0 0 0 1px var(--acc-ink);margin-top:8px}
+.card.ask{display:grid;gap:8px;box-shadow:inset 0 0 0 1px var(--neg)}.card.ask small{color:var(--muted)}
+.btn.danger{background:var(--neg);border-color:var(--neg);color:#fff}
+.wsw{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:10px}
+.wsw button{display:grid;justify-items:center;gap:6px;background:none;border:0;cursor:pointer;color:var(--muted);font:inherit;font-size:12px;font-weight:600}
+.wsw i{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#10110F;box-shadow:inset 0 0 0 1px rgba(127,127,127,.25)}
+.wsw button[aria-checked=true]{color:var(--ink)}.wsw button[aria-checked=true] i{box-shadow:0 0 0 3px var(--panel),0 0 0 5px var(--ink)}
+.between{display:flex;justify-content:space-between;align-items:center;gap:14px}
 .about{color:var(--muted);font-size:12.5px;text-align:center;padding:8px 0}
 
 /* Informe */
@@ -849,7 +873,7 @@ function recalc(full){cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{i
 function onModelChange(struct,src){markDirty();if(struct){recalc();setTimeout(()=>rr(src||'modelo'),0)}else recalc()}
 
 /* ---------- Apariencia ---------- */
-const ACCENTS=[['Lima','#C6F135'],['Menta','#3EE6A8'],['Cian','#36D1F2'],['Azul','#4C8DFF'],['Violeta','#9B7BFF'],['Rosa','#FF5FA2'],['Coral','#FF6B57'],['Ámbar','#FFB020']];
+const ACCENTS=[['Lima','#C6F135'],['Azul','#3D8BFF'],['Naranja','#FF8A1F'],['Rosa','#FF4FA3'],['Cian','#22E0E0'],['Morado','#A97BFF'],['Amarillo','#FFD60A'],['Coral','#FF5A5F']];
 const root=document.documentElement;let HOST=root.getAttribute('data-theme');
 const hex2rgb=h=>{h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');const n=parseInt(h,16);return [n>>16&255,n>>8&255,n&255]};
 const rgb2hex=c=>'#'+c.map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,'0')).join('');
@@ -1308,30 +1332,65 @@ function renderSens(){
 /* ---------- CUENTA ---------- */
 function roleName(){if(ST.mode==='fb')return 'Tu cuenta';if(ST.mode!=='db')return 'Este dispositivo';if(ST.role.owner)return 'Propietario';if(ST.role.edit)return 'Editor';if(ST.readOnly||ST.role.write===false)return 'Solo lectura';return 'Colaborador'}
 function canMacro(){return ST.mode!=='db'||ST.role.edit||ST.role.owner}
+const WI={user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',key:'<circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M14 9l2 2"/>',xls:'<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 12l6 6M15 12l-6 6"/>',dl:'<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',chk:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',chat:'<path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/>',bulb:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',out:'<path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 8l-4 4 4 4M6 12h10"/>',trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',apps:'<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',chev:'<path d="m9 6 6 6-6 6"/>'};
+const wic=(k,s=22,w=1.8)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${WI[k]}</svg>`;
+const acard=(act,icon,t,d,cls,extra)=>`<button class="acard${cls?' '+cls:''}" data-act="${act}"${extra||''}>${wic(icon)}<span class="grow"><b>${t}</b><span>${d}</span></span>${wic('chev',20)}</button>`;
+const waLink=(tipo)=>{const em=ST.mode==='fb'?ST.fbEmail:'';return window.wellnessWA?window.wellnessWA('Proyecta',tipo,em):'https://wa.me/573204451740?text='+encodeURIComponent((tipo==='recomendacion'?'Hola, tengo una recomendación para Proyecta: ':'Hola, necesito ayuda con Proyecta: ')+(em?'\n\n(Cuenta: '+em+')':''))};
+const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+function countVersions(){if(ST.mode==='fb')return Object.values(ST.fbVers||{}).reduce((a,l)=>a+l.length,0);if(ST.mode==='db')return (ST.versions||[]).length;return Object.keys(ST.projects).reduce((a,id)=>a+Local.vers(id).length,0)}
 function renderCuenta(){
-  const host=$('#s-cuenta'),M=ST.macro,me=ST.me;const nm=(me&&me.name)||prefs.user||'';const rn=roleName();
-  const cur=prefs.accent.toUpperCase(),hit=ACCENTS.find(a=>a[1]===cur);
+  const host=$('#s-cuenta'),M=ST.macro,me=ST.me;const nm=(ST.mode==='fb'?(me&&me.name):(me&&me.name)||prefs.user)||'';const rn=roleName();
+  const cur=prefs.accent.toUpperCase(),dark=isDark();
   const mr=(k,l,u)=>`<tr><td class="c0">${l}</td>${M.anios.map((y,i)=>`<td><input type="number" step="any" data-mpath="${k}.${i}" value="${esc(M[k][i])}" aria-label="${l} ${y}"${canMacro()?'':' disabled'}></td>`).join('')}</tr>`;
-  host.innerHTML=`<div class="screen-head"><div><h1>Cuenta</h1><p>Tu perfil, permisos y preferencias.</p></div></div>
-  <div class="card profile"><div class="avatar">${me&&me.avatarUrl&&me.id?`<img src="${esc(me.avatarUrl)}" alt="">`:esc((nm||'?').charAt(0).toUpperCase())}</div><div style="flex:1;min-width:0">${ST.mode==='fb'?`<input id="userName" aria-label="Tu nombre" placeholder="Tu nombre" value="${esc((me&&me.name)||'')}">`:me&&me.name?`<div style="font-size:20px;font-weight:800">${esc(me.name)}</div>`:`<input id="userName" aria-label="Tu nombre" placeholder="Tu nombre" value="${esc(prefs.user)}">`}<small>${ST.mode==='fb'?esc(ST.fbEmail||''):esc(rn)}${ST.mode==='db'?' · base central de proyectos':''}</small></div>${ST.mode==='fb'?'<button class="btn sm" data-act="logout">Cerrar sesión</button>':''}</div>
-  ${ST.mode==='fb'?`<div class="card"><p class="sub" style="margin:0">Tus proyectos, versiones y supuestos macro se guardan en tu cuenta y se sincronizan entre tus dispositivos. Solo tú puedes verlos. Es la misma cuenta de Mind Focus y PowerFit.</p></div>`:''}
-  <div class="label"${ST.mode==='fb'?' hidden':''}>Permisos</div>
-  <div class="card"${ST.mode==='fb'?' hidden':''}><p class="sub">${ST.mode==='db'?'Los permisos siguen el nivel con que te compartieron la app. El propietario los cambia en el menú Compartir.':'Estás trabajando sin conexión a la base central: todo se guarda solo en este dispositivo.'}</p>
-  <div class="roles">${[['Propietario','Todo, incluido compartir la app.'],['Editor','Crea y edita proyectos, versiones y supuestos macro.'],['Colaborador','Crea y edita proyectos y versiones.'],['Solo lectura','Consulta resultados, informes y versiones.']].map(([r,d])=>`<div class="${r===rn?'me':''}"><b>${r}</b><span>${d}</span></div>`).join('')}</div></div>
+  const email=ST.mode==='fb'?ST.fbEmail:'';const cr=ST.created?new Date(ST.created):null;
+  const nProj=Object.keys(ST.projects).length,ventas=sum(Object.values(ST.projects).map(d=>(d.kpis&&d.kpis.ventas)||0));
+  const canWipe=ST.mode!=='db'&&!ST.readOnly;
+  const inst=isStandalone()?`<div class="acard static">${wic('chk')}<span class="grow"><b>App instalada</b><span>Estás usando Proyecta como app</span></span></div>`
+    :ST.instP?acard('install','dl','Instalar app','Abre Proyecta desde tu pantalla de inicio')
+    :`<div class="acard static">${wic('dl')}<span class="grow"><b>Instalar app</b><span>Android: Chrome › ⋮ › Instalar app. iPhone: Safari › Compartir › Agregar a pantalla de inicio</span></span></div>`;
+  host.innerHTML=`<div class="screen-head"><div><h1>Cuenta</h1><p>Tu perfil, ajustes y supuestos de la empresa.</p></div></div>
+  <div class="card profile"><div class="avatar">${me&&me.avatarUrl&&me.id?`<img src="${esc(me.avatarUrl)}" alt="">`:wic('user',26,2.2)}</div><div style="flex:1;min-width:0;display:grid;gap:2px"><b class="pname">${esc(nm||email||'Sin sesión')}</b>${nm&&email?`<small>${esc(email)}</small>`:''}<small>${cr?'Cuenta creada el '+cr.getDate()+' '+MES[cr.getMonth()]+' '+cr.getFullYear():ST.mode==='fb'?'':esc(rn)+(ST.mode==='db'?' · base central de proyectos':'')}</small></div></div>
+  <div class="card namecard${nm?'':' need'}">${nm?'':'<b>Configura tu nombre para personalizar Proyecta</b>'}<label class="lbl" for="pname">Tu nombre</label><div class="namerow"><input id="pname" maxlength="30" placeholder="¿Cómo te llamas?" autocomplete="given-name" value="${esc(nm)}"><button class="btn${nm?'':' pri'}" data-act="save-name">Guardar</button></div><small>${ST.mode==='fb'?'Se usa en Mind Focus, PowerFit, Lumen y Proyecta.':'Se guarda en este dispositivo.'}</small></div>
+  <div class="acckpis"><div><b>${nProj}</b><span>Proyectos</span></div><div><b>${countVersions()}</b><span>Versiones</span></div><div><b>${ventas>=1e9?'$'+nf(ventas/1e9,ventas<1e11?1:0)+' mil M':fM(ventas)}</b><span>Ventas modeladas</span></div></div>
+  <div class="label">Ajustes</div>
+  <div class="astack">
+    ${ST.mode==='fb'?acard('reset-pass','key','Cambiar contraseña','Te enviamos un correo para crear una nueva'):''}
+    ${ST.P?acard('export-xlsx','xls','Descargar Excel','Proyecto actual: flujo, resultados y supuestos'):''}
+    ${inst}
+    <a class="acard" target="_blank" rel="noopener" href="${esc(waLink('soporte'))}">${wic('chat')}<span class="grow"><b>Contactar soporte</b><span>Escríbenos por WhatsApp si algo no funciona</span></span>${wic('chev',20)}</a>
+    <a class="acard" target="_blank" rel="noopener" href="${esc(waLink('recomendacion'))}">${wic('bulb')}<span class="grow"><b>Enviar recomendaciones</b><span>Cuéntanos qué mejorarías, por WhatsApp</span></span>${wic('chev',20)}</a>
+    ${ST.mode==='fb'?acard('logout','out','Cerrar sesión','Tus datos quedan guardados en tu cuenta'):''}
+    ${!canWipe?'':ST.askWipe?`<div class="card ask"><b>¿Borrar todos tus proyectos y versiones?</b><small>Se eliminan ${nProj} proyecto(s) y ${countVersions()} versión(es)${ST.mode==='fb'?' de tu cuenta':' de este dispositivo'}. Los supuestos macro se conservan. No se puede deshacer.</small><div class="row"><button class="btn" data-act="wipe-no">Cancelar</button><button class="btn danger" data-act="wipe-yes">Borrar todo</button></div></div>`
+      :acard('wipe-ask','trash','Borrar mis datos',ST.mode==='fb'?'Proyectos y versiones de tu cuenta. No se puede deshacer':'Se borran de este dispositivo','danger')}
+  </div>
   <div class="label">Apariencia</div>
-  <div class="card set"><div class="set-row"><div><div class="t">Modo</div><div class="d">Sistema sigue la configuración del dispositivo.</div></div><div class="seg sunk" role="group" aria-label="Modo de color">${[['system','Sistema'],['dark','Oscuro'],['light','Claro']].map(([k,l])=>`<button data-act="theme" data-k="${k}" aria-pressed="${prefs.theme===k}">${l}</button>`).join('')}</div></div>
-  <div class="set-row" style="display:grid;justify-content:stretch"><div><div class="t">Color de énfasis</div><div class="d">${hit?hit[0]:'Personalizado '+cur}</div></div><div class="swatches">${ACCENTS.map(([n,c])=>`<button class="sw-c" style="--c:${c}" data-act="accent" data-k="${c}" aria-label="${n}" title="${n}" aria-pressed="${c===cur}"></button>`).join('')}<label class="sw-c custom" title="Personalizado" aria-pressed="${!hit}"><input type="color" id="accCustom" value="${esc(prefs.accent)}" aria-label="Color personalizado"></label></div></div></div>
+  <div class="card"><b class="lbl">Color de énfasis</b><div class="wsw" role="radiogroup" aria-label="Color de énfasis">${ACCENTS.map(([n,c])=>{const on=c===cur;return `<button role="radio" aria-checked="${on}" data-act="accent" data-k="${c}"><i style="background:${c}">${on?wic('chk',18,3):''}</i>${n}</button>`}).join('')}</div></div>
+  <div class="card"><div class="between"><div style="display:grid;gap:2px"><b>Modo oscuro</b><small class="muted">${dark?'Activado':'Desactivado'} · no depende del celular</small></div><label class="switch"><input type="checkbox" data-act="dark" aria-label="Modo oscuro"${dark?' checked':''}><i></i></label></div></div>
+  <div class="label"${ST.mode==='db'?'':' hidden'}>Permisos</div>
+  <div class="card"${ST.mode==='db'?'':' hidden'}><p class="sub">Los permisos siguen el nivel con que te compartieron la app. El propietario los cambia en el menú Compartir.</p>
+  <div class="roles">${[['Propietario','Todo, incluido compartir la app.'],['Editor','Crea y edita proyectos, versiones y supuestos macro.'],['Colaborador','Crea y edita proyectos y versiones.'],['Solo lectura','Consulta resultados, informes y versiones.']].map(([r,d])=>`<div class="${r===rn?'me':''}"><b>${r}</b><span>${d}</span></div>`).join('')}</div></div>
   <div class="label">Supuestos macro de la empresa</div>
   <div class="card"><p class="sub">Aplican a todos los proyectos. ${canMacro()?'Los cambios se guardan para todo el equipo.':'Solo los editores pueden cambiarlos.'} Referencia: SMMLV 2026 de $1.750.905 (Decreto 1469 de 2025); inflación anual a sep-2026 de 6,29 %; tasa del Banco de la República en 12,25 % desde el 13-oct-2026. Las proyecciones son supuestos editables, no pronósticos oficiales.</p>
   <div class="fields tight" style="margin-bottom:12px">${[['anioBase','Año base',''],['smmlv','SMMLV del año base','$'],['topeVIS','Tope VIS','SMMLV'],['topeVISEsp','Tope VIS especial','SMMLV'],['topeVIP','Tope VIP','SMMLV']].map(([k,l,u])=>`<div class="f"><label>${l}</label><div class="box"><input type="number" data-mpath="${k}" value="${esc(M[k])}"${canMacro()?'':' disabled'}>${u?`<span class="u">${u}</span>`:''}</div></div>`).join('')}</div>
   <div class="tbl-wrap"><table class="tbl-in"><thead><tr><th class="c0">% anual</th>${M.anios.map(y=>`<th>${y}</th>`).join('')}</tr></thead><tbody>${mr('inflacion','Inflación')}${mr('iccv','Costos de construcción (ICCV)')}${mr('incSmmlv','Incremento SMMLV')}${mr('ibr','IBR E.A.')}</tbody></table></div>
   ${canMacro()?'<div style="margin-top:12px"><button class="btn sm" data-act="macro-reset">Volver a los valores de referencia</button></div>':''}</div>
   <div class="label">Datos</div>
-  <div class="card set"><div class="set-row"><div><div class="t">Almacenamiento</div><div class="d">${ST.mode==='db'?'Base central compartida con tu equipo.':'Solo en este dispositivo.'}</div></div><span class="tag acc">${ST.mode==='db'?'Central':'Local'}</span></div>
-  <div class="set-row"><div><div class="t">Proyectos en la base</div><div class="d">${Object.keys(ST.projects).length} proyecto(s)</div></div><button class="btn sm" data-act="proj-open">Administrar</button></div>
+  <div class="card set"><div class="set-row"><div><div class="t">Almacenamiento</div><div class="d">${ST.mode==='fb'?'En tu cuenta, sincronizado entre tus dispositivos. Solo tú puedes verlo.':ST.mode==='db'?'Base central compartida con tu equipo.':'Solo en este dispositivo.'}</div></div><span class="tag acc">${ST.mode==='fb'?'Cuenta':ST.mode==='db'?'Central':'Local'}</span></div>
+  <div class="set-row"><div><div class="t">Proyectos</div><div class="d">${nProj} proyecto(s)</div></div><button class="btn sm" data-act="proj-open">Administrar</button></div>
   <div class="set-row"><div><div class="t">Proyecto de ejemplo</div><div class="d">Crea una copia del ejemplo para practicar.</div></div><button class="btn sm" data-act="proj-new" data-kind="example"${ST.readOnly?' disabled':''}>Crear</button></div></div>
-  <p class="about">Proyecta · prototipo 0.5<br>Modelo financiero inmobiliario para Colombia.</p>`;
+  <a class="acard hl" target="_blank" rel="noopener" href="${esc(window.WELLNESS_APPS_URL||'https://www.planificarproyectos.com/wellness-apps/')}">${wic('apps')}<span class="grow"><b>Conoce más Wellness Apps</b><span>Mind Focus, PowerFit y Lumen en un solo lugar</span></span>${wic('chev',20)}</a>
+  <p class="about">${ST.mode==='fb'?'Una cuenta para Mind Focus, PowerFit, Lumen y Proyecta':'Tus datos se guardan en este dispositivo'}<br>Proyecta · prototipo 0.5</p>`;
 }
+async function wipeData(){
+  try{
+    if(ST.mode==='fb'&&ST.fbCol){const sn=await ST.fbCol.get();const docs=sn.docs.filter(d=>/^(p_|v_)/.test(d.id));
+      for(let i=0;i<docs.length;i+=400){const b=FB.db.batch();docs.slice(i,i+400).forEach(d=>b.delete(d.ref));await b.commit()}}
+    Object.keys(Local.all()).forEach(id=>Local.del(id));LS.set('pp.projects',{});prefs.last=null;savePrefs();
+    toast('Datos borrados');setTimeout(()=>location.reload(),700);
+  }catch(err){console.warn(err);toast('No se pudieron borrar los datos. Revisa tu conexión.');ST.askWipe=false;rr('cuenta')}
+}
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();ST.instP=e;if(ST.ready)rr('cuenta')});
+addEventListener('appinstalled',()=>{ST.instP=null;toast('Proyecta quedó instalada');if(ST.ready)rr('cuenta')});
 
 /* ---------- Hoja de proyectos ---------- */
 function openProjects(){
@@ -1441,6 +1500,16 @@ document.addEventListener('click',async e=>{
     case 'theme':prefs.theme=b.dataset.k;savePrefs();applyTheme();rr('cuenta');break;
     case 'accent':prefs.accent=b.dataset.k;savePrefs();applyAccent();rr('cuenta');break;
     case 'logout':if(FB.auth){FB.auth.signOut()}break;
+    case 'save-name':{const v=(($('#pname')||{}).value||'').trim().slice(0,30);if(!v){toast('Escribe tu nombre.');break}
+      if(ST.mode==='fb'&&FB.profRef){ST.me.name=v;FB.profRef.set({nombre:v,upd:Date.now()},{merge:true}).then(()=>toast('Nombre guardado'),()=>toast('No se pudo guardar tu nombre'))}
+      else{prefs.user=v;if(ST.me&&ST.mode!=='db')ST.me.name=v;savePrefs();toast('Nombre guardado')}
+      rr('cuenta');softRender('inicio');break}
+    case 'reset-pass':if(FB.auth&&ST.fbEmail){FB.auth.sendPasswordResetEmail(ST.fbEmail,{url:SITE_URL}).then(()=>toast('Te enviamos un correo a '+ST.fbEmail),e2=>toast(authErr(e2)))}break;
+    case 'install':if(ST.instP){const ev=ST.instP;ST.instP=null;ev.prompt();ev.userChoice.finally(()=>rr('cuenta'))}break;
+    case 'dark':prefs.theme=b.checked?'dark':'light';savePrefs();applyTheme();rr('cuenta');break;
+    case 'wipe-ask':ST.askWipe=true;rr('cuenta');break;
+    case 'wipe-no':ST.askWipe=false;rr('cuenta');break;
+    case 'wipe-yes':b.disabled=true;wipeData();break;
     case 'macro-reset':ST.macro=clone(DEFAULT_MACRO);saveMacroSoon();recalc(true);break;
   }
 });
@@ -1537,7 +1606,7 @@ function ensureAccess(u){
   }).catch(e=>{console.warn('acceso',e);return true});
 }
 function startFb(u){
-  ST.mode='fb';ST.fbEmail=u.email||'';ST.me={id:u.uid,name:'',email:u.email};ST.readOnly=false;
+  ST.mode='fb';ST.fbEmail=u.email||'';ST.created=u.metadata&&Date.parse(u.metadata.creationTime)||null;ST.me={id:u.uid,name:'',email:u.email};ST.readOnly=false;
   ST.fbCol=FB.db.collection('users').doc(u.uid).collection('proyecta');
   FB.profRef=FB.db.collection('users').doc(u.uid).collection('perfil').doc('datos');
   FB.unsubP=FB.profRef.onSnapshot(sn=>{const d=sn.exists?sn.data():null;if(d&&typeof d.nombre==='string'&&d.nombre!==ST.me.name){ST.me.name=d.nombre;if(ST.ready){softRender('inicio');softRender('cuenta')}}},()=>{});
