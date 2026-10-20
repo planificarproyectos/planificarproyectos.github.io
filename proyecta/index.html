@@ -294,7 +294,7 @@ textarea.paste{width:100%;min-height:96px;font-size:12px;border:0;background:var
 
 /* Navegación inferior */
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:8;background:var(--panel);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
-.nav .in{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));max-width:640px;margin:0 auto;height:var(--nav-h)}
+.nav .in{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));max-width:720px;margin:0 auto;height:var(--nav-h)}
 .nav button{border:0;background:transparent;display:grid;justify-items:center;align-content:center;gap:4px;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;padding:0}
 .nav button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .nav button[aria-current=page],.nav button[aria-pressed=true]{color:var(--acc-ink)}
@@ -356,6 +356,19 @@ body.authing .nav,body.authing .appbar{visibility:hidden}
 .hsb:hover{background:var(--acc);color:var(--on-acc);border-color:var(--acc)}
 .hsb svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 @media (prefers-reduced-motion:reduce){.hsb{transition:none}}
+/* Comparar proyectos */
+.cmpsel{display:flex;gap:6px;flex-wrap:wrap}
+.cmpsel .chip{display:inline-flex;align-items:center;gap:7px}
+.cmpsel .chip i,.cmpn i{width:9px;height:9px;border-radius:50%;flex:none;box-shadow:0 0 0 2px var(--panel)}
+.cmpt th.cmph{vertical-align:bottom;text-align:right;white-space:normal;min-width:130px}
+.cmph .cmpn{display:flex;align-items:center;justify-content:flex-end;gap:6px;color:var(--ink);font-size:12.5px;font-weight:800}
+.cmph small{display:block;font-weight:600;color:var(--muted)}
+.cmph small.cur{color:var(--acc-ink);font-weight:800}
+.cmph .lnk{padding:2px 0;font-size:12px}
+.cmpt tr.sec td{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--muted);padding-top:14px}
+.cmpt td.best{color:var(--acc-ink);font-weight:800}
+.cmpt .win{display:inline-block;margin-left:5px;font-size:11px}
+.hsc{font-size:16px}.hsc.ok{color:var(--acc-ink)}.hsc.warn{color:var(--warn)}.hsc.crit{color:var(--neg)}
 /* Inicio: bloques y tablero técnico */
 .blk{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--muted);display:flex;align-items:center;gap:10px;margin-top:10px}
 .blk::after{content:"";flex:1;height:1px;background:var(--line)}
@@ -433,6 +446,7 @@ body.desk .dtabs{display:block}
   <section class="screen" id="s-modelo" hidden></section>
   <section class="screen" id="s-resultados" hidden></section>
   <section class="screen" id="s-control" hidden></section>
+  <section class="screen" id="s-comparar" hidden></section>
   <section class="screen" id="s-cuenta" hidden></section>
  </div>
 </div>
@@ -446,6 +460,7 @@ body.desk .dtabs{display:block}
     <button data-go="modelo"><svg viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>Modelo</button>
     <button data-go="resultados"><svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M9 4v16"/></svg>Resultados</button>
     <button data-go="control"><svg viewBox="0 0 24 24"><path d="M4 20h16M7 16v-4M12 16V6M17 16v-7"/></svg>Control</button>
+    <button data-go="comparar"><svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="7" height="16" rx="2"/><rect x="13.5" y="4" width="7" height="16" rx="2"/><path d="M6 9h2M6 13h2M16 11h2M16 15h2"/></svg>Comparar</button>
     <button data-go="cuenta"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1.4-3.6 4.2-5.5 7.5-5.5s6.1 1.9 7.5 5.5"/></svg>Cuenta</button>
   </div>
 </nav>
@@ -854,7 +869,7 @@ function deepFill(base,data){if(Array.isArray(data))return data;if(data&&typeof 
 
 /* ---------- Estado ---------- */
 const prefs={user:'',theme:'system',accent:'#C6F135',last:null,screen:'inicio',sub:{modelo:'general',resultados:'flujo',control:'seguimiento'},per:'m',cols:['inicio'],desk:false};
-function normPrefs(){prefs.cols=Array.isArray(prefs.cols)?prefs.cols.filter(c=>['inicio','modelo','resultados','control'].includes(c)):['inicio'];prefs.cols=[...new Set(prefs.cols)];if(!prefs.cols.length)prefs.cols=['inicio'];
+function normPrefs(){prefs.cols=Array.isArray(prefs.cols)?prefs.cols.filter(c=>COLS.includes(c)):['inicio'];prefs.cols=[...new Set(prefs.cols)];if(!prefs.cols.length)prefs.cols=['inicio'];
   prefs.sub=Object.assign({modelo:'general',resultados:'flujo',control:'seguimiento'},prefs.sub||{});prefs.desk=!!prefs.desk}
 /* Ajustes que se aplican al instante en los demás dispositivos; la navegación (pantalla, subpestaña, proyecto abierto) solo se toma al abrir la app */
 const LIVE_PREFS=['theme','accent','desk','per','cols','webHint2'];
@@ -916,7 +931,7 @@ async function startDb(){
         if(!ST.dirty&&!ST.saving&&!editingNow()){loadData(d);toast('Proyecto actualizado por otra persona')}
         else{ST.remotePending=d;showBanner()}}}
     else if(ST.pid&&!m[ST.pid]){const ids=Object.keys(m);if(ids.length)selectProject(ids[0]);else{ST.pid=null;ST.P=null}}
-    if(ST.ready)softRender('inicio');
+    if(ST.ready){softRender('inicio');softRender('comparar')}
     updateAppbar();
   },e=>{if(!ST.ready){toast('No se pudo abrir la base central; trabajarás en este dispositivo');ST.db=null;startLocal();return}if(e&&e.code==='revoked'){setReadOnly(true)}});
   setTimeout(()=>{if(!ST.ready){toast('La base central no respondió; trabajarás en este dispositivo');ST.db=null;startLocal()}},15000);
@@ -1028,8 +1043,8 @@ const CURVAS=[['constante','Constante'],['lanzamiento','Lanzamiento fuerte'],['p
 const FORMAS=[['contado','Contado'],['diferido','Diferido en cuotas'],['especie','Aporte en especie'],['area','Pago con área (%)']];
 
 /* ---------- Navegación ---------- */
-const SCREENS=['inicio','modelo','resultados','control','cuenta'];
-const COLS=['inicio','modelo','resultados','control'];
+const SCREENS=['inicio','modelo','resultados','control','comparar','cuenta'];
+const COLS=['inicio','modelo','resultados','control','comparar'];
 const WEBQ=matchMedia('(min-width:1024px)'),DESKQ=matchMedia('(min-width:768px)');ST.cuentaOpen=false;
 /* Modo Escritorio: una sección a la vez con pestañas arriba; reemplaza la barra inferior y las columnas */
 function applyDesk(){ST.desk=!!prefs.desk&&DESKQ.matches;ST.web=WEBQ.matches&&!ST.desk;document.body.classList.toggle('desk',ST.desk);if(ST.desk)ST.cuentaOpen=false}
@@ -1042,8 +1057,8 @@ function deskBar(){if(!ST.desk)return;const t1=$('#dt1');
   deskKpi()}
 function deskKpi(){const el=$('#dkpi');if(!ST.desk||!el)return;const R=ST.R;
   el.innerHTML=R?[['Ventas',fM(R.ventas)],['Utilidad antes de impuestos',fM(R.uai),R.uai<0],['Margen antes de impuestos',fP(R.margen),R.margen<0],['TIR inversionista',fP(R.tirI)],['Utilidad neta',fM(R.utilNeta),R.utilNeta<0]].map(([l,v,n])=>`<div><span class="l" title="${l}">${l}</span><span class="v${n?' neg':''}">${v}</span></div>`).join(''):''}
-const RENDER={inicio:()=>renderInicio(),modelo:()=>renderModelo(),resultados:()=>renderResultados(),control:()=>renderControl(),cuenta:()=>renderCuenta()};
-const NAMES={inicio:'Inicio',modelo:'Modelo',resultados:'Resultados',control:'Control',cuenta:'Cuenta'};
+const RENDER={inicio:()=>renderInicio(),modelo:()=>renderModelo(),resultados:()=>renderResultados(),control:()=>renderControl(),comparar:()=>renderComparar(),cuenta:()=>renderCuenta()};
+const NAMES={inicio:'Inicio',modelo:'Modelo',resultados:'Resultados',control:'Control',comparar:'Comparar',cuenta:'Cuenta'};
 function visible(){return ST.web?prefs.cols.slice():[ST.screen==='cuenta'?'cuenta':ST.screen]}
 function shown(id){const el=$('#s-'+id);return el&&!el.hidden}
 function go(s){if(!SCREENS.includes(s))s='inicio';
@@ -1159,7 +1174,7 @@ function healthData(P,R){
   const mg=R.margen*100,tir=R.tirI==null?-Infinity:R.tirI*100;
   const pre=Math.max(...R.ets.map(e=>e.eq-e.t0+1)),inv=R.ets.some(e=>e.lastSale>e.fo);
   const ex=R.expo/v,deuda=Math.max(0,...r.bal.map((b,i)=>b+r.pBal[i]))/v;
-  const sg=segData(),dirS=R.tot.dir/v,lt=R.tot.lote/v,cpi=sg&&sg.cpi!=null?sg.cpi:null,dur=R.N-1;
+  const sg=P===ST.P?segData():null,dirS=R.tot.dir/v,lt=R.tot.lote/v,cpi=sg&&sg.cpi!=null?sg.cpi:null,dur=R.N-1;
   return [
     ['Rentabilidad',worst(mg>=mn?'ok':mg>=mn-3?'warn':'crit',tir>=tio?'ok':tir>=tio-3?'warn':'crit'),`Margen ${fP(R.margen)} · TIR inv. ${fP(R.tirI)}`,`Margen mínimo ${nf(mn,1)} % y TIO ${nf(tio,1)} %, definidos en Modelo › General`],
     ['Comercial',worst(lvl(pre,9,12),inv?'warn':'ok'),`${pre} meses al punto de equilibrio${inv?' · inventario al entregar la obra':''}`,'En rango: equilibrio en 9 meses o menos y sin inventario al entregar la obra'],
@@ -1562,6 +1577,97 @@ function renderSens(){
   ST.sensKey=key;ST.sensHtml=out.innerHTML;
 }
 
+/* ---------- COMPARAR ---------- */
+/* Cada proyecto conserva su color por casilla (hasta 4): quitar uno no repinta a los demás */
+const CMP_COLS=['var(--chart-pos)','var(--ink)','var(--muted)','var(--chart-neu)'];
+function cmpSlots(){
+  let s=Array.isArray(prefs.cmp)?prefs.cmp.slice(0,4):null;
+  if(!s){s=[];Object.keys(ST.projects).sort((a,b)=>(ST.projects[b].actualizado||0)-(ST.projects[a].actualizado||0)).slice(0,3).forEach(id=>s.push(id))}
+  while(s.length<4)s.push(null);return s.map(id=>id&&ST.projects[id]?id:null);
+}
+const CMPC={};
+function cmpResult(id){if(id===ST.pid&&ST.P&&ST.R)return {P:ST.P,R:ST.R};const d=ST.projects[id];if(!d)return null;const key=(d.actualizado||0)+'|'+JSON.stringify(ST.macro);
+  if(!CMPC[id]||CMPC[id].key!==key){const P=deepFill(newProject(),clone(d.data||{}));CMPC[id]={key,P,R:runProject(P,ST.macro)}}return CMPC[id]}
+const tipoDe=P=>[...new Set((P.etapas||[]).map(e=>e.tipo==='NoVIS'?'No VIS':e.tipo))].join(' + ');
+/* [etiqueta, valor, formato, dirección: 1 mayor es mejor, -1 menor es mejor, 0 sin ganador] */
+const CMP_ROWS=[
+  ['Comercial'],
+  ['Ventas totales',(P,R)=>R.ventas,fM,0],
+  ['Viviendas',(P,R)=>sum(R.ets.map(e=>e.UA)),v=>nf(v),0],
+  ['Precio promedio por m²',(P,R)=>R.ventas/(sum(R.ets.map(e=>e.AV))||1),fM2,0],
+  ['Meses al punto de equilibrio',(P,R)=>Math.max(...R.ets.map(e=>e.eq-e.t0+1)),v=>nf(v),-1],
+  ['Rentabilidad'],
+  ['Utilidad antes de impuestos',(P,R)=>R.uai,fM,1],
+  ['Margen antes de impuestos',(P,R)=>R.margen,fP,1],
+  ['Utilidad neta',(P,R)=>R.utilNeta,fM,1],
+  ['Margen neto',(P,R)=>R.margenNeto,fP,1],
+  ['TIR proyecto',(P,R)=>R.tirP,fP,1],
+  ['TIR inversionista',(P,R)=>R.tirI,fP,1],
+  ['VPN',(P,R)=>R.vpn,fM,1],
+  ['Múltiplo de socios',(P,R)=>R.aportes?R.distribuciones/R.aportes:null,fX,1],
+  ['Riesgo y financiación'],
+  ['Exposición máxima',(P,R)=>R.expo,fM,-1],
+  ['Exposición sobre ventas',(P,R)=>R.expo/(R.ventas||1),fP,-1],
+  ['Pico de deuda sobre ventas',(P,R)=>debtInfo(R).mx/(R.ventas||1),fP,-1],
+  ['Costos'],
+  ['Costo directo sobre ventas',(P,R)=>R.tot.dir/(R.ventas||1),fP,-1],
+  ['Lote sobre ventas',(P,R)=>R.tot.lote/(R.ventas||1),fP,-1],
+  ['Costo directo por m² construido',(P,R)=>R.tot.dir/(sum(R.ets.map(e=>e.AC))||1),fM2,-1],
+  ['Tiempos'],
+  ['Duración total',(P,R)=>R.N-1,v=>nf(v)+' meses',-1],
+  ['Recuperación del capital',(P,R)=>payback(R),v=>v==null?'—':'Mes '+nf(v),-1]];
+function cmpBars(L){
+  const ms=[['Margen AI',r=>r.margen],['Margen neto',r=>r.margenNeto],['TIR inversionista',r=>r.tirI],['Exposición / ventas',r=>r.expo/(r.ventas||1)]];
+  const W=640,H=250,Lp=44,Rr=8,T=16,B=30,cw=W-Lp-Rr,ch=H-T-B,g=cw/ms.length,n=L.length,bw=Math.min(28,(g*.7)/n);
+  const vals=ms.map(([,f])=>L.map(x=>{const v=f(x.R);return v==null||!isFinite(v)?null:v*100}));const all=vals.flat().filter(v=>v!=null);
+  let mx=Math.max(0,...all),mn=Math.min(0,...all);const st=nice(mx-mn||1);mx=Math.ceil(mx/st)*st;mn=Math.floor(mn/st)*st;const y=v=>T+(mx-v)/((mx-mn)||1)*ch;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:480px" role="img" aria-label="Comparación de márgenes, TIR y exposición">`;
+  for(let v=mn;v<=mx+1e-9;v+=st)s+=`<line x1="${Lp}" x2="${W-Rr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${Math.abs(v)<1e-9?1.2:.6}"/><text x="${Lp-6}" y="${y(v)+3}" text-anchor="end">${nf(v)} %</text>`;
+  ms.forEach(([l],i)=>{const x0=Lp+i*g+(g-n*bw-(n-1)*2)/2;
+    L.forEach((p,k)=>{const v=vals[i][k];if(v==null)return;const top=y(Math.max(v,0)),h=Math.max(1.5,Math.abs(y(v)-y(0)));
+      s+=`<rect x="${x0+k*(bw+2)}" y="${top}" width="${bw}" height="${h}" rx="3" fill="${CMP_COLS[p.slot]}"><title>${esc(p.d.nombre)} · ${l}: ${nf(v,1)} %</title></rect>`});
+    s+=`<text x="${Lp+i*g+g/2}" y="${H-10}" text-anchor="middle" style="fill:var(--ink)">${l}</text>`});
+  return s+'</svg>';
+}
+function cmpCash(L){
+  const n=Math.max(...L.map(p=>p.R.rows.cumEq.length)),W=640,H=240,Lp=58,Rr=10,T=14,B=26,cw=W-Lp-Rr,ch=H-T-B;
+  const ser=L.map(p=>p.R.rows.cumEq.map(v=>v/1e6));let mx=Math.max(0,...ser.flat()),mn=Math.min(0,...ser.flat());const st=nice(mx-mn||1);mx=Math.ceil(mx/st)*st;mn=Math.floor(mn/st)*st;
+  const x=i=>Lp+i/Math.max(1,n-1)*cw,y=v=>T+(mx-v)/((mx-mn)||1)*ch;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:480px" role="img" aria-label="Caja acumulada de los socios por proyecto">`;
+  for(let v=mn;v<=mx+1e-9;v+=st)s+=`<line x1="${Lp}" x2="${W-Rr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${Math.abs(v)<1e-9?1.2:.6}"/><text x="${Lp-6}" y="${y(v)+3}" text-anchor="end">${nf(v)}</text>`;
+  const stp=Math.max(6,Math.ceil(n/8/6)*6);for(let i=0;i<n;i+=stp)s+=`<text x="${x(i)}" y="${H-6}" text-anchor="middle">Mes ${i}</text>`;
+  L.forEach((p,k)=>{const v=ser[k],iMin=v.indexOf(Math.min(...v));
+    s+=`<polyline fill="none" stroke="${CMP_COLS[p.slot]}" stroke-width="2" stroke-linejoin="round" points="${v.map((a,i)=>`${x(i)},${y(a)}`).join(' ')}"><title>${esc(p.d.nombre)}</title></polyline>`;
+    s+=`<circle cx="${x(iMin)}" cy="${y(v[iMin])}" r="4" fill="${CMP_COLS[p.slot]}" stroke="var(--panel)" stroke-width="2"><title>${esc(p.d.nombre)} · exposición máxima ${fM(v[iMin]*1e6)} en el mes ${iMin}</title></circle>`});
+  return s+'</svg>';
+}
+function renderComparar(){
+  const host=$('#s-comparar'),ids=Object.keys(ST.projects);
+  let h=`<div class="screen-head"><div><h1>Comparar</h1><p>Elige de 2 a 4 proyectos para verlos lado a lado.</p></div></div>`;
+  if(ids.length<2){host.innerHTML=h+`<div class="card"><h3>Necesitas al menos 2 proyectos</h3><p class="sub">Crea otro proyecto o un ejemplo para comparar.</p><div class="row">${ST.readOnly?'':exBtns('','Ejemplo ')}</div></div>`;return}
+  const slots=cmpSlots();
+  h+=`<div class="card"><h3>Proyectos</h3><p class="sub">Toca un proyecto para sumarlo o quitarlo. Máximo 4.</p><div class="cmpsel">${ids.sort((a,b)=>(ST.projects[b].actualizado||0)-(ST.projects[a].actualizado||0)).map(id=>{const k=slots.indexOf(id);
+    return `<button class="chip" data-act="cmp-toggle" data-id="${id}" aria-pressed="${k>=0}">${k>=0?`<i style="background:${CMP_COLS[k]}"></i>`:''}${esc(ST.projects[id].nombre||'Proyecto')}</button>`}).join('')}</div></div>`;
+  const L=slots.map((id,slot)=>{if(!id)return null;const c=cmpResult(id);return c&&c.R?{id,slot,d:ST.projects[id],P:c.P,R:c.R}:null}).filter(Boolean);
+  if(L.length<2){host.innerHTML=h+`<div class="empty">Elige al menos 2 proyectos.</div>`;return}
+  const head=`<tr><th class="c0">Indicador</th>${L.map(p=>`<th class="cmph"><span class="cmpn"><i style="background:${CMP_COLS[p.slot]}"></i>${esc(p.d.nombre||'Proyecto')}</span><small>${esc(p.d.ciudad||'')} · ${tipoDe(p.P)}</small>${p.id===ST.pid?'<small class="cur">Abierto</small>':`<button class="lnk" data-act="proj-select" data-id="${p.id}">Abrir</button>`}</th>`).join('')}</tr>`;
+  const body=CMP_ROWS.map(r=>{if(r.length===1)return `<tr class="sec"><td class="c0" colspan="${L.length+1}">${r[0]}</td></tr>`;
+    const [l,g,f,dir]=r,vs=L.map(p=>{const v=g(p.P,p.R);return v==null||!isFinite(v)?null:v});const ok=vs.filter(v=>v!=null);
+    const best=dir&&ok.length>1&&Math.max(...ok)!==Math.min(...ok)?(dir>0?Math.max(...ok):Math.min(...ok)):null;
+    return `<tr><td class="c0">${l}</td>${vs.map(v=>`<td class="${best!=null&&v===best?'best':''}${v!=null&&v<0&&f!==fP?' neg':''}">${v==null?'—':f(v)}${best!=null&&v===best?'<span class="win" aria-label="Mejor">✓</span>':''}</td>`).join('')}</tr>`}).join('');
+  const hl=L.map(p=>healthData(p.P,p.R)),sc=hl.map(d=>Math.round(sum(d.map(x=>x[1]==='ok'?100:x[1]==='warn'?60:20))/d.length));
+  const pill=s=>`<span class="pill ${s}"><svg viewBox="0 0 24 24" aria-hidden="true">${STICO[s]}</svg>${STAT[s]}</span>`;
+  const health=`<tr><td class="c0"><b>Puntaje general</b></td>${sc.map(v=>{const s=v>=85?'ok':v>=60?'warn':'crit';return `<td><b class="hsc ${s}">${v}</b></td>`}).join('')}</tr>`+hl[0].map((row,i)=>`<tr><td class="c0">${row[0]}</td>${hl.map(d=>`<td title="${esc(d[i][2])}">${pill(d[i][1])}</td>`).join('')}</tr>`).join('');
+  const legend=`<div class="legend">${L.map(p=>`<span style="--c:${CMP_COLS[p.slot]}">${esc(p.d.nombre||'Proyecto')}</span>`).join('')}</div>`;
+  h+=`<div class="grid2">
+    <div class="card span2"><h3>Indicadores</h3><p class="sub">El ✓ marca el mejor valor de cada fila. Los resultados se calculan con los supuestos macro actuales.</p><div class="tbl-wrap"><table class="cmpt"><thead>${head}</thead><tbody>${body}</tbody></table></div></div>
+    <div class="card"><h3>Márgenes, TIR y exposición</h3><p class="sub">Porcentajes. En exposición, menos es mejor.</p><div class="chart-x">${cmpBars(L)}</div>${legend}</div>
+    <div class="card"><h3>Caja acumulada de los socios</h3><p class="sub">Millones de pesos desde el mes 0 de cada proyecto. El punto marca la exposición máxima.</p><div class="chart-x">${cmpCash(L)}</div>${legend}</div>
+    <div class="card span2"><h3>Semáforo de salud</h3><p class="sub">Mismos criterios del semáforo de Inicio, donde puedes ver el detalle de cada proyecto.</p><div class="tbl-wrap"><table class="cmpt"><thead>${head}</thead><tbody>${health}</tbody></table></div></div>
+  </div>`;
+  host.innerHTML=h;
+}
+
 /* ---------- CUENTA ---------- */
 function roleName(){if(ST.mode==='fb')return 'Tu cuenta';if(ST.mode!=='db')return 'Este dispositivo';if(ST.role.owner)return 'Propietario';if(ST.role.edit)return 'Editor';if(ST.readOnly||ST.role.write===false)return 'Solo lectura';return 'Colaborador'}
 function canMacro(){return ST.mode!=='db'||ST.role.edit||ST.role.owner}
@@ -1699,6 +1805,9 @@ document.addEventListener('click',async e=>{
     case 'msub':prefs.sub.modelo=b.dataset.k;savePrefs();rr('modelo');break;
     case 'rsub':prefs.sub.resultados=b.dataset.k;savePrefs();rr('resultados');break;
     case 'csub':prefs.sub.control=b.dataset.k;savePrefs();ST.confirm=null;rr('control');break;
+    case 'cmp-toggle':{const s=cmpSlots(),id=b.dataset.id,i=s.indexOf(id);
+      if(i>=0)s[i]=null;else{const j=s.indexOf(null);if(j<0){toast('Puedes comparar hasta 4 proyectos');break}s[j]=id}
+      prefs.cmp=s;savePrefs();rr('comparar');break}
     case 'per':prefs.per=b.dataset.k;savePrefs();rr('resultados');break;
     case 'col-hide':navTap(b.dataset.k);break;
     case 'col-left':moveCol(b.dataset.k,-1);break;
@@ -1910,7 +2019,7 @@ function startFb(u){
       if(d.actualizado>(ST.lastSaved||0)&&d.actualizado!==ST.loadedAt&&!snap.metadata.hasPendingWrites){
         if(!ST.dirty&&!ST.saving&&!editingNow()){loadData(d);toast('Proyecto actualizado desde otro dispositivo')}
         else{ST.remotePending=d;showBanner()}}}
-    if(ST.ready){softRender('inicio');if(prefs.sub.control==='versiones')softRender('control')}
+    if(ST.ready){softRender('inicio');softRender('comparar');if(prefs.sub.control==='versiones')softRender('control')}
     updateAppbar();
   },e=>{console.warn('firestore',e);if(e&&e.code==='permission-denied')showNoAccess(u);else toast('No se pudieron leer tus proyectos. Revisa tu conexión.')});
 }
