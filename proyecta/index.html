@@ -378,6 +378,18 @@ body.authing .nav,body.authing .appbar{visibility:hidden}
 @keyframes pj-word{from{opacity:0;transform:translateY(12px);letter-spacing:.4em}to{opacity:1;transform:none;letter-spacing:.06em}}
 @keyframes pj-auto{to{opacity:0;visibility:hidden}}
 @media (prefers-reduced-motion:reduce){#splash *{animation:none!important;stroke-dashoffset:0!important;opacity:1!important}#splash .fl{opacity:0!important}}
+/* Solicitudes de acceso */
+[data-go="cuenta"][data-badge]{position:relative}
+[data-go="cuenta"][data-badge]::after{content:attr(data-badge);position:absolute;top:4px;left:calc(50% + 6px);min-width:17px;height:17px;padding:0 5px;border-radius:99px;background:var(--neg);color:#fff;font-size:10.5px;font-weight:800;line-height:17px;text-align:center;box-sizing:border-box}
+#dt1 [data-go="cuenta"][data-badge]::after{position:static;display:inline-block;margin-left:2px}
+.reqs{display:grid;gap:2px}
+.reqrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.reqs>.reqrow:first-child{border-top:0;padding-top:0}
+.reqrow b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.reqrow small{color:var(--muted)}
+.reqrow .row{flex:none}
+.reqs details{border-top:1px solid var(--line);padding-top:10px;margin-top:4px}
+.reqs summary{cursor:pointer;font-weight:700;font-size:13px;color:var(--muted)}
 /* Aviso de instalar app */
 .instbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 12px);z-index:40;width:calc(100% - 32px);max-width:448px;background:var(--panel);border:1px solid var(--acc);border-radius:20px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.35);display:grid;gap:12px}
 .instbar[hidden]{display:none}
@@ -1119,7 +1131,7 @@ const WEBQ=matchMedia('(min-width:1024px)'),DESKQ=matchMedia('(min-width:768px)'
 function applyDesk(){ST.desk=!!prefs.desk&&DESKQ.matches;ST.web=WEBQ.matches&&!ST.desk;document.body.classList.toggle('desk',ST.desk);if(ST.desk)ST.cuentaOpen=false}
 applyDesk();
 function deskBar(){if(!ST.desk)return;const t1=$('#dt1');
-  if(!t1.firstChild)t1.innerHTML=$$('.nav button').map(b=>(b.dataset.go==='cuenta'?'<span class="sp"></span>':'')+`<button role="tab" data-go="${b.dataset.go}">${b.innerHTML}</button>`).join('');
+  if(!t1.firstChild)t1.innerHTML=$$('.nav button').map(b=>(b.dataset.go==='cuenta'?'<span class="sp"></span>':'')+`<button role="tab" data-go="${b.dataset.go}">${b.innerHTML}</button>`).join('');reqBadge();
   $$('#dt1 button').forEach(b=>{const on=b.dataset.go===ST.screen;b.setAttribute('aria-selected',on);on?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current')});
   const s={modelo:[MSUBS,'msub'],resultados:[RSUBS,'rsub'],control:[CSUBS,'csub']}[ST.screen];
   $('#dsub').innerHTML=s?s[0].map(([k,l])=>`<button data-act="${s[1]}" data-k="${k}" aria-pressed="${k===prefs.sub[ST.screen]}">${l}</button>`).join(''):'';
@@ -1788,6 +1800,7 @@ function renderCuenta(){
   host.innerHTML=`<div class="screen-head"><div><h1>Cuenta</h1><p>Tu perfil, ajustes y supuestos de la empresa.</p></div></div>
   <div class="card profile"><div class="avatar">${me&&me.avatarUrl&&me.id?`<img src="${esc(me.avatarUrl)}" alt="">`:wic('user',26,2.2)}</div><div style="flex:1;min-width:0;display:grid;gap:2px"><b class="pname">${esc(nm||email||'Sin sesión')}</b>${nm&&email?`<small>${esc(email)}</small>`:''}<small>${cr?'Cuenta creada el '+cr.getDate()+' '+MES[cr.getMonth()]+' '+cr.getFullYear():ST.mode==='fb'?'':esc(rn)+(ST.mode==='db'?' · base central de proyectos':'')}</small></div></div>
   <div class="card namecard${nm?'':' need'}">${nm?'':'<b>Configura tu nombre para personalizar Proyecta</b>'}<label class="lbl" for="pname">Tu nombre</label><div class="namerow"><input id="pname" maxlength="30" placeholder="¿Cómo te llamas?" autocomplete="given-name" value="${esc(nm)}"><button class="btn${nm?'':' pri'}" data-act="save-name">Guardar</button></div><small>${ST.mode==='fb'?'Se usa en Mind Focus, PowerFit, Lumen y Proyecta.':'Se guarda en este dispositivo.'}</small></div>
+  ${requestsHtml()}
   <div class="acckpis"><div><b>${nProj}</b><span>Proyectos</span></div><div><b>${countVersions()}</b><span>Versiones</span></div><div><b>${ventas>=1e9?'$'+nf(ventas/1e9,ventas<1e11?1:0)+' mil M':fM(ventas)}</b><span>Ventas modeladas</span></div></div>
   <div class="label">Ajustes</div>
   <div class="astack">
@@ -1958,6 +1971,10 @@ document.addEventListener('click',async e=>{
     case 'theme':prefs.theme=b.dataset.k;savePrefs();applyTheme();rr('cuenta');break;
     case 'accent':prefs.accent=b.dataset.k;savePrefs();applyAccent();rr('cuenta');break;
     case 'logout':if(FB.auth){FB.auth.signOut()}break;
+    case 'acc-set':if(ST.isAdmin){const k=b.dataset.k;b.disabled=true;
+      FB.db.collection('invitaciones').doc(b.dataset.id).update({proyecta:k,proyectaRes:Date.now()}).then(()=>toast(k==='aprobado'?'Acceso aprobado':'Acceso denegado'),()=>{b.disabled=false;toast('No se pudo actualizar la solicitud')})}break;
+    case 'acc-retry':{const u=FB.auth&&FB.auth.currentUser;if(!u)break;b.disabled=true;
+      FB.db.collection('invitaciones').doc((u.email||'').toLowerCase()).set({proyecta:'pendiente',proyectaSol:Date.now()},{merge:true}).catch(()=>{b.disabled=false;toast('No se pudo enviar la solicitud')});break}
     case 'save-name':{const v=(($('#pname')||{}).value||'').trim().slice(0,30);if(!v){toast('Escribe tu nombre.');break}
       if(ST.mode==='fb'&&FB.profRef){ST.me.name=v;FB.profRef.set({nombre:v,upd:Date.now()},{merge:true}).then(()=>toast('Nombre guardado'),()=>toast('No se pudo guardar tu nombre'))}
       else{prefs.user=v;if(ST.me&&ST.mode!=='db')ST.me.name=v;savePrefs();toast('Nombre guardado')}
@@ -2069,13 +2086,55 @@ function startFirebase(){
   catch(e){console.warn(e);showOffline();return}
   FB.auth.onAuthStateChanged(async u=>{
     if(FB.unsub){FB.unsub();FB.unsub=null}if(FB.unsubP){FB.unsubP();FB.unsubP=null}
+    if(FB.unsubA){FB.unsubA();FB.unsubA=null}if(FB.unsubR){FB.unsubR();FB.unsubR=null}ST.reqs=[];reqBadge();
     if(!u){ST.ready=false;ST.pid=null;ST.P=null;ST.R=null;ST.projects={};ST.mode='local';closeSheet();showAuth('login');return}
     hideAuth();
     const ok=await ensureAccess(u);
     if(!ok){showNoAccess(u);return}
-    startFb(u);
+    if(u.uid===ADMIN_UID){startFb(u);watchRequests();return}
+    watchApproval(u);
   });
 }
+/* ---------- Aprobación de acceso ----------
+   Cada cuenta, menos la del administrador, solicita acceso a Proyecta y espera aprobación.
+   El estado vive en invitaciones/{correo}.proyecta: "pendiente", "aprobado" o "denegado" */
+const ADMIN_UID='AQaEMcKNYfWEhcHVdc8N0ghxeZk1';
+function watchApproval(u){
+  const em=(u.email||'').toLowerCase(),ref=FB.db.collection('invitaciones').doc(em);let asked=false;
+  if(FB.unsubA)FB.unsubA();
+  FB.unsubA=ref.onSnapshot(sn=>{const d=sn.exists?sn.data():{},st=d.proyecta;
+    if(st==='aprobado'){if(ST.mode!=='fb'){hideAuth();startFb(u)}return}
+    if(!st){if(!asked){asked=true;ref.set({email:em,uid:u.uid,proyecta:'pendiente',proyectaSol:Date.now()},{merge:true}).catch(()=>showApproval(u,'error'))}return}
+    if(ST.mode==='fb')stopFb();
+    showApproval(u,st,d)},e=>{console.warn('aprobación',e);showApproval(u,'error')});
+}
+function stopFb(){if(FB.unsub){FB.unsub();FB.unsub=null}if(FB.unsubP){FB.unsubP();FB.unsubP=null}
+  ST.ready=false;ST.mode='local';ST.pid=null;ST.P=null;ST.R=null;ST.projects={};closeSheet()}
+function showApproval(u,st,d){hideSplash();const a=$('#auth');a.hidden=false;document.body.classList.add('authing');$('#s-loading').hidden=true;
+  const em=esc(u&&u.email||'tu cuenta'),f=d&&d.proyectaSol?fDate(d.proyectaSol).split(' · ')[0]:'';
+  const out='<button class="btn" data-act="logout" style="width:100%;padding:13px">Cerrar sesión</button>';
+  $('#authBody').innerHTML=st==='denegado'
+    ?`<h2>Solicitud denegada</h2><p class="muted" style="margin:0">El administrador no aprobó el acceso de ${em} a Proyecta. Puedes volver a solicitarlo.</p><button class="btn pri" data-act="acc-retry" style="width:100%;padding:13px">Volver a solicitar</button>${out}`
+    :st==='error'?`<h2>No pudimos verificar tu acceso</h2><p class="muted" style="margin:0">Revisa tu conexión e inténtalo de nuevo.</p><button class="btn pri" onclick="location.reload()" style="width:100%;padding:13px">Reintentar</button>${out}`
+    :`<h2>Solicitud en espera de aprobación</h2><p class="muted" style="margin:0">Enviamos tu solicitud para usar Proyecta con ${em}${f?' el '+f:''}. Podrás entrar en cuanto el administrador la apruebe; esta pantalla se actualiza sola.</p>${out}`}
+/* Administrador: escucha todas las solicitudes, muestra el contador en Cuenta y avisa al abrir */
+function watchRequests(){if(FB.unsubR)FB.unsubR();let seen=null;
+  FB.unsubR=FB.db.collection('invitaciones').where('proyecta','in',['pendiente','aprobado','denegado']).onSnapshot(snap=>{
+    ST.reqs=snap.docs.map(d=>Object.assign({id:d.id},d.data())).filter(r=>r.uid!==ADMIN_UID);reqBadge();
+    const pend=ST.reqs.filter(r=>r.proyecta==='pendiente').map(r=>r.id),n=pend.length;
+    if(!seen){if(n)setTimeout(()=>toast(`Tienes ${n} solicitud${n>1?'es':''} de acceso a Proyecta. Revísala${n>1?'s':''} en Cuenta.`),2600)}
+    else if(pend.some(id=>!seen.includes(id)))toast('Nueva solicitud de acceso a Proyecta. Revísala en Cuenta.');
+    seen=pend;if(ST.ready)softRender('cuenta')},e=>console.warn('solicitudes',e))}
+function reqBadge(){const n=(ST.reqs||[]).filter(r=>r.proyecta==='pendiente').length;
+  $$('[data-go="cuenta"]').forEach(b=>n?b.setAttribute('data-badge',n):b.removeAttribute('data-badge'))}
+function requestsHtml(){if(!ST.isAdmin)return '';const L=(ST.reqs||[]).slice().sort((a,b)=>(b.proyectaSol||0)-(a.proyectaSol||0));
+  const pend=L.filter(r=>r.proyecta==='pendiente'),ok=L.filter(r=>r.proyecta==='aprobado'),no=L.filter(r=>r.proyecta==='denegado');
+  const row=(r,btns)=>`<div class="reqrow"><div style="min-width:0"><b>${esc(r.id)}</b><small>${r.proyecta==='pendiente'?'Solicitó el ':r.proyecta==='aprobado'?'Aprobada el ':'Denegada el '}${fDate(r.proyecta==='pendiente'?r.proyectaSol:(r.proyectaRes||r.proyectaSol)).split(' · ')[0]}</small></div><div class="row">${btns}</div></div>`;
+  const b=(id,k,l,c)=>`<button class="btn sm${c?' '+c:''}" data-act="acc-set" data-id="${esc(id)}" data-k="${k}">${l}</button>`;
+  return `<div class="label">Solicitudes de acceso${pend.length?` · ${pend.length} pendiente${pend.length>1?'s':''}`:''}</div>
+  <div class="card reqs">${pend.length?pend.map(r=>row(r,b(r.id,'denegado','Denegar')+b(r.id,'aprobado','Aprobar','pri'))).join(''):'<p class="sub" style="margin:0">No hay solicitudes pendientes.</p>'}
+  ${ok.length?`<details><summary>Con acceso (${ok.length})</summary>${ok.map(r=>row(r,b(r.id,'denegado','Quitar acceso','danger'))).join('')}</details>`:''}
+  ${no.length?`<details><summary>Denegadas (${no.length})</summary>${no.map(r=>row(r,b(r.id,'aprobado','Aprobar','pri'))).join('')}</details>`:''}</div>`}
 function ensureAccess(u){
   // Mismo esquema de Mind Focus y PowerFit: autorregistro como "activo"; "revocado" = sin acceso.
   const em=(u.email||'').toLowerCase(),ref=FB.db.collection('invitaciones').doc(em),now=Date.now();
@@ -2087,7 +2146,7 @@ function ensureAccess(u){
   }).catch(e=>{console.warn('acceso',e);return true});
 }
 function startFb(u){
-  ST.mode='fb';ST.fbEmail=u.email||'';ST.created=u.metadata&&Date.parse(u.metadata.creationTime)||null;ST.me={id:u.uid,name:'',email:u.email};ST.readOnly=false;
+  ST.mode='fb';ST.isAdmin=u.uid===ADMIN_UID;ST.fbEmail=u.email||'';ST.created=u.metadata&&Date.parse(u.metadata.creationTime)||null;ST.me={id:u.uid,name:'',email:u.email};ST.readOnly=false;
   ST.fbCol=FB.db.collection('users').doc(u.uid).collection('proyecta');
   FB.profRef=FB.db.collection('users').doc(u.uid).collection('perfil').doc('datos');
   FB.unsubP=FB.profRef.onSnapshot(sn=>{const d=sn.exists?sn.data():null;if(d&&typeof d.nombre==='string'&&d.nombre!==ST.me.name){ST.me.name=d.nombre;if(ST.ready){softRender('inicio');softRender('cuenta')}}},()=>{});
