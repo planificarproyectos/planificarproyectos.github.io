@@ -104,26 +104,25 @@ button,input,select,textarea{font:inherit;color:inherit}
 .projcard{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .projcard .t{font-weight:800;font-size:16px}
 .projcard .d{color:var(--muted);font-size:12.5px}
-/* Resumen gráfico del proyecto (Inicio): lote y torres en axonométrico + datos clave */
-.axo{display:grid;gap:14px}
-@container scr (min-width:560px){.axo{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);align-items:center}}
-.axo-g svg{width:100%;height:auto;max-height:240px;display:block;overflow:visible}
-.axo-g .legend{margin-top:6px}
+/* Resumen gráfico del proyecto (Inicio): franja compacta con el lote en axonométrico y los datos clave */
+.axo{display:grid;grid-template-columns:minmax(0,42%) minmax(0,1fr);gap:12px;align-items:center;padding:12px 14px}
+.axo-g svg{width:100%;height:auto;max-height:112px;display:block;overflow:visible}
 .axo-lot{fill:var(--sunk);stroke:var(--line);stroke-width:1;vector-effect:non-scaling-stroke}
 .axo-side{stroke:none}.axo-side.l{fill:color-mix(in srgb,var(--sunk) 70%,#000)}.axo-side.r{fill:color-mix(in srgb,var(--sunk) 55%,#000)}
 .axo-sh{stroke:rgba(0,0,0,.25);stroke-width:.6;vector-effect:non-scaling-stroke;stroke-linejoin:round}
 .axo-sh.l{fill:rgba(0,0,0,.10)}.axo-sh.r{fill:rgba(0,0,0,.30)}.axo-sh.t{fill:rgba(255,255,255,.30)}
-.axo-fl{fill:none;stroke:rgba(0,0,0,.22);stroke-width:.6;vector-effect:non-scaling-stroke}
+.axo-fl{fill:none;stroke:rgba(0,0,0,.22);stroke-width:.5;vector-effect:non-scaling-stroke}
 .axo-tree{fill:#3f9b4f;fill-opacity:.85}
-.axo-lab{font-size:.62px;font-weight:800;fill:var(--ink);text-anchor:middle}
-.axo-st{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.axo-st>div{background:var(--sunk);border-radius:12px;padding:8px 10px;display:grid;gap:1px;min-width:0}
+.axo-lab{font-size:.75px;font-weight:800;fill:var(--ink);text-anchor:middle}
+.axo-d{min-width:0}
+.axo-st{display:grid;grid-template-columns:minmax(0,1fr);gap:1px 14px}
+.axo-st>div{display:flex;justify-content:space-between;align-items:baseline;gap:6px;min-width:0;border-bottom:1px solid var(--line);padding:1px 0;line-height:1.35}
 .axo-st span{font-size:11px;color:var(--muted);font-weight:600}
-.axo-st b{font-size:16px;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.axo-st b small{display:block;font-size:10px;color:var(--muted);font-weight:600}
-.axo-st>div:last-child{grid-column:1/-1}
-.axo-tip{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.axo-tip span{font-size:11.5px;padding:4px 9px;border-radius:999px;background:var(--sunk)}
+.axo-st b{font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.axo-tip{margin-top:6px;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.axo-tip span{color:var(--ink);font-weight:700}
+@container scr (min-width:560px){.axo{grid-template-columns:minmax(0,32%) minmax(0,1fr)}.axo-st{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container scr (min-width:900px){.axo-st{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .hero{position:relative;background:var(--acc);color:var(--on-acc);border-radius:22px;padding:18px 20px 20px;display:grid;gap:4px}
 .hero.loss{background:var(--neg);color:#fff}
 /* Pulso de fondo: un trazo de electrocardiograma tenue y un destello que lo recorre, como un monitor de signos vitales */
@@ -1586,12 +1585,11 @@ function axoCard(P,R){
   const nT=ets.reduce((a,e)=>a+e.tw.length,0),ps=ets.flatMap(e=>e.tw.map(t=>t.p)),pmin=Math.min(...ps),apts=(P.tipologias||[]).filter(t=>t.clase==='apto');
   const UA=Math.round(sum(R.ets.map(e=>e.UA))),AV=sum(R.ets.map(e=>e.AV)),L=P.costos&&P.costos.lote||{};
   const tipos=Object.values(apts.reduce((m,t)=>{const k=(t.nombre||'Tipo')+'|'+(+t.area).toFixed(1);(m[k]=m[k]||{n:t.nombre||'Tipo',a:+t.area,u:0}).u+=+t.unidades||0;return m},{})).sort((a,b)=>b.u-a.u);
-  const LF={contado:'de contado',diferido:'en cuotas',especie:'aporte en especie',area:'pago en área'}[L.forma]||'';
-  const st=[['Etapas',ets.length],['Torres',nT],['Pisos',pmin===maxP?maxP:pmin+' a '+maxP],['Apartamentos',nf(UA)],['Tipologías',tipos.length],['Área vendible',nf(AV)+' m²'],['Lote',fM(+L.valor||0)+(LF?`<small>${LF}</small>`:'')]];
-  return `<div class="card axo"><div class="axo-g"><svg viewBox="${vb.map(v=>v.toFixed(2)).join(' ')}" role="img" aria-label="Esquema del proyecto: ${nT} torres en ${ets.length} etapas">${s}</svg>
-      <div class="legend">${ets.map(e=>`<span style="--c:${AXO_COLS[e.i%AXO_COLS.length]}">${axoEt(e)} · ${e.tw.length} torre${e.tw.length>1?'s':''}</span>`).join('')}</div></div>
+  const st=[['Torres',nT+' en '+ets.length+' etapa'+(ets.length>1?'s':'')],['Pisos',pmin===maxP?maxP:pmin+'–'+maxP],['Aptos',nf(UA)],['Vendible',nf(AV)+' m²'],['Lote',fM(+L.valor||0)]];
+  const tl=tipos.map(t=>`${t.n} ${nf(t.a,1)} m² (${nf(t.u)})`).join(' · ');
+  return `<div class="card axo"><div class="axo-g"><svg viewBox="${vb.map(v=>v.toFixed(2)).join(' ')}" role="img" aria-label="Esquema del proyecto: ${nT} torres en ${ets.length} etapas">${s}</svg></div>
     <div class="axo-d"><div class="axo-st">${st.map(([l,v])=>`<div><span>${l}</span><b>${v}</b></div>`).join('')}</div>
-      <div class="axo-tip">${tipos.slice(0,6).map(t=>`<span>${esc(t.n)} · ${nf(t.a,1)} m² · ${nf(t.u)} und</span>`).join('')}${tipos.length>6?`<span class="muted">y ${tipos.length-6} más</span>`:''}</div></div></div>`}
+      <div class="axo-tip" title="${esc(tl)}"><span>${tipos.length} tipología${tipos.length===1?'':'s'}:</span> ${esc(tl)}</div></div></div>`}
 function renderInicio(){
   const host=$('#s-inicio'),now=new Date(),h=now.getHours();
   // En Modo Escritorio con dos columnas, los gráficos que se ajustan al ancho se dibujan para media pantalla
