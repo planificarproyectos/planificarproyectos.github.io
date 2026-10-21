@@ -185,6 +185,14 @@ mark.qhit{background:color-mix(in srgb,var(--accent) 30%,transparent);color:inhe
 .part.now{box-shadow:0 0 0 2px var(--accent)}
 .part summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:52px}
 .part summary::-webkit-details-marker{display:none}
+/* Manual paso a paso (Cuenta › Ayuda) */
+.mstep summary{justify-content:flex-start;gap:12px}
+.mstep summary>.stack{flex:1}
+.mstep summary>svg{flex-shrink:0;color:var(--muted);transition:transform .2s}
+.mstep[open] summary>svg{transform:rotate(90deg)}
+.mnum{width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0}
+.mstep ul{margin:0 0 12px;padding-left:20px;display:grid;gap:6px;line-height:1.5;color:var(--soft)}
+[id^="me-"]{scroll-margin-top:16px}
 .part .ref{color:var(--accent-fg);font-weight:700}
 .part p{margin:0 0 12px;line-height:1.6;color:var(--soft)}
 .verses sup,.reader sup{color:var(--accent-fg);font-size:11px;font-weight:700;margin-right:3px}

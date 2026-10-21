@@ -182,6 +182,15 @@ nav.tabs button.on{color:var(--accent-fg);font-weight:700}
 .zone{display:flex;flex-direction:column;gap:6px}
 .hist{display:flex;align-items:center;gap:10px;padding-block:8px;border-top:1px solid var(--surface2)}
 .hist:first-of-type{border-top:none}
+.mstep{background:var(--surface);border-radius:18px}
+.mstep summary{list-style:none;display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer}
+.mstep summary::-webkit-details-marker{display:none}
+.mstep summary .grow{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.mstep .n{width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+.mstep .chev{color:var(--muted);transition:transform .2s;display:flex}
+.mstep[open] .chev{transform:rotate(180deg)}
+.mstep ul{margin:0;padding:0 16px 14px 58px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.45}
+.mstep .btn{width:auto;min-height:44px;margin:0 16px 16px 58px}
 .empty{border:1.5px dashed var(--line);border-radius:18px;padding:20px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;font-size:14px;z-index:50;max-width:calc(100% - 32px)}
 .installbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:40;width:calc(100% - 32px);max-width:448px;background:var(--surface);border:1px solid var(--accent-fg);border-radius:20px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:10px;animation:ib-in .35s ease-out}
@@ -251,6 +260,7 @@ var IP = {
   trash:'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13', flame:'M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-3 2-4 2-7 2 1 3 2 3 4',
   chevL:'M15 6l-6 6 6 6', chevR:'M9 6l6 6-6 6', pause:'M8 5v14M16 5v14', search:'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4',
   edit:'M4 20h4L20 8l-4-4L4 16zM14 6l4 4', user:'M12 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM4 21c1-4 4-6 8-6s7 2 8 6',
+  book:'M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11M9 8h6',
   key:'M15 7a4 4 0 1 1-3.5 6H9v2H7v2H4v-3l6.5-6.5A4 4 0 0 1 15 7z', download:'M12 4v11M7 10l5 5 5-5M5 20h14', out:'M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10', shield:'M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z'
 };
 function ic(n,s,w){ s=s||20; w=w||2;
@@ -764,12 +774,12 @@ function render(){
   if(v==='auth') h=vAuth();
   else if(v==='home') h=vHome(); else if(v==='routines') h=vRoutines(); else if(v==='lib') h=vLib();
   else if(v==='progress') h=vProgress(); else if(v==='account') h=vAccount(); else if(v==='sedit') h=vSedit(); else if(v==='detail') h=vDetail(); else if(v==='builder') h=vBuilder();
-  else if(v==='ex') h=vEx(); else if(v==='work') h=vWork(); else if(v==='done') h=vDone();
+  else if(v==='ex') h=vEx(); else if(v==='work') h=vWork(); else if(v==='done') h=vDone(); else if(v==='manual') h=vManual();
   var _cs=document.querySelector('.chips.scroll'), _sl=_cs?_cs.scrollLeft:0;
   app.innerHTML=h;
   var _c2=document.querySelector('.chips.scroll'); if(_c2&&_sl) _c2.scrollLeft=_sl;
   var nav=document.getElementById('nav'); nav.hidden=(v==='work'||v==='done'||v==='auth');
-  var tabOf={home:'home',routines:'routines',detail:'routines',builder:'routines',lib:'lib',ex:'lib',progress:'progress',account:'account',sedit:'progress'};
+  var tabOf={home:'home',routines:'routines',detail:'routines',builder:'routines',lib:'lib',ex:'lib',progress:'progress',account:'account',sedit:'progress',manual:'account'};
   ['home','routines','lib','progress','account'].forEach(function(t){ var b=document.getElementById('t-'+t); b.classList.toggle('on',tabOf[v]===t); if(tabOf[v]===t) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
   if(v==='builder') renderBLib();
   setupCanvases();
@@ -1055,6 +1065,7 @@ function vAccount(){
    '<div class="kpis"><div class="kpi"><b class="num">'+tot.s+'</b><span>Sesiones</span></div><div class="kpi"><b class="num">'+Math.round(tot.m)+'</b><span>Minutos</span></div><div class="kpi"><b class="num">'+tot.r+'</b><span>Repeticiones</span></div></div>'+
    '<p class="muted small">'+(first?'Entrenando desde el '+fmtDate(first)+' · racha actual: '+streak()+' días':'Aún no has registrado entrenos.')+'</p>'+
    '<section class="stack"><h2>Ajustes</h2>'+
+   '<button class="card" data-a="manual">'+ic('book',22)+'<span class="grow"><b>Manual paso a paso</b><span class="muted small">Cómo usar PowerFit, sección por sección</span></span>'+ic('chevR',20)+'</button>'+
    '<button class="card" data-a="resetPass">'+ic('key',22)+'<span class="grow"><b>Cambiar contraseña</b><span class="muted small">Te enviamos un correo para crear una nueva</span></span>'+ic('chevR',20)+'</button>'+
    '<button class="card" data-a="exportCsv"'+(tot.s?'':' disabled style="opacity:.5"')+'>'+ic('download',22)+'<span class="grow"><b>Descargar mi historial</b><span class="muted small">Archivo CSV para abrir en Excel</span></span>'+ic('chevR',20)+'</button>'+
    (Inst.standalone()?'<div class="card">'+ic('check',22)+'<span class="grow"><b>App instalada</b><span class="muted small">Estás usando PowerFit como app</span></span></div>':Inst.can()?'<div class="panel">'+Inst.body(false)+'</div>':'')+
@@ -1064,6 +1075,30 @@ function vAccount(){
    del+'</section>'+vEquip()+vTheme();
   if(S.isAdmin) h+=vAdmin();
   return h+'<a class="card" target="_blank" rel="noopener" style="text-decoration:none;border:1px solid var(--accent-fg)" href="'+esc((window.WELLNESS_APPS_URL||"https://www.planificarproyectos.com/wellness-apps/"))+'">'+ic('apps',22)+'<span class="grow"><b>Conoce más Wellness Apps</b><span class="muted small">Mind Focus, PowerFit y Lumen en un solo lugar</span></span>'+ic('chevR',20)+'</a>'+'<p class="muted small" style="text-align:center">Una cuenta para Mind Focus, PowerFit y Lumen</p></div>';
+}
+/* Manual paso a paso: el orden recomendado para usar PowerFit, en lenguaje simple. Cada paso se despliega; "Ir a" lleva a la sección (s = sección dentro de la pantalla) */
+var MANUAL=[
+ {t:'Escribe tu nombre',w:'Cuenta',go:'account',p:['En Cuenta, escribe cómo quieres que te saludemos y toca “Guardar nombre”.','Es el mismo nombre que usan Mind Focus y Lumen: si lo cambias aquí, cambia en todas.']},
+ {t:'Marca el equipo que tienes en casa',w:'Cuenta › Mi equipo en casa',go:'account',s:'equipSec',p:['Toca cada cosa que tienes: mancuernas, bandas, banco, tapete, etc.','Las recomendaciones, las rutinas generadas y la biblioteca solo te mostrarán ejercicios que puedes hacer.','Los ejercicios sin equipo y de piso siempre se incluyen.']},
+ {t:'Mira tu semana y tu racha',w:'Inicio',go:'home',p:['La fila de días muestra una cara feliz los días que entrenaste y una triste los días pasados sin entreno.','La llama de arriba es tu racha: cuántos días seguidos llevas entrenando.']},
+ {t:'Elige qué entrenar hoy',w:'Inicio › ¿Qué entrenas hoy?',go:'home',p:['Mismo gesto: Empuje, Tracción o Piernas y glúteos. Superserie: alterna músculos opuestos, como pecho y espalda.','La etiqueta “Hoy” marca el grupo que menos has trabajado en los últimos días.','O elige una o varias zonas y toca “Generar rutina”.','Más abajo están las rutinas recomendadas para tu equipo.']},
+ {t:'Revisa la rutina y empieza',w:'Rutina elegida',p:['Verás cada ejercicio con sus series y repeticiones (o segundos) y el tiempo aproximado.','Entre series hay 40 segundos de descanso.','Toca Personalizar para cambiarla, o Empezar para entrenar.']},
+ {t:'Arma tu propia rutina',w:'Rutinas › Armar mi rutina',go:'routines',p:['Busca ejercicios, filtra por zona y toca + para agregarlos.','Ajusta series, repeticiones o segundos con − y +, y ordénalos con las flechas.','Ponle nombre y toca Guardar: quedará en Mis rutinas para repetirla. O toca Empezar.']},
+ {t:'Explora los ejercicios',w:'Ejercicios',go:'lib',p:['Cada ejercicio tiene una figura animada de frente y de lado, y una explicación de cómo hacerlo.','“Solo mi equipo” muestra lo que puedes hacer con tu equipo; quítalo para ver todos.','En “Usar ahora” elige un accesorio para ver solo sus ejercicios y armar una rutina con ellos.','Desde un ejercicio, “Agregar a mi rutina” lo suma a la rutina que estás armando.']},
+ {t:'Durante el entreno',w:'Entreno en curso',p:['Repeticiones: cuéntalas con + y −, y toca “Terminar serie” al acabar.','Por tiempo: toca Iniciar; la cuenta regresiva termina sola con un sonido.','El descanso empieza solo: súmale 15 segundos o sáltalo.','“Saltar ejercicio” pasa al siguiente. Mientras entrenas, la app intenta mantener la pantalla encendida.']},
+ {t:'Termina o retoma el entreno',w:'Entreno en curso',p:['Toca Finalizar para guardar lo que hiciste; solo cuentan las series registradas.','La X sale sin guardar (antes te pregunta).','Si cierras la app, el entreno queda pendiente; si vuelves después de unas horas, Inicio te deja continuar, guardar y terminar, o descartar.']},
+ {t:'Mira tu progreso',w:'Progreso',go:'progress',p:['Elige Semana, Mes, Semestre o Año, y usa las flechas para ver periodos anteriores.','Verás sesiones, minutos y repeticiones, un gráfico de minutos y las zonas que más trabajaste.','Debajo aparece cuántas sesiones hiciste en el periodo anterior y tu racha.']},
+ {t:'Corrige o registra entrenos',w:'Progreso › Sesiones',go:'progress',p:['Toca una sesión para cambiar su nombre, fecha, duración, ejercicios o series.','La papelera borra una sesión (te pide confirmar).','“Registrar entreno pasado” agrega un entreno que hiciste sin la app.']},
+ {t:'Cambia los colores',w:'Cuenta › Apariencia',go:'account',s:'themeSec',p:['Elige uno de los 8 colores o el último círculo para escoger cualquier color.','Activa o desactiva el modo oscuro.','El color y el modo se aplican también en Proyecta, Lumen y Mind Focus.']},
+ {t:'Tu cuenta y tus datos',w:'Cuenta › Ajustes',go:'account',p:['Tus entrenos y rutinas se guardan en tu cuenta: los ves en cualquier dispositivo donde inicies sesión.','“Descargar mi historial” crea un archivo para abrir en Excel.','Si tu celular lo permite, aquí también puedes instalar PowerFit como app.','“Contactar soporte” te lleva a WhatsApp si algo no funciona.','“Borrar mi historial” elimina tus sesiones y rutinas propias y no se puede deshacer.']}
+];
+function vManual(){
+  return '<div class="wrap">'+head('Manual paso a paso',true)+
+   '<p class="muted">El orden recomendado para usar PowerFit. Toca un paso para ver qué hacer.</p>'+
+   '<div class="stack" style="gap:8px">'+MANUAL.map(function(m,i){
+    return '<details class="mstep"><summary><span class="n num">'+(i+1)+'</span><span class="grow"><b>'+esc(m.t)+'</b><span class="muted small">'+esc(m.w)+'</span></span><span class="chev">'+ic('down',18)+'</span></summary>'+
+     '<ul>'+m.p.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>'+
+     (m.go?'<button class="btn ghost" data-a="mGo" data-v="'+m.go+'"'+(m.s?' data-s="'+m.s+'"':'')+'>Ir a '+esc(m.s?m.w.split(' › ').slice(-1)[0]:{home:'Inicio',routines:'Rutinas',lib:'Ejercicios',progress:'Progreso',account:'Cuenta'}[m.go])+'</button>':'')+'</details>'; }).join('')+'</div></div>';
 }
 function vAdmin(){
   var A=S.adm;
@@ -1126,7 +1161,7 @@ function setTheme(patch,save){
 if(window.Apariencia) Apariencia.on(function(s,preview){ setTheme(s,false); if(!preview&&typeof render==='function') keep(render); });
 function vTheme(){
   var sw=window.Apariencia?Apariencia.picker(PF_THEME.accent):'', dark=PF_THEME.mode!=='light';
-  return '<section class="stack"><h2>Apariencia</h2><div class="panel" style="--ap-bg:var(--surface)"><b class="small">Color de énfasis</b>'+sw+'<span class="muted small">Se aplica también en Proyecta, Lumen y Mind Focus</span></div>'+
+  return '<section class="stack" id="themeSec"><h2>Apariencia</h2><div class="panel" style="--ap-bg:var(--surface)"><b class="small">Color de énfasis</b>'+sw+'<span class="muted small">Se aplica también en Proyecta, Lumen y Mind Focus</span></div>'+
    '<div class="panel"><div class="between"><div class="stack" style="gap:2px"><b>Modo oscuro</b><span class="muted small">'+(dark?'Activado':'Desactivado')+' · no depende del celular</span></div>'+
    '<button class="switch" role="switch" aria-checked="'+dark+'" aria-label="Modo oscuro" data-a="darkMode"></button></div></div></section>';
 }
@@ -1178,7 +1213,7 @@ function authSubmit(){
 var wake=null, actx=null;
 
 /* ---------- Continuidad: el entreno y la pantalla sobreviven a recargas y cierres ---------- */
-var STALE=6*3600e3, PV={home:1,routines:1,lib:1,progress:1,account:1,builder:1,detail:1,ex:1,work:1};
+var STALE=6*3600e3, PV={home:1,routines:1,lib:1,progress:1,account:1,manual:1,builder:1,detail:1,ex:1,work:1};
 var Act={uid:null,t:null,lastRemote:0,
   key:function(){ return 'powerfit:state:'+(this.uid||'local'); },
   snap:function(){
@@ -1322,6 +1357,8 @@ var A={
   pOff:function(v){ var n=S.pOff+(+v); if(n>0) return; S.pOff=n; render(); },
   authMode:function(v){ var e=document.getElementById('aEmail'); if(e) S.authEmail=e.value; S.authMode=v; render(); },
   equipTog:function(v){ var o=owned().slice(), i=o.indexOf(v); if(i>=0) o.splice(i,1); else o.push(v); setEquip(o,true); keep(render); },
+  manual:function(){ go('manual'); },
+  mGo:function(v,el){ var s=el&&el.dataset.s; go(v); if(s) setTimeout(function(){ var x=document.getElementById(s); if(x) x.scrollIntoView({behavior:'smooth',block:'start'}); },60); },
   equipGo:function(){ go('account'); setTimeout(function(){ var el=document.getElementById('equipSec'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); },60); },
   libMine:function(){ S.libAll=!S.libAll; render(); },
   accent:function(v){ setTheme({accent:v},true); keep(render); },

@@ -850,8 +850,9 @@ function vMe(){
   +'<div class="panel"><div class="prof"><span class="av">'+ic('user',26,2.2)+'</span><div class="stack" style="gap:2px;min-width:0"><b style="overflow-wrap:anywhere">'+esc(S.name||(u&&u.email)||'Sin sesión')+'</b>'
    +(S.name&&u?'<span class="small muted" style="overflow-wrap:anywhere">'+esc(u.email)+'</span>':'')
    +(cr?'<span class="small muted">Cuenta creada el '+cr.getDate()+' '+MONTHS[cr.getMonth()].slice(0,3)+' '+cr.getFullYear()+'</span>':'')+'</div></div></div>'
-  +'<div class="panel"><label class="label" for="nm">Tu nombre</label><div class="namerow"><input class="inp" id="nm" maxlength="30" value="'+esc(S.name)+'" placeholder="¿Cómo te llamas?" autocomplete="given-name"><button class="btn" data-a="saveName">Guardar</button></div><span class="small muted">Se usa en Mind Focus, PowerFit y Lumen.</span></div>'
-  +'<section class="stack"><h2>Ajustes</h2>'
+  +'<div class="panel" id="me-nombre"><label class="label" for="nm">Tu nombre</label><div class="namerow"><input class="inp" id="nm" maxlength="30" value="'+esc(S.name)+'" placeholder="¿Cómo te llamas?" autocomplete="given-name"><button class="btn" data-a="saveName">Guardar</button></div><span class="small muted">Se usa en Mind Focus, PowerFit y Lumen.</span></div>'
+  +'<section class="stack"><h2>Ayuda</h2>'+card('manual','plan','Manual paso a paso','Cómo usar Lumen, sección por sección')+'</section>'
+  +'<section class="stack" id="me-ajustes"><h2>Ajustes</h2>'
    +(u?card('resetPass','key','Cambiar contraseña','Te enviamos un correo para crear una nueva'):'')
    +(Inst.standalone()?'<div class="card">'+ic('check',22)+'<span class="grow"><b>App instalada</b><span>Estás usando Lumen como app</span></span></div>':Inst.can()?'<div class="panel">'+Inst.body(false)+'</div>':'<div class="card">'+ic('dl',22)+'<span class="grow"><b>Instalar app</b><span>Android: Chrome › ⋮ › Instalar app. iPhone: Safari › Compartir › Agregar a pantalla de inicio</span></span></div>')
    +'<a class="card" target="_blank" rel="noopener" href="'+esc((window.wellnessWA||function(a,t){return "https://wa.me/573204451740"})('Lumen','soporte',u&&u.email))+'">'+ic('chat',22)+'<span class="grow"><b>Contactar soporte</b><span>Escríbenos por WhatsApp si algo no funciona</span></span>'+ic('chevR',20)+'</a>'
@@ -860,17 +861,52 @@ function vMe(){
    +(U.confirmReset?'<div class="panel"><b>¿Borrar racha, rutina y progreso del Rosario?</b><span class="small muted">No se puede deshacer.</span><div class="grid2"><button class="btn soft" data-a="resetNo">Cancelar</button><button class="btn danger" data-a="resetYes">Sí, borrar</button></div></div>'
      :card('reset','trash','Borrar mis datos',u?'Racha, rutina y progreso del Rosario. No se puede deshacer':'Se borran de este dispositivo','danger'))
   +'</section>'
-  +'<section class="stack"><h2>Recordatorios</h2>'+remPanel()+'</section>'
-  +'<section class="stack"><h2>Modo bolsillo</h2>'+pinGuide()+'</section>'
-  +'<section class="stack"><h2>Apariencia</h2><div class="panel" style="--ap-bg:var(--surface)"><b class="small">Color de énfasis</b>'+(window.Apariencia?Apariencia.picker(accHex(S.accent)):'')+'<span class="small muted">Se aplica también en Proyecta, Mind Focus y PowerFit</span></div>'
+  +'<section class="stack" id="me-rem"><h2>Recordatorios</h2>'+remPanel()+'</section>'
+  +'<section class="stack" id="me-bolsillo"><h2>Modo bolsillo</h2>'+pinGuide()+'</section>'
+  +'<section class="stack" id="me-ap"><h2>Apariencia</h2><div class="panel" style="--ap-bg:var(--surface)"><b class="small">Color de énfasis</b>'+(window.Apariencia?Apariencia.picker(accHex(S.accent)):'')+'<span class="small muted">Se aplica también en Proyecta, Mind Focus y PowerFit</span></div>'
    +'<div class="panel"><div class="between"><div class="stack" style="gap:2px"><b>Modo oscuro</b><span class="small muted">'+(dark?'Activado':'Desactivado')+' · no depende del celular</span></div><button class="switch" role="switch" aria-checked="'+dark+'" aria-label="Modo oscuro" data-a="dark"></button></div></div></section>'
-  +'<section class="stack"><h2>Lectura en voz alta</h2><div class="panel">'
+  +'<section class="stack" id="me-voz"><h2>Lectura en voz alta</h2><div class="panel">'
   +(TTS?'<label class="small muted" for="vsel">Voz</label><select class="inp" id="vsel" data-a="voice"><option value="">Automática (recomendada)</option>'+vs.map(function(v,k){ return '<option value="'+esc(v.name)+'"'+(v.name===S.voice?' selected':'')+'>'+esc(v.name)+' ('+v.lang+')'+(k===0?' · mejor disponible':'')+'</option>'; }).join('')+'</select>'
    +'<div class="between"><label class="small muted" for="rate">Velocidad</label><span class="small num" id="rateV">'+(+S.rate||1).toFixed(1)+'×</span></div><input type="range" id="rate" data-a="rate" min="0.6" max="1.4" step="0.1" value="'+(S.rate||1)+'">'
    +'<div>'+sayBtn('test','Probar voz')+'</div>'+voiceGuide()
    :'<p class="small muted">Este navegador no permite lectura en voz alta. Usa Chrome (Android) o Safari (iPhone).</p>')+'</div></section>'
   +'<a class="card" target="_blank" rel="noopener" style="border:1px solid var(--accent-fg)" href="'+esc((window.WELLNESS_APPS_URL||"https://www.planificarproyectos.com/wellness-apps/"))+'">'+ic('apps',22)+'<span class="grow"><b>Conoce más Wellness Apps</b><span>Mind Focus, PowerFit y Lumen en un solo lugar</span></span>'+ic('chevR',20)+'</a>'
   +'<p class="small muted" style="text-align:center">'+(u?'Una cuenta para Mind Focus, PowerFit y Lumen':'Tus datos se guardan en este dispositivo')+'</p>';
+}
+
+/* ---------- Manual paso a paso (Cuenta › Ayuda) ----------
+   Cada paso: título, dónde está en la app, qué hacer en frases cortas y, si aplica, un botón que lleva a esa sección
+   (l: texto del botón cuando no basta con la última parte de "dónde").
+   go: pestaña (misa, rosary, home, bible), 'plans' para la lista de planes, o 'me:<id>' para una parte de Cuenta. */
+var MANUAL=[
+ {t:'Tu cuenta y tu nombre',w:'Cuenta › Tu nombre',go:'me:nombre',l:'Tu nombre',p:['Entra con tu correo y contraseña. Es la misma cuenta de Mind Focus y PowerFit.','Escribe cómo quieres que te saludemos y toca Guardar.','Tu rutina, tu racha, tus planes y tus ajustes quedan en tu cuenta: los ves igual en cualquier celular o computador.']},
+ {t:'Instala Lumen como app',w:'Cuenta › Ajustes › Instalar app',go:'me:ajustes',l:'Ajustes',p:['En Android, abre Lumen en Chrome, toca ⋮ y luego Instalar app.','En iPhone, abre Lumen en Safari, toca Compartir y luego Agregar a inicio.','Así se abre más rápido desde tu pantalla de inicio, como cualquier otra app.']},
+ {t:'Tu día en Hoy',w:'Hoy',go:'home',p:['Arriba ves la celebración del día según el calendario litúrgico y el santo del día.','La Frase del día se puede escuchar, copiar o compartir como imagen.','En Tu progreso ves tus días seguidos de oración y la semana. El botón Siguiente te lleva a la próxima oración.']},
+ {t:'Tu rutina de oración',w:'Hoy › Rutina de hoy',go:'home',p:['La rutina tiene 9 momentos, del ofrecimiento al despertar a la oración de la noche.','Toca el nombre de una oración para abrirla y leerla o escucharla.','Toca el círculo de la derecha para marcarla como rezada.','Más abajo, en Oraciones, tienes el Padre Nuestro, el Ave María, el Credo y otras.']},
+ {t:'La Misa del día',w:'Misa',go:'misa',p:['Encuentras las lecturas y el Evangelio de hoy.','Con las flechas o tocando la fecha ves la Misa de otro día.','El botón grande lee en voz alta todas las lecturas, una tras otra.','Toca la cita de una lectura para abrirla en la Biblia.']},
+ {t:'El Santo Rosario',w:'Rosario',go:'rosary',p:['Ya vienen elegidos los misterios del día (dice “hoy”); puedes cambiar a otros.','El botón grande te guía en voz alta, cuenta por cuenta.','Si prefieres rezar a tu ritmo, usa Siguiente cuenta y el botón de la izquierda para volver una cuenta.','El rosario dibujado te muestra en qué cuenta vas.']},
+ {t:'Modo bolsillo',w:'Misa o Rosario › candado',go:'me:bolsillo',l:'Modo bolsillo',p:['Toca el candado junto al botón de reproducir: la pantalla queda negra y no responde a toques, y la voz sigue sonando.','Para salir, mantén presionada la pantalla 2 segundos.','En Cuenta › Modo bolsillo te explicamos cómo bloquear también los botones del celular.']},
+ {t:'La Biblia',w:'Biblia',go:'bible',p:['Están los 73 libros de la Biblia católica.','Busca un libro, una cita como Juan 3,16 o palabras.','Elige Antiguo o Nuevo Testamento, luego el libro y el capítulo.','En cada capítulo puedes tocar Escuchar capítulo y pasar al anterior o al siguiente.']},
+ {t:'Compartir versículos y frases',w:'Biblia › un capítulo',go:'bible',l:'Biblia',p:['Toca uno o varios versículos para seleccionarlos.','Abajo aparece una barra: Copiar o Imagen.','La imagen sale con un fondo de colores distinto cada vez, el logo y la fecha, y lleva el enlace para que otros prueben Lumen.','La Frase del día de Hoy también se puede compartir como imagen.']},
+ {t:'Planes de lectura',w:'Biblia › Planes de lectura',go:'plans',p:['Elige un plan: los Evangelios en 30 días, el Nuevo Testamento en 90, los Salmos, los Proverbios o la Biblia en un año.','Toca Empezar hoy. Cada día te muestra qué capítulos leer.','Marca el día como leído para ver tu avance. En Hoy aparece el plan que tienes en curso.']},
+ {t:'El reproductor flotante',w:'Cualquier sección',p:['Si algo se está leyendo en voz alta y cambias de sección, aparece un botón flotante abajo.','Con él pausas o reanudas, vuelves a lo que suena o lo detienes con la X.']},
+ {t:'La voz de lectura',w:'Cuenta › Lectura en voz alta',go:'me:voz',p:['Elige la voz que más te guste y la velocidad; 0.9× suena más natural.','Toca Probar voz para escucharla.','Si suena robótica, sigue la guía de esa misma sección para descargar una voz mejor en tu celular.']},
+ {t:'Recordatorios',w:'Cuenta › Recordatorios',go:'me:rem',p:['Marca los recordatorios que quieras, por ejemplo el Ángelus, y ajusta la hora.','Toca Agregar al calendario: el calendario de tu celular te avisará cada día, aunque Lumen esté cerrada.','Para cambiarlos, bórralos del calendario y vuelve a agregarlos desde aquí.']},
+ {t:'Apariencia',w:'Cuenta › Apariencia',go:'me:ap',p:['Elige uno de los 8 colores o toca el último círculo para escoger cualquier color.','Activa o desactiva el Modo oscuro.','El color y el modo se aplican también en Proyecta, Mind Focus y PowerFit.']},
+ {t:'Ayuda y soporte',w:'Cuenta › Ajustes',go:'me:ajustes',l:'Ajustes',p:['Contactar soporte y Enviar recomendaciones abren WhatsApp para escribirnos.','También puedes cambiar tu contraseña o cerrar sesión; tus datos quedan guardados en tu cuenta.','Borrar mis datos reinicia tu racha, tu rutina y el progreso del Rosario. No se puede deshacer.']}];
+function vManual(){
+ return '<header class="row"><button class="icon-btn" data-a="manBack" aria-label="Volver a Cuenta">'+ic('back')+'</button><h1>MANUAL</h1></header>'
+  +'<p class="muted small" style="margin:0">Cómo usar Lumen, sección por sección. Toca un paso para ver qué hacer.</p>'
+  +'<div class="stack" style="gap:8px">'+MANUAL.map(function(s,i){
+   return '<details class="part mstep"><summary><span class="mnum">'+(i+1)+'</span><span class="stack grow" style="gap:2px;min-width:0"><b>'+esc(s.t)+'</b><span class="small muted">'+esc(s.w)+'</span></span>'+ic('chevR',18)+'</summary>'
+    +'<ul>'+s.p.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>'
+    +(s.go?'<button class="say" data-a="manGo" data-v="'+s.go+'" style="margin-bottom:12px">Ir a '+esc(s.l||s.w.split(' › ').slice(-1)[0])+ic('chevR',14)+'</button>':'')+'</details>'; }).join('')+'</div>';
+}
+function manGo(v){
+ if(v==='plans'){ U.tab='bible'; U.plan='*'; U.bk=null; U.ch=null; render(); window.scrollTo(0,0); return; }
+ if(v.indexOf('me:')===0){ go('me'); var el=document.getElementById('me-'+v.slice(3)); if(el) el.scrollIntoView({block:'start'}); return; }
+ if(v==='bible'){ U.bk=null; U.ch=null; U.plan=null; }
+ go(v);
 }
 
 /* ---------- Render ---------- */
@@ -880,9 +916,9 @@ function render(){
  var nav=document.querySelector('nav.tabs');
  if(needAuth()||Cloud.noAccess){ nav.hidden=true; $('app').innerHTML='<div class="wrap" style="padding-bottom:24px">'+(Cloud.noAccess?vNoAccess():vAuth())+'</div>'; Inst.show(); return; }
  nav.hidden=false;
- var v={home:vHome,rosary:vRosary,misa:vHoy,bible:vBible,me:vMe,pray:vPray}[U.tab]();
+ var v={home:vHome,rosary:vRosary,misa:vHoy,bible:vBible,me:vMe,pray:vPray,manual:vManual}[U.tab]();
  $('app').innerHTML='<div class="wrap">'+v+'</div>';
- var cur=U.tab==='pray'?'home':U.tab;
+ var cur=U.tab==='pray'?'home':U.tab==='manual'?'me':U.tab;
  $('navIn').innerHTML=TABS.map(function(t){
   if(t[0]==='home') return '<button class="hoy'+(cur==='home'?' on':'')+'" data-a="tab" data-v="home" aria-current="'+(cur==='home'?'page':'false')+'"><span>'+ic('sun',26,2.2)+'</span>Hoy</button>';
   return '<button class="'+(cur===t[0]?'on':'')+'" data-a="tab" data-v="'+t[0]+'" aria-current="'+(cur===t[0]?'page':'false')+'">'+ic(t[2],22)+t[1]+'</button>'; }).join('');
@@ -910,6 +946,9 @@ document.addEventListener('click',function(e){
  if(a==='done'){ var id2=el.getAttribute('data-id'); setDone(id2,!isDone(id2)); render(); return; }
  if(a==='open'){ if(v==='misa'){ go('misa'); return; } if(v==='ros'){ go('rosary'); return; } U.pid=v; go('pray'); return; }
  if(a==='pback'){ go('home'); return; }
+ if(a==='manual'){ go('manual'); return; }
+ if(a==='manBack'){ go('me'); return; }
+ if(a==='manGo'){ manGo(v); return; }
  if(a==='copy'){ if(!LIT.frase) return; var txt=LIT.frase.t+' ('+LIT.frase.ref+')';
   if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){ toast('Frase copiada'); },function(){ toast(txt,5000); }); } else toast(txt,5000); return; }
  if(a==='pocket'){ pocketOn(); return; }

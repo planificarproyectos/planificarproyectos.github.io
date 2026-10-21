@@ -526,6 +526,26 @@ a.card{text-decoration:none}
 @keyframes mf-word{from{opacity:0;transform:translateY(12px);letter-spacing:10px}to{opacity:1;transform:none;letter-spacing:3px}}
 #splash.replay *{animation-name:none!important}
 @media (prefers-reduced-motion:reduce){#splash *{animation:none!important;stroke-dashoffset:0!important;opacity:1!important}#splash .fl{opacity:0!important}}
+/* Manual paso a paso (Cuenta › Ayuda) */
+.mansheet{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}
+.mansheet[hidden]{display:none}
+.manbox{background:var(--bg);width:100%;max-width:560px;max-height:88vh;overflow:auto;border-radius:22px 22px 0 0;padding:18px 16px calc(20px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px}
+.manbox>*{flex-shrink:0}
+@media (min-width:700px){.mansheet{align-items:center}.manbox{border-radius:22px;max-height:84vh}}
+.manbox .phead{display:flex;justify-content:space-between;align-items:center;gap:10px}
+#manClose{width:40px;height:40px;padding:0;justify-content:center;font-size:18px}
+.hsteps{display:grid;gap:8px}
+.hstep{background:var(--surface);border-radius:16px}
+.hstep summary{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;list-style:none}
+.hstep summary::-webkit-details-marker{display:none}
+.hstep summary .grow{flex:1;min-width:0}
+.hstep summary b{display:block;font-size:14.5px}
+.hstep summary small{display:block;color:var(--muted);font-size:12.5px}
+.hstep summary svg{transition:transform .2s;flex:none;color:var(--muted)}
+.hstep[open] summary svg{transform:rotate(90deg)}
+.hnum{flex:none;width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:800;font-size:13px}
+.hstep ul{margin:0;padding:0 16px 6px 54px;display:grid;gap:6px;font-size:14px;line-height:1.45}
+.hgo{margin:6px 14px 14px 54px;border-radius:14px;background:var(--surface2);color:var(--ink);font-weight:700}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -1779,7 +1799,7 @@ document.querySelectorAll("#bnav button").forEach(b=>b.onclick=()=>setView(b.dat
 setView("home");
 
 // ================= ESTÉTICA POWERFIT: CUENTA, APARIENCIA Y BIENVENIDA =================
-const IC={key:'<path d="M15 7a4 4 0 1 1-3.9 5H7v3H4v-3H2v-3h9.1A4 4 0 0 1 15 7z"/>',dl:'<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',ul:'<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>',csv:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h7"/>',out:'<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',chev:'<path d="M9 6l6 6-6 6"/>',check:'<path d="M5 12l5 5 9-10"/>',apps:'<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>',chat:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-5A8 8 0 1 1 21 12z"/>',bulb:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/>',trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'};
+const IC={key:'<path d="M15 7a4 4 0 1 1-3.9 5H7v3H4v-3H2v-3h9.1A4 4 0 0 1 15 7z"/>',dl:'<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',ul:'<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>',csv:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h7"/>',out:'<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',chev:'<path d="M9 6l6 6-6 6"/>',check:'<path d="M5 12l5 5 9-10"/>',apps:'<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>',chat:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-5A8 8 0 1 1 21 12z"/>',bulb:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/>',trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',book:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M9 7h6M9 11h6"/>'};
 const icn=(k,sz,w)=>'<svg viewBox="0 0 24 24" width="'+(sz||22)+'" height="'+(sz||22)+'" fill="none" stroke="currentColor" stroke-width="'+(w||1.9)+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+IC[k]+'</svg>';
 /* Apariencia compartida con Proyecta, Lumen y PowerFit (/apariencia.js): los cambios se guardan en la cuenta y llegan
    en vivo desde cualquiera de las apps. El tema que Mind Focus guardaba aparte (config/categorias.tema) ya no se usa;
@@ -1794,6 +1814,7 @@ if(window.Apariencia)Apariencia.on((s,preview)=>{mfApplyTheme(s);if(!preview)ren
   '<div class="panel"><div class="prof"><span class="av">'+icn("user",26,2.2)+'</span><div class="stack" style="gap:2px;min-width:0"><b id="accName" style="overflow-wrap:anywhere"></b><span class="status" id="accEmail2" style="overflow-wrap:anywhere"></span><span class="status" id="accRole"></span></div></div></div>'+
   '<div class="panel"><label class="label" for="nameIn">Tu nombre</label><div class="namerow"><input id="nameIn" maxlength="30" placeholder="¿Cómo te llamas?" autocomplete="given-name"><button type="button" class="primary" id="nameSave">Guardar</button></div><p class="status" id="nameMsg" style="margin:6px 0 0">Se usa en Mind Focus, PowerFit y Lumen.</p></div>'+
   '<div class="acckpis"><div><b class="num" id="akReg">0</b><span>Registros</span></div><div><b class="num" id="akHrs">0</b><span>Horas</span></div><div><b class="num" id="akStk">0</b><span>Días de racha</span></div></div>'+
+  '<section class="stack"><h2>Ayuda</h2><button class="card" id="manBtn">'+icn("book")+'<span class="grow"><b>Manual paso a paso</b><span>Cómo usar Mind Focus, sección por sección</span></span><span class="chev2">'+icn("chev",20)+'</span></button></section>'+
   '<section class="stack"><h2>Ajustes</h2>'+
   '<button class="card" data-c="pwdBtn">'+icn("key")+'<span class="grow"><b>Cambiar contraseña</b><span>Te enviamos un correo para crear una nueva</span></span><span class="chev2">'+icn("chev",20)+'</span></button>'+
   '<button class="card" data-c="csvBtn">'+icn("csv")+'<span class="grow"><b>Exportar CSV</b><span>Registros del periodo elegido en Análisis, para Excel</span></span><span class="chev2">'+icn("chev",20)+'</span></button>'+
@@ -1820,6 +1841,52 @@ if(window.Apariencia)Apariencia.on((s,preview)=>{mfApplyTheme(s);if(!preview)ren
   try{const snap=await col.get();for(const d of snap.docs)await d.ref.delete();toast("Historial borrado")}catch(e){toast("No se pudo borrar. Revisa tu conexión.")}};
  $("modeSw").onclick=()=>setMfTheme({mode:MF_THEME.mode==="light"?"dark":"light"},true);
 }
+// ---------- Manual paso a paso (Cuenta › Ayuda) ----------
+/* Cada paso: t título, w dónde está en la app, p puntos en lenguaje simple y, si sirve, go/el para el botón "Ir a":
+   go es la sección (setView) y el, el selector del elemento al que se baja al llegar. */
+const MF_MANUAL=[
+ {t:"Entra y escribe tu nombre",w:"Cuenta › Tu nombre",go:"acc",el:"#nameIn",
+  p:["Entra con tu correo y contraseña. Si es la primera vez, toca «Crear cuenta».","En Cuenta escribe tu nombre y toca «Guardar»: Mind Focus te saluda con él.","Es la misma cuenta de PowerFit y Lumen, y el nombre se comparte con ellas.","Tus registros se guardan en tu cuenta: los ves igual en cualquier celular o computador."]},
+ {t:"Empieza a contar una actividad",w:"Inicio › Actividades",go:"home",el:"#tiles",
+  p:["Toca una actividad (por ejemplo Trabajo o Almuerzo) y el tiempo empieza a contar desde ese momento.","La tarjeta «Ahora» muestra qué está en curso y cuánto lleva.","Si tocas otra actividad, la anterior termina y se guarda sola.","¿No la ves? Búscala en «Buscar actividad…» o toca «Ver todas». Si no existe, escribe el nombre y toca «Crear»."]},
+ {t:"Termina, agrega una nota o márcala como favorita",w:"Inicio › Ahora",go:"home",el:"#nowCard",
+  p:["«■ Terminar» detiene el tiempo y guarda el registro.","«✎ Nota» te deja escribir con quién estabas o qué lograste.","«☆ Favorito» la guarda en Favoritos para empezarla con un toque."]},
+ {t:"Usa tus favoritos y frecuentes",w:"Inicio › Favoritos y frecuentes",go:"home",el:"#favPanel",
+  p:["Tus favoritos aparecen con ★; tócalos para empezar a contar.","Lo que repites seguido en el último mes aparece aquí solo, sin hacer nada.","Para quitar un favorito toca «Editar», luego la ✕ y al final «Listo»."]},
+ {t:"Registra tu sueño",w:"Inicio › Me voy a dormir / Me desperté",go:"home",el:"#sleepBtn",
+  p:["Antes de dormir toca «☾ Me voy a dormir».","Al levantarte toca «☀ Me desperté» y el sueño queda guardado.","Si olvidaste marcarlo, «Me desperté» te pregunta a qué hora te dormiste.","Cuánto y cómo duermes lo ves en Análisis › Sueño."]},
+ {t:"Concéntrate con un pomodoro",w:"Inicio › Pomodoro",go:"home",el:"#pomoPanel",
+  p:["Elige los minutos de enfoque y de pausa.","Toca «Iniciar pomodoro» y luego la actividad en la que vas a trabajar.","Si ya tienes algo en curso, el botón dice «Pomodoro con…» y la usa directamente.","Puedes pausarlo o detenerlo; cada sesión de enfoque queda guardada como registro."]},
+ {t:"Registra lo que olvidaste",w:"Inicio › ¿Olvidaste registrar algo?",go:"home",el:"#pastTitle",
+  p:["Elige cuánto tiempo: desde tu último registro, 15 o 30 minutos, 1 o 2 horas.","Luego toca la actividad y ese tiempo queda guardado.","«Huecos de hoy sin registrar» muestra los espacios vacíos del día: toca uno y elige qué hiciste.","Si te arrepientes, toca «Cancelar» en la barra de color."]},
+ {t:"Revisa y corrige tu día",w:"Registro",go:"reg",el:"#dayTitle",
+  p:["Elige el día con ◀ ▶, con el calendario o con «Hoy».","Ves la línea de tiempo del día y la lista de registros, el más reciente arriba.","«Editar» abre el registro para corregirlo; «Borrar» pide confirmación.","«Registro detallado (a mano)» sirve para escribir inicio, fin, actividad y nota. «Ahora» pone la hora actual."]},
+ {t:"Mira cómo usas tu tiempo",w:"Análisis",go:"ana",el:"#prodTitle",
+  p:["Elige el periodo: día, semana, mes, trimestre, semestre, año o fechas personalizadas, y muévete con ◀ ▶.","«Productividad» muestra el tiempo por categoría: productivo, neutro y distracciones.","«Sueño» resume cuánto duermes; «Evolución» compara periodos.","«Tus horas fuertes» te dice a qué horas rindes más."]},
+ {t:"Organiza tus categorías",w:"Cuenta › Editar categorías",go:"acc",el:"#catPanel",
+  p:["Toca «Editar categorías» para ver la lista.","El tipo define cómo cuenta en Análisis: Productiva suma, Neutra no suma ni resta y Distracción resta.","Cambia el nombre o el tipo directamente en la lista.","Para crear una, escribe el nombre, elige el tipo y toca «Añadir». Al eliminar una con registros, te pide a cuál pasarlos."]},
+ {t:"Exporta y respalda tus datos",w:"Cuenta › Ajustes",go:"acc",el:"[data-c=csvBtn]",
+  p:["«Exportar CSV» descarga los registros del periodo elegido en Análisis, para abrirlos en Excel.","«Descargar respaldo» guarda una copia completa de tus registros y categorías; «Importar respaldo» la recupera.","«Borrar mi historial» elimina todos tus registros y no se puede deshacer."]},
+ {t:"Elige tu color y el modo oscuro",w:"Cuenta › Apariencia",go:"acc",el:"#swatches",
+  p:["Toca uno de los 8 colores, o el círculo multicolor para elegir cualquier otro.","Activa o desactiva el modo oscuro con el interruptor.","El color y el modo se aplican también en Proyecta, Lumen y PowerFit."]},
+ {t:"Instala la app y pide ayuda",w:"Cuenta › Ajustes",go:"acc",el:"#waSup",
+  p:["Si tu celular lo permite, aparece «Instalar app» para abrir Mind Focus desde la pantalla de inicio.","En iPhone: en Safari toca Compartir y luego «Agregar a pantalla de inicio».","En el celular puedes deslizar a la izquierda o a la derecha para cambiar de sección.","¿Algo no funciona o tienes una idea? Usa «Contactar soporte» o «Enviar recomendaciones» por WhatsApp."]}];
+{const m=document.createElement("div");m.className="mansheet";m.id="manual";m.hidden=true;m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-labelledby","manTitle");
+ m.innerHTML='<div class="manbox"><div class="phead"><h2 id="manTitle">Manual paso a paso</h2><button type="button" class="ghost" id="manClose" aria-label="Cerrar manual">✕</button></div>'+
+  '<p class="status" style="margin:0">Así se usa Mind Focus, en el orden recomendado. Toca un paso para verlo.</p><div class="hsteps">'+
+  MF_MANUAL.map((s,i)=>'<details class="hstep"><summary><span class="hnum">'+(i+1)+'</span><span class="grow"><b>'+esc(s.t)+'</b><small>'+esc(s.w)+'</small></span>'+icn("chev",18)+'</summary><ul>'+s.p.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>'+
+   (s.go?'<button type="button" class="hgo" data-go="'+s.go+'" data-el="'+esc(s.el)+'">Ir a '+esc(s.w.split(" / ")[0])+'</button>':'')+'</details>').join("")+'</div></div>';
+ document.body.appendChild(m);}
+let manFrom=null;
+function manualOpen(){manFrom=document.activeElement;$("manual").hidden=false;document.body.style.overflow="hidden";$("manClose").focus()}
+function manualClose(){$("manual").hidden=true;document.body.style.overflow="";if(manFrom&&manFrom.focus)manFrom.focus()}
+$("manBtn").onclick=manualOpen;$("manClose").onclick=manualClose;
+$("manual").addEventListener("click",e=>{if(e.target===$("manual")){manualClose();return}
+  const b=e.target.closest(".hgo");if(!b)return;manualClose();setView(b.dataset.go);
+  setTimeout(()=>{const el=document.querySelector(b.dataset.el);if(!el)return;if(el.id==="catPanel"&&$("catBody").hidden)$("catToggle").click();
+    // si es más alto que media pantalla, se baja a su comienzo (dejando espacio a la barra de arriba); si no, queda centrado
+    if(el.offsetHeight>innerHeight*.5)scrollTo({top:el.getBoundingClientRect().top+scrollY-90,behavior:"smooth"});else el.scrollIntoView({behavior:"smooth",block:"center"})},80)});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("manual").hidden)manualClose()});
 function renderTheme(){
   const sw=$("swatches");if(!sw)return;
   sw.innerHTML=window.Apariencia?Apariencia.picker(MF_THEME.accent)+'<span class="status">Se aplica también en Proyecta, Lumen y PowerFit</span>':'';
