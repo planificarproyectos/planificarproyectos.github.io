@@ -55,9 +55,10 @@
 
   var css=document.createElement('style');
   css.textContent='.ap-row{display:flex;gap:8px;align-items:center;width:100%;max-width:420px}'
-    +'.ap-sw{flex:1 1 0;min-width:0;max-width:38px;aspect-ratio:1;border-radius:50%;border:0;padding:0;background:var(--c);cursor:pointer;position:relative;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}'
+    // Medidas fijadas con .ap-row>.ap-sw para que los estilos de botón de cada app (p. ej. altura mínima de 44 px) no los deformen
+    +'.ap-row>.ap-sw{display:block;flex:1 1 0;min-width:0;min-height:0;width:auto;height:auto;max-width:38px;aspect-ratio:1/1;margin:0;border-radius:50%;border:0;padding:0;background:var(--c);cursor:pointer;position:relative;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}'
     +'.ap-sw[aria-checked=true]{box-shadow:0 0 0 2px var(--ap-bg,#111315),0 0 0 4px var(--c)}'
-    +'.ap-own{background:conic-gradient(#ff4f4f,#ffd60a,#c6f432,#22e0e0,#3d8bff,#a97bff,#ff4fa3,#ff4f4f);overflow:hidden}'
+    +'.ap-row>.ap-own{background:conic-gradient(#ff4f4f,#ffd60a,#c6f432,#22e0e0,#3d8bff,#a97bff,#ff4fa3,#ff4f4f);overflow:hidden}'
     +'.ap-own::after{content:"";position:absolute;inset:26%;border-radius:50%;background:var(--c);box-shadow:0 0 0 2px rgba(255,255,255,.9)}'
     +'.ap-own[aria-checked=false]::after{background:rgba(17,19,21,.55);box-shadow:none;-webkit-mask:none}'
     +'.ap-own[aria-checked=true]{box-shadow:0 0 0 2px var(--ap-bg,#111315),0 0 0 4px var(--c)}'

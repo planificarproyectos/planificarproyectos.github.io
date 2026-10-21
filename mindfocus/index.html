@@ -343,7 +343,7 @@ body:not(.v-home) header.top{margin-bottom:12px}
 .tsearch{position:relative;flex:1 1 150px;min-width:0}.tsearch input{width:100%;min-height:40px!important;padding:0 34px 0 12px;font-size:14px}.tsearch button{position:absolute;right:2px;top:50%;transform:translateY(-50%);min-height:32px!important;width:32px;padding:0;background:transparent;color:var(--muted)}
 .tsearch input::-webkit-search-cancel-button,.tsearch input::-webkit-search-decoration{-webkit-appearance:none;display:none}
 .tile.new{grid-column:1/-1;background:var(--surface2)!important;color:var(--ink)!important}
-.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+
 .tile{position:relative;justify-content:flex-start;text-align:left;min-height:58px;padding:10px 12px 10px 18px;border-radius:14px;background:var(--field);font-size:.9rem;line-height:1.25;overflow:hidden}
 .tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;background:var(--tc)}
 .tile:hover{background:color-mix(in srgb,var(--tc) 14%,var(--field))}
@@ -363,7 +363,7 @@ body:not(.v-home) header.top{margin-bottom:12px}
 .formdisc:hover{background:transparent;opacity:.8}
 .tl .gapb{position:absolute;top:0;bottom:0;cursor:pointer;background:repeating-linear-gradient(135deg,transparent 0 5px,color-mix(in srgb,var(--accent) 22%,transparent) 5px 7px)}
 .tl .gapb:hover{background:color-mix(in srgb,var(--accent) 25%,transparent)}
-@media (max-width:560px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.now-time{font-size:2.4rem}}
+@media (max-width:560px){.now-time{font-size:2.4rem}}
 </style>
 <style>:root{padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}
 /* ================= ESTÉTICA POWERFIT ================= */
@@ -445,6 +445,24 @@ button.ghost:hover{background:var(--surface2)}
 .stopbtn{border-radius:16px;min-height:52px}
 .sleepb{background:var(--surface)!important;border:0!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;border-radius:16px;min-height:52px}
 .tile{background:var(--tc)!important;color:var(--tcf,#111315);border-radius:16px;font-weight:700;min-height:60px;padding:10px 14px}
+/* Carrusel de actividades de Inicio: páginas de 4 filas que se deslizan a los lados */
+.tcar{position:relative}
+.tiles{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scroll-behavior:auto}
+.tiles::-webkit-scrollbar{display:none}
+.tpage{flex:0 0 calc(100% - 28px);scroll-snap-align:start;display:grid;grid-template-columns:repeat(var(--cols,2),minmax(0,1fr));grid-auto-rows:minmax(60px,auto);gap:10px;align-content:start}
+.tiles.one .tpage{flex-basis:100%}
+.tiles.c8 .tile{font-size:.8rem;padding:8px 10px;min-height:56px}
+.tiles.anim .tile{animation:tileIn .38s cubic-bezier(.2,.7,.3,1) both;animation-delay:calc(var(--i,0)*28ms)}
+@keyframes tileIn{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
+.tile{transition:transform .12s ease}
+.tile:active{transform:scale(.96)}
+.tdots{display:flex;justify-content:center;gap:6px;margin-top:12px}
+.tdots[hidden]{display:none}
+.tdots button{width:8px;height:8px;min-height:0;min-width:0;padding:0;border:0;border-radius:4px;background:var(--line);transition:width .25s ease,background .25s ease}
+.tdots button[aria-current=true]{width:22px;background:var(--accent-fg)}
+.tnav{display:none}
+@media (hover:hover) and (pointer:fine){.tnav{display:grid;place-items:center;position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:34px;height:34px;min-height:0;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink,inherit);font-size:20px;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,.25)}.tnav.prev{left:-12px}.tnav.next{right:-12px}.tnav[hidden]{display:none}}
+@media (prefers-reduced-motion:reduce){.tiles.anim .tile{animation:none}.tdots button{transition:none}}
 .tile::before{display:none}
 .tile:hover{background:var(--tc)!important;filter:brightness(1.08)}
 .tile.cur{box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--ink)!important}
@@ -646,8 +664,8 @@ a.card{text-decoration:none}
 
       <section class="panel" aria-labelledby="tileTitle">
         <div class="phead"><h2 id="tileTitle">Actividades</h2><div class="tsearch"><input id="tileQ" type="search" placeholder="Buscar actividad…" autocomplete="off" aria-label="Buscar actividad"><button type="button" id="tileQx" hidden aria-label="Borrar búsqueda">✕</button></div></div>
-        <div class="tiles" id="tiles"></div>
-        <button type="button" class="ghost more" id="tilesMore"></button>
+        <div class="tcar"><button type="button" class="tnav prev" id="tilePrev" aria-label="Actividades anteriores">‹</button><div class="tiles" id="tiles" aria-label="Actividades, desliza para ver más"></div><button type="button" class="tnav next" id="tileNext" aria-label="Más actividades">›</button></div>
+        <div class="tdots" id="tileDots"></div>
       </section>
 
       <section class="panel" aria-labelledby="pastTitle">
@@ -1631,7 +1649,7 @@ else{
 }
 
 // ================= INICIO RÁPIDO + NAVEGACIÓN INFERIOR =================
-let tileQ="",cur=lsGet("mf_actual",null),favs=lsGet("mf_favs",[]),mode={t:"switch"},favEditing=false,showAllTiles=false,curRemote=false;
+let tileQ="",cur=lsGet("mf_actual",null),favs=lsGet("mf_favs",[]),mode={t:"switch"},favEditing=false,curRemote=false;
 function onCfg(d){
   cur=d.actual||null;lsSet("mf_actual",cur);curRemote=true;
   if("pomo" in d){const r=d.pomo||null;if(JSON.stringify(r)!==JSON.stringify(pomo)){pomo=r;lsSet("bitacora_pomo",pomo);if(!pomo)try{localStorage.removeItem("bitacora_pomo")}catch(e){}if(typeof tickPomo==="function")setTimeout(tickPomo,0)}}
@@ -1718,16 +1736,51 @@ function renderHome(){
   if(!fc.children.length)fc.innerHTML='<p class="status" style="margin:0">Cuando una actividad esté en curso, toca «☆ Favorito» para tenerla aquí. Lo que repites seguido aparece solo.</p>';
   $("favEdit").textContent=favEditing?"Listo":"Editar";$("favEdit").hidden=!favs.length&&!favEditing;
   // actividades
-  const u=usage(),all=[...cats].sort((a,b)=>(u[b.id]||0)-(u[a.id]||0)),q=nk(tileQ),sorted=q?all.filter(c=>nk(c.n).includes(q)):all,N=(showAllTiles||q)?sorted.length:Math.min(12,sorted.length);
-  const tg=$("tiles");tg.innerHTML="";$("tileQx").hidden=!tileQ;
-  if(q&&!sorted.length){const nb=document.createElement("button");nb.type="button";nb.className="tile new";nb.style.setProperty("--tc","var(--surface2)");nb.textContent="Sin coincidencias · Crear «"+tileQ.trim()+"»";nb.onclick=()=>{const t=tileQ.trim();tileQ="";$("tileQ").value="";choose({act:t,cat:classify(t)})};tg.appendChild(nb)}
-  for(const c of sorted.slice(0,N)){const b=document.createElement("button");b.type="button";b.className="tile"+(run&&cur.cat===c.id&&cur.act===c.n?" cur":"");b.style.setProperty("--tc",catColor(c));b.textContent=c.n;b.onclick=()=>choose({act:c.n,cat:c.id});tg.appendChild(b)}
-  $("tilesMore").hidden=!!q||sorted.length<=12;$("tilesMore").textContent=showAllTiles?"Ver menos":"Ver todas ("+sorted.length+")";
+  const u=usage(),q=nk(tileQ),all=[...cats].sort((a,b)=>tileGrupo(a)-tileGrupo(b)||(u[b.id]||0)-(u[a.id]||0)||a.n.localeCompare(b.n,"es")),sorted=q?all.filter(c=>nk(c.n).includes(q)):all;
+  $("tileQx").hidden=!tileQ;const items=[];
+  if(q&&!sorted.length){const nb=document.createElement("button");nb.type="button";nb.className="tile new";nb.style.setProperty("--tc","var(--surface2)");nb.textContent="Sin coincidencias · Crear «"+tileQ.trim()+"»";nb.onclick=()=>{const t=tileQ.trim();tileQ="";$("tileQ").value="";choose({act:t,cat:classify(t)})};items.push(nb)}
+  for(const c of sorted){const b=document.createElement("button");b.type="button";b.className="tile"+(run&&cur.cat===c.id&&cur.act===c.n?" cur":"");b.style.setProperty("--tc",catColor(c));b.textContent=c.n;b.onclick=()=>choose({act:c.n,cat:c.id});items.push(b)}
+  tilePages(items,q);
   // huecos de hoy
   const gaps=dayGaps(ymd(new Date()),10).slice(-5).reverse(),gb=$("gapChips");gb.innerHTML="";
   for(const g of gaps){const b=document.createElement("button");b.type="button";b.textContent=hm12(hmT(g.a))+" – "+hm12(hmT(g.b))+" · "+fmtH((g.b-g.a)/60000);b.onclick=()=>setMode({t:"gap",a:g.a,b:g.b});gb.appendChild(b)}
   $("gapBox").hidden=!gaps.length;
 }
+/* Actividades de Inicio: van agrupadas por tema (sin títulos) para que las relacionadas queden juntas, y dentro de cada
+   tema primero las más usadas. Se muestran en páginas de 4 filas que se deslizan a los lados; las columnas dependen del
+   ancho (2 en celular, 4 en tablet, 8 en computador). Se asoma el borde de la página siguiente y abajo van los puntos. */
+const TILE_GRUPOS=[
+  [["profundo","coordinacion","admin","planificacion","proyectos"],/trabaj|oficina|reuni|correo|cliente|obra|informe|negocio|proyect|llamad/],
+  [["formacion","lectura"],/estudi|curso|clase|leer|lectura|libro|aprend|idioma|ingl/],
+  [["sueno","siesta","pausa","pausa_activa"],/dorm|sue[nñ]o|siesta|descans|pausa|despert/],
+  [["cocinar","comer"],/com(er|ida)|almuer|desayun|cena|merienda|onces|cocin|aliment/],
+  [["ejercicio","meditacion","higiene"],/ejercic|gimnas|gym|correr|caminar|deporte|yoga|medita|ora(r|ci)|ba[nñ]o|duch|aseo|arreglo|salud|m[eé]dic/],
+  [["hogar","compras","desplazamiento"],/hogar|casa|limpi|lavar|ropa|mercado|compra|diligenc|banco|tr[aá]nsito|transport|despla|conduc|viaje|carro|bus/],
+  [["familia","social"],/famil|pareja|hij|amig|social|visita|cumplea/],
+  [["entretenimiento","redes","distraccion"],/tv|televis|serie|pel[ií]cula|juego|video|redes|instagram|tiktok|facebook|youtube|distrac|procrastin|ocio/]];
+function tileGrupo(c){const n=nk(c.n);for(let i=0;i<TILE_GRUPOS.length;i++)if(TILE_GRUPOS[i][0].includes(c.id))return i;
+  for(let i=0;i<TILE_GRUPOS.length;i++)if(TILE_GRUPOS[i][1].test(n))return i;
+  return c.tipo==="productiva"?0:c.tipo==="distraccion"?7:TILE_GRUPOS.length}
+let tilePage=0,tileAnim=true,tileQPrev="";
+function tilePages(items,q){
+  const tg=$("tiles"),w=tg.clientWidth||320,cols=w>=900?8:w>=520?4:2,per=cols*4,pages=Math.max(1,Math.ceil(items.length/per));
+  if(q!==tileQPrev){tilePage=0;tileQPrev=q}tilePage=Math.min(tilePage,pages-1);
+  tg.innerHTML="";tg.style.setProperty("--cols",cols);tg.classList.toggle("c8",cols===8);tg.classList.toggle("one",pages===1);
+  for(let p=0;p<pages;p++){const pg=document.createElement("div");pg.className="tpage";pg.setAttribute("role","group");pg.setAttribute("aria-label","Página "+(p+1)+" de "+pages);
+    items.slice(p*per,(p+1)*per).forEach((b,i)=>{b.style.setProperty("--i",i);pg.appendChild(b)});tg.appendChild(pg)}
+  tg.classList.toggle("anim",tileAnim);tileAnim=false;   // la entrada animada solo la primera vez, no en cada actualización
+  const pgs=tg.children;if(pgs[tilePage])tg.scrollLeft=pgs[tilePage].offsetLeft-tg.offsetLeft;
+  const d=$("tileDots");d.innerHTML="";d.hidden=pages<2;
+  for(let p=0;p<pages;p++){const b=document.createElement("button");b.type="button";b.setAttribute("aria-label","Ir a la página "+(p+1));b.setAttribute("aria-current",String(p===tilePage));
+    b.onclick=()=>{const pg=tg.children[p];if(pg)tg.scrollTo({left:pg.offsetLeft-tg.offsetLeft,behavior:"smooth"})};d.appendChild(b)}
+  $("tilePrev").hidden=$("tileNext").hidden=pages<2}
+// Página visible al deslizar: actualiza los puntos sin volver a dibujar
+$("tiles").addEventListener("scroll",()=>{const tg=$("tiles"),pgs=[...tg.children];if(!pgs.length)return;
+  let best=0,bd=1e9;pgs.forEach((pg,i)=>{const dd=Math.abs(pg.offsetLeft-tg.offsetLeft-tg.scrollLeft);if(dd<bd){bd=dd;best=i}});
+  if(best!==tilePage){tilePage=best;[...$("tileDots").children].forEach((b,i)=>b.setAttribute("aria-current",String(i===best)))}},{passive:true});
+$("tilePrev").onclick=()=>$("tileDots").children[Math.max(0,tilePage-1)]?.click();
+$("tileNext").onclick=()=>$("tileDots").children[Math.min($("tiles").children.length-1,tilePage+1)]?.click();
+{let rt=0,lw=0;window.addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(()=>{const w=$("tiles").clientWidth;if(w&&w!==lw){lw=w;renderHome()}},150)})}
 function dayGaps(f,minMin){
   const today=ymd(new Date()),d0=tsOf(f,"00:00"),limit=f===today?Math.min(Date.now(),cur?cur.start:Date.now()):tsOf(f,"24:00");
   const iv=entries.filter(e=>e.fecha===f).map(e=>[tsOf(f,e.inicio),tsOf(f,e.fin)]).sort((a,b)=>a[0]-b[0]);
@@ -1750,7 +1803,6 @@ $("nowNote").addEventListener("change",async()=>{if(!cur)return;cur.desc=$("nowN
 $("nowFav").onclick=async()=>{if(!cur)return;const i=favs.findIndex(f=>nk(f.act)===nk(cur.act));if(i>=0)favs.splice(i,1);else favs.push({act:cur.act,cat:cur.cat});await saveFavs();renderHome();toast(i>=0?"Quitado de favoritos":"Guardado en favoritos")};
 $("favEdit").onclick=()=>{favEditing=!favEditing;renderHome()};
 $("tileQ").addEventListener("input",()=>{tileQ=$("tileQ").value;renderHome()});$("tileQx").onclick=()=>{tileQ="";$("tileQ").value="";renderHome();$("tileQ").focus()};
-$("tilesMore").onclick=()=>{showAllTiles=!showAllTiles;renderHome()};
 document.querySelectorAll("#pastChips button").forEach(b=>b.onclick=()=>{const v=b.dataset.past;if(v==="since"&&!lastEnd()){toast("Aún no tienes registros previos.");return}setMode({t:"past",min:v==="since"?"since":+v})});
 $("pomoGo").onclick=async()=>{if(cur){const ch={act:cur.act,cat:cur.cat};await finishCur(Date.now());startPomoWith(ch)}else setMode({t:"pomo"})};
 $("sleepBtn").onclick=()=>startAct({act:"Dormir",cat:cats.some(c=>c.id==="sueno")?"sueno":classify("dormir")});
@@ -1848,7 +1900,7 @@ const MF_MANUAL=[
  {t:"Entra y escribe tu nombre",w:"Cuenta › Tu nombre",go:"acc",el:"#nameIn",
   p:["Entra con tu correo y contraseña. Si es la primera vez, toca «Crear cuenta».","En Cuenta escribe tu nombre y toca «Guardar»: Mind Focus te saluda con él.","Es la misma cuenta de PowerFit y Lumen, y el nombre se comparte con ellas.","Tus registros se guardan en tu cuenta: los ves igual en cualquier celular o computador."]},
  {t:"Empieza a contar una actividad",w:"Inicio › Actividades",go:"home",el:"#tiles",
-  p:["Toca una actividad (por ejemplo Trabajo o Almuerzo) y el tiempo empieza a contar desde ese momento.","La tarjeta «Ahora» muestra qué está en curso y cuánto lleva.","Si tocas otra actividad, la anterior termina y se guarda sola.","¿No la ves? Búscala en «Buscar actividad…» o toca «Ver todas». Si no existe, escribe el nombre y toca «Crear»."]},
+  p:["Toca una actividad (por ejemplo Trabajo o Almuerzo) y el tiempo empieza a contar desde ese momento.","La tarjeta «Ahora» muestra qué está en curso y cuánto lleva.","Si tocas otra actividad, la anterior termina y se guarda sola.","Las actividades van agrupadas por tema (trabajo, sueño, alimentación…). Desliza a la izquierda o a la derecha para ver más; los puntos de abajo indican en qué página estás.","¿No la ves? Búscala en «Buscar actividad…». Si no existe, escribe el nombre y toca «Crear»."]},
  {t:"Termina, agrega una nota o márcala como favorita",w:"Inicio › Ahora",go:"home",el:"#nowCard",
   p:["«■ Terminar» detiene el tiempo y guarda el registro.","«✎ Nota» te deja escribir con quién estabas o qué lograste.","«☆ Favorito» la guarda en Favoritos para empezarla con un toque."]},
  {t:"Usa tus favoritos y frecuentes",w:"Inicio › Favoritos y frecuentes",go:"home",el:"#favPanel",
