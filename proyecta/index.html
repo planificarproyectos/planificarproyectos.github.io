@@ -452,6 +452,9 @@ body.wizon{overflow:hidden}
 .glos>div:first-child{border-top:0}
 .glos dt{font-weight:800;font-size:14px}
 .glos dd{margin:2px 0 0;color:var(--muted);font-size:13px;line-height:1.45}
+.glos-g h3{margin:14px 0 2px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--acc-ink)}
+.glos-g h3 .muted{font-weight:600;letter-spacing:0}
+.glos>div.on{background:var(--acc-soft);border-radius:10px;padding-left:10px;padding-right:10px;transition:background .2s}
 /* Solicitudes de acceso */
 [data-go="cuenta"][data-badge]{position:relative}
 [data-go="cuenta"][data-badge]::after{content:attr(data-badge);position:absolute;top:4px;left:calc(50% + 6px);min-width:17px;height:17px;padding:0 5px;border-radius:99px;background:var(--neg);color:#fff;font-size:10.5px;font-weight:800;line-height:17px;text-align:center;box-sizing:border-box}
@@ -1273,7 +1276,7 @@ function showBanner(){$('#bannerWrap').hidden=false;setTimeout(layout,0);$('#ban
 function hideBanner(){$('#bannerWrap').hidden=true;if(ST.ready)setTimeout(layout,0)}
 function toast(m,ms){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,ms||2600)}
 function openSheet(html){$('#sheetHost').innerHTML=`<div class="sheet-bg" data-bg="1"><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${html}</div></div>`;paintNames()}
-function closeSheet(){$('#sheetHost').innerHTML=''}
+function closeSheet(){if(TTS&&TTS.h&&TTS.h.glos)ttsStop();$('#sheetHost').innerHTML=''}
 async function paintNames(){const els=$$('[data-uid]');if(!els.length)return;
   const ids=[...new Set(els.map(e=>e.dataset.uid).filter(Boolean))];
   let ps={};if(ST.user&&ids.length){try{ps=await ST.user.profiles(ids)}catch(e){}}
@@ -1963,34 +1966,40 @@ function wzRender(){const s=WZ_STEPS[WZ.i],n=WZ_STEPS.length,last=WZ.i===n-1;
    <div class="wzfields">${s.body(WZ.a)}</div><p class="wzerr" id="wzErr" role="alert"></p></div>
    <div class="wzfoot">${WZ.i>0?'<button class="btn" data-act="wz-back">Atrás</button>':'<span></span>'}${last?`<button class="btn pri" data-act="wz-save">Guardar proyecto</button>`:`<button class="btn pri" data-act="wz-next">${WZ.i===0?'Empezar':'Siguiente'}</button>`}</div></div>`;
   const b=$('#wiz .wzbody');if(b)b.scrollTop=0}
-/* Lectura en voz alta del asistente (misma técnica que Lumen): el texto se lee por frases cortas, porque Chrome corta
-   las largas; se guarda cada frase para que el navegador no la descarte antes de leerla; solo se cancela si algo suena,
-   y si Android ignora la primera orden se reintenta una vez. Si no suena, se explica qué revisar. */
-const TTS_REF=[];let wzGen=0,wzWatch=0;
+/* Lectura en voz alta (misma técnica que Lumen), usada por el asistente y el glosario: el texto se lee por frases cortas,
+   porque Chrome corta las largas; se guarda cada frase para que el navegador no la descarte antes de leerla; solo se
+   cancela si algo suena, y si Android ignora la primera orden se reintenta una vez. Si no suena, se explica qué revisar.
+   ttsPlay(items,h): items = [{t:'texto', pause:ms después, i:índice para h.onItem}]; h.onItem(i) al empezar cada uno, h.onEnd() al terminar o detener. */
+var TTS_REF=[],TTS={gen:0,watch:0,h:null};   // var: closeSheet() lo consulta y puede llamarse antes de esta línea
 function wzChunks(t){const out=[];(String(t).replace(/\s+/g,' ').trim().match(/[^.!?;:]+[.!?;:]*/g)||[]).forEach(p=>{p=p.trim();
   while(p.length>180){let c=p.lastIndexOf(',',180);if(c<60)c=p.lastIndexOf(' ',180);if(c<1)c=180;out.push(p.slice(0,c+1).trim());p=p.slice(c+1).trim()}if(p)out.push(p)});return out}
 function wzVoice(){const vs=speechSynthesis.getVoices().filter(x=>/^es/i.test(x.lang)),sc=x=>(/google|natural|neural|premium|enhanced/i.test(x.name)?2:0)+(/^es[-_](CO|US|MX|419)/i.test(x.lang)?1:0);return vs.sort((a,b)=>sc(b)-sc(a))[0]}
-function wzBtn(on){const b=$('#wiz [data-act="wz-say"]');if(b)b.textContent=on?'■ Detener':'🔊 Escuchar'}
 function ttsHelp(){const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
   toast(ios?'No se escucha: quita el modo silencio del iPhone y sube el volumen.':'No se escucha: sube el volumen multimedia y revisa que el celular tenga una voz en español (Ajustes › Idioma › Salida de texto a voz).',7000)}
-function wzStop(){WZ.speaking=false;wzGen++;clearTimeout(wzWatch);try{const ss=speechSynthesis;if(ss.speaking||ss.pending)ss.cancel()}catch(e){}}
-function wzSay(){if(WZ.speaking){wzStop();wzBtn(false);return}
-  if(!('speechSynthesis' in window)){toast('Tu navegador no permite leer en voz alta');return}
-  const s=WZ_STEPS[WZ.i],Q=wzChunks([s.t,s.q,s.h].filter(Boolean).join('. '));if(!Q.length)return;
-  wzStop();WZ.speaking=true;wzBtn(true);let my=wzGen,qi=0,started=false;
-  const next=()=>{if(my!==wzGen)return;if(qi>=Q.length){WZ.speaking=false;wzBtn(false);return}
-    const u=new SpeechSynthesisUtterance(Q[qi]),v=wzVoice();if(v){u.voice=v;u.lang=v.lang}else u.lang='es-CO';u.rate=1;u.volume=1;
-    u.onstart=()=>{if(my===wzGen)started=true};
-    u.onend=()=>{if(my!==wzGen)return;started=true;qi++;setTimeout(next,120)};
-    u.onerror=e=>{if(my!==wzGen)return;const er=e&&e.error;if(er==='interrupted'||er==='canceled')return;
-      if(!started&&/not-allowed|audio-busy|synthesis-unavailable|language-unavailable|voice-unavailable/.test(er||'')){WZ.speaking=false;wzBtn(false);ttsHelp();return}qi++;next()};
+function ttsStop(){TTS.gen++;clearTimeout(TTS.watch);const h=TTS.h;TTS.h=null;try{const ss=speechSynthesis;if(ss.speaking||ss.pending)ss.cancel()}catch(e){}if(h&&h.onEnd)h.onEnd()}
+function ttsPlay(items,h){ttsStop();if(!('speechSynthesis' in window)){toast('Tu navegador no permite leer en voz alta');return false}
+  const Q=[];items.forEach(it=>{const cs=wzChunks(it.t);cs.forEach((c,k)=>Q.push({t:c,i:it.i,first:k===0,pause:k===cs.length-1?it.pause||120:120}))});if(!Q.length)return false;
+  TTS.h=h||{};let my=TTS.gen,qi=0,started=false;
+  const end=()=>{if(my!==TTS.gen)return;TTS.gen++;const f=TTS.h;TTS.h=null;if(f&&f.onEnd)f.onEnd()};
+  const next=()=>{if(my!==TTS.gen)return;if(qi>=Q.length){end();return}const q=Q[qi];if(q.first&&TTS.h.onItem)TTS.h.onItem(q.i);
+    const u=new SpeechSynthesisUtterance(q.t),v=wzVoice();if(v){u.voice=v;u.lang=v.lang}else u.lang='es-CO';u.rate=1;u.volume=1;
+    u.onstart=()=>{if(my===TTS.gen)started=true};
+    u.onend=()=>{if(my!==TTS.gen)return;started=true;qi++;setTimeout(next,q.pause)};
+    u.onerror=e=>{if(my!==TTS.gen)return;const er=e&&e.error;if(er==='interrupted'||er==='canceled')return;
+      if(!started&&/not-allowed|audio-busy|synthesis-unavailable|language-unavailable|voice-unavailable/.test(er||'')){end();ttsHelp();return}qi++;next()};
     TTS_REF.push(u);if(TTS_REF.length>40)TTS_REF.shift();
     try{speechSynthesis.speak(u);if(speechSynthesis.paused)speechSynthesis.resume()}catch(e){}};
   next();   // en el mismo toque, como exige el iPhone
-  wzWatch=setTimeout(()=>{if(my!==wzGen||started)return;   // Android a veces ignora la primera orden: reintenta una vez
-    try{speechSynthesis.cancel()}catch(e){}my=++wzGen;qi=0;next();
-    wzWatch=setTimeout(()=>{if(my===wzGen&&!started&&!speechSynthesis.speaking){wzGen++;WZ.speaking=false;wzBtn(false);ttsHelp()}},3000)},450)}
+  TTS.watch=setTimeout(()=>{if(my!==TTS.gen||started||speechSynthesis.speaking)return;   // Android a veces ignora la primera orden: reintenta una vez (si la voz solo tarda en arrancar, no)
+    try{speechSynthesis.cancel()}catch(e){}my=++TTS.gen;qi=0;next();
+    TTS.watch=setTimeout(()=>{if(my===TTS.gen&&!started&&!speechSynthesis.speaking){end();ttsHelp()}},3000)},450);
+  return true}
 if('speechSynthesis' in window)try{speechSynthesis.getVoices()}catch(e){}
+function wzBtn(on){const b=$('#wiz [data-act="wz-say"]');if(b)b.textContent=on?'■ Detener':'🔊 Escuchar'}
+function wzStop(){if(WZ.speaking)ttsStop();WZ.speaking=false}
+function wzSay(){if(WZ.speaking){wzStop();wzBtn(false);return}
+  const s=WZ_STEPS[WZ.i];
+  if(ttsPlay([{t:[s.t,s.q,s.h].filter(Boolean).join('. ')}],{onEnd:()=>{WZ.speaking=false;wzBtn(false)}})){WZ.speaking=true;wzBtn(true)}}
 function wzNext(){const s=WZ_STEPS[WZ.i],err=s.ok&&s.ok(WZ.a);if(err){$('#wzErr').textContent=err;return}wzStop();
   if(WZ.i===1&&WZ.a.tipo==='VIS'&&ESP_CIUDADES.test(WZ.a.ciudad||''))WZ.a.topeEsp=true;
   WZ.i=Math.min(WZ_STEPS.length-1,WZ.i+1);WZ.opt=null;wzRender()}
@@ -2164,11 +2173,37 @@ function helpManual(){
 document.addEventListener('input',e=>{if(e.target.id!=='glosQ')return;
   const q=e.target.value.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();let n=0;
   const re=q?new RegExp('(^|[^a-z0-9])'+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')):null;
-  $$('.glos>div').forEach(d=>{const on=!re||re.test(d.dataset.q);d.hidden=!on;if(on)n++});const em=$('.glos-empty');if(em)em.hidden=n>0});
-function helpGlos(){
- openSheet(`<h2>Glosario</h2><p class="muted" style="margin:0">${GLOSARIO.length} términos usados en Proyecta.</p>
+  $$('.glos>div').forEach(d=>{const on=!re||re.test(d.dataset.q);d.hidden=!on;if(on)n++});
+  $$('.glos-g').forEach(g=>g.hidden=!g.querySelector('.glos>div:not([hidden])'));const em=$('.glos-empty');if(em)em.hidden=n>0});
+/* El glosario se muestra por temas, en un orden que va de lo básico (qué se vende) a lo avanzado (seguimiento).
+   Dentro de cada tema los términos siguen el orden en que aparecen al estructurar un proyecto, no el alfabético. */
+const GLOS_TEMAS=[
+ ['Tipos de vivienda y subsidios',['VIS','VIP','No VIS','Tope VIS / VIP','SMMLV','Subsidio nacional','Subsidio de caja','Devolución de IVA']],
+ ['Producto y áreas',['Tipología','Área vendible','Área construida','Prima por piso / vista']],
+ ['Ventas y compradores',['Separación','Cuota inicial','Cesantías','Velocidad de ventas','Absorción','Curva de ventas','Encargo fiduciario','Punto de equilibrio','Desistimiento','Escrituración','Ventana de escrituración']],
+ ['Costos y obra',['Indirectos','Imprevistos','ICCV','Curva S','Póliza decenal']],
+ ['Crédito y financiación',['Crédito puente','Crédito constructor','Comisión de estructuración','IBR','Spread','Capitalizar intereses','Factor de liberación']],
+ ['Impuestos y vehículo del proyecto',['Fiducia (vehículo)','Sociedad (vehículo)','Renta','ICA','GMF (4x1000)','Plusvalía']],
+ ['Socios',['Aportes de socios','Distribuciones','Exposición máxima','Múltiplo de socios','Payback (recuperación)']],
+ ['Utilidad y rentabilidad',['Utilidad antes de impuestos','Utilidad neta','Margen antes de impuestos','Margen neto','TIO (tasa de descuento)','TIR del proyecto','TIR del inversionista','VPN']],
+ ['Reportes financieros',['Estado de resultados','Balance proyectado','Fuentes y usos']],
+ ['Seguimiento y análisis',['Mes 0','Línea base','Versión','CPI','SPI','Semáforo de salud','Sensibilidad']]];
+const GLOS_DEF=Object.fromEntries(GLOSARIO);
+function helpGlos(){let k=0;
+ openSheet(`<div class="between"><h2>Glosario</h2><button class="btn sm" data-act="glos-say" aria-pressed="false">🔊 Escuchar</button></div>
+ <p class="muted" style="margin:0">${GLOSARIO.length} términos usados en Proyecta, agrupados por tema. Escuchar los lee todos en orden, con una pausa después de cada término para que intentes recordar qué significa; si buscas algo, lee solo lo que aparece.</p>
  <input class="inp" id="glosQ" type="search" placeholder="Buscar un término" aria-label="Buscar en el glosario" autocomplete="off">
- <dl class="glos">${GLOSARIO.map(([t,d])=>`<div data-q="${esc((t+' '+d).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''))}"><dt>${esc(t)}</dt><dd>${esc(d)}</dd></div>`).join('')}</dl><p class="muted glos-empty" hidden>Ningún término coincide.</p>`)}
+ ${GLOS_TEMAS.map(([tema,ts])=>`<section class="glos-g"><h3>${esc(tema)} <span class="muted">${ts.length}</span></h3><dl class="glos">${ts.map(t=>`<div data-k="${k++}" data-q="${esc((t+' '+GLOS_DEF[t]).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''))}"><dt>${esc(t)}</dt><dd>${esc(GLOS_DEF[t])}</dd></div>`).join('')}</dl></section>`).join('')}
+ <p class="muted glos-empty" hidden>Ningún término coincide.</p>`)}
+function glosBtn(on){const b=$('[data-act="glos-say"]');if(b){b.textContent=on?'■ Detener':'🔊 Escuchar';b.setAttribute('aria-pressed',on)}if(!on)$$('.glos>div.on').forEach(d=>d.classList.remove('on'))}
+function glosSay(){if(TTS.h&&TTS.h.glos){ttsStop();return}
+  const items=[],els=[];
+  $$('.glos-g').forEach(g=>{const vis=[...g.querySelectorAll('.glos>div')].filter(d=>!d.hidden);if(!vis.length)return;
+    items.push({t:g.querySelector('h3').firstChild.textContent.trim()+'.',pause:700,i:-1});
+    vis.forEach(d=>{els.push(d);const i=els.length-1;
+      items.push({t:d.querySelector('dt').textContent+'.',pause:1400,i});   // pausa para que la persona intente recordar
+      items.push({t:d.querySelector('dd').textContent,pause:900,i:-2})})});
+  if(ttsPlay(items,{glos:true,onItem:i=>{if(i<0)return;$$('.glos>div.on').forEach(d=>d.classList.remove('on'));const d=els[i];if(d){d.classList.add('on');d.scrollIntoView({block:'center',behavior:'smooth'})}},onEnd:()=>glosBtn(false)}))glosBtn(true)}
 const acard=(act,icon,t,d,cls,extra)=>`<button class="acard${cls?' '+cls:''}" data-act="${act}"${extra||''}>${wic(icon)}<span class="grow"><b>${t}</b><span>${d}</span></span>${wic('chev',20)}</button>`;
 const waLink=(tipo)=>{const em=ST.mode==='fb'?ST.fbEmail:'';return window.wellnessWA?window.wellnessWA('Proyecta',tipo,em):'https://wa.me/573204451740?text='+encodeURIComponent((tipo==='recomendacion'?'Hola, tengo una recomendación para Proyecta: ':'Hola, necesito ayuda con Proyecta: ')+(em?'\n\n(Cuenta: '+em+')':''))};
 const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
@@ -2376,6 +2411,7 @@ document.addEventListener('click',async e=>{
     case 'wz-next':wzNext();break;
     case 'wz-back':wzStop();WZ.i=Math.max(0,WZ.i-1);WZ.opt=null;wzRender();break;
     case 'wz-say':wzSay();break;
+    case 'glos-say':glosSay();break;
     case 'wz-save':b.disabled=true;wzSave();break;
     case 'wz-tipo':if(WZ.a.tipo!==b.dataset.k){WZ.a=wzDefaults(b.dataset.k,{nombre:WZ.a.nombre,ciudad:WZ.a.ciudad,fecha:WZ.a.fecha});if(b.dataset.k==='VIS'&&ESP_CIUDADES.test(WZ.a.ciudad||''))WZ.a.topeEsp=true;wzRender()}break;
     case 'wz-set':{const v=b.dataset.v;WZ.a[b.dataset.k]=v==='true'?true:v==='false'?false:(isNaN(+v)?v:+v);wzRender();break}
