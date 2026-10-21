@@ -382,6 +382,11 @@ body.authing .nav,body.authing .appbar{visibility:hidden}
 /* Botón flotante y asistente de proyecto nuevo */
 .fab{position:fixed;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 18px);z-index:25;width:58px;height:58px;border-radius:50%;border:0;background:var(--acc);color:var(--on-acc);display:grid;place-items:center;box-shadow:0 10px 26px rgba(0,0,0,.35);cursor:pointer;transition:transform .15s}
 .fab[hidden]{display:none}
+/* Pulso constante y suave: dos anillos del color de énfasis salen del botón y se desvanecen */
+.fab::before,.fab::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--acc);z-index:-1;animation:fabPulse 2.6s cubic-bezier(.2,.6,.3,1) infinite;pointer-events:none}
+.fab::after{animation-delay:1.3s}
+@keyframes fabPulse{0%{transform:scale(1);opacity:.5}80%,100%{transform:scale(1.75);opacity:0}}
+@media (prefers-reduced-motion:reduce){.fab::before,.fab::after{animation:none;opacity:0}}
 .fab:hover{transform:scale(1.06)}
 .fab svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round}
 body.desk .fab{bottom:24px;right:24px}
@@ -1956,11 +1961,11 @@ function wzF(type,k,label,ph,o,unit){const a=WZ.a,v=a[k];o=o||{};
 function wzRadio(k,opts){return `<div class="wzopts">${opts.map(([v,l])=>`<button class="wzopt" data-act="wz-set" data-k="${k}" data-v="${String(v)}" aria-pressed="${String(WZ.a[k])===String(v)}"><b>${l}</b></button>`).join('')}</div>`}
 function wzSw(k,label,d){return `<label class="wzsw"><input type="checkbox" data-wz="${k}"${WZ.a[k]?' checked':''}><span><b>${label}</b><small>${d||''}</small></span></label>`}
 function wzOpen(){if(ST.readOnly){toast('Tienes acceso de solo lectura');return}
-  WZ.i=0;WZ.a=wzDefaults('NoVIS');WZ.P=null;WZ.R=null;WZ.opt=null;$('#wiz').hidden=false;document.body.classList.add('wizon');wzRender()}
+  WZ.i=0;WZ.a=wzDefaults('NoVIS');WZ.P=null;WZ.R=null;WZ.opt=null;$('#wiz').hidden=false;document.body.classList.add('wizon');wzRender();wzAuto()}
 function wzClose(force){if(!force&&WZ.i>0&&!confirm('¿Salir del asistente? Se perderán los datos que ingresaste.'))return;wzStop();$('#wiz').hidden=true;document.body.classList.remove('wizon')}
 function wzRender(){const s=WZ_STEPS[WZ.i],n=WZ_STEPS.length,last=WZ.i===n-1;
   if(last){WZ.P=wzBuild(WZ.a);WZ.R=runProject(WZ.P,ST.macro)}
-  $('#wiz').innerHTML=`<div class="wzbox"><div class="wzhead"><button class="iconbtn" data-act="wz-close" aria-label="Cerrar asistente"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="wzprog"><i style="width:${(WZ.i/(n-1))*100}%"></i></div><span class="muted">${WZ.i+1} / ${n}</span></div>
+  $('#wiz').innerHTML=`<div class="wzbox"><div class="wzhead"><button class="iconbtn" data-act="wz-close" aria-label="Cerrar asistente"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="wzprog"><i style="width:${(WZ.i/(n-1))*100}%"></i></div><span class="muted">${WZ.i+1} / ${n}</span><button class="iconbtn" data-act="wz-voz" aria-pressed="${!prefs.wzMute}" aria-label="${prefs.wzMute?'Activar la voz automática':'Silenciar la voz automática'}" title="${prefs.wzMute?'Voz automática apagada':'Voz automática encendida'}"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/>${prefs.wzMute?'<path d="M16 9l5 6M21 9l-5 6"/>':'<path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>'}</svg></button></div>
    <div class="wzbody"><h2>${esc(s.t)}</h2>${s.q?`<p class="wzq">${esc(s.q)}</p>`:''}
    ${s.h?`<div class="wzhelp"><div class="between"><b>¿Qué significa?</b><button class="btn sm" data-act="wz-say">${WZ.speaking?'■ Detener':'🔊 Escuchar'}</button></div><p>${esc(s.h)}</p></div>`:''}
    <div class="wzfields">${s.body(WZ.a)}</div><p class="wzerr" id="wzErr" role="alert"></p></div>
@@ -1997,21 +2002,33 @@ function ttsPlay(items,h){ttsStop();if(!('speechSynthesis' in window)){toast('Tu
 if('speechSynthesis' in window)try{speechSynthesis.getVoices()}catch(e){}
 function wzBtn(on){const b=$('#wiz [data-act="wz-say"]');if(b)b.textContent=on?'■ Detener':'🔊 Escuchar'}
 function wzStop(){if(WZ.speaking)ttsStop();WZ.speaking=false}
+/* En el último paso se lee el resultado: si es rentable, las razones si no lo es y las recomendaciones de wzOptimize */
 function wzSay(){if(WZ.speaking){wzStop();wzBtn(false);return}
-  const s=WZ_STEPS[WZ.i];
-  if(ttsPlay([{t:[s.t,s.q,s.h].filter(Boolean).join('. ')}],{onEnd:()=>{WZ.speaking=false;wzBtn(false)}})){WZ.speaking=true;wzBtn(true)}}
+  const s=WZ_STEPS[WZ.i],last=WZ.i===WZ_STEPS.length-1,t=last?wzVerdictSay():[s.t,s.q,s.h].filter(Boolean).map(x=>/[.!?:]$/.test(x.trim())?x.trim():x.trim()+'.').join(' ');
+  if(ttsPlay([{t}],{onEnd:()=>{WZ.speaking=false;wzBtn(false)}})){WZ.speaking=true;wzBtn(true)}}
+// Lectura automática al abrir el asistente y al cambiar de paso (va en el mismo toque, como exige el iPhone). Se apaga con el botón de la cabecera
+function wzAuto(){if(prefs.wzMute)return;if(WZ.i===WZ_STEPS.length-1&&!WZ.opt)wzOptimize(true);wzStop();wzSay()}
 function wzNext(){const s=WZ_STEPS[WZ.i],err=s.ok&&s.ok(WZ.a);if(err){$('#wzErr').textContent=err;return}wzStop();
   if(WZ.i===1&&WZ.a.tipo==='VIS'&&ESP_CIUDADES.test(WZ.a.ciudad||''))WZ.a.topeEsp=true;
-  WZ.i=Math.min(WZ_STEPS.length-1,WZ.i+1);WZ.opt=null;wzRender()}
+  WZ.i=Math.min(WZ_STEPS.length-1,WZ.i+1);WZ.opt=null;wzRender();wzAuto()}
+const spM=v=>{v=Math.round(+v||0);const a=Math.abs(v),s=v<0?'menos ':'';return a>=1e6?s+nf(a/1e6,a>=1e8?0:1)+' millones de pesos':s+nf(a)+' pesos'};
+const spP=f=>'un '+nf(Math.abs(f-1)*100,1)+' % '+(f>=1?'más':'menos');
+function wzVerdictSay(){const P=WZ.P,R=WZ.R,ok=wzViable(P,R),mn=+P.general.margenMin,tio=+P.general.tasaDesc;
+  const tir=R.tirI==null?'no se puede calcular, porque los socios no recuperan su dinero':'es de '+fP(R.tirI);
+  return (ok?`Resultado. Tu proyecto es rentable: cumple el margen mínimo de ${nf(mn,1)} % y la rentabilidad mínima de los socios de ${nf(tio,1)} %. El margen es de ${fP(R.margen)} y la rentabilidad de los socios ${tir}. `
+    :`Resultado. Tu proyecto todavía no es rentable. Las razones: ${wzReasons(P,R,true).join(' ')} `)
+   +`Las ventas totales serían de ${spM(R.ventas)}, con una utilidad antes de impuestos de ${spM(R.uai)}. `
+   +(WZ.optSay&&WZ.optSay.length?(ok?'¿Qué tan firme es? ':'Mis recomendaciones. ')+WZ.optSay.join(' '):'')}
 /* Resultado: indicadores, veredicto y sugerencias para viabilizar */
-function wzReasons(P,R){const r=[],mn=+P.general.margenMin,tio=+P.general.tasaDesc;
+function wzReasons(P,R,say){const r=[],mn=+P.general.margenMin,tio=+P.general.tasaDesc;
   if(R.utilNeta<=0)r.push('El proyecto pierde dinero.');
   if(R.margen*100<mn)r.push(`El margen es ${fP(R.margen)}, menor al mínimo de ${nf(mn,1)} %.`);
-  if(R.tirI==null||R.tirI*100<tio)r.push(`La rentabilidad de los socios (TIR) es ${fP(R.tirI)}, menor a la mínima de ${nf(tio,1)} %.`);
+  if(R.tirI==null&&say)r.push('La rentabilidad de los socios no se puede calcular, porque no recuperan el dinero que ponen.');
+  else if(R.tirI==null||R.tirI*100<tio)r.push(`La rentabilidad de los socios${say?'':' (TIR)'} es ${fP(R.tirI)}, menor a la mínima de ${nf(tio,1)} %.`);
   return r}
 function wzResult(){const P=WZ.P,R=WZ.R,ok=wzViable(P,R),rs=wzReasons(P,R);
   const k=[['Ventas totales',fM(R.ventas)],['Utilidad antes de impuestos',fM(R.uai)],['Margen',fP(R.margen)+' (mín. '+nf(P.general.margenMin,1)+' %)'],['Rentabilidad de los socios (TIR)',fP(R.tirI)+' (mín. '+nf(P.general.tasaDesc,1)+' %)'],['Dinero máximo que ponen los socios',fM(R.expo)],['Duración',(R.N-1)+' meses']];
-  return `<div class="wzverdict ${ok?'ok':'no'}"><b>${ok?'✓ Tu proyecto es viable':'✕ Tu proyecto todavía no es viable'}</b><span>${ok?'Cumple el margen y la rentabilidad mínima que definiste.':esc(rs.join(' '))}</span></div>
+  return `<div class="wzverdict ${ok?'ok':'no'}"><div class="between"><b>${ok?'✓ Tu proyecto es viable':'✕ Tu proyecto todavía no es viable'}</b><button class="btn sm" data-act="wz-say">${WZ.speaking?'■ Detener':'🔊 Escuchar'}</button></div><span>${ok?'Cumple el margen y la rentabilidad mínima que definiste.':esc(rs.join(' '))}</span></div>
    <div class="wzkpis">${k.map(([l,v])=>`<div><span>${l}</span><b>${v}</b></div>`).join('')}</div>
    <div class="wzhelp"><div class="between"><b>${ok?'¿Qué tan firme es?':'¿Cómo hacerlo viable?'}</b><button class="btn sm pri" data-act="wz-opt">${WZ.opt?'Recalcular':'Optimizar'}</button></div><p>${ok?'Calculo cuánto pueden cambiar los precios, los costos y las ventas antes de que deje de ser viable.':'Calculo, uno por uno, cuánto debería cambiar cada dato para que el proyecto sea viable, y una combinación equilibrada de todos.'}</p>${WZ.opt||''}</div>
    <p class="muted" style="margin:0">Al guardar se crea el proyecto completo. Después puedes afinar cada detalle en Modelo.</p>`}
@@ -2025,36 +2042,40 @@ const WZ_LEV={
  costo:(P,f)=>P.costos.capitulos.forEach(c=>c.valor*=f),
  vel:(P,f)=>P.etapas.forEach(e=>e.velocidad*=f),
  mix:(P,s)=>{WZ_LEV.precio(P,1+0.12*s);WZ_LEV.lote(P,1-0.35*s);WZ_LEV.costo(P,1-0.12*s);WZ_LEV.vel(P,1+0.4*s)}};
-function wzOptimize(){const a=WZ.a,ok=wzViable(WZ.P,WZ.R),pct=f=>(f>=1?'+':'−')+nf(Math.abs(f-1)*100,1)+' %',rows=[];
+function wzOptimize(auto){const a=WZ.a,ok=wzViable(WZ.P,WZ.R),pct=f=>(f>=1?'+':'−')+nf(Math.abs(f-1)*100,1)+' %',rows=[],say=[];
   // Mismo redondeo que al aplicar: aumentos hacia arriba, reducciones hacia abajo
   const rPrecio=v=>Math.ceil(v/1000)*1000,rLote=v=>Math.floor(v/1e6)*1e6,rCosto=v=>Math.floor(v/1000)*1000,rVel=v=>Math.ceil(v*10)/10;
-  const row=(t,from,to,f,lev,why)=>rows.push(`<div class="wzsug"><div><b>${t}</b><span>${from} → <strong>${to}</strong> (${pct(f)})</span><small>${why}</small></div>${ok?'':`<button class="btn sm" data-act="wz-apply" data-k="${lev}" data-f="${f}">Aplicar</button>`}</div>`);
-  const nope=(t,why)=>rows.push(`<div class="wzsug"><div><b>${t}</b><small>${why}</small></div></div>`);
+  // say: la misma sugerencia en palabras, para leerla en voz alta con el resultado
+  const row=(t,from,to,f,lev,why,s)=>{rows.push(`<div class="wzsug"><div><b>${t}</b><span>${from} → <strong>${to}</strong> (${pct(f)})</span><small>${why}</small></div>${ok?'':`<button class="btn sm" data-act="wz-apply" data-k="${lev}" data-f="${f}">Aplicar</button>`}</div>`);say.push(s)};
+  const nope=(t,why,s)=>{rows.push(`<div class="wzsug"><div><b>${t}</b><small>${why}</small></div></div>`);say.push(s)};
   if(!ok){
-    const fp=wzSolve(WZ_LEV.precio,1,1.6,true);fp?row('Precio de venta mínimo',pesos(a.precio)+'/m²',pesos(rPrecio(a.precio*fp))+'/m²',fp,'precio','Sube el precio por m² hasta este valor. Compáralo con proyectos de la zona.'+(a.tipo!=='NoVIS'?' En VIS y VIP el precio no puede pasar del tope legal.':'')):nope('Precio de venta','Ni subiéndolo 60 % alcanza'+(a.tipo!=='NoVIS'?' (y en '+a.tipo+' lo limita el tope legal)':'')+'.');
-    const fl=wzSolve(WZ_LEV.lote,0,1,false);fl!=null?row('Valor máximo del lote',pesos(a.lote),pesos(rLote(a.lote*fl)),fl,'lote','Es lo máximo que puedes pagar por el terreno para que el proyecto sea viable. Úsalo para negociar.'):nope('Valor del lote','Aunque el lote fuera gratis no alcanza: hay que ajustar otros datos.');
-    const fc=wzSolve(WZ_LEV.costo,0.6,1,false);fc!=null?row('Costo de obra máximo',pesos(a.costo)+'/m²',pesos(rCosto(a.costo*fc))+'/m²',fc,'costo','Es el costo directo máximo por m² construido. Revisa el presupuesto con el constructor o simplifica acabados.'):nope('Costo de obra','Ni bajándolo 40 % alcanza.');
-    const fv=wzSolve(WZ_LEV.vel,1,3,true);fv?row('Ventas mínimas por mes',nf(a.vel,1)+' und',nf(rVel(a.vel*fv),1)+' und',fv,'vel','Vender más rápido reduce intereses y el dinero que ponen los socios. Implica más publicidad o mejor precio.'):nope('Velocidad de ventas','Vender más rápido no alcanza por sí solo: mejora la rentabilidad de los socios, pero casi no cambia el margen.');
+    const fp=wzSolve(WZ_LEV.precio,1,1.6,true);fp?row('Precio de venta mínimo',pesos(a.precio)+'/m²',pesos(rPrecio(a.precio*fp))+'/m²',fp,'precio','Sube el precio por m² hasta este valor. Compáralo con proyectos de la zona.'+(a.tipo!=='NoVIS'?' En VIS y VIP el precio no puede pasar del tope legal.':''),`Una opción es subir el precio de venta a ${spM(rPrecio(a.precio*fp))} por metro cuadrado, ${spP(fp)}.`):nope('Precio de venta','Ni subiéndolo 60 % alcanza'+(a.tipo!=='NoVIS'?' (y en '+a.tipo+' lo limita el tope legal)':'')+'.','Subir solo el precio no alcanza.');
+    const fl=wzSolve(WZ_LEV.lote,0,1,false);fl!=null?row('Valor máximo del lote',pesos(a.lote),pesos(rLote(a.lote*fl)),fl,'lote','Es lo máximo que puedes pagar por el terreno para que el proyecto sea viable. Úsalo para negociar.',`Otra es pagar por el lote como máximo ${spM(rLote(a.lote*fl))}, ${spP(fl)}.`):nope('Valor del lote','Aunque el lote fuera gratis no alcanza: hay que ajustar otros datos.','Aunque el lote fuera gratis, no alcanzaría.');
+    const fc=wzSolve(WZ_LEV.costo,0.6,1,false);fc!=null?row('Costo de obra máximo',pesos(a.costo)+'/m²',pesos(rCosto(a.costo*fc))+'/m²',fc,'costo','Es el costo directo máximo por m² construido. Revisa el presupuesto con el constructor o simplifica acabados.',`Otra es bajar el costo de obra a ${spM(rCosto(a.costo*fc))} por metro cuadrado, ${spP(fc)}.`):nope('Costo de obra','Ni bajándolo 40 % alcanza.','Bajar solo el costo de obra no alcanza.');
+    const fv=wzSolve(WZ_LEV.vel,1,3,true);fv?row('Ventas mínimas por mes',nf(a.vel,1)+' und',nf(rVel(a.vel*fv),1)+' und',fv,'vel','Vender más rápido reduce intereses y el dinero que ponen los socios. Implica más publicidad o mejor precio.',`Otra es vender al menos ${nf(rVel(a.vel*fv),1)} unidades al mes.`):nope('Velocidad de ventas','Vender más rápido no alcanza por sí solo: mejora la rentabilidad de los socios, pero casi no cambia el margen.','Vender más rápido, por sí solo, no alcanza.');
     // El ajuste combinado deja 1 punto de holgura en margen y rentabilidad, para no quedar justo en el límite
     const sm=wzSolve(WZ_LEV.mix,0,1,true,1);
     rows.push(sm!=null?`<div class="wzsug best"><div><b>Ajuste combinado (recomendado)</b><span>Precio ${pct(1+0.12*sm)} · lote ${pct(1-0.35*sm)} · obra ${pct(1-0.12*sm)} · ventas ${pct(1+0.4*sm)}</span><small>Mueve un poco cada dato en lugar de mucho uno solo, y deja 1 punto de holgura en margen y rentabilidad. Suele ser lo más realista.</small></div><button class="btn sm pri" data-act="wz-apply" data-k="mix" data-f="${sm}">Aplicar</button></div>`
       :`<div class="wzsug"><div><b>Ajuste combinado</b><small>Con cambios razonables no alcanza. Revisa el tamaño del proyecto, el tipo de vivienda o la ubicación.</small></div></div>`);
+    say.push(sm!=null?`Lo que te recomiendo, por ser lo más realista, es un ajuste combinado: precio ${spP(1+0.12*sm)}, lote ${spP(1-0.35*sm)}, costo de obra ${spP(1-0.12*sm)} y ventas ${spP(1+0.4*sm)}. Así queda viable y con un punto de holgura. Toca Aplicar en la opción que prefieras y después Guardar proyecto.`
+      :'Con cambios razonables no alcanza. Revisa el tamaño del proyecto, el tipo de vivienda o la ubicación.');
   }else{
     const fp=wzSolve(WZ_LEV.precio,0.5,1,true),fc=wzSolve(WZ_LEV.costo,1,1.8,false),fl=wzSolve(WZ_LEV.lote,1,4,false),fv=wzSolve(WZ_LEV.vel,0.2,1,true);
-    if(fp)nope('El precio puede bajar hasta '+pesos(rPrecio(a.precio*fp))+'/m² ('+pct(fp)+')','Por debajo de eso deja de ser viable.');
-    if(fc!=null)nope('El costo de obra puede subir hasta '+pesos(rCosto(a.costo*fc))+'/m² ('+pct(fc)+')','Es tu margen de seguridad ante sobrecostos.');
-    if(fl!=null)nope('Podrías pagar por el lote hasta '+pesos(rLote(a.lote*fl))+' ('+pct(fl)+')','Útil para negociar o comparar otros terrenos.');
-    if(fv)nope('Las ventas pueden bajar hasta '+nf(a.vel*fv,1)+' und/mes ('+pct(fv)+')','Si se vende más lento, el proyecto aguanta hasta ahí.');
+    if(fp)nope('El precio puede bajar hasta '+pesos(rPrecio(a.precio*fp))+'/m² ('+pct(fp)+')','Por debajo de eso deja de ser viable.',`El precio puede bajar hasta ${spM(rPrecio(a.precio*fp))} por metro cuadrado, ${spP(fp)}.`);
+    if(fc!=null)nope('El costo de obra puede subir hasta '+pesos(rCosto(a.costo*fc))+'/m² ('+pct(fc)+')','Es tu margen de seguridad ante sobrecostos.',`El costo de obra puede subir hasta ${spM(rCosto(a.costo*fc))} por metro cuadrado, ${spP(fc)}.`);
+    if(fl!=null)nope('Podrías pagar por el lote hasta '+pesos(rLote(a.lote*fl))+' ('+pct(fl)+')','Útil para negociar o comparar otros terrenos.',`Podrías pagar por el lote hasta ${spM(rLote(a.lote*fl))}.`);
+    if(fv)nope('Las ventas pueden bajar hasta '+nf(a.vel*fv,1)+' und/mes ('+pct(fv)+')','Si se vende más lento, el proyecto aguanta hasta ahí.',`Y las ventas pueden bajar hasta ${nf(a.vel*fv,1)} unidades al mes.`);
+    say.push('Si estás conforme, toca Guardar proyecto.');
   }
-  WZ.opt=`<div class="wzsugs">${rows.join('')}</div>`;wzRender();
-  setTimeout(()=>{const x=$('#wiz .wzsugs');if(x)x.scrollIntoView({block:'start',behavior:'smooth'})},50)}
+  WZ.opt=`<div class="wzsugs">${rows.join('')}</div>`;WZ.optSay=say;wzRender();
+  if(!auto)setTimeout(()=>{const x=$('#wiz .wzsugs');if(x)x.scrollIntoView({block:'start',behavior:'smooth'})},50)}
 function wzApply(k,f){const a=WZ.a;
   // Los aumentos se redondean hacia arriba y las reducciones hacia abajo, para no quedar justo por debajo del límite
   if(k==='precio'||k==='mix')a.precio=Math.ceil(a.precio*(k==='mix'?1+0.12*f:f)/1000)*1000;
   if(k==='lote'||k==='mix')a.lote=Math.floor(a.lote*(k==='mix'?1-0.35*f:f)/1e6)*1e6;
   if(k==='costo'||k==='mix')a.costo=Math.floor(a.costo*(k==='mix'?1-0.12*f:f)/1000)*1000;
   if(k==='vel'||k==='mix')a.vel=Math.ceil(a.vel*(k==='mix'?1+0.4*f:f)*10)/10;
-  WZ.opt=null;wzRender();const ok=wzViable(WZ.P,WZ.R);toast(ok?'Ajuste aplicado: el proyecto ya es viable':'Ajuste aplicado; revisa las demás sugerencias')}
+  wzStop();WZ.opt=null;wzRender();const ok=wzViable(WZ.P,WZ.R);toast(ok?'Ajuste aplicado: el proyecto ya es viable':'Ajuste aplicado; revisa las demás sugerencias');wzAuto()}
 function wzInput(el){const k=el.dataset.wz;if(!k||!WZ.a)return;
   const v=el.type==='checkbox'?el.checked:el.type==='number'?(el.value===''?'':+el.value):el.value;
   const p=k.split('.');if(p.length===3)WZ.a[p[0]][+p[1]][p[2]]=v;else WZ.a[k]=v;
@@ -2409,7 +2430,8 @@ document.addEventListener('click',async e=>{
     case 'wz-open':wzOpen();break;
     case 'wz-close':wzClose();break;
     case 'wz-next':wzNext();break;
-    case 'wz-back':wzStop();WZ.i=Math.max(0,WZ.i-1);WZ.opt=null;wzRender();break;
+    case 'wz-back':wzStop();WZ.i=Math.max(0,WZ.i-1);WZ.opt=null;wzRender();wzAuto();break;
+    case 'wz-voz':prefs.wzMute=!prefs.wzMute;savePrefs();if(prefs.wzMute){wzStop();wzRender()}else{wzRender();wzAuto()}toast(prefs.wzMute?'Voz automática apagada':'Voz automática encendida');break;
     case 'wz-say':wzSay();break;
     case 'glos-say':glosSay();break;
     case 'wz-save':b.disabled=true;wzSave();break;
