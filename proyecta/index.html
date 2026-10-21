@@ -351,7 +351,15 @@ body.web .cols{display:grid;grid-template-columns:repeat(var(--n,1),minmax(0,560
 /* Modo cuadrícula: las secciones abiertas en 3 columnas y 2 filas de media altura, cada una con su propio desplazamiento */
 body.web.grid .cols{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(var(--rows,2),minmax(0,1fr));justify-content:stretch}
 body.web.grid .cols>.screen{min-height:0}
-body.web .cols>.screen{grid-auto-rows:max-content;overflow-y:auto;overscroll-behavior:contain;background:var(--col);border-radius:22px;padding:0 14px 14px;min-width:0;scrollbar-width:thin}
+body.web .cols>.screen{grid-auto-rows:max-content;overflow-y:auto;overscroll-behavior:contain;background:var(--col);border-radius:22px;padding:0 14px 14px;min-width:0}
+/* Barra de desplazamiento de cada ventana: delgada, flotante y por dentro del borde (con margen arriba y abajo para no
+   tocar las esquinas redondeadas). Chrome, Edge y Safari usan ::-webkit-scrollbar; Firefox, la barra delgada estándar */
+body.web .cols>.screen::-webkit-scrollbar{width:12px}
+body.web .cols>.screen::-webkit-scrollbar-track{background:transparent;margin:26px 0}
+body.web .cols>.screen::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--muted) 45%,transparent);border-radius:10px;border:4px solid transparent;background-clip:padding-box}
+body.web .cols>.screen::-webkit-scrollbar-thumb:hover{background-color:color-mix(in srgb,var(--muted) 75%,transparent)}
+body.web .cols>.screen::-webkit-scrollbar-corner{background:transparent}
+@supports not selector(::-webkit-scrollbar){body.web .cols>.screen{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--muted) 55%,transparent) transparent}}
 /* Borde delgado del color de énfasis en cada ventana (columnas y cuadrícula), para ver dónde empieza y termina cada una en modo oscuro y claro */
 body.web .cols>.screen{border:1.5px solid var(--acc)}
 body.web .cols>.screen.dragging{border-color:var(--acc)}
