@@ -422,11 +422,31 @@ body.wizon{overflow:hidden}
 .wztipos{display:grid;gap:10px}
 .wzets{display:grid;gap:12px;margin-bottom:10px}
 .wzet{background:var(--panel);border-radius:14px;padding:12px;display:grid;gap:10px}
-.wztorre{display:grid;grid-template-columns:64px minmax(0,1fr) minmax(0,1fr) 34px;gap:8px;align-items:end}
-.wztorre>b{align-self:center;font-size:13px}
 .wzet>.btn{justify-self:start}
-.wztipo{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:end;background:var(--panel);border-radius:14px;padding:10px}
-@media (max-width:480px){.wztipo{grid-template-columns:1fr 1fr}.wztipo .f:first-child{grid-column:1/-1}}
+.wztorre{display:grid;gap:6px;padding:10px 0 4px;border-top:1px solid var(--line)}
+.wzet>.between+.wztorre{border-top:0;padding-top:0}
+.wztorre b{font-size:14px}
+.wztipo{display:grid;gap:8px;background:var(--panel);border-radius:14px;padding:12px}
+.wztipo-h{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end}
+/* Deslizador táctil del asistente */
+.wzsl{display:grid;gap:4px}
+.wzsl-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.wzsl-top label{font-size:13px;color:var(--muted);font-weight:600}
+.wzsl-val{display:flex;align-items:baseline;gap:4px;font-weight:800;font-size:22px;color:var(--ink)}
+.wzsl-val>span{font-size:13px;font-weight:600;color:var(--muted)}
+.wzsl-in{width:9ch;text-align:right;font:inherit;color:inherit;background:transparent;border:0;border-bottom:1.5px dashed var(--line);padding:0 2px;border-radius:0}
+.wzsl-in:focus{outline:none;border-bottom-color:var(--acc)}
+.wzsl-row{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:10px;align-items:center}
+.wzsl-b{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--sunk);color:var(--ink);font-size:24px;line-height:1;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.wzsl-b:active{background:var(--acc);color:var(--on-acc);border-color:var(--acc)}
+.wzsl-r{-webkit-appearance:none;appearance:none;width:100%;height:40px;background:transparent;margin:0;touch-action:pan-y;cursor:pointer}
+.wzsl-r::-webkit-slider-runnable-track{height:8px;border-radius:8px;background:linear-gradient(to right,var(--acc) var(--p,0%),var(--sunk) var(--p,0%))}
+.wzsl-r::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;margin-top:-11px;border-radius:50%;background:var(--acc);border:4px solid var(--bg);box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.wzsl-r::-moz-range-track{height:8px;border-radius:8px;background:var(--sunk)}
+.wzsl-r::-moz-range-progress{height:8px;border-radius:8px;background:var(--acc)}
+.wzsl-r::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--acc);border:4px solid var(--bg);box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.wzsl-r:focus-visible{outline:2px solid var(--acc);outline-offset:4px;border-radius:8px}
+.wzsl .hint{text-align:right}
 .wzcalc{background:var(--panel);border-radius:14px;padding:12px 16px;display:grid;gap:4px}
 .wzcalc div{display:flex;justify-content:space-between;gap:10px;font-size:14px}
 .wzcalc small{color:var(--muted)}
@@ -1940,8 +1960,8 @@ const WZ_STEPS=[
   h:'Al final verás si el proyecto es viable, es decir, si deja la ganancia mínima que esperas. Si no lo es, te diré qué ajustar: el precio de venta, el costo del lote, el costo de la obra o el ritmo de ventas. Puedes volver atrás cuando quieras.',body:()=>''},
  {t:'¿Cómo se llama y dónde queda?',q:'Escribe un nombre para reconocer el proyecto y la ciudad o municipio donde se construirá.',
   h:'El nombre es solo para ti, por ejemplo “Torres del Parque”. La ciudad sirve para saber si aplica el tope especial de vivienda VIS de las grandes ciudades.',
-  body:a=>wzF('text','nombre','Nombre del proyecto','Ej.: Torres del Parque')+wzF('text','ciudad','Ciudad o municipio','Ej.: Medellín'),
-  ok:a=>!String(a.nombre||'').trim()?'Escribe un nombre para el proyecto.':''},
+  body:a=>wzF('text','nombre','Nombre del proyecto','Ej.: Torres del Parque')+wzCity(a),
+  ok:a=>!String(a.nombre||'').trim()?'Escribe un nombre para el proyecto.':!String(a.ciudad||'').trim()?'Elige la ciudad o escríbela en “Otra ciudad”.':''},
  {t:'¿Qué tipo de vivienda vas a vender?',q:'Elige según el precio de las viviendas.',
   h:'VIS (vivienda de interés social) y VIP (vivienda de interés prioritario) tienen un precio máximo fijado por ley en salarios mínimos; a cambio, los compradores pueden recibir subsidios y el proyecto puede pedir devolución de IVA. No VIS es cualquier vivienda por encima de ese precio. Al elegir, ajusto todos los valores sugeridos a ese tipo.',
   body:a=>`<div class="wzopts">${[['NoVIS','No VIS','Precio libre, sin tope ni subsidios'],['VIS','VIS','Hasta 135 salarios mínimos (150 en grandes ciudades)'],['VIP','VIP','Hasta 90 salarios mínimos']].map(([k,l,d])=>`<button class="wzopt" data-act="wz-tipo" data-k="${k}" aria-pressed="${a.tipo===k}"><b>${l}</b><span>${d}</span></button>`).join('')}</div>`
@@ -1955,13 +1975,13 @@ const WZ_STEPS=[
  {t:'¿Qué tan grande es?',q:'Cuántas etapas tiene, cuántas torres hay en cada etapa y cuántos pisos y apartamentos tiene cada torre.',
   h:'Una etapa es un grupo de torres que se vende y se construye al mismo tiempo. Agrega las etapas que necesites y, en cada una, sus torres. Cada etapa nueva empieza a venderse un año después de la anterior, lo que reduce el riesgo. Los pisos de cada torre definen el precio extra de los apartamentos altos.',
   body:a=>{let n=0;return `<div class="wzets">${a.et.map((e,k)=>`<div class="wzet"><div class="between"><b>Etapa ${k+1}</b>${a.et.length>1?`<button class="iconbtn" data-act="wz-delet" data-i="${k}" aria-label="Quitar la etapa ${k+1}">${ICON_DEL}</button>`:''}</div>
-    ${e.torres.map((t,m)=>`<div class="wztorre"><b>Torre ${++n}</b><div class="f"><label>Pisos</label><div class="box"><input type="number" inputmode="numeric" min="1" max="80" data-wz="et.${k}.torres.${m}.pisos" value="${esc(t.pisos)}"><span class="u">pisos</span></div></div><div class="f"><label>Apartamentos</label><div class="box"><input type="number" inputmode="numeric" min="1" data-wz="et.${k}.torres.${m}.und" value="${esc(t.und)}"><span class="u">und</span></div></div>${e.torres.length>1?`<button class="iconbtn" data-act="wz-deltorre" data-i="${k}" data-m="${m}" aria-label="Quitar la torre ${n}">${ICON_DEL}</button>`:'<span></span>'}</div>`).join('')}
+    ${e.torres.map((t,m)=>`<div class="wztorre"><div class="between"><b>Torre ${++n}</b>${e.torres.length>1?`<button class="iconbtn" data-act="wz-deltorre" data-i="${k}" data-m="${m}" aria-label="Quitar la torre ${n}">${ICON_DEL}</button>`:''}</div>${wzSlider(`et.${k}.torres.${m}.pisos`,'Pisos',{unit:'pisos'})}${wzSlider(`et.${k}.torres.${m}.und`,'Apartamentos',{unit:'und'})}</div>`).join('')}
     <button class="btn sm" data-act="wz-addtorre" data-i="${k}">+ Agregar torre a la etapa ${k+1}</button></div>`).join('')}</div>
     <button class="btn" data-act="wz-addet">+ Agregar etapa</button><div class="wzcalc" data-wztot>${wzTot(a)}</div>`},
   ok:a=>a.et.some(e=>e.torres.some(t=>!(Math.round(+t.pisos)>=1)))?'Cada torre necesita al menos 1 piso.':a.et.some(e=>e.torres.some(t=>!(Math.round(+t.und)>=1)))?'Cada torre necesita al menos 1 apartamento.':''},
  {t:'Tipos de apartamento',q:'Escribe cada tipo de apartamento con su área y cuántas unidades habrá en total.',
   h:'El área es la que se vende al comprador (área privada), en metros cuadrados. Por ejemplo: “2 alcobas, 55 m², 120 unidades”. Puedes tener hasta 4 tipos. Las unidades de los tipos deben sumar los apartamentos de las torres, y se reparten entre las etapas según los apartamentos de cada una.',
-  body:a=>`<div class="wztipos">${a.tipos.map((t,j)=>`<div class="wztipo"><div class="f"><label>Nombre</label><div class="box"><input data-wz="tipos.${j}.n" value="${esc(t.n)}"></div></div><div class="f"><label>Área</label><div class="box"><input type="number" inputmode="decimal" data-wz="tipos.${j}.area" value="${esc(t.area)}"><span class="u">m²</span></div></div><div class="f"><label>Unidades</label><div class="box"><input type="number" inputmode="numeric" data-wz="tipos.${j}.und" value="${esc(t.und)}"><span class="u">und</span></div></div>${a.tipos.length>1?`<button class="iconbtn" data-act="wz-deltipo" data-i="${j}" aria-label="Quitar tipo">${ICON_DEL}</button>`:''}</div>`).join('')}</div>${a.tipos.length<4?'<button class="btn sm" data-act="wz-addtipo">+ Agregar otro tipo</button>':''}<div class="wzcalc" data-wztip>${wzTipTot(a)}</div>`,
+  body:a=>`<div class="wztipos">${a.tipos.map((t,j)=>`<div class="wztipo"><div class="wztipo-h"><div class="f"><label>Nombre</label><div class="box"><input data-wz="tipos.${j}.n" value="${esc(t.n)}"></div></div>${a.tipos.length>1?`<button class="iconbtn" data-act="wz-deltipo" data-i="${j}" aria-label="Quitar tipo">${ICON_DEL}</button>`:''}</div>${wzSlider(`tipos.${j}.area`,'Área privada',{unit:'m²'})}${wzSlider(`tipos.${j}.und`,'Unidades',{unit:'und'})}</div>`).join('')}</div>${a.tipos.length<4?'<button class="btn sm" data-act="wz-addtipo">+ Agregar otro tipo</button>':''}<div class="wzcalc" data-wztip>${wzTipTot(a)}</div>`,
   ok:a=>a.tipos.some(t=>!(+t.area>0)||!(+t.und>0))?'Cada tipo necesita un área y unidades mayores que cero.':sum(a.tipos.map(t=>Math.round(+t.und||0)))!==wzUndTot(a)?`Los tipos deben sumar ${nf(wzUndTot(a))} apartamentos, como las torres. Toca “Ajustar los tipos” o corrige las unidades.`:''},
  {t:'Precio de venta',q:'¿A cuánto venderás cada metro cuadrado?',
   h:'Es el precio por metro cuadrado de área privada al inicio de las ventas. Mira proyectos parecidos de la zona: es la mejor referencia. Después sube un poco cada mes según el avance. En VIS y VIP, si el precio pasa del tope legal, se ajusta al máximo permitido.',
@@ -1983,7 +2003,7 @@ const WZ_STEPS=[
   body:a=>wzRadio('credito',[[true,'Sí, con crédito'],[false,'No, solo con recursos propios']])+(a.credito?wzF('num','cupo','Cupo del crédito','',{min:10,max:90},'% del costo'):'')},
  {t:'Socios',q:'¿Cuántos socios participan y en qué porcentaje?',
   h:'Los socios ponen el dinero que falta cuando la caja del proyecto no alcanza y se reparten las utilidades según su participación. Si el lote se aporta como socio, el segundo socio es el dueño del lote.',
-  body:a=>wzRadio('socios',[[1,'Un solo socio'],[2,'Dos socios']])+(+a.socios===2?wzF('num','part1','Participación del primer socio','',{min:1,max:99},'%')+`<p class="muted" style="margin:0">El segundo socio tiene el ${nf(100-(+a.part1||0))} %.</p>`:'')},
+  body:a=>wzRadio('socios',[[1,'Un solo socio'],[2,'Dos socios']])+(+a.socios===2?wzF('num','part1','Participación del primer socio','',{min:1,max:99},'%')+`<p class="muted" style="margin:0">El segundo socio tiene el <span data-wzp2>${nf(100-(+a.part1||0))}</span> %.</p>`:'')},
  {t:'¿Qué ganancia esperas?',q:'La rentabilidad mínima que deben dejar el proyecto y el dinero de los socios.',
   h:'Margen mínimo: la utilidad antes de impuestos dividida entre las ventas; en vivienda se suele pedir entre 10 % y 15 %. Rentabilidad mínima (TIO): lo que esperan ganar los socios al año por su dinero; suele estar entre 12 % y 18 %. Con estos dos datos decido si el proyecto es viable.',
   body:a=>wzF('num','margen','Margen mínimo','',{min:1,max:40},'% de las ventas')+wzF('num','tio','Rentabilidad mínima de los socios (TIO)','',{min:1,max:60},'% al año')},
@@ -1991,8 +2011,45 @@ const WZ_STEPS=[
 function wzF(type,k,label,ph,o,unit){const a=WZ.a,v=a[k];o=o||{};
   if(type==='month')return `<div class="f"><label>${label}</label><div class="box"><input type="month" data-wz="${k}" value="${esc(v)}"></div></div>`;
   if(type==='text')return `<div class="f"><label>${label}</label><div class="box"><input data-wz="${k}" value="${esc(v)}" placeholder="${esc(ph||'')}" autocomplete="off"></div></div>`;
-  const money=type==='money';
-  return `<div class="f"><label>${label}</label><div class="box"><input type="number" inputmode="decimal" data-wz="${k}" value="${esc(v)}"${o.min!=null?` min="${o.min}"`:''}${o.max!=null?` max="${o.max}"`:''} step="${o.step||'any'}">${unit?`<span class="u">${unit}</span>`:money?'<span class="u">$</span>':''}</div>${money?`<div class="hint" data-wzhint="${k}">${pesos(v)}${+v>=1e6?' · '+nf(v/1e6,v<1e8?1:0)+' millones':''}</div>`:''}</div>`}
+  return wzSlider(k,label,Object.assign({unit,money:type==='money'},o))}
+/* Deslizador: el valor grande arriba (se puede tocar para escribirlo exacto), la barra para moverlo con el dedo y los
+   botones − / + para afinarlo (mantenerlos presionados repite). Los rangos de cada dato están en WZ_RG; si el valor
+   escrito se sale del rango, la barra se amplía para incluirlo. */
+/* Ciudad: lista por departamento (en el celular abre la rueda de selección); "Otra" deja escribirla */
+const CIUDADES={'Antioquia':['Medellín','Bello','Envigado','Itagüí','Sabaneta','La Estrella','Caldas','Copacabana','Girardota','Rionegro','La Ceja','Marinilla','Apartadó'],
+ 'Atlántico':['Barranquilla','Soledad','Malambo','Puerto Colombia','Galapa'],'Bogotá D. C.':['Bogotá'],'Bolívar':['Cartagena','Turbaco'],'Boyacá':['Tunja','Duitama','Sogamoso'],
+ 'Caldas':['Manizales','Villamaría'],'Caquetá':['Florencia'],'Casanare':['Yopal'],'Cauca':['Popayán'],'Cesar':['Valledupar'],'Córdoba':['Montería'],
+ 'Cundinamarca':['Soacha','Chía','Cajicá','Zipaquirá','Mosquera','Funza','Madrid','Cota','Facatativá','Fusagasugá','Girardot','Tocancipá','Sopó','La Calera'],
+ 'Huila':['Neiva'],'La Guajira':['Riohacha'],'Magdalena':['Santa Marta'],'Meta':['Villavicencio'],'Nariño':['Pasto','Ipiales'],'Norte de Santander':['Cúcuta','Villa del Rosario','Los Patios'],
+ 'Quindío':['Armenia','Calarcá'],'Risaralda':['Pereira','Dosquebradas'],'Santander':['Bucaramanga','Floridablanca','Girón','Piedecuesta','Barrancabermeja'],'Sucre':['Sincelejo'],
+ 'Tolima':['Ibagué'],'Valle del Cauca':['Cali','Jamundí','Palmira','Yumbo','Candelaria','Tuluá','Buga','Cartago','Buenaventura']};
+function wzCity(a){const all=Object.values(CIUDADES).flat(),otra=a.ciudadOtra||(a.ciudad&&!all.includes(a.ciudad));
+  return `<div class="f"><label for="wzCity">Ciudad o municipio</label><div class="box"><select id="wzCity" data-wz="ciudad"><option value=""${!a.ciudad&&!otra?' selected':''} disabled>Elige la ciudad</option>
+   ${Object.entries(CIUDADES).map(([d,cs])=>`<optgroup label="${esc(d)}">${cs.map(c=>`<option${c===a.ciudad?' selected':''}>${esc(c)}</option>`).join('')}</optgroup>`).join('')}<option value="__otra"${otra?' selected':''}>Otra ciudad…</option></select></div></div>
+   ${otra?`<div class="f"><label>Escribe la ciudad</label><div class="box"><input data-wz="ciudad" value="${esc(a.ciudad||'')}" placeholder="Ej.: Chinchiná" autocomplete="off"></div></div>`:''}`}
+const WZ_RG={lote:[0,60e9,50e6],precio:[1e6,25e6,50e3],parqPrecio:[0,200e6,1e6],costo:[5e5,1e7,25e3],parq:[0,2000,1],vel:[1,60,1],ci:[0,100,1],obra:[6,60,1],
+  cupo:[10,90,1],part1:[1,99,1],margen:[1,40,.5],tio:[1,60,.5],pisos:[1,60,1],und:[1,500,1],area:[20,250,1],tund:[1,2000,1]};
+const wzRgKey=k=>{const p=k.split('.');return p[0]==='tipos'?(p[2]==='und'?'tund':p[2]):p[p.length-1]};
+const wzFmt=(v,st)=>v===''||v==null||!isFinite(+v)?'':nf(+v,st<1?1:0);
+const wzParse=s=>{s=String(s).replace(/[^\d,.-]/g,'').replace(/\./g,'').replace(',','.');return s===''||s==='-'?'':parseFloat(s)};
+function wzSlider(k,label,o){const rg=WZ_RG[wzRgKey(k)]||[o.min||0,o.max||100,o.step||1],v=+getPath(WZ.a,k)||0,st=rg[2],mx=Math.max(rg[1],v),mn=Math.min(rg[0],v);
+  const id='wzs-'+k.replace(/\W/g,'-'),p=mx>mn?(v-mn)/(mx-mn)*100:0;
+  return `<div class="wzsl" data-sl="${k}" data-min="${mn}" data-max="${mx}" data-step="${st}"><div class="wzsl-top"><label for="${id}">${label}</label>
+   <span class="wzsl-val">${o.money?'<span>$</span>':''}<input class="wzsl-in" id="${id}" type="text" inputmode="${st<1?'decimal':'numeric'}" data-wz="${k}" data-num="1" value="${wzFmt(v,st)}" aria-label="${esc(label)}, escribir el valor">${o.unit?`<span>${o.unit}</span>`:''}</span></div>
+   <div class="wzsl-row"><button type="button" class="wzsl-b" data-d="-1" aria-label="Menos">−</button><input class="wzsl-r" type="range" min="${mn}" max="${mx}" step="${st}" value="${v}" data-wz="${k}" style="--p:${p}%" aria-label="${esc(label)}"><button type="button" class="wzsl-b" data-d="1" aria-label="Más">+</button></div>
+   ${o.money?`<div class="hint" data-wzhint="${k}">${wzMill(v)}</div>`:''}</div>`}
+const wzMill=v=>+v>=1e6?nf(v/1e6,v<1e8?1:0)+' millones':pesos(v);
+// Refleja un valor nuevo en los dos controles del deslizador (menos en el que lo originó, para no mover el cursor al escribir)
+function wzSlSync(k,v,src){const w=$(`#wiz .wzsl[data-sl="${CSS.escape(k)}"]`);if(!w)return;const st=+w.dataset.step,r=w.querySelector('.wzsl-r'),t=w.querySelector('.wzsl-in');
+  if(+v>+r.max){r.max=v;w.dataset.max=v}if(+v<+r.min){r.min=v;w.dataset.min=v}
+  if(r!==src)r.value=v;if(t!==src)t.value=wzFmt(v,st);r.style.setProperty('--p',((+v-r.min)/((r.max-r.min)||1)*100)+'%')}
+function wzStepSl(b){const w=b.closest('.wzsl'),k=w.dataset.sl,st=+w.dataset.step,v=+getPath(WZ.a,k)||0,
+  nv=Math.max(+w.dataset.min,Math.round((v+st*+b.dataset.d)/st)*st);const r=w.querySelector('.wzsl-r');r.value=+nv.toFixed(4);wzInput(r)}
+(()=>{let rep=0,tm=0;const stop=()=>{clearTimeout(tm);clearInterval(rep)};
+  document.addEventListener('pointerdown',e=>{const b=e.target.closest&&e.target.closest('#wiz .wzsl-b');if(!b)return;e.preventDefault();wzStepSl(b);stop();tm=setTimeout(()=>{rep=setInterval(()=>wzStepSl(b),70)},420)});
+  ['pointerup','pointercancel','pointerleave'].forEach(t=>document.addEventListener(t,stop));
+  document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#wiz .wzsl-b');if(b&&e.detail===0)wzStepSl(b)})})();   // teclado: Enter o espacio
+document.addEventListener('focusout',e=>{const t=e.target;if(t.classList&&t.classList.contains('wzsl-in')&&WZ.a){const w=t.closest('.wzsl');t.value=wzFmt(getPath(WZ.a,t.dataset.wz),+w.dataset.step)}});
 function wzRadio(k,opts){return `<div class="wzopts">${opts.map(([v,l])=>`<button class="wzopt" data-act="wz-set" data-k="${k}" data-v="${String(v)}" aria-pressed="${String(WZ.a[k])===String(v)}"><b>${l}</b></button>`).join('')}</div>`}
 function wzSw(k,label,d){return `<label class="wzsw"><input type="checkbox" data-wz="${k}"${WZ.a[k]?' checked':''}><span><b>${label}</b><small>${d||''}</small></span></label>`}
 function wzOpen(){if(ST.readOnly){toast('Tienes acceso de solo lectura');return}
@@ -2113,10 +2170,12 @@ function wzApply(k,f){const a=WZ.a;
   if(k==='vel'||k==='mix')a.vel=Math.ceil(a.vel*(k==='mix'?1+0.4*f:f)*10)/10;
   wzStop();WZ.opt=null;wzRender();const ok=wzViable(WZ.P,WZ.R);toast(ok?'Ajuste aplicado: el proyecto ya es viable':'Ajuste aplicado; revisa las demás sugerencias');wzAuto()}
 function wzInput(el){const k=el.dataset.wz;if(!k||!WZ.a)return;
-  const v=el.type==='checkbox'?el.checked:el.type==='number'?(el.value===''?'':+el.value):el.value;
-  setPath(WZ.a,k,v);
+  let v=el.type==='checkbox'?el.checked:el.type==='number'||el.type==='range'?(el.value===''?'':+el.value):el.dataset.num?wzParse(el.value):el.value;
+  if(k==='ciudad'&&el.tagName==='SELECT'){WZ.a.ciudadOtra=v==='__otra';setPath(WZ.a,k,WZ.a.ciudadOtra?'':v);wzRender();if(WZ.a.ciudadOtra){const t=$('#wiz input[data-wz="ciudad"]');if(t)t.focus()}return}
+  setPath(WZ.a,k,v);if(el.dataset.num||el.type==='range')wzSlSync(k,v===''?0:v,el);
+  const p2=$('#wiz [data-wzp2]');if(p2)p2.textContent=nf(100-(+WZ.a.part1||0));
   const tt=$('#wiz [data-wztot]');if(tt)tt.innerHTML=wzTot(WZ.a);const tp=$('#wiz [data-wztip]');if(tp)tp.innerHTML=wzTipTot(WZ.a);
-  const h=$(`#wiz [data-wzhint="${k}"]`);if(h)h.textContent=pesos(v)+(+v>=1e6?' · '+nf(v/1e6,v<1e8?1:0)+' millones':'');
+  const h=$(`#wiz [data-wzhint="${k}"]`);if(h)h.textContent=wzMill(v);
   const er=$('#wzErr');if(er)er.textContent='';
   if(WZ.i===7||k==='part1'){const c=$('#wiz .wzcalc');if(c&&WZ.i===7)c.innerHTML=WZ.a.tipos.map(t=>`<div><span>${esc(t.n)}</span><b>${pesos(t.area*WZ.a.precio)}</b></div>`).join('')+'<small>Precio aproximado de cada apartamento</small>'}}
 document.addEventListener('input',e=>{if(e.target.closest&&e.target.closest('#wiz'))wzInput(e.target)});
