@@ -523,6 +523,20 @@ body.desk .instbar{left:auto;right:20px;bottom:20px;transform:none}
 .cmpt td.best{color:var(--acc-ink);font-weight:800}
 .cmpt .win{display:inline-block;margin-left:5px;font-size:11px}
 .rank{display:grid;gap:22px}
+/* Ranking de proyectos en Comparar */
+.pdot{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none}
+.rklist{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.rklist li{display:grid;grid-template-columns:28px 12px minmax(0,1fr) auto;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+.rklist li:last-child{border-bottom:0}
+.rklist li>small.muted{grid-column:4;font-size:10px;text-align:right;margin-top:-6px}
+.rklist .rk{text-align:center;font-weight:800;color:var(--muted)}
+.rklist .rn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rklist .nv{color:var(--neg);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.04em;margin-left:4px}
+.rklist b{font-variant-numeric:tabular-nums}
+.rklist.big li{font-size:14px;padding:9px 0}
+.rklist.big li:nth-child(-n+3) b{color:var(--acc-ink)}
+.rkgen{margin-bottom:18px}
+.rkgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
 @container scr (min-width:760px){.rank{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .cmpt th.c0,.cmpt td.c0{position:sticky;left:0;z-index:2;background:var(--panel)}
 .cmpt th.c0{z-index:3}
@@ -1102,7 +1116,7 @@ const Local={
   saveVers(id,l){LS.set('pp.v.'+id,l)}
 };
 function kpisOf(R){return R?{ventas:R.ventas,uai:R.uai,margen:R.margen,tirI:R.tirI,utilNeta:R.utilNeta}:{}}
-function projDoc(){const P=ST.P,prev=ST.projects[ST.pid]||{};return {nombre:P.general.nombre||'Proyecto',ciudad:P.general.ciudad||'',actualizado:Date.now(),actualizadoPor:ST.me&&ST.me.id||null,creadoPor:prev.creadoPor||ST.me&&ST.me.id||null,creado:prev.creado||Date.now(),kpis:kpisOf(ST.R),data:clone(P)}}
+function projDoc(){const P=ST.P,prev=ST.projects[ST.pid]||{};return {...(prev.color?{color:prev.color}:{}),nombre:P.general.nombre||'Proyecto',ciudad:P.general.ciudad||'',actualizado:Date.now(),actualizadoPor:ST.me&&ST.me.id||null,creadoPor:prev.creadoPor||ST.me&&ST.me.id||null,creado:prev.creado||Date.now(),kpis:kpisOf(ST.R),data:clone(P)}}
 function setSync(s){ST.sync=s;const d=$('#syncDot');if(!d)return;d.className='dot'+(s==='busy'?' busy':s==='err'?' err':s==='ro'?' off':'');d.title={ok:ST.mode==='db'?'Guardado en la base central':ST.mode==='fb'?'Guardado en tu cuenta y sincronizado':'Sin guardar',busy:'Guardando…',err:'No se pudo guardar',ro:'Solo lectura'}[s]||''}
 function markDirty(){if(ST.readOnly)return;ST.dirty=true;clearTimeout(ST.timer);ST.timer=setTimeout(persist,700);setSync('busy')}
 async function persist(){
@@ -1170,7 +1184,7 @@ async function createProject(kind,from,opt){
   const id='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
   const P=from?clone(from):newProject(kind);if(from&&!(opt&&opt.keepName))P.general.nombre=(P.general.nombre||'Proyecto')+' (copia)';
   const R=runProject(P,ST.macro);
-  const doc={nombre:P.general.nombre,ciudad:P.general.ciudad,actualizado:Date.now(),actualizadoPor:ST.me&&ST.me.id||null,creadoPor:ST.me&&ST.me.id||null,creado:Date.now(),kpis:kpisOf(R),data:P};
+  const doc={nombre:P.general.nombre,ciudad:P.general.ciudad,actualizado:Date.now(),actualizadoPor:ST.me&&ST.me.id||null,creadoPor:ST.me&&ST.me.id||null,creado:Date.now(),kpis:kpisOf(R),data:P,color:pickColor()};
   try{if(ST.mode==='db')await ST.db.collection('projects').doc(id).set(doc);else if(ST.mode==='fb')await ST.fbCol.doc('p_'+id).set(doc);else Local.save(id,doc);
     ST.projects[id]=doc;if(window.Uso)Uso.ev('proyecto_creado');selectProject(id);closeSheet();go(opt&&opt.goTo||'modelo');toast(opt&&opt.msg||'Proyecto creado');return true}catch(e){dbError(e)}
 }
@@ -1816,9 +1830,23 @@ function renderSens(){
 }
 
 /* ---------- COMPARAR ---------- */
-/* Con hasta 4 proyectos cada uno conserva su color por casilla (quitar uno no repinta a los demás).
-   Con más de 4 los gráficos cambian a ranking y a líneas grises con el proyecto abierto resaltado */
-const CMP_COLS=['var(--chart-pos)','var(--ink)','var(--muted)','var(--chart-neu)'];
+/* Cada proyecto tiene su propio color, elegido al azar al crearlo y guardado en su documento (campo color), así se
+   ve igual en todos los dispositivos y no cambia al sumar o quitar proyectos de la comparación. Se toma primero de
+   una paleta de tonos bien distintos entre sí; si ya se usaron todos, se genera un tono nuevo al azar.
+   Con más de 4 proyectos los gráficos cambian a ranking, y el proyecto abierto se resalta con un trazo más grueso */
+const PROJ_COLS=['#3D8BFF','#FF8A1F','#22C3A6','#E8508F','#A97BFF','#E5B400','#FF5A5F','#2EB4E8','#7FBF2A','#C2185B','#00897B','#F4511E','#5C6BC0','#8D6E63','#26A69A','#D4A017'];
+function pickColor(){const used=new Set(Object.values(ST.projects).map(d=>d.color).filter(Boolean));const free=PROJ_COLS.filter(c=>!used.has(c));
+  if(free.length)return free[Math.floor(Math.random()*free.length)];
+  const h=Math.floor(Math.random()*360);return `hsl(${h} 70% 52%)`}
+// Sin color guardado (proyectos anteriores o cuenta de solo lectura): uno fijo según el identificador, hasta que se guarde
+function projColor(id){const d=ST.projects[id];if(d&&d.color)return d.color;let h=0;for(const ch of String(id))h=(h*31+ch.charCodeAt(0))>>>0;return PROJ_COLS[h%PROJ_COLS.length]}
+// Asigna y guarda un color a los proyectos que aún no lo tienen (una sola vez por proyecto)
+function ensureColors(){if(ST.readOnly||ST.coloring)return;const miss=Object.keys(ST.projects).filter(id=>!ST.projects[id].color);if(!miss.length)return;ST.coloring=true;
+  const jobs=miss.map(id=>{const c=pickColor();ST.projects[id].color=c;
+    if(ST.mode==='db')return ST.db.collection('projects').doc(id).set({color:c},{merge:true});
+    if(ST.mode==='fb')return ST.fbCol.doc('p_'+id).set({color:c},{merge:true});
+    const a=Local.all();if(a[id]){a[id].color=c;Local.save(id,a[id])}return null});
+  Promise.all(jobs).catch(()=>{}).then(()=>{ST.coloring=false})}
 const byUpd=ids=>ids.sort((a,b)=>(ST.projects[b].actualizado||0)-(ST.projects[a].actualizado||0));
 function cmpSlots(){
   let s=Array.isArray(prefs.cmp)?prefs.cmp.map(id=>id&&ST.projects[id]?id:null):byUpd(Object.keys(ST.projects));
@@ -1865,7 +1893,7 @@ function cmpBars(L){
   for(let v=mn;v<=mx+1e-9;v+=st)s+=`<line x1="${Lp}" x2="${W-Rr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${Math.abs(v)<1e-9?1.2:.6}"/><text x="${Lp-6}" y="${y(v)+3}" text-anchor="end">${nf(v)} %</text>`;
   ms.forEach(([l],i)=>{const x0=Lp+i*g+(g-n*bw-(n-1)*2)/2;
     L.forEach((p,k)=>{const v=vals[i][k];if(v==null)return;const top=y(Math.max(v,0)),h=Math.max(1.5,Math.abs(y(v)-y(0)));
-      s+=`<rect x="${x0+k*(bw+2)}" y="${top}" width="${bw}" height="${h}" rx="3" fill="${CMP_COLS[p.slot]}"><title>${esc(p.d.nombre)} · ${l}: ${nf(v,1)} %</title></rect>`});
+      s+=`<rect x="${x0+k*(bw+2)}" y="${top}" width="${bw}" height="${h}" rx="3" fill="${projColor(p.id)}"><title>${esc(p.d.nombre)} · ${l}: ${nf(v,1)} %</title></rect>`});
     s+=`<text x="${Lp+i*g+g/2}" y="${H-10}" text-anchor="middle" style="fill:var(--ink)">${l}</text>`});
   return s+'</svg>';
 }
@@ -1874,10 +1902,10 @@ function cmpRank(L){
   const ms=[['Margen antes de impuestos',r=>r.margen,1],['Margen neto',r=>r.margenNeto,1],['TIR inversionista',r=>r.tirI,1],['Exposición sobre ventas',r=>r.expo/(r.ventas||1),-1]];
   return `<div class="rank">${ms.map(([l,f,dir])=>{const rows=L.map(p=>({p,v:f(p.R)})).filter(x=>x.v!=null&&isFinite(x.v)).sort((a,b)=>dir*(b.v-a.v));
     const mx=Math.max(...rows.map(x=>Math.abs(x.v)))||1;
-    return `<div><div class="sut"><b>${l}</b><span>${dir>0?'Mayor es mejor':'Menor es mejor'}</span></div><div class="bars">${rows.map(({p,v})=>`<div class="bar" title="${esc(p.d.nombre)}: ${fP(v)}"><span${p.id===ST.pid?' style="font-weight:800"':''}>${esc(p.d.nombre||'Proyecto')}</span><div class="track"><div class="fill${v<0?' neg':p.id===ST.pid?' util':''}" style="width:${Math.abs(v)/mx*100}%"></div></div><span class="amt">${fP(v)}</span></div>`).join('')}</div></div>`}).join('')}</div>`;
+    return `<div><div class="sut"><b>${l}</b><span>${dir>0?'Mayor es mejor':'Menor es mejor'}</span></div><div class="bars">${rows.map(({p,v})=>`<div class="bar" title="${esc(p.d.nombre)}: ${fP(v)}"><span${p.id===ST.pid?' style="font-weight:800"':''}>${esc(p.d.nombre||'Proyecto')}</span><div class="track"><div class="fill${v<0?" neg":""}" style="width:${Math.abs(v)/mx*100}%;background:${v<0?"":projColor(p.id)}"></div></div><span class="amt">${fP(v)}</span></div>`).join('')}</div></div>`}).join('')}</div>`;
 }
 function cmpCash(L){
-  const many=L.length>4,col=p=>many?(p.id===ST.pid?'var(--chart-pos)':'var(--muted)'):CMP_COLS[p.slot];
+  const many=L.length>4,col=p=>projColor(p.id);
   if(many)L=L.slice().sort((a,b)=>(a.id===ST.pid)-(b.id===ST.pid));
   const n=Math.max(...L.map(p=>p.R.rows.cumEq.length)),W=640,H=240,Lp=58,Rr=10,T=14,B=26,cw=W-Lp-Rr,ch=H-T-B;
   const ser=L.map(p=>p.R.rows.cumEq.map(v=>v/1e6));let mx=Math.max(0,...ser.flat()),mn=Math.min(0,...ser.flat());const st=nice(mx-mn||1);mx=Math.ceil(mx/st)*st;mn=Math.floor(mn/st)*st;
@@ -1890,16 +1918,31 @@ function cmpCash(L){
     if(hi)s+=`<circle cx="${x(iMin)}" cy="${y(v[iMin])}" r="4" fill="${col(p)}" stroke="var(--panel)" stroke-width="2"><title>${esc(p.d.nombre)} · exposición máxima ${fM(v[iMin]*1e6)} en el mes ${iMin}</title></circle>`});
   return s+'</svg>';
 }
+/* Ranking: general (promedio de la posición relativa en margen, TIR de socios y puntaje de salud, de 0 a 100) y las
+   tres listas por separado. Medallas para los 3 primeros; los proyectos no viables se marcan */
+function cmpRanking(L,sc){
+  const it=L.map((p,k)=>({p,m:p.R.margen,t:p.R.tirI,s:sc[k],v:wzViable(p.P,p.R)}));
+  const pos=(key,dir=1)=>{const ok=it.filter(x=>x[key]!=null&&isFinite(x[key])).sort((a,b)=>dir*(b[key]-a[key]));const n=ok.length;
+    it.forEach(x=>{const i=ok.indexOf(x);x[key+'R']=i<0?0:n>1?100*(n-1-i)/(n-1):100})};
+  pos('m');pos('t');pos('s');it.forEach(x=>x.g=Math.round((x.mR+x.tR+x.sR)/3));
+  const MED=['🥇','🥈','🥉'],dot=p=>`<i class="pdot" style="background:${projColor(p.id)}"></i>`;
+  const row=(x,i,val,lab)=>`<li><span class="rk">${i<3?MED[i]:i+1}</span>${dot(x.p)}<span class="rn">${esc(x.p.d.nombre||'Proyecto')}${x.v?'':' <small class="nv">no viable</small>'}</span><b>${val}</b>${lab?`<small class="muted">${lab}</small>`:''}</li>`;
+  const list=(t,key,f,sub)=>{const ok=it.filter(x=>x[key]!=null&&isFinite(x[key])).sort((a,b)=>b[key]-a[key]);
+    return `<div class="rkcol"><div class="sut"><b>${t}</b><span>${sub}</span></div><ol class="rklist">${ok.map((x,i)=>row(x,i,f(x[key]))).join('')}</ol></div>`};
+  const gen=it.slice().sort((a,b)=>b.g-a.g||b.m-a.m);
+  return `<div class="rkgen"><ol class="rklist big">${gen.map((x,i)=>row(x,i,x.g,'puntaje')).join('')}</ol></div>
+   <div class="rkgrid">${list('Más rentables','m',fP,'Margen antes de impuestos')}${list('Mejor para los socios','t',fP,'TIR inversionista')}${list('Más saludables','s',v=>v+'/100','Puntaje del semáforo')}</div>`}
 function renderComparar(){
+  ensureColors();
   const host=$('#s-comparar'),ids=Object.keys(ST.projects);
   let h=`<div class="screen-head"><div><h1>Comparar</h1><p>Elige los proyectos que quieras ver lado a lado, o todos.</p></div></div>`;
   if(ids.length<2){host.innerHTML=h+`<div class="card"><h3>Necesitas al menos 2 proyectos</h3><p class="sub">Crea otro proyecto o un ejemplo para comparar.</p><div class="row">${ST.readOnly?'':exBtns('','Ejemplo ')}</div></div>`;return}
   const slots=cmpSlots(),nSel=slots.filter(Boolean).length,many=nSel>4;
   h+=`<div class="card"><div class="between"><h3>Proyectos · ${nSel} de ${ids.length}</h3><div class="row"><button class="btn sm" data-act="cmp-all"${nSel===ids.length?' disabled':''}>Todos</button><button class="btn sm" data-act="cmp-none"${nSel?'':' disabled'}>Ninguno</button></div></div><p class="sub">Toca un proyecto para sumarlo o quitarlo.${many?' Con más de 4, los gráficos resaltan el proyecto abierto.':''}</p><div class="cmpsel">${byUpd(ids).map(id=>{const k=slots.indexOf(id);
-    return `<button class="chip" data-act="cmp-toggle" data-id="${id}" aria-pressed="${k>=0}">${k>=0&&!many?`<i style="background:${CMP_COLS[k]}"></i>`:''}${esc(ST.projects[id].nombre||'Proyecto')}</button>`}).join('')}</div></div>`;
+    return `<button class="chip" data-act="cmp-toggle" data-id="${id}" aria-pressed="${k>=0}"><i style="background:${projColor(id)}"></i>${esc(ST.projects[id].nombre||'Proyecto')}</button>`}).join('')}</div></div>`;
   const L=slots.map((id,slot)=>{if(!id)return null;const c=cmpResult(id);return c&&c.R?{id,slot,d:ST.projects[id],P:c.P,R:c.R}:null}).filter(Boolean);
   if(L.length<2){host.innerHTML=h+`<div class="empty">Elige al menos 2 proyectos.</div>`;return}
-  const head=`<tr><th class="c0">Indicador</th>${L.map(p=>`<th class="cmph"><span class="cmpn">${many?'':`<i style="background:${CMP_COLS[p.slot]}"></i>`}${esc(p.d.nombre||'Proyecto')}</span><small>${esc(p.d.ciudad||'')} · ${tipoDe(p.P)}</small>${p.id===ST.pid?'<small class="cur">Abierto</small>':`<button class="lnk" data-act="proj-select" data-id="${p.id}">Abrir</button>`}</th>`).join('')}</tr>`;
+  const head=`<tr><th class="c0">Indicador</th>${L.map(p=>`<th class="cmph"><span class="cmpn"><i style="background:${projColor(p.id)}"></i>${esc(p.d.nombre||'Proyecto')}</span><small>${esc(p.d.ciudad||'')} · ${tipoDe(p.P)}</small>${p.id===ST.pid?'<small class="cur">Abierto</small>':`<button class="lnk" data-act="proj-select" data-id="${p.id}">Abrir</button>`}</th>`).join('')}</tr>`;
   const body=CMP_ROWS.map(r=>{if(r.length===1)return `<tr class="sec"><td class="c0" colspan="${L.length+1}">${r[0]}</td></tr>`;
     const [l,g,f,dir]=r,vs=L.map(p=>{const v=g(p.P,p.R);return v==null||!isFinite(v)?null:v});const ok=vs.filter(v=>v!=null);
     const best=dir&&ok.length>1&&Math.max(...ok)!==Math.min(...ok)?(dir>0?Math.max(...ok):Math.min(...ok)):null;
@@ -1908,9 +1951,9 @@ function renderComparar(){
   const pill=s=>`<span class="pill ${s}"><svg viewBox="0 0 24 24" aria-hidden="true">${STICO[s]}</svg>${STAT[s]}</span>`;
   const health=`<tr><td class="c0"><b>Puntaje general</b></td>${sc.map(v=>{const s=v>=85?'ok':v>=60?'warn':'crit';return `<td><b class="hsc ${s}">${v}</b></td>`}).join('')}</tr>`+hl[0].map((row,i)=>`<tr><td class="c0">${row[0]}</td>${hl.map(d=>`<td title="${esc(d[i][2])}">${pill(d[i][1])}</td>`).join('')}</tr>`).join('');
   const open=L.find(p=>p.id===ST.pid);
-  const legend=many?`<div class="legend">${open?`<span style="--c:var(--chart-pos)">${esc(open.d.nombre)} (abierto)</span>`:''}<span style="--c:var(--muted)">${open?'Otros proyectos':'Proyectos'} · pasa el cursor para ver el nombre</span></div>`
-    :`<div class="legend">${L.map(p=>`<span style="--c:${CMP_COLS[p.slot]}">${esc(p.d.nombre||'Proyecto')}</span>`).join('')}</div>`;
+  const legend=`<div class="legend">${L.map(p=>`<span style="--c:${projColor(p.id)}">${esc(p.d.nombre||'Proyecto')}${many&&p.id===ST.pid?' (abierto)':''}</span>`).join('')}</div>`;
   h+=`<div class="grid2">
+    <div class="card span2"><h3>Ranking de proyectos</h3><p class="sub">Los mejores entre los proyectos elegidos. El puntaje general promedia la posición en margen, rentabilidad de los socios y salud.</p>${cmpRanking(L,sc)}</div>
     <div class="card span2"><h3>Indicadores</h3><p class="sub">El ✓ marca el mejor valor de cada fila. Los resultados se calculan con los supuestos macro actuales.</p><div class="tbl-wrap"><table class="cmpt"><thead>${head}</thead><tbody>${body}</tbody></table></div></div>
     ${many?`<div class="card span2"><h3>Ranking de márgenes, TIR y exposición</h3><p class="sub">De mejor a peor en cada indicador.${open?' El proyecto abierto va resaltado.':''}</p>${cmpRank(L)}</div>`
       :`<div class="card"><h3>Márgenes, TIR y exposición</h3><p class="sub">Porcentajes. En exposición, menos es mejor.</p><div class="chart-x">${cmpBars(L)}</div>${legend}</div>`}
