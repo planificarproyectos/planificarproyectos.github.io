@@ -600,7 +600,11 @@ body.desk .dtabs{display:block}
 /* Modo Escritorio en computador: Inicio en dos columnas, cada gráfico o tarjeta en su mitad (el celular no cambia) */
 @media (min-width:1024px){
   body.desk #s-inicio{grid-template-columns:repeat(2,minmax(0,1fr))}
-  body.desk #s-inicio>:is(.hello,.tiles,.grid2,.empty),body.desk #s-inicio>.card:not(.projcard){grid-column:1/-1}
+  body.desk #s-inicio>:is(.hello,.tiles,.grid2,.empty),body.desk #s-inicio>.card:not(.projcard):not(.axo){grid-column:1/-1}
+  /* Arriba: el proyecto y su resumen gráfico a la izquierda, la utilidad a la derecha con la altura de ambos */
+  body.desk #s-inicio>.projcard{grid-column:1;grid-row:2}
+  body.desk #s-inicio>.axo{grid-column:1;grid-row:3;margin:0}
+  body.desk #s-inicio>.hero{grid-column:2;grid-row:2/span 2;align-content:center}
   body.desk #s-inicio .grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
   body.desk #s-inicio .grid2>.span2:not(.blk){grid-column:auto}
   body.desk #s-inicio .grid2.mason{align-items:start}
@@ -1645,8 +1649,17 @@ function masonInicio(){
   if(!(ST.desk&&innerWidth>=1024))return;
   let topic='';items.forEach(e=>{if(e.classList.contains('blk'))topic=e.textContent;else if(topic)e.dataset.topic=topic});
   const cols=[0,1].map(()=>{const c=document.createElement('div');c.className='mcol';g.appendChild(c);return c});g.classList.add('mason');
-  items.forEach(e=>{if(e.classList.contains('blk')){cols[0].appendChild(e);return}const c=cols[0].offsetHeight<=cols[1].offsetHeight?cols[0]:cols[1];c.appendChild(e)});
+  masonBalance(g,cols,items);
+  // Algunos gráficos crecen al terminar de dibujarse: se vuelve a balancear si las columnas quedan desparejas
+  clearTimeout(ST.masonT);ST.masonT=setTimeout(()=>{const cs=[...g.querySelectorAll(':scope>.mcol')];if(cs.length===2&&Math.abs(cs[0].offsetHeight-cs[1].offsetHeight)>80)masonBalance(g,cs,items)},450);
 }
+/* Reparte las tarjetas en las dos columnas según su altura real: se miden al ancho de columna, se asignan de la más
+   alta a la más baja a la columna que va más corta, y dentro de cada columna conservan el orden original de lectura */
+function masonBalance(g,cols,items){
+  const cards=items.filter(e=>!e.classList.contains('blk'));cards.forEach(e=>cols[0].appendChild(e));
+  const hs=new Map(cards.map(e=>[e,e.offsetHeight+12]));const sum2=[0,0],dest=new Map();
+  cards.slice().sort((a,b)=>hs.get(b)-hs.get(a)).forEach(e=>{const k=sum2[0]<=sum2[1]?0:1;sum2[k]+=hs.get(e);dest.set(e,k)});
+  items.forEach(e=>{if(e.classList.contains('blk'))cols[0].appendChild(e);else cols[dest.get(e)].appendChild(e)})}
 function portfolioHtml(){
   return Object.entries(ST.projects).sort((a,b)=>(b[1].actualizado||0)-(a[1].actualizado||0)).map(([id,d])=>{const k=d.kpis||{};
     return `<button data-act="proj-select" data-id="${id}" aria-current="${id===ST.pid}"><span class="n">${esc(d.nombre)}</span><span class="k">${fP(k.margen)}</span><span class="m">${esc(d.ciudad||'')} · Ventas ${fM(k.ventas)} · TIR ${fP(k.tirI)} · ${fDate(d.actualizado)} por ${who(d.actualizadoPor)}</span></button>`}).join('');
