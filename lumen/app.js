@@ -724,7 +724,7 @@ function remIcs(){ var st=remState(), on=REMS.filter(function(r){ return st[r[0]
  toast(isIOS()?'Toca “Agregar todo” para guardarlos en tu calendario':'Abre el archivo descargado con tu app de Calendario',6000); }
 
 /* ---------- Compartir como imagen ----------
-   Versículos (tocándolos en un capítulo) o la frase del día se convierten en una imagen 1080×1350 con los colores de Lumen */
+   Versículos (tocándolos en un capítulo) o la frase del día se convierten en una imagen 1080×1350 sobre un fondo de cielo distinto cada vez */
 function vselBar(){ var n=(U.vsel||[]).length; if(!n) return '';
  return '<div class="vbar" role="region" aria-label="Versículos seleccionados"><span class="small"><b>'+n+'</b> '+(n===1?'versículo':'versículos')+'</span><span class="row" style="gap:6px"><button class="say" data-a="vcopy">'+ic('copy',16)+'<span>Copiar</span></button><button class="say on" data-a="vshare">'+ic('share',16)+'<span>Imagen</span></button><button class="icon-btn" data-a="vclear" aria-label="Quitar selección">'+ic('x',18)+'</button></span></div>'; }
 function vselPick(){ var b=U.bk, c=U.ch, bk=BOOKS_DATA[b]; if(!bk||!U.vsel||!U.vsel.length) return null;
@@ -734,15 +734,57 @@ function vselPick(){ var b=U.bk, c=U.ch, bk=BOOKS_DATA[b]; if(!bk||!U.vsel||!U.v
 function cssVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
 function wrapLines(ctx,text,maxW){ var words=String(text).split(/\s+/), lines=[], ln='';
  words.forEach(function(w){ var t=ln?ln+' '+w:w; if(ctx.measureText(t).width>maxW&&ln){ lines.push(ln); ln=w; } else ln=t; }); if(ln) lines.push(ln); return lines; }
+/* Fondos "de cielo": cada imagen sale distinta. Se elige una paleta al azar (gloria, cielo, aurora, vitral, rosa mística,
+   Pentecostés, sabiduría) y se pintan, en posiciones al azar, una luz que irradia rayos, resplandores, cintas de luz,
+   destellos y partículas. Todo es abstracto y la frase va sobre un panel translúcido para que siempre se lea. */
+var SKY=[
+ {g:['#140a35','#4a1a66','#c24d7a'],b:['#ffd27a','#ff7aa8','#8a5cff','#ffe9b0'],l:'#ffe6a8',a:'#FFD27A'},
+ {g:['#06173a','#124c98','#4aa6dc'],b:['#9fe3ff','#ffffff','#ffd98a','#5d8bff'],l:'#fff2c8',a:'#FFE08A'},
+ {g:['#03131c','#0b4f58','#4b3a92'],b:['#5ef2c8','#b48cff','#ffe39a','#46c7ff'],l:'#e8fff4',a:'#9BFFE0'},
+ {g:['#10042a','#360c58','#6e1236'],b:['#ff4f7b','#4fa3ff','#ffc94f','#b45cff'],l:'#fff0c8',a:'#FFC94F'},
+ {g:['#26082c','#6e2462','#d16d96'],b:['#ffb3d1','#fff0c2','#c58cff','#ff8a9b'],l:'#fff3e0',a:'#FFE2A8'},
+ {g:['#260407','#7e1716','#d24d26'],b:['#ffd36b','#ff6b3d','#fff3c4','#ff9f5a'],l:'#fff6d6',a:'#FFE08A'},
+ {g:['#050f28','#103a66','#1b9696'],b:['#fff6c9','#7cf0e0','#8fb8ff','#ffffff'],l:'#fffbe6',a:'#FFF0A8'}
+];
+function rnd(a,b){ return a+Math.random()*(b-a); }
+function rgba(hex,al){ var n=parseInt(hex.slice(1),16); return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+al+')'; }
+function heavenBg(x,W,H){
+ var s=SKY[Math.floor(Math.random()*SKY.length)], sx=rnd(.15,.85)*W, sy=rnd(.04,.3)*H, i, g;
+ g=x.createLinearGradient(W-sx,H,sx,0); g.addColorStop(0,s.g[0]); g.addColorStop(.55,s.g[1]); g.addColorStop(1,s.g[2]); x.fillStyle=g; x.fillRect(0,0,W,H);
+ x.globalCompositeOperation='screen';
+ for(i=0;i<6;i++){ var bx=rnd(-.1,1.1)*W, by=rnd(-.05,1.05)*H, br=rnd(.3,.7)*W, c=s.b[i%s.b.length];   // resplandores de color
+  g=x.createRadialGradient(bx,by,0,bx,by,br); g.addColorStop(0,rgba(c,rnd(.35,.6))); g.addColorStop(1,rgba(c,0)); x.fillStyle=g; x.fillRect(0,0,W,H); }
+ var rc=document.createElement('canvas'); rc.width=W; rc.height=H; var r=rc.getContext('2d'), n=Math.round(rnd(14,26)), off=rnd(0,6.3);   // rayos de luz
+ for(i=0;i<n;i++){ var a0=off+i*6.283/n; r.fillStyle=rgba(s.l,rnd(.06,.2)); r.beginPath(); r.moveTo(sx,sy); r.arc(sx,sy,H*1.7,a0,a0+rnd(.03,.12)); r.closePath(); r.fill(); }
+ r.globalCompositeOperation='destination-in'; g=r.createRadialGradient(sx,sy,0,sx,sy,H*rnd(.8,1.1)); g.addColorStop(0,'#000'); g.addColorStop(1,'rgba(0,0,0,0)'); r.fillStyle=g; r.fillRect(0,0,W,H);
+ x.drawImage(rc,0,0);
+ x.lineWidth=2;   // cintas de luz que cruzan la imagen
+ for(var k=0;k<3;k++){ var y0=rnd(.1,.9)*H, y1=rnd(0,1)*H, y2=rnd(0,1)*H, y3=rnd(.1,.9)*H, c2=s.b[(k+1)%s.b.length], d1=rnd(-6,6), d2=rnd(-6,6);
+  for(var j=0;j<46;j++){ x.strokeStyle=rgba(c2,.045); x.beginPath(); x.moveTo(-60,y0+j*3); x.bezierCurveTo(W*.33,y1+j*d1,W*.66,y2+j*d2,W+60,y3+j*2); x.stroke(); } }
+ var hr=rnd(240,420);   // la fuente de luz con su halo
+ g=x.createRadialGradient(sx,sy,0,sx,sy,hr); g.addColorStop(0,'rgba(255,255,255,.95)'); g.addColorStop(.18,rgba(s.l,.75)); g.addColorStop(1,rgba(s.l,0)); x.fillStyle=g; x.fillRect(0,0,W,H);
+ for(i=1;i<=3;i++){ x.strokeStyle='rgba(255,255,255,'+(.16/i)+')'; x.lineWidth=2; x.beginPath(); x.arc(sx,sy,hr*(.5+i*.38),0,6.283); x.stroke(); }
+ for(i=0;i<60;i++){ var px=rnd(0,W), py=rnd(0,H), pr=Math.random()<.8?rnd(2,9):rnd(14,46);   // partículas
+  g=x.createRadialGradient(px,py,0,px,py,pr); g.addColorStop(0,rgba(pr>12?s.b[i%s.b.length]:s.l,rnd(.25,.7))); g.addColorStop(1,rgba(s.l,0)); x.fillStyle=g; x.beginPath(); x.arc(px,py,pr,0,6.283); x.fill(); }
+ for(i=0;i<10;i++){ var qx=rnd(0,W), qy=rnd(0,H), L=rnd(12,34), t=L*.13;   // destellos de cuatro puntas
+  x.fillStyle='rgba(255,255,255,'+rnd(.55,.9)+')'; x.beginPath(); x.moveTo(qx,qy-L); x.lineTo(qx+t,qy-t); x.lineTo(qx+L,qy); x.lineTo(qx+t,qy+t); x.lineTo(qx,qy+L); x.lineTo(qx-t,qy+t); x.lineTo(qx-L,qy); x.lineTo(qx-t,qy-t); x.closePath(); x.fill(); }
+ x.globalCompositeOperation='source-over';
+ g=x.createRadialGradient(W/2,H/2,H*.35,W/2,H/2,H*.8); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.4)'); x.fillStyle=g; x.fillRect(0,0,W,H);
+ return s;
+}
 function shareImage(text,ref){
  var W=1080,H=1350,P=96, cv=document.createElement('canvas'); cv.width=W; cv.height=H; var x=cv.getContext('2d');
- var bg=cssVar('--bg')||'#111315', sf=cssVar('--surface')||'#1C1F22', fg=cssVar('--fg')||'#F2F2EE', ac=cssVar('--accent')||'#C6F432', afg=cssVar('--accent-fg')||ac, mu=cssVar('--muted')||'#A3A8AD';
  var disp='"Barlow Condensed","Arial Narrow",sans-serif', body='"DM Sans",system-ui,sans-serif';
  var ready=document.fonts&&document.fonts.load?Promise.all([document.fonts.load('700 48px "Barlow Condensed"'),document.fonts.load('600 60px "Barlow Condensed"'),document.fonts.load('700 36px "DM Sans"')]).catch(function(){}):Promise.resolve();
  return ready.then(function(){
-  x.fillStyle=bg; x.fillRect(0,0,W,H);
-  x.fillStyle=sf; x.beginPath(); if(x.roundRect) x.roundRect(P-40,210,W-2*(P-40),H-210-200,44); else x.rect(P-40,210,W-2*(P-40),H-210-200); x.fill();
-  x.fillStyle=ac; x.fillRect(P-40,210,14,H-210-200);
+  var s=heavenBg(x,W,H), fg='#FFFFFF', afg=s.a;
+  var bx=P-40, by=210, bw=W-2*bx, bh=H-210-200, a1=document.createElement('canvas'), a2=document.createElement('canvas');   // panel de vidrio esmerilado: el fondo reducido y ampliado queda difuminado
+  a1.width=Math.round(bw/6); a1.height=Math.round(bh/6); a1.getContext('2d').drawImage(cv,bx,by,bw,bh,0,0,a1.width,a1.height);
+  a2.width=Math.round(bw/24); a2.height=Math.round(bh/24); a2.getContext('2d').drawImage(a1,0,0,a2.width,a2.height);
+  x.save(); x.beginPath(); if(x.roundRect) x.roundRect(bx,by,bw,bh,44); else x.rect(bx,by,bw,bh); x.clip(); x.imageSmoothingQuality='high'; x.drawImage(a2,bx,by,bw,bh);
+  x.fillStyle='rgba(10,6,30,.34)'; x.fillRect(bx,by,bw,bh); x.restore();
+  x.strokeStyle='rgba(255,255,255,.3)'; x.lineWidth=2; x.beginPath(); if(x.roundRect) x.roundRect(bx,by,bw,bh,44); else x.rect(bx,by,bw,bh); x.stroke();
+  x.shadowColor='rgba(0,0,0,.45)'; x.shadowBlur=14; x.shadowOffsetY=2;
   x.textBaseline='alphabetic'; x.font='700 56px '+disp; x.fillStyle=fg; x.fillText('LU',P,140); var lw=x.measureText('LU').width; x.fillStyle=afg; x.fillText('MEN',P+lw,140);
   var maxW=W-2*P-20, top=300, bottom=H-200-150, fs=86, lines, lh;
   for(;fs>=34;fs-=2){ x.font='600 '+fs+'px '+disp; lines=wrapLines(x,text,maxW); lh=Math.round(fs*1.14); if(lines.length*lh<=bottom-top) break; }
@@ -750,7 +792,8 @@ function shareImage(text,ref){
   x.font='700 160px '+disp; x.fillStyle=afg; x.fillText('“',P-6,top+70);
   x.font='600 '+fs+'px '+disp; x.fillStyle=fg; var y=top+(bottom-top-lines.length*lh)/2+fs; lines.forEach(function(l){ x.fillText(l,P+10,y); y+=lh; });
   x.font='700 40px '+body; x.fillStyle=afg; x.fillText(ref,P+10,H-200-60);
-  x.font='500 30px '+body; x.fillStyle=mu; x.fillText('planificarproyectos.com/lumen',P,H-90);
+  x.font='500 30px '+body; x.fillStyle='rgba(255,255,255,.85)'; x.fillText('planificarproyectos.com/lumen',P,H-90);
+  x.shadowColor='transparent'; x.shadowBlur=0; x.shadowOffsetY=0;
   return new Promise(function(res){ cv.toBlob(res,'image/png'); });
  }).then(function(blob){ if(!blob){ toast('No se pudo crear la imagen'); return; }
   var name='lumen-'+ref.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.png', file=null;
