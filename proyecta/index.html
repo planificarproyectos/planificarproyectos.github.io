@@ -553,6 +553,30 @@ body.wizon{overflow:hidden}
 body.desk .instbar{left:auto;right:20px;bottom:20px;transform:none}
 /* Comparar proyectos */
 .cmpsel{display:flex;gap:6px;flex-wrap:wrap}
+/* Comparar compacto: selector desplegable y ranking en tabla */
+.cmpbox{gap:8px;padding-block:12px}
+.cmpdd{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--ink);font:inherit;font-size:14px;cursor:pointer;padding:4px 0}
+.cmpdd svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;transition:transform .2s}
+.cmpdd[aria-expanded=true] svg{transform:rotate(180deg)}
+.cmpsel .chip{padding:4px 10px;font-size:12px;gap:6px}
+.cmpsum{display:flex;gap:4px 12px;overflow:hidden;white-space:nowrap;mask-image:linear-gradient(90deg,#000 85%,transparent);-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent)}
+.cmpsum span{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);font-weight:600}
+.cmpsum i{width:8px;height:8px;border-radius:50%;flex:none}
+.rkt{font-size:12.5px}
+.rkt th,.rkt td{padding:5px 8px;white-space:nowrap}
+.rkt td.rk{width:26px;text-align:center;font-weight:800;color:var(--muted)}
+.rkt .rn{display:inline-flex;align-items:center;gap:6px;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.rkt .nv{color:var(--neg);font-weight:800;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;margin-left:4px}
+.rkt td.num small{font-size:9.5px;color:var(--muted);margin-left:3px;font-weight:600}
+.rkt td.best{color:var(--acc-ink);font-weight:800}
+#s-comparar .cmpt th,#s-comparar .cmpt td{padding:5px 8px}
+#s-comparar .cmpt tr.sec td{padding-top:10px}
+#s-comparar .card{padding-block:14px}
+.cmpbox>.between{flex-wrap:nowrap;gap:8px}
+.cmpbox .row{flex-wrap:nowrap;gap:6px}
+.cmpbox .btn.sm{padding:5px 10px;font-size:12px;min-height:0}
+.rkmore{margin-top:6px;font-size:12px}
+@media (max-width:560px){.rkt .rn{max-width:120px}}
 .cmpsel .chip{display:inline-flex;align-items:center;gap:7px}
 .cmpsel .chip i,.cmpn i{width:9px;height:9px;border-radius:50%;flex:none;box-shadow:0 0 0 2px var(--panel)}
 .cmpt th.cmph{vertical-align:bottom;text-align:right;white-space:normal;min-width:130px}
@@ -564,20 +588,7 @@ body.desk .instbar{left:auto;right:20px;bottom:20px;transform:none}
 .cmpt td.best{color:var(--acc-ink);font-weight:800}
 .cmpt .win{display:inline-block;margin-left:5px;font-size:11px}
 .rank{display:grid;gap:22px}
-/* Ranking de proyectos en Comparar */
 .pdot{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none}
-.rklist{list-style:none;margin:0;padding:0;display:grid;gap:2px}
-.rklist li{display:grid;grid-template-columns:28px 12px minmax(0,1fr) auto;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
-.rklist li:last-child{border-bottom:0}
-.rklist li>small.muted{grid-column:4;font-size:10px;text-align:right;margin-top:-6px}
-.rklist .rk{text-align:center;font-weight:800;color:var(--muted)}
-.rklist .rn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rklist .nv{color:var(--neg);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.04em;margin-left:4px}
-.rklist b{font-variant-numeric:tabular-nums}
-.rklist.big li{font-size:14px;padding:9px 0}
-.rklist.big li:nth-child(-n+3) b{color:var(--acc-ink)}
-.rkgen{margin-bottom:18px}
-.rkgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
 @container scr (min-width:760px){.rank{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .cmpt th.c0,.cmpt td.c0{position:sticky;left:0;z-index:2;background:var(--panel)}
 .cmpt th.c0{z-index:3}
@@ -2059,28 +2070,30 @@ function cmpCash(L){
     if(hi)s+=`<circle cx="${x(iMin)}" cy="${y(v[iMin])}" r="4" fill="${col(p)}" stroke="var(--panel)" stroke-width="2"><title>${esc(p.d.nombre)} · exposición máxima ${fM(v[iMin]*1e6)} en el mes ${iMin}</title></circle>`});
   return s+'</svg>';
 }
-/* Ranking: general (promedio de la posición relativa en margen, TIR de socios y puntaje de salud, de 0 a 100) y las
-   tres listas por separado. Medallas para los 3 primeros; los proyectos no viables se marcan */
+/* Ranking en una sola tabla compacta: una fila por proyecto, ordenada por el puntaje general (promedio de la posición
+   relativa en margen, TIR de socios y puntaje de salud, de 0 a 100). En cada columna se resalta el mejor valor y al
+   lado va su puesto en esa columna; medallas para los 3 primeros y marca para los no viables */
 function cmpRanking(L,sc){
   const it=L.map((p,k)=>({p,m:p.R.margen,t:p.R.tirI,s:sc[k],v:wzViable(p.P,p.R)}));
-  const pos=(key,dir=1)=>{const ok=it.filter(x=>x[key]!=null&&isFinite(x[key])).sort((a,b)=>dir*(b[key]-a[key]));const n=ok.length;
-    it.forEach(x=>{const i=ok.indexOf(x);x[key+'R']=i<0?0:n>1?100*(n-1-i)/(n-1):100})};
+  const pos=(key)=>{const ok=it.filter(x=>x[key]!=null&&isFinite(x[key])).sort((a,b)=>b[key]-a[key]);const n=ok.length;
+    it.forEach(x=>{const i=ok.indexOf(x);x[key+'P']=i<0?null:i+1;x[key+'R']=i<0?0:n>1?100*(n-1-i)/(n-1):100})};
   pos('m');pos('t');pos('s');it.forEach(x=>x.g=Math.round((x.mR+x.tR+x.sR)/3));
-  const MED=['🥇','🥈','🥉'],dot=p=>`<i class="pdot" style="background:${projColor(p.id)}"></i>`;
-  const row=(x,i,val,lab)=>`<li><span class="rk">${i<3?MED[i]:i+1}</span>${dot(x.p)}<span class="rn">${esc(x.p.d.nombre||'Proyecto')}${x.v?'':' <small class="nv">no viable</small>'}</span><b>${val}</b>${lab?`<small class="muted">${lab}</small>`:''}</li>`;
-  const list=(t,key,f,sub)=>{const ok=it.filter(x=>x[key]!=null&&isFinite(x[key])).sort((a,b)=>b[key]-a[key]);
-    return `<div class="rkcol"><div class="sut"><b>${t}</b><span>${sub}</span></div><ol class="rklist">${ok.map((x,i)=>row(x,i,f(x[key]))).join('')}</ol></div>`};
-  const gen=it.slice().sort((a,b)=>b.g-a.g||b.m-a.m);
-  return `<div class="rkgen"><ol class="rklist big">${gen.map((x,i)=>row(x,i,x.g,'puntaje')).join('')}</ol></div>
-   <div class="rkgrid">${list('Más rentables','m',fP,'Margen antes de impuestos')}${list('Mejor para los socios','t',fP,'TIR inversionista')}${list('Más saludables','s',v=>v+'/100','Puntaje del semáforo')}</div>`}
+  const MED=["🥇","🥈","🥉"],all=it.slice().sort((a,b)=>b.g-a.g||b.m-a.m),N=5,gen=ST.rkAll||all.length<=N+1?all:all.slice(0,N);
+  const cel=(x,key,txt)=>`<td class="num${x[key+'P']===1?' best':''}">${txt}${x[key+'P']?`<small>${x[key+'P']}°</small>`:''}</td>`;
+  return `<div class="tbl-wrap"><table class="rkt"><thead><tr><th>#</th><th class="c0">Proyecto</th><th class="num">Puntaje</th><th class="num">Margen</th><th class="num">TIR socios</th><th class="num">Salud</th></tr></thead><tbody>${gen.map((x,i)=>
+    `<tr><td class="rk">${i<3?MED[i]:i+1}</td><td class="c0"><span class="rn"><i class="pdot" style="background:${projColor(x.p.id)}"></i>${esc(x.p.d.nombre||'Proyecto')}${x.v?'':'<small class="nv">no viable</small>'}</span></td><td class="num"><b>${x.g}</b></td>${cel(x,'m',fP(x.m))}${cel(x,'t',fP(x.t))}${cel(x,"s",x.s)}</tr>`).join("")}</tbody></table></div>${all.length>N+1?`<button class="lnk rkmore" data-act="rk-all">${ST.rkAll?"Ver solo los 5 primeros":"Ver los "+all.length+" proyectos"}</button>`:""}`}
 function renderComparar(){
   ensureColors();
   const host=$('#s-comparar'),ids=Object.keys(ST.projects);
   let h=`<div class="screen-head"><div><h1>Comparar</h1><p>Elige los proyectos que quieras ver lado a lado, o todos.</p></div></div>`;
   if(ids.length<2){host.innerHTML=h+`<div class="card"><h3>Necesitas al menos 2 proyectos</h3><p class="sub">Crea otro proyecto o un ejemplo para comparar.</p><div class="row">${ST.readOnly?'':exBtns('','Ejemplo ')}</div></div>`;return}
   const slots=cmpSlots(),nSel=slots.filter(Boolean).length,many=nSel>4;
-  h+=`<div class="card"><div class="between"><h3>Proyectos · ${nSel} de ${ids.length}</h3><div class="row"><button class="btn sm" data-act="cmp-all"${nSel===ids.length?' disabled':''}>Todos</button><button class="btn sm" data-act="cmp-none"${nSel?'':' disabled'}>Ninguno</button></div></div><p class="sub">Toca un proyecto para sumarlo o quitarlo.${many?' Con más de 4, los gráficos resaltan el proyecto abierto.':''}</p><div class="cmpsel">${byUpd(ids).map(id=>{const k=slots.indexOf(id);
-    return `<button class="chip" data-act="cmp-toggle" data-id="${id}" aria-pressed="${k>=0}"><i style="background:${projColor(id)}"></i>${esc(ST.projects[id].nombre||'Proyecto')}</button>`}).join('')}</div></div>`;
+  // Selector compacto: cerrado muestra en una línea los proyectos elegidos; al abrirlo aparecen los botones pequeños
+  const selN=slots.filter(Boolean),selOpen=!!ST.cmpOpen;
+  h+=`<div class="card cmpbox"><div class="between"><button class="cmpdd" data-act="cmp-open" aria-expanded="${selOpen}"><b>${nSel} de ${ids.length} proyectos</b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="row"><button class="btn sm" data-act="cmp-all"${nSel===ids.length?' disabled':''}>Todos</button><button class="btn sm" data-act="cmp-none"${nSel?'':' disabled'}>Ninguno</button></div></div>
+    ${selOpen?`<div class="cmpsel">${byUpd(ids).map(id=>{const k=slots.indexOf(id);
+      return `<button class="chip" data-act="cmp-toggle" data-id="${id}" aria-pressed="${k>=0}"><i style="background:${projColor(id)}"></i>${esc(ST.projects[id].nombre||'Proyecto')}</button>`}).join('')}</div>`
+      :`<div class="cmpsum">${selN.map(id=>`<span><i style="background:${projColor(id)}"></i>${esc(ST.projects[id].nombre||'Proyecto')}</span>`).join('')||'<span class="muted">Ninguno elegido</span>'}</div>`}</div>`;
   const L=slots.map((id,slot)=>{if(!id)return null;const c=cmpResult(id);return c&&c.R?{id,slot,d:ST.projects[id],P:c.P,R:c.R}:null}).filter(Boolean);
   if(L.length<2){host.innerHTML=h+`<div class="empty">Elige al menos 2 proyectos.</div>`;return}
   const head=`<tr><th class="c0">Indicador</th>${L.map(p=>`<th class="cmph"><span class="cmpn"><i style="background:${projColor(p.id)}"></i>${esc(p.d.nombre||'Proyecto')}</span><small>${esc(p.d.ciudad||'')} · ${tipoDe(p.P)}</small>${p.id===ST.pid?'<small class="cur">Abierto</small>':`<button class="lnk" data-act="proj-select" data-id="${p.id}">Abrir</button>`}</th>`).join('')}</tr>`;
@@ -2094,7 +2107,7 @@ function renderComparar(){
   const open=L.find(p=>p.id===ST.pid);
   const legend=`<div class="legend">${L.map(p=>`<span style="--c:${projColor(p.id)}">${esc(p.d.nombre||'Proyecto')}${many&&p.id===ST.pid?' (abierto)':''}</span>`).join('')}</div>`;
   h+=`<div class="grid2">
-    <div class="card span2"><h3>Ranking de proyectos</h3><p class="sub">Los mejores entre los proyectos elegidos. El puntaje general promedia la posición en margen, rentabilidad de los socios y salud.</p>${cmpRanking(L,sc)}</div>
+    <div class="card span2"><h3>Ranking de proyectos</h3><p class="sub">Puntaje = posición promedio en margen, TIR de socios y salud. El número pequeño es el puesto en cada columna.</p>${cmpRanking(L,sc)}</div>
     <div class="card span2"><h3>Indicadores</h3><p class="sub">El ✓ marca el mejor valor de cada fila. Los resultados se calculan con los supuestos macro actuales.</p><div class="tbl-wrap"><table class="cmpt"><thead>${head}</thead><tbody>${body}</tbody></table></div></div>
     ${many?`<div class="card span2"><h3>Ranking de márgenes, TIR y exposición</h3><p class="sub">De mejor a peor en cada indicador.${open?' El proyecto abierto va resaltado.':''}</p>${cmpRank(L)}</div>`
       :`<div class="card"><h3>Márgenes, TIR y exposición</h3><p class="sub">Porcentajes. En exposición, menos es mejor.</p><div class="chart-x">${cmpBars(L)}</div>${legend}</div>`}
@@ -2688,6 +2701,8 @@ document.addEventListener('click',async e=>{
     case 'cmp-toggle':{const s=cmpSlots(),id=b.dataset.id,i=s.indexOf(id);
       if(i>=0)s[i]=null;else{const j=s.indexOf(null);if(j<0)s.push(id);else s[j]=id}
       prefs.cmp=s;savePrefs();rr('comparar');break}
+    case 'cmp-open':ST.cmpOpen=!ST.cmpOpen;rr('comparar');break;
+    case 'rk-all':ST.rkAll=!ST.rkAll;rr('comparar');break;
     case 'cmp-all':prefs.cmp=byUpd(Object.keys(ST.projects));savePrefs();rr('comparar');break;
     case 'cmp-none':prefs.cmp=[];savePrefs();rr('comparar');break;
     case 'per':prefs.per=b.dataset.k;savePrefs();rr('resultados');break;
