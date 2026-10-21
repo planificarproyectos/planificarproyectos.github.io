@@ -1893,6 +1893,6 @@ new MutationObserver(()=>{if(!$("appView").hidden)setTimeout(()=>{Inst.card();In
 <script>/* Deslizar para cambiar de sección (celular y tablet) */
 if(window.swipeNav)swipeNav({items:()=>document.querySelectorAll("#bnav button"),
  enabled:()=>{const sp=document.getElementById("splash"),av=document.getElementById("appView");return (!sp||sp.classList.contains("out"))&&av&&!av.hidden&&!document.querySelector("[aria-modal=\"true\"]:not([hidden])")},
- content:()=>document.getElementById("appView")});</script>
+ content:()=>document.querySelector("#appView [id^=view]:not([hidden])")});</script>
 </body>
 </html>

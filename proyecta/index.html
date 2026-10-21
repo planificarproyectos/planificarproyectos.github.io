@@ -2418,7 +2418,7 @@ addEventListener('resize',()=>{if(ST.ready)layout()});
     if(!s||s.scrollWidth-s.clientWidth<4)return;const before=s.scrollLeft;s.scrollLeft+=e.deltaY;if(s.scrollLeft!==before)e.preventDefault()},{passive:false});
 })();
 /* Deslizar para cambiar de sección en celular y tablet (no en la vista de columnas del computador) */
-if(window.swipeNav)swipeNav({items:()=>ST.desk?$$('#dt1 button'):$$('.nav button'),enabled:()=>ST.ready&&!ST.web&&!$('#sheetHost').innerHTML&&$('#wiz').hidden&&!document.body.classList.contains('authing'),content:()=>$('#cols')});
+if(window.swipeNav)swipeNav({items:()=>ST.desk?$$('#dt1 button'):$$('.nav button'),enabled:()=>ST.ready&&!ST.web&&!$('#sheetHost').innerHTML&&$('#wiz').hidden&&!document.body.classList.contains('authing'),content:()=>$('#cols > .screen:not([hidden])')});
 function webHint(){if(prefs.webHint2)return;prefs.webHint2=1;savePrefs();setTimeout(()=>toast('Toca las secciones de abajo para sumarlas como columnas. Arrastra el encabezado de una columna para reordenarla.'),600)}
 /* Arrastrar columnas para reordenarlas */
 let DRAG=null;
