@@ -10,13 +10,16 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="PowerFit">
 <link rel="manifest" href="manifest.webmanifest">
+<script src="/apariencia.js"></script>
 <script>
 window.PF_ACCENTS={lima:['Lima','#C6F432','#4D7A00'],azul:['Azul','#3D8BFF','#1F5FD1'],naranja:['Naranja','#FF8A1F','#B35400'],rosa:['Rosa','#FF4FA3','#C2186B'],cian:['Cian','#22E0E0','#007C85'],morado:['Morado','#A97BFF','#6A3FD1'],amarillo:['Amarillo','#FFD60A','#8A6D00'],coral:['Coral','#FF5A5F','#C62828']};
-window.pfApplyTheme=function(t){ t=t||{}; var a=PF_ACCENTS[t.accent]?t.accent:'lima', light=t.mode==='light', c=PF_ACCENTS[a], r=document.documentElement;
+/* El color puede ser una clave de PF_ACCENTS (versiones anteriores) o un #RRGGBB de la apariencia compartida (/apariencia.js) */
+window.pfAccHex=function(a){ return PF_ACCENTS[a]?PF_ACCENTS[a][1]:((window.Apariencia&&Apariencia.hex(a))||'#C6F432'); };
+window.pfApplyTheme=function(t){ t=t||{}; var h=pfAccHex(t.accent), k=Object.keys(PF_ACCENTS).filter(function(x){ return PF_ACCENTS[x][1]===h; })[0], light=t.mode==='light', c=k?PF_ACCENTS[k]:['',h,window.Apariencia?Apariencia.forLight(h):h], a=h, r=document.documentElement;
   r.setAttribute('data-mode',light?'light':'dark'); r.style.setProperty('--accent',c[1]); r.style.setProperty('--accent-fg',light?c[2]:c[1]);
   var m=document.querySelector('meta[name=theme-color]'); if(m) m.setAttribute('content',light?'#F3F4F1':'#111315');
   window.PF_THEME={accent:a,mode:light?'light':'dark'}; };
-(function(){ var t=null; try{ t=JSON.parse(localStorage.getItem('powerfit:theme')||'null'); }catch(e){} pfApplyTheme(t); })();
+(function(){ var t=window.Apariencia&&Apariencia.local(); if(!t) try{ t=JSON.parse(localStorage.getItem('powerfit:theme')||'null'); }catch(e){} pfApplyTheme(t); })();
 </script>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -639,10 +642,11 @@ var Store={mode:'local',col:null,months:{},
     self.auth.onAuthStateChanged(function(u){
       S.authWait=false;
       if(self.unsub){ self.unsub(); self.unsub=null; } if(self.unsubP){ self.unsubP(); self.unsubP=null; } S.perfilOk=false;
-      if(!u){ Act.ready=false; S.pendingW=null; S.user=null; S.local=true; self.mode='local'; S.sessions=[]; S.routines=[]; S.w=null; S.view='auth'; render(); return; }
+      if(!u){ if(window.Apariencia) Apariencia.disconnect(); Act.ready=false; S.pendingW=null; S.user=null; S.local=true; self.mode='local'; S.sessions=[]; S.routines=[]; S.w=null; S.view='auth'; render(); return; }
       if(S.loginPending){ S.loginPending=false; playSplash(); }
       self.gotFirst=false; S.equip=(function(){ try{ return JSON.parse(localStorage.getItem('powerfit:equip:'+u.uid)||'null'); }catch(e){ return null; } })(); S.user={email:u.email,uid:u.uid,created:u.metadata&&Date.parse(u.metadata.creationTime)}; S.isAdmin=u.uid===ADMIN_UID; S.adm=null; S.noAccess=false; S.local=false; self.mode='db'; self.months={};
       self.col=self.fdb.collection('users').doc(u.uid).collection('powerfit');
+      if(window.Apariencia) Apariencia.connect(self.fdb,u.uid,function(){ return {accent:PF_THEME.accent,mode:PF_THEME.mode}; });
       var loc=self.readLocal(), first=true;
       Act.ready=false; Act.uid=u.uid; S.sessions=[]; S.routines=[]; S.w=null; S.pendingW=null; S.view='home'; S.prev='home'; Act.restore(u.uid,null); Act.ready=false; render();
       var me=u.uid;
@@ -679,11 +683,11 @@ var Store={mode:'local',col:null,months:{},
         snap.docs.forEach(function(d){ var b=d.data()||{};
           if(d.id==='equip'){ hasEquip=true; if(JSON.stringify(b.list||[])!==JSON.stringify(S.equip)) setEquip(b.list||[],false); }
           else if(d.id==='active'){ remoteAct=b; }
-          else if(d.id==='prefs'){ hasPrefs=true; if(!S.perfilOk&&b.name&&b.name!==S.name){ S.name=b.name||''; try{localStorage.setItem('powerfit:name',S.name);}catch(e){} prefsChanged=true; } if(b.accent!==PF_THEME.accent||b.mode!==PF_THEME.mode){ setTheme(b,false); prefsChanged=true; } }
+          else if(d.id==='prefs'){ hasPrefs=true; if(!S.perfilOk&&b.name&&b.name!==S.name){ S.name=b.name||''; try{localStorage.setItem('powerfit:name',S.name);}catch(e){} prefsChanged=true; } }
           else if(d.id==='routines') rts=b.list||[];
           else if(d.id.indexOf('m-')===0){ self.months[d.id]=b.sessions||[]; ses=ses.concat(b.sessions||[]); } });
         S.sessions=ses.sort(function(a,b){return a.ts-b.ts;}); S.routines=rts;
-        if(wasFirst&&!hasPrefs) setTheme({},true);
+
         if(wasFirst&&!hasEquip&&S.equip) setEquip(S.equip,true);
         if(wasFirst){ if(remoteAct&&remoteAct.w){ var loc0=Act.read(); if(!loc0||remoteAct.upd>(loc0.upd||0)){ S.w=null; S.pendingW=null; Act.restore(S.user.uid,remoteAct); render(); } } Act.ready=true; }
         if(S.view!=='work'&&S.view!=='builder') render();
@@ -1112,17 +1116,17 @@ function setEquip(list,save){
   if(save&&Store.mode==='db'&&Store.col) Store.col.doc('equip').set({list:list}).catch(function(){ toast('No se pudo guardar tu equipo.'); });
 }
 
-/* Apariencia */
+/* Apariencia compartida con Proyecta, Lumen y Mind Focus (/apariencia.js): los cambios se guardan en la cuenta y llegan
+   en vivo desde cualquiera de las apps. El tema que PowerFit guardaba en powerfit/prefs ya no se aplica. */
 function setTheme(patch,save){
+  if(save&&window.Apariencia){ Apariencia.set(patch); return; }
   var t={accent:PF_THEME.accent,mode:PF_THEME.mode}; for(var k in patch) t[k]=patch[k];
   pfApplyTheme(t); try{ localStorage.setItem('powerfit:theme',JSON.stringify(PF_THEME)); }catch(e){}
-  if(save&&Store.mode==='db'&&Store.col) Store.col.doc('prefs').set({accent:PF_THEME.accent,mode:PF_THEME.mode},{merge:true}).catch(function(){ toast('No se pudo guardar en tu cuenta.'); });
 }
+if(window.Apariencia) Apariencia.on(function(s,preview){ setTheme(s,false); if(!preview&&typeof render==='function') keep(render); });
 function vTheme(){
-  var sw=Object.keys(PF_ACCENTS).map(function(k){ var c=PF_ACCENTS[k], on=PF_THEME.accent===k;
-    return '<button class="sw" role="radio" aria-checked="'+on+'" data-a="accent" data-v="'+k+'"><i style="background:'+c[1]+'">'+(on?ic('check',20,3):'')+'</i>'+c[0]+'</button>'; }).join('');
-  var dark=PF_THEME.mode!=='light';
-  return '<section class="stack"><h2>Apariencia</h2><div class="panel"><b class="small">Color de énfasis</b><div class="swatches" role="radiogroup" aria-label="Color de énfasis">'+sw+'</div></div>'+
+  var sw=window.Apariencia?Apariencia.picker(PF_THEME.accent):'', dark=PF_THEME.mode!=='light';
+  return '<section class="stack"><h2>Apariencia</h2><div class="panel" style="--ap-bg:var(--surface)"><b class="small">Color de énfasis</b>'+sw+'<span class="muted small">Se aplica también en Proyecta, Lumen y Mind Focus</span></div>'+
    '<div class="panel"><div class="between"><div class="stack" style="gap:2px"><b>Modo oscuro</b><span class="muted small">'+(dark?'Activado':'Desactivado')+' · no depende del celular</span></div>'+
    '<button class="switch" role="switch" aria-checked="'+dark+'" aria-label="Modo oscuro" data-a="darkMode"></button></div></div></section>';
 }

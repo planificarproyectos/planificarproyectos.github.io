@@ -40,7 +40,8 @@ var ACCENTS={lima:['Lima','#C6F432','#4D7A00'],dorado:['Dorado','#E3B95B','#8A65
 /* ---------- Estado guardado ---------- */
 var BASE={name:'',accent:'lima',mode:'dark',rate:1,voice:'',guided:false,done:{},ros:{},plans:{},rem:null}, S={};
 function KEY(){ return 'lumen:v1'+(Cloud.user?':'+Cloud.user.uid:''); }
-function loadLocal(){ S=JSON.parse(JSON.stringify(BASE)); try{ var t=JSON.parse(localStorage.getItem('lumen:theme')||'null'); if(t){ S.accent=t.accent||S.accent; S.mode=t.mode||S.mode; } var raw=localStorage.getItem(KEY()); if(raw){ var o=JSON.parse(raw); for(var k in o) S[k]=o[k]; } }catch(e){} }
+function loadLocal(){ S=JSON.parse(JSON.stringify(BASE)); try{ var t=JSON.parse(localStorage.getItem('lumen:theme')||'null'); if(t){ S.accent=t.accent||S.accent; S.mode=t.mode||S.mode; } var raw=localStorage.getItem(KEY()); if(raw){ var o=JSON.parse(raw); for(var k in o) S[k]=o[k]; } }catch(e){}
+ var ap=window.Apariencia&&Apariencia.local(); if(ap){ S.accent=ap.accent; S.mode=ap.mode; } } // la apariencia compartida con las otras apps manda
 function saveLocal(){ try{ localStorage.setItem(KEY(),JSON.stringify(S)); localStorage.setItem('lumen:theme',JSON.stringify({accent:S.accent,mode:S.mode})); }catch(e){} }
 function save(){ saveLocal(); Cloud.push(); }
 function prune(o,days){ var lim=dkey(new Date(Date.now()-days*864e5)), r={}; for(var k in o) if(k.slice(0,10)>=lim) r[k]=o[k]; return r; }
@@ -55,10 +56,11 @@ var Cloud={auth:null,db:null,user:null,wait:false,ref:null,unsub:null,prof:null,
   self.wait=true;
   self.auth.onAuthStateChanged(function(u){
    self.wait=false; if(self.unsub){ self.unsub(); self.unsub=null; } if(self.unsubP){ self.unsubP(); self.unsubP=null; } self.perfilOk=false; self.prof=null; clearTimeout(self.t);
-   if(!u){ self.user=null; self.ref=null; self.noAccess=false; loadLocal(); applyTheme(); render(); return; }
+   if(!u){ self.user=null; self.ref=null; self.noAccess=false; if(window.Apariencia) Apariencia.disconnect(); loadLocal(); applyTheme(); render(); return; }
    if(self.loginPending){ self.loginPending=false; playSplash(); }
    self.user={email:u.email,uid:u.uid,created:u.metadata&&Date.parse(u.metadata.creationTime)}; self.noAccess=false; loadLocal(); applyTheme(); U.tab='home';
    self.ref=self.db.collection('users').doc(u.uid).collection('lumen').doc('data');
+   if(window.Apariencia) Apariencia.connect(self.db,u.uid,function(){ return {accent:accHex(S.accent),mode:S.mode}; });
    render();
    var me=u.uid;
    self.ensureAccess(u).then(function(ok){ if(!self.user||self.user.uid!==me) return; if(!ok){ self.noAccess=true; render(); return; } self.sub(); });
@@ -86,7 +88,7 @@ var Cloud={auth:null,db:null,user:null,wait:false,ref:null,unsub:null,prof:null,
    if(first){ first=false; if(!sn.exists){ self.push(true); return; } }
    if(!sn.exists||sn.metadata.hasPendingWrites) return;
    var d=sn.data()||{};
-   ['done','ros','name','guided','rate','accent','mode','plans','rem'].forEach(function(k){ if(d[k]!==undefined&&!(k==='name'&&(self.perfilOk||!d[k]))) S[k]=d[k]; });
+   ['done','ros','name','guided','rate','plans','rem'].forEach(function(k){ if(d[k]!==undefined&&!(k==='name'&&(self.perfilOk||!d[k]))) S[k]=d[k]; });
    saveLocal(); applyTheme();
    var a=document.activeElement; if(!(a&&(a.id==='bq'||a.id==='nm'))) render();
   },function(e){ console.warn('firestore',e); if(e&&e.code==='permission-denied'){ self.noAccess=true; render(); } else toast('No se pudo leer tu cuenta. Revisa tu conexión.'); });
@@ -102,8 +104,12 @@ var Cloud={auth:null,db:null,user:null,wait:false,ref:null,unsub:null,prof:null,
   this.prof.set({nombre:v,upd:Date.now()},{merge:true}).then(function(){ toast('Nombre guardado para Mind Focus, PowerFit y Lumen'); },function(){ toast('Guardado en Lumen; no se pudo compartir con las otras apps.'); }); }
 };
 loadLocal();
+/* El color puede venir como clave de ACCENTS (versiones anteriores) o como #RRGGBB de la apariencia compartida */
+function accHex(a){ return ACCENTS[a]?ACCENTS[a][1]:((window.Apariencia&&Apariencia.hex(a))||ACCENTS.lima[1]); }
+function accTriple(a){ var h=accHex(a); for(var k in ACCENTS) if(ACCENTS[k][1]===h) return ACCENTS[k]; return ['',h,window.Apariencia?Apariencia.forLight(h):h]; }
+if(window.Apariencia) Apariencia.on(function(s,preview){ S.accent=s.accent; S.mode=s.mode; applyTheme(); if(!preview){ saveLocal(); render(); } });
 function applyTheme(){
- var c=ACCENTS[S.accent]||ACCENTS.lima, light=S.mode==='light', r=document.documentElement;
+ var c=accTriple(S.accent), light=S.mode==='light', r=document.documentElement;
  r.setAttribute('data-theme',light?'light':'dark');
  r.style.setProperty('--accent',c[1]); r.style.setProperty('--accent-fg',light?c[2]:c[1]);
  var m=document.querySelector('meta[name=theme-color]'); if(m) m.setAttribute('content',light?'#F3F2EE':'#111315');
@@ -856,7 +862,7 @@ function vMe(){
   +'</section>'
   +'<section class="stack"><h2>Recordatorios</h2>'+remPanel()+'</section>'
   +'<section class="stack"><h2>Modo bolsillo</h2>'+pinGuide()+'</section>'
-  +'<section class="stack"><h2>Apariencia</h2><div class="panel"><b class="small">Color de énfasis</b><div class="swatches" role="radiogroup" aria-label="Color de énfasis">'+Object.keys(ACCENTS).map(function(k){ var c=ACCENTS[k], on=S.accent===k; return '<button class="sw'+(on?' on':'')+'" role="radio" data-a="accent" data-v="'+k+'" aria-checked="'+on+'"><i style="background:'+c[1]+'">'+(on?ic('check',18,3):'')+'</i>'+c[0]+'</button>'; }).join('')+'</div></div>'
+  +'<section class="stack"><h2>Apariencia</h2><div class="panel" style="--ap-bg:var(--surface)"><b class="small">Color de énfasis</b>'+(window.Apariencia?Apariencia.picker(accHex(S.accent)):'')+'<span class="small muted">Se aplica también en Proyecta, Mind Focus y PowerFit</span></div>'
    +'<div class="panel"><div class="between"><div class="stack" style="gap:2px"><b>Modo oscuro</b><span class="small muted">'+(dark?'Activado':'Desactivado')+' · no depende del celular</span></div><button class="switch" role="switch" aria-checked="'+dark+'" aria-label="Modo oscuro" data-a="dark"></button></div></div></section>'
   +'<section class="stack"><h2>Lectura en voz alta</h2><div class="panel">'
   +(TTS?'<label class="small muted" for="vsel">Voz</label><select class="inp" id="vsel" data-a="voice"><option value="">Automática (recomendada)</option>'+vs.map(function(v,k){ return '<option value="'+esc(v.name)+'"'+(v.name===S.voice?' selected':'')+'>'+esc(v.name)+' ('+v.lang+')'+(k===0?' · mejor disponible':'')+'</option>'; }).join('')+'</select>'
@@ -945,8 +951,8 @@ document.addEventListener('click',function(e){
  if(a==='chap'){ U.vsel=null; U.hl=null; U.ch=+v; stopSpeak(); render(); window.scrollTo(0,0); return; }
  if(a==='bback'){ U.vsel=null; U.bk=null; render(); return; }
  if(a==='cback'){ U.vsel=null; if(U.plan) U.bk=null; U.hl=null; U.from=null; U.ch=null; stopSpeak(); render(); return; }
- if(a==='mode'){ S.mode=v; applyTheme(); save(); render(); return; }
- if(a==='dark'){ S.mode=S.mode==='light'?'dark':'light'; applyTheme(); save(); render(); return; }
+ if(a==='mode'){ if(window.Apariencia){ Apariencia.set({mode:v}); return; } S.mode=v; applyTheme(); save(); render(); return; }
+ if(a==='dark'){ var nm=S.mode==='light'?'dark':'light'; if(window.Apariencia){ Apariencia.set({mode:nm}); return; } S.mode=nm; applyTheme(); save(); render(); return; }
  if(a==='saveName'){ var nv=(($('nm')||{}).value||'').trim().slice(0,30); if(!nv){ toast('Escribe tu nombre.'); return; } S.name=nv; save(); Cloud.pushName(nv); render(); return; }
  if(a==='accent'){ S.accent=v; applyTheme(); save(); render(); return; }
  if(a==='reset'){ U.confirmReset=true; render(); return; }

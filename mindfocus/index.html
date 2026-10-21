@@ -10,13 +10,16 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Mind Focus</title>
+<script src="/apariencia.js"></script>
 <script>
 window.MF_ACCENTS={lima:['Lima','#C6F432','#4D7A00'],azul:['Azul','#3D8BFF','#1F5FD1'],naranja:['Naranja','#FF8A1F','#B35400'],rosa:['Rosa','#FF4FA3','#C2186B'],cian:['Cian','#22E0E0','#007C85'],morado:['Morado','#A97BFF','#6A3FD1'],amarillo:['Amarillo','#FFD60A','#8A6D00'],coral:['Coral','#FF5A5F','#C62828']};
-window.mfApplyTheme=function(t){t=t||{};var a=MF_ACCENTS[t.accent]?t.accent:'lima',light=t.mode==='light',c=MF_ACCENTS[a],r=document.documentElement;
+/* El color puede ser una clave de MF_ACCENTS (versiones anteriores) o un #RRGGBB de la apariencia compartida (/apariencia.js) */
+window.mfAccHex=function(a){return MF_ACCENTS[a]?MF_ACCENTS[a][1]:((window.Apariencia&&Apariencia.hex(a))||'#C6F432')};
+window.mfApplyTheme=function(t){t=t||{};var h=mfAccHex(t.accent),k=Object.keys(MF_ACCENTS).find(function(x){return MF_ACCENTS[x][1]===h}),light=t.mode==='light',c=k?MF_ACCENTS[k]:['',h,window.Apariencia?Apariencia.forLight(h):h],a=h,r=document.documentElement;
   r.setAttribute('data-theme',light?'light':'dark');r.style.setProperty('--accent',c[1]);r.style.setProperty('--accent-fg',light?c[2]:c[1]);
   var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content',light?'#F3F4F1':'#111315');
   window.MF_THEME={accent:a,mode:light?'light':'dark'};try{localStorage.setItem('mf:theme',JSON.stringify(MF_THEME));localStorage.setItem('bitacora_tema',MF_THEME.mode)}catch(e){}};
-(function(){var t=null;try{t=JSON.parse(localStorage.getItem('mf:theme')||'null')}catch(e){}mfApplyTheme(t)})();
+(function(){var t=window.Apariencia&&Apariencia.local();if(!t)try{t=JSON.parse(localStorage.getItem('mf:theme')||'null')}catch(e){}mfApplyTheme(t)})();
 </script>
 
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -1450,7 +1453,7 @@ $("authForm").addEventListener("submit",async ev=>{
 });
 $("aForgot").onclick=async()=>{const em=$("aEmail").value.trim();if(!em){authMsg("Escribe tu correo y vuelve a pulsar «Olvidé mi contraseña».");$("aEmail").focus();return}
   try{await auth.sendPasswordResetEmail(em,{url:"https://www.planificarproyectos.com/mindfocus/"});authMsg("Te enviamos un correo para restablecer la contraseña.")}catch(e){authMsg(errTxt(e))}};
-$("logoutBtn").onclick=()=>auth.signOut();
+$("logoutBtn").onclick=()=>{if(window.Apariencia)Apariencia.disconnect();auth.signOut()};
 $("pwdBtn").onclick=async()=>{const u=auth.currentUser;if(!u)return;
   try{await auth.sendPasswordResetEmail(u.email,{url:"https://www.planificarproyectos.com/mindfocus/"});$("storeBanner").hidden=false;$("storeBanner").textContent="Te enviamos un correo a "+u.email+" para cambiar la contraseña."}catch(e){$("storeBanner").hidden=false;$("storeBanner").textContent=errTxt(e)}};
 
@@ -1598,6 +1601,7 @@ else{
     $("appView").hidden=false;$("acctBar").hidden=false;$("acctEmail").textContent=user.email;
     const base=db.collection("users").doc(user.uid);
     col=base.collection("entradas");cfgDoc=base.collection("config").doc("categorias");profDoc=base.collection("perfil").doc("datos");
+    if(window.Apariencia)Apariencia.connect(db,user.uid,()=>({accent:MF_THEME.accent,mode:MF_THEME.mode}));
     unsubs.push(profDoc.onSnapshot(snap=>{try{onPerfil(snap.exists?snap.data():null)}catch(e){}},()=>{}));
     renderAll();
     unsubs.push(cfgDoc.onSnapshot(snap=>{const d=snap.exists&&snap.data();if(d&&Array.isArray(d.lista)&&d.lista.length)cats=JSON.parse(JSON.stringify(d.lista));onCfg(d||{});renderAll()},()=>{}));
@@ -1777,8 +1781,11 @@ setView("home");
 // ================= ESTÉTICA POWERFIT: CUENTA, APARIENCIA Y BIENVENIDA =================
 const IC={key:'<path d="M15 7a4 4 0 1 1-3.9 5H7v3H4v-3H2v-3h9.1A4 4 0 0 1 15 7z"/>',dl:'<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',ul:'<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>',csv:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h7"/>',out:'<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',chev:'<path d="M9 6l6 6-6 6"/>',check:'<path d="M5 12l5 5 9-10"/>',apps:'<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>',chat:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-5A8 8 0 1 1 21 12z"/>',bulb:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/>',trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'};
 const icn=(k,sz,w)=>'<svg viewBox="0 0 24 24" width="'+(sz||22)+'" height="'+(sz||22)+'" fill="none" stroke="currentColor" stroke-width="'+(w||1.9)+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+IC[k]+'</svg>';
-function setMfTheme(patch,save){const t=Object.assign({},window.MF_THEME||{},patch);mfApplyTheme(t);renderTheme();if(save&&cfgDoc)cfgDoc.set({tema:{accent:MF_THEME.accent,mode:MF_THEME.mode}},{merge:true}).catch(()=>toast("No se pudo guardar en tu cuenta."))}
-{const _o=onCfg;onCfg=function(d){_o(d);const t=d&&d.tema;if(t&&(t.accent!==MF_THEME.accent||t.mode!==MF_THEME.mode)){mfApplyTheme(t);renderTheme()}}}
+/* Apariencia compartida con Proyecta, Lumen y PowerFit (/apariencia.js): los cambios se guardan en la cuenta y llegan
+   en vivo desde cualquiera de las apps. El tema que Mind Focus guardaba aparte (config/categorias.tema) ya no se usa;
+   si la cuenta aún no tiene apariencia compartida, se crea con la que tenga Mind Focus en ese momento. */
+function setMfTheme(patch,save){if(save&&window.Apariencia){Apariencia.set(patch);return}const t=Object.assign({},window.MF_THEME||{},patch);mfApplyTheme(t);renderTheme()}
+if(window.Apariencia)Apariencia.on((s,preview)=>{mfApplyTheme(s);if(!preview)renderTheme()});
 // Cuenta al estilo PowerFit
 {const acc=$("viewAcc").querySelector(".col"),stash=document.createElement("div");stash.hidden=true;document.body.appendChild(stash);
  const aiPanel=$("aiTitle").closest(".panel");stash.append(aiPanel,$("themeBtn"),$("accEmail"),$("pwdBtn"),$("logoutBtn"));
@@ -1797,7 +1804,7 @@ function setMfTheme(patch,save){const t=Object.assign({},window.MF_THEME||{},pat
   '<button class="card" data-c="logoutBtn">'+icn("out")+'<span class="grow"><b>Cerrar sesión</b><span>Tus datos quedan guardados en tu cuenta</span></span><span class="chev2">'+icn("chev",20)+'</span></button>'+
   '<button class="card danger" id="wipeBtn">'+icn("trash")+'<span class="grow"><b>Borrar mi historial</b><span>Elimina todos tus registros. No se puede deshacer</span></span><span class="chev2">'+icn("chev",20)+'</span></button>'+
   '<p class="status" id="aiStatusSlot"></p></section>'+
-  '<section class="stack"><h2>Apariencia</h2><div class="panel"><b class="small">Color de énfasis</b><div class="swatches" role="radiogroup" aria-label="Color de énfasis" id="swatches"></div></div>'+
+  '<section class="stack"><h2>Apariencia</h2><div class="panel"><b class="small">Color de énfasis</b><div class="stack" id="swatches" style="gap:8px;--ap-bg:var(--surface)"></div></div>'+
   '<div class="panel"><div class="between"><div class="stack" style="gap:2px"><b>Modo oscuro</b><span class="status" id="modeSub"></span></div><button class="switch" role="switch" id="modeSw" aria-label="Modo oscuro"></button></div></div></section>'+
   '<h2 style="margin-top:6px">Categorías</h2>';
  acc.prepend(top);
@@ -1815,8 +1822,7 @@ function setMfTheme(patch,save){const t=Object.assign({},window.MF_THEME||{},pat
 }
 function renderTheme(){
   const sw=$("swatches");if(!sw)return;
-  sw.innerHTML=Object.keys(MF_ACCENTS).map(k=>{const c=MF_ACCENTS[k],on=MF_THEME.accent===k;return '<button class="sw" role="radio" aria-checked="'+on+'" data-k="'+k+'"><i style="background:'+c[1]+'">'+(on?icn("check",20,3):'')+'</i>'+c[0]+'</button>'}).join("");
-  sw.querySelectorAll(".sw").forEach(b=>b.onclick=()=>setMfTheme({accent:b.dataset.k},true));
+  sw.innerHTML=window.Apariencia?Apariencia.picker(MF_THEME.accent)+'<span class="status">Se aplica también en Proyecta, Lumen y PowerFit</span>':'';
   const dark=MF_THEME.mode!=="light";$("modeSw").setAttribute("aria-checked",dark);$("modeSub").textContent=(dark?"Activado":"Desactivado")+" · no depende del celular";
 }
 function renderAccTop(){
