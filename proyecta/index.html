@@ -1271,7 +1271,7 @@ ST.sub=()=>prefs.sub;
 function updateAppbar(){$('#projName').textContent=ST.P?ST.P.general.nombre||'Proyecto':(ST.ready?'Sin proyectos':'Cargando…')}
 function showBanner(){$('#bannerWrap').hidden=false;setTimeout(layout,0);$('#banner').innerHTML=`<span><b>Otra persona actualizó este proyecto.</b> Tus cambios sin guardar se perderían si cargas su versión.</span><span class="row"><button class="btn sm" data-act="remote-keep">Conservar los míos</button><button class="btn sm pri" data-act="remote-load">Cargar la nueva</button></span>`}
 function hideBanner(){$('#bannerWrap').hidden=true;if(ST.ready)setTimeout(layout,0)}
-function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2600)}
+function toast(m,ms){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,ms||2600)}
 function openSheet(html){$('#sheetHost').innerHTML=`<div class="sheet-bg" data-bg="1"><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${html}</div></div>`;paintNames()}
 function closeSheet(){$('#sheetHost').innerHTML=''}
 async function paintNames(){const els=$$('[data-uid]');if(!els.length)return;
@@ -1963,13 +1963,34 @@ function wzRender(){const s=WZ_STEPS[WZ.i],n=WZ_STEPS.length,last=WZ.i===n-1;
    <div class="wzfields">${s.body(WZ.a)}</div><p class="wzerr" id="wzErr" role="alert"></p></div>
    <div class="wzfoot">${WZ.i>0?'<button class="btn" data-act="wz-back">Atrás</button>':'<span></span>'}${last?`<button class="btn pri" data-act="wz-save">Guardar proyecto</button>`:`<button class="btn pri" data-act="wz-next">${WZ.i===0?'Empezar':'Siguiente'}</button>`}</div></div>`;
   const b=$('#wiz .wzbody');if(b)b.scrollTop=0}
-function wzStop(){WZ.speaking=false;try{speechSynthesis.cancel()}catch(e){}}
-function wzSay(){if(WZ.speaking){wzStop();wzRender();return}
+/* Lectura en voz alta del asistente (misma técnica que Lumen): el texto se lee por frases cortas, porque Chrome corta
+   las largas; se guarda cada frase para que el navegador no la descarte antes de leerla; solo se cancela si algo suena,
+   y si Android ignora la primera orden se reintenta una vez. Si no suena, se explica qué revisar. */
+const TTS_REF=[];let wzGen=0,wzWatch=0;
+function wzChunks(t){const out=[];(String(t).replace(/\s+/g,' ').trim().match(/[^.!?;:]+[.!?;:]*/g)||[]).forEach(p=>{p=p.trim();
+  while(p.length>180){let c=p.lastIndexOf(',',180);if(c<60)c=p.lastIndexOf(' ',180);if(c<1)c=180;out.push(p.slice(0,c+1).trim());p=p.slice(c+1).trim()}if(p)out.push(p)});return out}
+function wzVoice(){const vs=speechSynthesis.getVoices().filter(x=>/^es/i.test(x.lang)),sc=x=>(/google|natural|neural|premium|enhanced/i.test(x.name)?2:0)+(/^es[-_](CO|US|MX|419)/i.test(x.lang)?1:0);return vs.sort((a,b)=>sc(b)-sc(a))[0]}
+function wzBtn(on){const b=$('#wiz [data-act="wz-say"]');if(b)b.textContent=on?'■ Detener':'🔊 Escuchar'}
+function ttsHelp(){const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  toast(ios?'No se escucha: quita el modo silencio del iPhone y sube el volumen.':'No se escucha: sube el volumen multimedia y revisa que el celular tenga una voz en español (Ajustes › Idioma › Salida de texto a voz).',7000)}
+function wzStop(){WZ.speaking=false;wzGen++;clearTimeout(wzWatch);try{const ss=speechSynthesis;if(ss.speaking||ss.pending)ss.cancel()}catch(e){}}
+function wzSay(){if(WZ.speaking){wzStop();wzBtn(false);return}
   if(!('speechSynthesis' in window)){toast('Tu navegador no permite leer en voz alta');return}
-  const s=WZ_STEPS[WZ.i],u=new SpeechSynthesisUtterance([s.t,s.q,s.h].filter(Boolean).join('. '));
-  const v=speechSynthesis.getVoices().filter(x=>/^es/i.test(x.lang)).sort((x,y)=>(/google|natural|neural|premium/i.test(y.name)?1:0)-(/google|natural|neural|premium/i.test(x.name)?1:0))[0];
-  if(v){u.voice=v;u.lang=v.lang}else u.lang='es-CO';u.onend=u.onerror=()=>{WZ.speaking=false;const btn=$('#wiz [data-act="wz-say"]');if(btn)btn.textContent='🔊 Escuchar'};
-  wzStop();WZ.speaking=true;speechSynthesis.speak(u);const btn=$('#wiz [data-act="wz-say"]');if(btn)btn.textContent='■ Detener'}
+  const s=WZ_STEPS[WZ.i],Q=wzChunks([s.t,s.q,s.h].filter(Boolean).join('. '));if(!Q.length)return;
+  wzStop();WZ.speaking=true;wzBtn(true);let my=wzGen,qi=0,started=false;
+  const next=()=>{if(my!==wzGen)return;if(qi>=Q.length){WZ.speaking=false;wzBtn(false);return}
+    const u=new SpeechSynthesisUtterance(Q[qi]),v=wzVoice();if(v){u.voice=v;u.lang=v.lang}else u.lang='es-CO';u.rate=1;u.volume=1;
+    u.onstart=()=>{if(my===wzGen)started=true};
+    u.onend=()=>{if(my!==wzGen)return;started=true;qi++;setTimeout(next,120)};
+    u.onerror=e=>{if(my!==wzGen)return;const er=e&&e.error;if(er==='interrupted'||er==='canceled')return;
+      if(!started&&/not-allowed|audio-busy|synthesis-unavailable|language-unavailable|voice-unavailable/.test(er||'')){WZ.speaking=false;wzBtn(false);ttsHelp();return}qi++;next()};
+    TTS_REF.push(u);if(TTS_REF.length>40)TTS_REF.shift();
+    try{speechSynthesis.speak(u);if(speechSynthesis.paused)speechSynthesis.resume()}catch(e){}};
+  next();   // en el mismo toque, como exige el iPhone
+  wzWatch=setTimeout(()=>{if(my!==wzGen||started)return;   // Android a veces ignora la primera orden: reintenta una vez
+    try{speechSynthesis.cancel()}catch(e){}my=++wzGen;qi=0;next();
+    wzWatch=setTimeout(()=>{if(my===wzGen&&!started&&!speechSynthesis.speaking){wzGen++;WZ.speaking=false;wzBtn(false);ttsHelp()}},3000)},450)}
+if('speechSynthesis' in window)try{speechSynthesis.getVoices()}catch(e){}
 function wzNext(){const s=WZ_STEPS[WZ.i],err=s.ok&&s.ok(WZ.a);if(err){$('#wzErr').textContent=err;return}wzStop();
   if(WZ.i===1&&WZ.a.tipo==='VIS'&&ESP_CIUDADES.test(WZ.a.ciudad||''))WZ.a.topeEsp=true;
   WZ.i=Math.min(WZ_STEPS.length-1,WZ.i+1);WZ.opt=null;wzRender()}
