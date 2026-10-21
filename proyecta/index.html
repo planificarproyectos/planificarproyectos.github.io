@@ -378,6 +378,24 @@ body.authing .nav,body.authing .appbar{visibility:hidden}
 @keyframes pj-word{from{opacity:0;transform:translateY(12px);letter-spacing:.4em}to{opacity:1;transform:none;letter-spacing:.06em}}
 @keyframes pj-auto{to{opacity:0;visibility:hidden}}
 @media (prefers-reduced-motion:reduce){#splash *{animation:none!important;stroke-dashoffset:0!important;opacity:1!important}#splash .fl{opacity:0!important}}
+/* Ayuda: manual y glosario */
+.hsteps{display:grid;gap:8px}
+.hstep{background:var(--sunk);border-radius:var(--r-sm)}
+.hstep summary{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;list-style:none}
+.hstep summary::-webkit-details-marker{display:none}
+.hstep summary .grow{flex:1;min-width:0}
+.hstep summary b{display:block;font-size:14px}
+.hstep summary small{display:block;color:var(--muted);font-size:12px}
+.hstep summary svg{transition:transform .2s;flex:none;color:var(--muted)}
+.hstep[open] summary svg{transform:rotate(90deg)}
+.hnum{flex:none;width:28px;height:28px;border-radius:50%;background:var(--acc);color:var(--on-acc);display:grid;place-items:center;font-weight:800;font-size:13px}
+.hstep ul{margin:0;padding:0 16px 4px 54px;display:grid;gap:6px;font-size:13.5px;line-height:1.45}
+.hstep .btn{margin:8px 14px 14px 54px}
+.glos{margin:0;display:grid;gap:2px}
+.glos>div{padding:10px 0;border-top:1px solid var(--line)}
+.glos>div:first-child{border-top:0}
+.glos dt{font-weight:800;font-size:14px}
+.glos dd{margin:2px 0 0;color:var(--muted);font-size:13px;line-height:1.45}
 /* Solicitudes de acceso */
 [data-go="cuenta"][data-badge]{position:relative}
 [data-go="cuenta"][data-badge]::after{content:attr(data-badge);position:absolute;top:4px;left:calc(50% + 6px);min-width:17px;height:17px;padding:0 5px;border-radius:99px;background:var(--neg);color:#fff;font-size:10.5px;font-weight:800;line-height:17px;text-align:center;box-sizing:border-box}
@@ -1781,8 +1799,116 @@ function renderComparar(){
 /* ---------- CUENTA ---------- */
 function roleName(){if(ST.mode==='fb')return 'Tu cuenta';if(ST.mode!=='db')return 'Este dispositivo';if(ST.role.owner)return 'Propietario';if(ST.role.edit)return 'Editor';if(ST.readOnly||ST.role.write===false)return 'Solo lectura';return 'Colaborador'}
 function canMacro(){return ST.mode!=='db'||ST.role.edit||ST.role.owner}
-const WI={user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',key:'<circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M14 9l2 2"/>',xls:'<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 12l6 6M15 12l-6 6"/>',dl:'<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',chk:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',chat:'<path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/>',bulb:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',out:'<path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 8l-4 4 4 4M6 12h10"/>',trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',apps:'<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',chev:'<path d="m9 6 6 6-6 6"/>'};
+const WI={manual:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19a2 2 0 0 1 2-2h13M9 7h6M9 11h6"/>',glos:'<path d="M5 3h10l4 4v14H5zM15 3v4h4M8 11h8M8 15h8M8 19h5"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',key:'<circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M14 9l2 2"/>',xls:'<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 12l6 6M15 12l-6 6"/>',dl:'<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',chk:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',chat:'<path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/>',bulb:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',out:'<path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 8l-4 4 4 4M6 12h10"/>',trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',apps:'<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',chev:'<path d="m9 6 6 6-6 6"/>'};
 const wic=(k,s=22,w=1.8)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${WI[k]}</svg>`;
+/* ---------- Ayuda: manual paso a paso y glosario (solo en Cuenta) ---------- */
+const HELP_STEPS=[
+ {t:'Crea o elige el proyecto',w:'Nombre del proyecto en la barra superior › Proyectos',go:'proj',
+  p:['Toca el nombre del proyecto arriba para abrir la lista de proyectos.','Elige “Nuevo en blanco” para empezar de cero, o un ejemplo (No VIS, VIS o VIP) para practicar con datos de referencia.','“Duplicar actual” crea una copia para probar otra alternativa sin tocar la original.','Todo se guarda solo en tu cuenta y se ve igual en todos tus dispositivos.']},
+ {t:'Revisa los supuestos macro de la empresa',w:'Cuenta › Supuestos macro de la empresa',go:'cuenta',
+  p:['Se configuran una vez y aplican a todos los proyectos.','Año base y SMMLV del año base: con ellos se calculan los topes VIS y VIP y los subsidios.','Topes VIS, VIS especial y VIP, en SMMLV.','Tabla por año: inflación, ICCV (costos de construcción), incremento del SMMLV e IBR. Son proyecciones editables, no pronósticos oficiales.','“Volver a los valores de referencia” restablece los valores sugeridos.']},
+ {t:'Datos generales',w:'Modelo › General',go:'modelo:general',
+  p:['Nombre del proyecto y ciudad.','Mes 0 del flujo: el mes en que arranca el proyecto; todos los meses se cuentan desde ahí.','Vehículo del negocio: fiducia (la renta la paga cada socio) o sociedad (la paga el proyecto).','Tasa de descuento (TIO): la rentabilidad mínima que esperan los socios; con ella se calcula el VPN y se compara la TIR.','Margen mínimo exigido: si el margen queda por debajo, aparece una alerta.']},
+ {t:'Producto: etapas y tipologías',w:'Modelo › Producto',go:'modelo:producto',
+  p:['Crea una etapa por torre o fase que se venda y construya por separado.','En cada etapa: tipo de vivienda (No VIS, VIS o VIP), número de pisos y la relación área construida / área vendible.','Si es VIS en una ciudad con tope especial, activa “Tope VIS de 150 SMMLV”.','Agrega las tipologías de cada etapa: nombre, clase (apartamento, parqueadero, depósito o local), unidades, área vendible y precio.','El precio es por m² para apartamentos y locales, y por unidad para parqueaderos y depósitos.','Prima por piso y prima por vista suben el precio de las unidades más altas o con vista.']},
+ {t:'Ventas y plan de pagos',w:'Modelo › Ventas',go:'modelo:ventas',
+  p:['Por etapa: mes de inicio de ventas, velocidad base (unidades por mes), curva de ventas, incremento mensual de precio y descuento promedio.','Punto de equilibrio: el % de unidades que debe venderse antes de iniciar obra.','Mes mínimo de inicio de obra, duración de obra y ventana de escrituración.','Sala de ventas y apartamento modelo.','Plan de pagos del comprador: separación, cuota inicial y abonos con cesantías y primas.','Desistimientos: qué % de las ventas se cae, cuántos meses después y qué penalidad se retiene.','Subsidios (solo VIS y VIP): % de compradores con subsidio nacional o de caja, su monto en SMMLV y el rezago de pago.']},
+ {t:'Costos',w:'Modelo › Costos',go:'modelo:costos',
+  p:['Presupuesto de obra por capítulos, en pesos por m² construido a precios del mes 0, con el % del plazo de obra en que empieza y termina cada uno.','Imprevistos y si los costos se ajustan con el ICCV.','Lote: valor y forma de pago (contado, diferido en cuotas, aporte en especie o pago con área).','Licencias y cargas: curaduría, delineación, plusvalía y cargas urbanísticas.','Indirectos de obra: diseños, interventoría, póliza decenal, otros y conexión de servicios.','Ventas y gerencia: publicidad, comisiones, honorarios de gerencia y gastos de escrituración.','Posventa y tenencia: posventa, predial y administración de unidades no vendidas.','Comisiones fiduciarias de cada etapa.']},
+ {t:'Impuestos',w:'Modelo › Impuestos',go:'modelo:impuestos',
+  p:['IVA: qué parte del costo directo está gravada y la tarifa. En vivienda el IVA de materiales es costo.','En VIS y VIP puedes solicitar la devolución de IVA (hasta el 4 % del precio) y su rezago.','ICA (por mil sobre los ingresos) y si se aplica el 4x1000 a los pagos.','Tarifa de renta.']},
+ {t:'Financiación',w:'Modelo › Financiación',go:'modelo:financiacion',
+  p:['Crédito constructor: spread sobre el IBR, comisión de estructuración, factor de liberación por unidad y si se capitalizan intereses durante la obra.','Cupo del crédito por etapa, como % del costo.','Crédito puente para el lote: qué % del lote financia y su spread. Se paga al iniciar la primera obra.','Fiducia: rendimiento de los recursos retenidos hasta el punto de equilibrio.']},
+ {t:'Socios',w:'Modelo › Socios',go:'modelo:socios',
+  p:['Agrega cada socio con su participación. Las participaciones deben sumar 100 %.','Marca “Aporta el lote en especie” en el socio que entrega el lote.','Primero se devuelven los aportes y luego se reparten las utilidades, según la participación.']},
+ {t:'Revisa la salud del proyecto',w:'Inicio',go:'inicio',
+  p:['Indicadores principales: utilidad, margen, TIR, VPN, exposición y duración.','Semáforo de salud y alertas: muestran qué está fuera de rango y por qué.','Gráficos de cascada, flujo de caja, deuda, retorno a socios, fuentes y usos, absorción, mezcla, sensibilidad, cronograma y curva S.','Si algo no cuadra, vuelve al paso correspondiente del Modelo y ajústalo; todo se recalcula al instante.']},
+ {t:'Resultados e informe',w:'Resultados',go:'resultados:flujo',
+  p:['Flujo de caja mensual o anual, estado de resultados, balance proyectado y resultados por socio.','Informe: resumen listo para el comité, que puedes imprimir o guardar en PDF.','Para llevarte todo a Excel, usa “Descargar Excel” en Cuenta.']},
+ {t:'Guarda versiones',w:'Control › Versiones',go:'control:versiones',
+  p:['Antes de cambios importantes guarda una versión (factibilidad, comité, seguimiento u otra).','Compara dos versiones para ver cómo cambiaron los indicadores y qué supuestos se modificaron.']},
+ {t:'Analiza la sensibilidad',w:'Control › Sensibilidad',go:'control:sensibilidad',
+  p:['Matriz de margen según cambios de precio y de costo directo.','Gráfico de qué supuesto mueve más la utilidad.','Escenarios pesimista y optimista automáticos.']},
+ {t:'Haz seguimiento a la ejecución',w:'Control › Seguimiento',go:'control:seguimiento',
+  p:['Elige la línea base (el modelo actual o una versión guardada).','Define el mes de corte y el avance físico de obra al corte.','Pega la ejecución real del mes (viviendas, recaudo, directos e indirectos), por ejemplo exportada de tu ERP.','Elige cómo proyectar a terminación: “lo que falta según presupuesto” o “según el desempeño” (CPI).']},
+ {t:'Compara proyectos',w:'Comparar',go:'comparar',
+  p:['Elige los proyectos que quieras ver lado a lado, o todos.','El ✓ marca el mejor valor de cada indicador.','Revisa márgenes, TIR, exposición, caja de los socios y el semáforo de cada uno.']}];
+const GLOSARIO=[
+ ['Absorción','Ritmo al que se venden las unidades de una etapa. Se mide en unidades vendidas por mes o en % del inventario vendido.'],
+ ['Aportes de socios','Dinero que los socios ponen cuando la caja del proyecto no alcanza. Se devuelven antes de repartir utilidades.'],
+ ['Área construida','Metros cuadrados totales que se construyen, incluidas zonas comunes, muros y circulaciones.'],
+ ['Área vendible','Metros cuadrados privados que se venden a los compradores.'],
+ ['Balance proyectado','Activos, pasivos y patrimonio del proyecto mes a mes. Debe cuadrar; si no, aparece una alerta.'],
+ ['Capitalizar intereses','Sumar los intereses del crédito al saldo en vez de pagarlos cada mes durante la obra.'],
+ ['Cesantías','Ahorro del trabajador que se retira en febrero y suele usarse para abonar a la cuota inicial.'],
+ ['Comisión de estructuración','Cobro del banco por aprobar el crédito constructor, como % del cupo.'],
+ ['CPI','Índice de desempeño del costo: valor ganado ÷ costo real. Menor que 1 significa que la obra está costando más de lo presupuestado.'],
+ ['Crédito constructor','Préstamo bancario para la obra. Se desembolsa contra avance y se paga cuando se escrituran las unidades.'],
+ ['Crédito puente','Préstamo de corto plazo para pagar el lote antes de iniciar la obra.'],
+ ['Cuota inicial','Parte del precio que el comprador paga entre la separación y la entrega, normalmente en cuotas mensuales.'],
+ ['Curva de ventas','Cómo se reparten las ventas en el tiempo: constante, con lanzamiento fuerte o mes a mes.'],
+ ['Curva S','Forma típica del avance de obra o del gasto acumulado: lenta al inicio, rápida en el medio y lenta al final.'],
+ ['Desistimiento','Comprador que se retira de la compra. Se le devuelve lo pagado menos la penalidad y la unidad vuelve al inventario.'],
+ ['Devolución de IVA','Beneficio para proyectos VIS y VIP: se recupera parte del IVA pagado en materiales, hasta el 4 % del precio de venta.'],
+ ['Distribuciones','Dinero que el proyecto entrega a los socios: primero la devolución de aportes y luego las utilidades.'],
+ ['Encargo fiduciario','Cuenta administrada por una fiduciaria donde se guardan los pagos de los compradores hasta el punto de equilibrio.'],
+ ['Escrituración','Firma de la escritura de venta. Es cuando se recibe el saldo (crédito hipotecario o subsidios) y se libera el crédito constructor.'],
+ ['Estado de resultados','Ingresos, costos, gastos e impuestos del proyecto, y la utilidad que resulta.'],
+ ['Exposición máxima','Lo máximo que los socios llegan a tener invertido en el proyecto al mismo tiempo. Mide el capital que necesitan.'],
+ ['Factor de liberación','Cuánto del crédito constructor se paga con cada unidad escriturada, como múltiplo de lo que esa unidad usó del crédito.'],
+ ['Fiducia (vehículo)','El proyecto se hace a través de una fiducia: la utilidad pasa a los socios y cada uno paga su propio impuesto de renta.'],
+ ['Fuentes y usos','De dónde sale el dinero del proyecto (clientes, créditos, socios) y en qué se gasta.'],
+ ['GMF (4x1000)','Gravamen a los movimientos financieros: 4 pesos por cada 1.000 que salen de las cuentas.'],
+ ['IBR','Indicador Bancario de Referencia. Es la tasa base sobre la que se suma el spread del crédito.'],
+ ['ICA','Impuesto de industria y comercio. Se cobra por mil sobre los ingresos, según el municipio.'],
+ ['ICCV','Índice de costos de la construcción de vivienda (DANE). Se usa para ajustar los costos de obra en el tiempo.'],
+ ['Imprevistos','Reserva sobre el costo directo para cubrir lo que no está en el presupuesto.'],
+ ['Indirectos','Costos que no son la obra misma: diseños, interventoría, pólizas, licencias, gerencia, ventas.'],
+ ['Línea base','Versión del modelo contra la que se compara lo ejecutado en el seguimiento.'],
+ ['Margen antes de impuestos','Utilidad antes de impuestos ÷ ventas. Es el indicador más usado para decidir si un proyecto es viable.'],
+ ['Margen neto','Utilidad después de impuestos ÷ ventas.'],
+ ['Mes 0','Primer mes del flujo de caja del proyecto. Todos los meses se cuentan desde ahí.'],
+ ['Múltiplo de socios','Distribuciones ÷ aportes. Un 1,7x significa que por cada peso aportado vuelven 1,7.'],
+ ['No VIS','Vivienda con precio por encima del tope VIS. No tiene subsidios ni devolución de IVA.'],
+ ['Payback (recuperación)','Mes en que los socios terminan de recuperar el capital aportado.'],
+ ['Plusvalía','Pago al municipio por el mayor valor que gana el suelo por decisiones urbanísticas.'],
+ ['Póliza decenal','Seguro obligatorio que cubre por diez años daños estructurales de la edificación.'],
+ ['Prima por piso / vista','Aumento de precio para las unidades en pisos más altos o con mejor vista.'],
+ ['Punto de equilibrio','Porcentaje de unidades vendidas que exige la fiduciaria (o el banco) para liberar recursos e iniciar la obra.'],
+ ['Renta','Impuesto sobre la utilidad. Con sociedad lo paga el proyecto; con fiducia, cada socio.'],
+ ['Semáforo de salud','Resumen en Inicio que califica seis dimensiones del proyecto como en rango, atención o crítico.'],
+ ['Sensibilidad','Cuánto cambian la utilidad o el margen cuando cambia un supuesto, como el precio o el costo.'],
+ ['Separación','Pago pequeño con el que el comprador aparta la unidad antes de firmar.'],
+ ['SMMLV','Salario mínimo mensual legal vigente. Los topes VIS y VIP y los subsidios se expresan en SMMLV.'],
+ ['Sociedad (vehículo)','El proyecto se hace a través de una sociedad, que paga el impuesto de renta sobre la utilidad.'],
+ ['SPI','Índice de desempeño del cronograma: valor ganado ÷ valor planeado. Menor que 1 significa que la obra va atrasada.'],
+ ['Spread','Puntos que el banco suma al IBR para fijar la tasa del crédito.'],
+ ['Subsidio de caja','Ayuda de la caja de compensación familiar para comprar vivienda VIS o VIP.'],
+ ['Subsidio nacional','Ayuda del Gobierno para comprar vivienda VIS o VIP (por ejemplo, Mi Casa Ya).'],
+ ['Tipología','Tipo de unidad que se vende: un modelo de apartamento, parqueadero, depósito o local.'],
+ ['TIO (tasa de descuento)','Tasa interna de oportunidad: la rentabilidad mínima que exigen los socios.'],
+ ['TIR del inversionista','Rentabilidad anual del dinero que ponen los socios, según sus aportes y distribuciones.'],
+ ['TIR del proyecto','Rentabilidad anual del proyecto completo, antes de la financiación de los socios.'],
+ ['Tope VIS / VIP','Precio máximo que puede tener una vivienda para ser VIS (135 SMMLV, o 150 en ciudades con tope especial) o VIP (90 SMMLV).'],
+ ['Utilidad antes de impuestos','Ventas más otros ingresos, menos todos los costos y gastos, antes del impuesto de renta.'],
+ ['Utilidad neta','Utilidad que queda después del impuesto de renta.'],
+ ['Velocidad de ventas','Unidades que se venden en promedio cada mes.'],
+ ['Ventana de escrituración','Meses que tarda escriturar todas las unidades después de terminar la obra.'],
+ ['Versión','Copia congelada del modelo con todos sus supuestos, para compararla después.'],
+ ['VIP','Vivienda de interés prioritario: precio hasta el tope VIP. Puede tener subsidios y devolución de IVA.'],
+ ['VIS','Vivienda de interés social: precio hasta el tope VIS. Puede tener subsidios y devolución de IVA.'],
+ ['VPN','Valor presente neto: lo que vale hoy el flujo de los socios, descontado a la TIO. Si es positivo, el proyecto supera la rentabilidad mínima.']];
+function helpManual(){
+ openSheet(`<h2>Manual paso a paso</h2><p class="muted" style="margin:0">El orden recomendado para configurar un proyecto. Toca un paso para ver qué debes llenar.</p>
+ <div class="hsteps">${HELP_STEPS.map((s,i)=>`<details class="hstep"><summary><span class="hnum">${i+1}</span><span class="grow"><b>${esc(s.t)}</b><small>${esc(s.w)}</small></span>${wic('chev',18)}</summary><ul>${s.p.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>${s.go?`<button class="btn sm" data-act="help-go" data-to="${s.go}">Ir a ${esc(s.w.split(' › ').slice(-1)[0])}</button>`:''}</details>`).join('')}</div>`)}
+document.addEventListener('input',e=>{if(e.target.id!=='glosQ')return;
+  const q=e.target.value.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();let n=0;
+  const re=q?new RegExp('(^|[^a-z0-9])'+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')):null;
+  $$('.glos>div').forEach(d=>{const on=!re||re.test(d.dataset.q);d.hidden=!on;if(on)n++});const em=$('.glos-empty');if(em)em.hidden=n>0});
+function helpGlos(){
+ openSheet(`<h2>Glosario</h2><p class="muted" style="margin:0">${GLOSARIO.length} términos usados en Proyecta.</p>
+ <input class="inp" id="glosQ" type="search" placeholder="Buscar un término" aria-label="Buscar en el glosario" autocomplete="off">
+ <dl class="glos">${GLOSARIO.map(([t,d])=>`<div data-q="${esc((t+' '+d).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''))}"><dt>${esc(t)}</dt><dd>${esc(d)}</dd></div>`).join('')}</dl><p class="muted glos-empty" hidden>Ningún término coincide.</p>`)}
 const acard=(act,icon,t,d,cls,extra)=>`<button class="acard${cls?' '+cls:''}" data-act="${act}"${extra||''}>${wic(icon)}<span class="grow"><b>${t}</b><span>${d}</span></span>${wic('chev',20)}</button>`;
 const waLink=(tipo)=>{const em=ST.mode==='fb'?ST.fbEmail:'';return window.wellnessWA?window.wellnessWA('Proyecta',tipo,em):'https://wa.me/573204451740?text='+encodeURIComponent((tipo==='recomendacion'?'Hola, tengo una recomendación para Proyecta: ':'Hola, necesito ayuda con Proyecta: ')+(em?'\n\n(Cuenta: '+em+')':''))};
 const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
@@ -1801,6 +1927,8 @@ function renderCuenta(){
   <div class="card profile"><div class="avatar">${me&&me.avatarUrl&&me.id?`<img src="${esc(me.avatarUrl)}" alt="">`:wic('user',26,2.2)}</div><div style="flex:1;min-width:0;display:grid;gap:2px"><b class="pname">${esc(nm||email||'Sin sesión')}</b>${nm&&email?`<small>${esc(email)}</small>`:''}<small>${cr?'Cuenta creada el '+cr.getDate()+' '+MES[cr.getMonth()]+' '+cr.getFullYear():ST.mode==='fb'?'':esc(rn)+(ST.mode==='db'?' · base central de proyectos':'')}</small></div></div>
   <div class="card namecard${nm?'':' need'}">${nm?'':'<b>Configura tu nombre para personalizar Proyecta</b>'}<label class="lbl" for="pname">Tu nombre</label><div class="namerow"><input id="pname" maxlength="30" placeholder="¿Cómo te llamas?" autocomplete="given-name" value="${esc(nm)}"><button class="btn${nm?'':' pri'}" data-act="save-name">Guardar</button></div><small>${ST.mode==='fb'?'Se usa en Mind Focus, PowerFit, Lumen y Proyecta.':'Se guarda en este dispositivo.'}</small></div>
   ${requestsHtml()}
+  <div class="label">Ayuda</div>
+  <div class="astack">${acard('help-manual','manual','Manual paso a paso','Qué configurar y en qué orden, sección por sección')}${acard('help-glos','glos','Glosario',GLOSARIO.length+' términos del modelo explicados')}</div>
   <div class="acckpis"><div><b>${nProj}</b><span>Proyectos</span></div><div><b>${countVersions()}</b><span>Versiones</span></div><div><b>${ventas>=1e9?'$'+nf(ventas/1e9,ventas<1e11?1:0)+' mil M':fM(ventas)}</b><span>Ventas modeladas</span></div></div>
   <div class="label">Ajustes</div>
   <div class="astack">
@@ -1982,6 +2110,12 @@ document.addEventListener('click',async e=>{
     case 'reset-pass':if(FB.auth&&ST.fbEmail){FB.auth.sendPasswordResetEmail(ST.fbEmail,{url:SITE_URL}).then(()=>toast('Te enviamos un correo a '+ST.fbEmail),e2=>toast(authErr(e2)))}break;
     case 'install':if(ST.instP){const ev=ST.instP;ST.instP=null;instBar();ev.prompt();ev.userChoice.finally(()=>rr('cuenta'))}break;
     case 'inst-no':prefs.instNo=Date.now();savePrefs();instBar();break;
+    case 'help-manual':helpManual();break;
+    case 'help-glos':helpGlos();setTimeout(()=>{const q=$('#glosQ');if(q&&!('ontouchstart' in window))q.focus()},80);break;
+    case 'help-go':{const to=b.dataset.to;closeSheet();
+      if(to==='proj'){openProjects();break}
+      if(to==='cuenta'){const l=$$('#s-cuenta .label').find(x=>/macro/i.test(x.textContent));if(l)setTimeout(()=>l.scrollIntoView({block:'start'}),60);break}
+      const [scr,sub]=to.split(':');if(sub){prefs.sub[scr]=sub;savePrefs()}go(scr);break}
     case 'dark':prefs.theme=b.checked?'dark':'light';savePrefs();applyTheme();rr('cuenta');break;
     case 'desk':prefs.desk=b.checked;savePrefs();applyDesk();if(ST.desk)ST.screen='cuenta';else if(ST.web)ST.cuentaOpen=true;renderScreen();
       toast(ST.desk?'Modo Escritorio activado':'Volviste a la vista anterior');break;
