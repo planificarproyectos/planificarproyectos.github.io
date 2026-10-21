@@ -185,6 +185,12 @@ button,input,select,textarea{font:inherit;color:inherit}
 .al-go .lnk{padding:0 2px;flex:none}
 .plan-hl{animation:planhl 2.4s ease;border-radius:10px}
 @keyframes planhl{0%,60%{box-shadow:0 0 0 3px var(--acc)}100%{box-shadow:0 0 0 3px transparent}}
+/* Orden de la lista de proyectos */
+.psort{margin:2px 0}
+.port-g{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:8px 2px 0}
+.port-g:first-child{margin-top:0}
+.port-g span{font-weight:700;background:var(--sunk);border-radius:99px;padding:1px 7px;letter-spacing:0}
+.ptipo{display:inline-block;font-size:10.5px;font-weight:800;padding:0 6px;border-radius:6px;background:var(--acc-soft);color:var(--acc-ink);margin-right:6px}
 /* Compartir proyectos */
 .port .shby{display:flex;align-items:center;gap:5px;color:var(--acc-ink);font-weight:600}
 .sheet .chips.shsel,.sheet .chips.shem{position:static;flex-wrap:wrap;overflow:visible;background:none}
@@ -1197,7 +1203,7 @@ function syncColOrder(){const o=prefs.colOrder,idx=o.map((c,i)=>prefs.cols.inclu
 function showCol(s){if(!prefs.colOrder.includes(s))prefs.colOrder.push(s);prefs.cols=prefs.colOrder.filter(c=>c===s||prefs.cols.includes(c))}
 /* Ajustes que se aplican al instante en los demás dispositivos; la navegación (pantalla, subpestaña, proyecto abierto) solo se toma al abrir la app */
 // El tema y el color no van aquí: los comparte toda la familia de apps en perfil/apariencia (/apariencia.js)
-const LIVE_PREFS=['desk','grid','per','cols','colOrder','webHint2'];
+const LIVE_PREFS=['desk','grid','per','cols','colOrder','webHint2','projSort'];
 /* Los ajustes se guardan en la cuenta (documento "ajustes" junto a los proyectos), nunca en el navegador */
 function savePrefs(){if(ST.mode!=='fb'||!ST.fbCol)return;clearTimeout(ST.prefT);
   ST.prefT=setTimeout(()=>{const d=clone(prefs);ST.prefsSent=JSON.stringify(LIVE_PREFS.map(k=>prefs[k]));ST.fbCol.doc('ajustes').set(Object.assign(d,{upd:Date.now()})).catch(()=>{})},400)}
@@ -1949,10 +1955,27 @@ function masonBalance(g,cols,items){
   const hs=new Map(cards.map(e=>[e,e.offsetHeight+12]));const sum2=[0,0],dest=new Map();
   cards.slice().sort((a,b)=>hs.get(b)-hs.get(a)).forEach(e=>{const k=sum2[0]<=sum2[1]?0:1;sum2[k]+=hs.get(e);dest.set(e,k)});
   items.forEach(e=>{if(e.classList.contains('blk'))cols[0].appendChild(e);else cols[dest.get(e)].appendChild(e)})}
-function portfolioHtml(){
-  return Object.entries(ST.projects).sort((a,b)=>(b[1].actualizado||0)-(a[1].actualizado||0)).map(([id,d])=>{const k=d.kpis||{};
+/* Orden de la lista de proyectos (se guarda en los ajustes de la cuenta): recientes, nombre, ciudad o tipo de vivienda.
+   Por ciudad y por tipo se agrupan con un rótulo; dentro de cada grupo van por nombre. */
+const PSORT=[['rec','Recientes'],['nombre','Nombre'],['ciudad','Ciudad'],['tipo','Tipo']];
+const TIPO_ORD={VIP:0,VIS:1,NoVIS:2};
+// Tipo de vivienda de un proyecto según sus etapas: "VIS", "VIS y VIP"…
+function projTipo(d){const ts=[...new Set(((d.data||{}).etapas||[]).map(e=>e.tipo||'NoVIS'))].sort((a,b)=>TIPO_ORD[a]-TIPO_ORD[b]);
+  return ts.length?ts.map(t=>(TIPOS.find(x=>x[0]===t)||[t,t])[1]).join(' y '):'Sin etapas'}
+const byName=(a,b)=>String(a[1].nombre||'').localeCompare(String(b[1].nombre||''),'es',{sensitivity:'base',numeric:true});
+function portfolioHtml(){const s=prefs.projSort||'rec',grp=s==='ciudad'?d=>(d.ciudad||'').trim()||'Sin ciudad':s==='tipo'?projTipo:null;
+  let L=Object.entries(ST.projects);
+  if(s==='rec')L.sort((a,b)=>(b[1].actualizado||0)-(a[1].actualizado||0));
+  else if(s==='nombre')L.sort(byName);
+  else if(s==='ciudad')L.sort((a,b)=>grp(a[1]).localeCompare(grp(b[1]),'es',{sensitivity:'base'})||byName(a,b));
+  else{const tk=d=>{const t=((d.data||{}).etapas||[]).map(e=>TIPO_ORD[e.tipo||'NoVIS']);return t.length?Math.min(...t)*10+(new Set(t).size>1?5:0):99};
+    L.sort((a,b)=>tk(a[1])-tk(b[1])||projTipo(a[1]).localeCompare(projTipo(b[1]))||byName(a,b))}
+  let last=null;
+  return L.map(([id,d])=>{const k=d.kpis||{};let head='';
+    if(grp){const g=grp(d);if(g!==last){const n=L.filter(x=>grp(x[1])===g).length;head=`<div class="port-g">${esc(g)} <span>${n}</span></div>`;last=g}}
+    const tag=s==='tipo'?'':`<span class="ptipo">${esc(projTipo(d))}</span>`;
     const sh=isShared(id)?`<span class="m shby">${ki('share')}Compartido por ${esc(d._de||'otra cuenta')} · ${shCanEdit(d)?'puedes editar':'solo ver'}</span>`:(d.compartidoCon||[]).length?`<span class="m shby">${ki('share')}Compartido con ${d.compartidoCon.length===1?esc(d.compartidoCon[0]):d.compartidoCon.length+' personas'}</span>`:'';
-    return `<button data-act="proj-select" data-id="${id}" aria-current="${id===ST.pid}"><span class="n">${esc(d.nombre)}</span><span class="k">${fP(k.margen)}</span><span class="m">${esc(d.ciudad||'')} · Ventas ${fM(k.ventas)} · TIR ${fP(k.tirI)} · ${fDate(d.actualizado)}${isShared(id)?'':' por '+who(d.actualizadoPor)}</span>${sh}</button>`}).join('');
+    return `${head}<button data-act="proj-select" data-id="${id}" aria-current="${id===ST.pid}"><span class="n">${esc(d.nombre)}</span><span class="k">${fP(k.margen)}</span><span class="m">${tag}${s==='ciudad'?'':esc(d.ciudad||'')+' · '}Ventas ${fM(k.ventas)} · TIR ${fP(k.tirI)} · ${fDate(d.actualizado)}${isShared(id)?'':' por '+who(d.actualizadoPor)}</span>${sh}</button>`}).join('');
 }
 
 /* ---------- MODELO ---------- */
@@ -2854,6 +2877,7 @@ function openProjects(){
   const list=Object.entries(ST.projects).sort((a,b)=>(b[1].actualizado||0)-(a[1].actualizado||0));
   const sh=isShared(ST.pid),nm=ST.P?esc(ST.P.general.nombre):'';
   openSheet(`<div class="between"><h2>Proyectos</h2>${ST.mode==='fb'?`<button class="btn sm" data-act="sh-open">${ki('share',15)} Compartir</button>`:''}</div><p class="muted" style="margin:0">${ST.mode==='db'?'Base central compartida con tu equipo.':'Guardados en tu cuenta y sincronizados en todos tus dispositivos.'}</p>
+  ${list.length>1?`<div class="seg psort" role="group" aria-label="Ordenar proyectos">${PSORT.map(([k,l])=>`<button data-act="psort" data-k="${k}" aria-pressed="${(prefs.projSort||'rec')===k}">${l}</button>`).join('')}</div>`:''}
   <div class="port">${list.length?portfolioHtml():'<div class="empty">No hay proyectos.</div>'}</div>
   ${ST.readOnly&&!ST.shareRO?'':`<div class="row"><button class="btn pri" data-act="proj-new" data-kind="blank">Nuevo en blanco</button>${exBtns('','Ejemplo ')}${ST.P?`<button class="btn" data-act="proj-dup">${sh?'Guardar una copia en mi cuenta':'Duplicar actual'}</button>`:''}</div>
   ${ST.P?`<div class="row" id="delRow">${sh?(ST.confirm==='proj'?`<span class="muted">¿Quitar «${nm}» de tu lista? Quien lo compartió lo conserva.</span><button class="btn sm danger" data-act="proj-del">Sí, quitar</button><button class="btn sm" data-act="cancel-sheet">Cancelar</button>`:`<button class="btn sm danger" data-act="ask-proj">Quitar de mi lista</button>`)
@@ -2961,6 +2985,7 @@ document.addEventListener('click',async e=>{
     case 'cancel-sheet':ST.confirm=null;openProjects();break;
     case 'proj-del':if(!isShared(ST.pid)&&!W())break;ST.confirm=null;deleteProject(ST.pid);break;
     case 'sh-open':ST.confirm=null;openShare();break;
+    case 'psort':prefs.projSort=b.dataset.k;savePrefs();{const sc=$('.sheet');const y=sc?sc.scrollTop:0;openProjects();const s2=$('.sheet');if(s2)s2.scrollTop=y}softRender('inicio');break;
     // Lleva al campo que hay que ajustar: abre la pantalla y la sección, lo centra y lo resalta un momento
     case 'plan-go':{const [scr,sub]=String(b.dataset.to||'').split(':');if(!scr)break;if(sub){prefs.sub[scr]=sub;savePrefs()}go(scr);const p=b.dataset.path;
       if(p)setTimeout(()=>{const el=$(`#s-${scr} [data-path="${CSS.escape(p)}"]`);if(!el)return;const f=el.closest('.f')||el.closest('td')||el;
