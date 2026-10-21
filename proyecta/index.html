@@ -348,6 +348,9 @@ textarea.paste{width:100%;min-height:96px;font-size:12px;border:0;background:var
 body.web{padding-bottom:0;overflow:hidden}
 body.web .wrap{max-width:none}
 body.web .cols{display:grid;grid-template-columns:repeat(var(--n,1),minmax(0,560px));justify-content:center;gap:12px;padding-bottom:12px}
+/* Modo cuadrícula: las secciones abiertas en 3 columnas y 2 filas de media altura, cada una con su propio desplazamiento */
+body.web.grid .cols{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(var(--rows,2),minmax(0,1fr));justify-content:stretch}
+body.web.grid .cols>.screen{min-height:0}
 body.web .cols>.screen{grid-auto-rows:max-content;overflow-y:auto;overscroll-behavior:contain;background:var(--col);border-radius:22px;padding:0 14px 14px;min-width:0;scrollbar-width:thin}
 body.web .colcap{display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:6;background:var(--col);margin:0 -14px;padding:10px 8px 6px 18px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:800;color:var(--muted)}
 body.web .colcap{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -1126,7 +1129,7 @@ function syncColOrder(){const o=prefs.colOrder,idx=o.map((c,i)=>prefs.cols.inclu
 function showCol(s){if(!prefs.colOrder.includes(s))prefs.colOrder.push(s);prefs.cols=prefs.colOrder.filter(c=>c===s||prefs.cols.includes(c))}
 /* Ajustes que se aplican al instante en los demás dispositivos; la navegación (pantalla, subpestaña, proyecto abierto) solo se toma al abrir la app */
 // El tema y el color no van aquí: los comparte toda la familia de apps en perfil/apariencia (/apariencia.js)
-const LIVE_PREFS=['desk','per','cols','colOrder','webHint2'];
+const LIVE_PREFS=['desk','grid','per','cols','colOrder','webHint2'];
 /* Los ajustes se guardan en la cuenta (documento "ajustes" junto a los proyectos), nunca en el navegador */
 function savePrefs(){if(ST.mode!=='fb'||!ST.fbCol)return;clearTimeout(ST.prefT);
   ST.prefT=setTimeout(()=>{const d=clone(prefs);ST.prefsSent=JSON.stringify(LIVE_PREFS.map(k=>prefs[k]));ST.fbCol.doc('ajustes').set(Object.assign(d,{upd:Date.now()})).catch(()=>{})},400)}
@@ -1356,6 +1359,9 @@ function renderScreen(){
   $('#s-cuenta').hidden=ST.web?!ST.cuentaOpen:ST.screen!=='cuenta';
   $('#scrim').hidden=!(ST.web&&ST.cuentaOpen);
   $('#cols').style.setProperty('--n',vis.length);
+  // Modo cuadrícula: 3 columnas y 2 filas de media altura; la última sección se estira para no dejar huecos
+  const grid=ST.web&&!!prefs.grid;document.body.classList.toggle('grid',grid);$('#cols').style.setProperty('--rows',vis.length>3?2:1);
+  const last=prefs.cols.filter(c=>vis.includes(c)).pop();COLS.forEach(id=>{const el=$('#s-'+id);el.style.gridColumn=grid&&id===last&&vis.length%3?'span '+(4-vis.length%3):''});
   layout();
   vis.forEach(renderOne);if(ST.web&&ST.cuentaOpen)renderOne('cuenta');
   navState();updateAppbar();fabSync();
@@ -2549,6 +2555,7 @@ function renderCuenta(){
   <div class="card" style="display:grid;gap:10px;--ap-bg:var(--panel)"><b class="lbl">Color de énfasis</b>${window.Apariencia?Apariencia.picker(cur):''}<small class="muted">Se aplica también en Lumen, Mind Focus y PowerFit</small></div>
   <div class="card"><div class="between"><div style="display:grid;gap:2px"><b>Modo oscuro</b><small class="muted">${dark?'Activado':'Desactivado'} · no depende del celular</small></div><label class="switch"><input type="checkbox" data-act="dark" aria-label="Modo oscuro"${dark?' checked':''}><i></i></label></div></div>
   <div class="card"><div class="between"><div style="display:grid;gap:2px"><b>Modo Escritorio</b><small class="muted">${DESKQ.matches?(prefs.desk?'Activado':'Desactivado')+' · pestañas arriba e indicadores fijos, como un software financiero':'Disponible en tablets y computadores'}</small></div><label class="switch"><input type="checkbox" data-act="desk" aria-label="Modo Escritorio"${prefs.desk?' checked':''}${DESKQ.matches?'':' disabled'}><i></i></label></div></div>
+  <div class="card"><div class="between"><div style="display:grid;gap:2px"><b>Modo cuadrícula</b><small class="muted">${!WEBQ.matches?"Disponible en pantallas anchas":prefs.desk?"Se usa con Modo Escritorio apagado · secciones en 2 filas × 3 columnas":(prefs.grid?"Activado":"Desactivado")+" · las secciones abiertas en 2 filas × 3 columnas en vez de columnas verticales"}</small></div><label class="switch"><input type="checkbox" data-act="grid" aria-label="Modo cuadrícula"${prefs.grid?" checked":""}${WEBQ.matches&&!prefs.desk?"":" disabled"}><i></i></label></div></div>
   <div class="label"${ST.mode==='db'?'':' hidden'}>Permisos</div>
   <div class="card"${ST.mode==='db'?'':' hidden'}><p class="sub">Los permisos siguen el nivel con que te compartieron la app. El propietario los cambia en el menú Compartir.</p>
   <div class="roles">${[['Propietario','Todo, incluido compartir la app.'],['Editor','Crea y edita proyectos, versiones y supuestos macro.'],['Colaborador','Crea y edita proyectos y versiones.'],['Solo lectura','Consulta resultados, informes y versiones.']].map(([r,d])=>`<div class="${r===rn?'me':''}"><b>${r}</b><span>${d}</span></div>`).join('')}</div></div>
@@ -2746,6 +2753,7 @@ document.addEventListener('click',async e=>{
       if(to==='cuenta'){const l=$$('#s-cuenta .label').find(x=>/macro/i.test(x.textContent));if(l)setTimeout(()=>l.scrollIntoView({block:'start'}),60);break}
       const [scr,sub]=to.split(':');if(sub){prefs.sub[scr]=sub;savePrefs()}go(scr);break}
     case 'dark':if(window.Apariencia&&ST.mode==='fb'){Apariencia.set({mode:b.checked?'dark':'light'});break}prefs.theme=b.checked?'dark':'light';savePrefs();applyTheme();rr('cuenta');break;
+    case 'grid':prefs.grid=b.checked;savePrefs();renderScreen();toast(prefs.grid?'Modo cuadrícula: 2 filas × 3 columnas':'Columnas verticales');break;
     case 'desk':prefs.desk=b.checked;savePrefs();applyDesk();if(ST.desk)ST.screen='cuenta';else if(ST.web)ST.cuentaOpen=true;renderScreen();
       toast(ST.desk?'Modo Escritorio activado':'Volviste a la vista anterior');break;
     case 'wipe-ask':ST.askWipe=true;rr('cuenta');break;
