@@ -104,6 +104,26 @@ button,input,select,textarea{font:inherit;color:inherit}
 .projcard{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .projcard .t{font-weight:800;font-size:16px}
 .projcard .d{color:var(--muted);font-size:12.5px}
+/* Resumen gráfico del proyecto (Inicio): lote y torres en axonométrico + datos clave */
+.axo{display:grid;gap:14px}
+@container scr (min-width:560px){.axo{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);align-items:center}}
+.axo-g svg{width:100%;height:auto;max-height:240px;display:block;overflow:visible}
+.axo-g .legend{margin-top:6px}
+.axo-lot{fill:var(--sunk);stroke:var(--line);stroke-width:1;vector-effect:non-scaling-stroke}
+.axo-side{stroke:none}.axo-side.l{fill:color-mix(in srgb,var(--sunk) 70%,#000)}.axo-side.r{fill:color-mix(in srgb,var(--sunk) 55%,#000)}
+.axo-sh{stroke:rgba(0,0,0,.25);stroke-width:.6;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+.axo-sh.l{fill:rgba(0,0,0,.10)}.axo-sh.r{fill:rgba(0,0,0,.30)}.axo-sh.t{fill:rgba(255,255,255,.30)}
+.axo-fl{fill:none;stroke:rgba(0,0,0,.22);stroke-width:.6;vector-effect:non-scaling-stroke}
+.axo-tree{fill:#3f9b4f;fill-opacity:.85}
+.axo-lab{font-size:.62px;font-weight:800;fill:var(--ink);text-anchor:middle}
+.axo-st{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.axo-st>div{background:var(--sunk);border-radius:12px;padding:8px 10px;display:grid;gap:1px;min-width:0}
+.axo-st span{font-size:11px;color:var(--muted);font-weight:600}
+.axo-st b{font-size:16px;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.axo-st b small{display:block;font-size:10px;color:var(--muted);font-weight:600}
+.axo-st>div:last-child{grid-column:1/-1}
+.axo-tip{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.axo-tip span{font-size:11.5px;padding:4px 9px;border-radius:999px;background:var(--sunk)}
 .hero{position:relative;background:var(--acc);color:var(--on-acc);border-radius:22px;padding:18px 20px 20px;display:grid;gap:4px}
 .hero.loss{background:var(--neg);color:#fff}
 /* Pulso de fondo: un trazo de electrocardiograma tenue y un destello que lo recorre, como un monitor de signos vitales */
@@ -1526,6 +1546,52 @@ function alertsFor(P,R){
 const alertHtml=list=>list.map(([c,t,m])=>`<div class="alert ${c}"><b>${t}</b><div>${esc(m)}</div></div>`).join('');
 
 /* ---------- INICIO ---------- */
+/* Resumen gráfico del proyecto en Inicio: un lote en axonométrico con las torres de cada etapa levantadas encima.
+   Cada etapa ocupa una zona del lote, con su color y su rótulo; cada torre es un volumen con altura proporcional a sus
+   pisos y las líneas de piso dibujadas. Es una representación esquemática (no es la implantación real del lote).
+   Al lado van los datos clave: etapas, torres, pisos, apartamentos, tipologías, área vendible y lote. */
+// Rótulo corto de la etapa: el número de su nombre ("Etapa 4" → E4) o su posición
+const axoEt=e=>{const m=String(e.E.nombre||'').match(/etapa\s*(\d+)/i);return 'E'+(m?m[1]:e.i+1)};
+const AXO_COLS=['var(--acc)','#3D8BFF','#FF8A1F','#A97BFF','#22C3A6','#E8508F','#E5B400','#2EB4E8'];
+function axoCard(P,R){
+  const C=Math.cos(Math.PI/6),pr=(x,y,z)=>[(x-y)*C,(x+y)*.5-z],pts=a=>a.map(p=>pr(...p).map(v=>v.toFixed(2)).join(',')).join(' ');
+  const FW=1.5,FD=1.15,G=.75,ets=(P.etapas||[]).map((E,i)=>{const T=torresDe(E),ua=(R.ets[i]||{}).UA||0;
+    const tw=T.length?T.map(t=>({n:t.nombre,p:Math.max(1,+t.pisos||1),u:+t.unidades||0})):[{n:E.nombre,p:Math.max(1,+E.pisos||1),u:Math.round(ua)}];
+    const cols=Math.ceil(Math.sqrt(tw.length*1.4)),rows=Math.ceil(tw.length/cols);return {E,i,tw,cols,rows,w:cols*(FW+G)+G,d:rows*(FD+G)+G}});
+  if(!ets.length)return '';
+  const maxP=Math.max(...ets.flatMap(e=>e.tw.map(t=>t.p))),D=Math.max(...ets.map(e=>e.d)),W=ets.reduce((a,e)=>a+e.w,0)+(ets.length-1)*.5;
+  const hf=Math.min(.24,Math.max(.06,Math.max(W,D)*.55/maxP));   // altura de un piso, para que la torre más alta quepa bien
+  let x0=0,boxes=[],zones='',lab='';ets.forEach(e=>{const col=AXO_COLS[e.i%AXO_COLS.length],zy=(D-e.d)/2;
+    zones+=`<polygon points="${pts([[x0,zy,0],[x0+e.w,zy,0],[x0+e.w,zy+e.d,0],[x0,zy+e.d,0]])}" fill="${col}" fill-opacity=".14" stroke="${col}" stroke-width="1.4" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>`;
+    const lp=pr(x0+e.w*.5,zy+e.d+.55,0);lab+=`<text x="${lp[0].toFixed(2)}" y="${lp[1].toFixed(2)}" class="axo-lab">${axoEt(e)}</text>`;
+    e.tw.forEach((t,k)=>{const c=k%e.cols,r=Math.floor(k/e.cols);boxes.push({x:x0+G+c*(FW+G),y:zy+G+r*(FD+G),t,e,col})});x0+=e.w+.5});
+  boxes.sort((a,b)=>(a.x+a.y)-(b.x+b.y));   // de atrás hacia adelante
+  const lot=[[-.8,-.8,0],[W+.8,-.8,0],[W+.8,D+.8,0],[-.8,D+.8,0]],slab=.35;
+  let s=`<polygon points="${pts(lot.map(p=>[p[0],p[1],0]).concat([]))}" class="axo-lot"/>`
+    +`<polygon points="${pts([[W+.8,-.8,0],[W+.8,D+.8,0],[W+.8,D+.8,-slab],[W+.8,-.8,-slab]])}" class="axo-side r"/>`
+    +`<polygon points="${pts([[-.8,D+.8,0],[W+.8,D+.8,0],[W+.8,D+.8,-slab],[-.8,D+.8,-slab]])}" class="axo-side l"/>`+zones;
+  boxes.forEach(({x,y,t,e,col})=>{const w=FW,d=FD,h=t.p*hf;
+    let fl='';const step=Math.max(1,Math.ceil(t.p/36));for(let k=step;k<t.p;k+=step){const z=k*hf;
+      fl+=`<polyline points="${pts([[x,y+d,z],[x+w,y+d,z],[x+w,y,z]])}" class="axo-fl"/>`}
+    s+=`<g><title>${esc(t.n)} · ${esc(e.E.nombre)} · ${t.p} pisos${t.u?' · '+nf(t.u)+' apartamentos':''}</title>`
+      +`<polygon points="${pts([[x,y+d,0],[x+w,y+d,0],[x+w,y+d,h],[x,y+d,h]])}" fill="${col}"/><polygon points="${pts([[x,y+d,0],[x+w,y+d,0],[x+w,y+d,h],[x,y+d,h]])}" class="axo-sh l"/>`
+      +`<polygon points="${pts([[x+w,y,0],[x+w,y+d,0],[x+w,y+d,h],[x+w,y,h]])}" fill="${col}"/><polygon points="${pts([[x+w,y,0],[x+w,y+d,0],[x+w,y+d,h],[x+w,y,h]])}" class="axo-sh r"/>`
+      +`<polygon points="${pts([[x,y,h],[x+w,y,h],[x+w,y+d,h],[x,y+d,h]])}" fill="${col}"/><polygon points="${pts([[x,y,h],[x+w,y,h],[x+w,y+d,h],[x,y+d,h]])}" class="axo-sh t"/>${fl}</g>`});
+  // Árboles de adorno en el borde delantero del lote
+  for(let k=0;k<Math.min(9,Math.round(W/1.6));k++){const tp=pr(-.4+k*(W+.8)/Math.max(1,Math.round(W/1.6)-1)*.98,D+.45,0);s+=`<circle cx="${tp[0].toFixed(2)}" cy="${(tp[1]-.28).toFixed(2)}" r=".3" class="axo-tree"/>`}
+  s+=lab;
+  const all=[...lot,[W+.8,-.8,maxP*hf],[-.8,-.8,maxP*hf],[W+.8,D+.8,-slab]].map(p=>pr(...p)),xs=all.map(p=>p[0]),ys=all.map(p=>p[1]);
+  const vb=[Math.min(...xs)-.6,Math.min(...ys)-.8,Math.max(...xs)-Math.min(...xs)+1.2,Math.max(...ys)-Math.min(...ys)+2];
+  // Datos clave
+  const nT=ets.reduce((a,e)=>a+e.tw.length,0),ps=ets.flatMap(e=>e.tw.map(t=>t.p)),pmin=Math.min(...ps),apts=(P.tipologias||[]).filter(t=>t.clase==='apto');
+  const UA=Math.round(sum(R.ets.map(e=>e.UA))),AV=sum(R.ets.map(e=>e.AV)),L=P.costos&&P.costos.lote||{};
+  const tipos=Object.values(apts.reduce((m,t)=>{const k=(t.nombre||'Tipo')+'|'+(+t.area).toFixed(1);(m[k]=m[k]||{n:t.nombre||'Tipo',a:+t.area,u:0}).u+=+t.unidades||0;return m},{})).sort((a,b)=>b.u-a.u);
+  const LF={contado:'de contado',diferido:'en cuotas',especie:'aporte en especie',area:'pago en área'}[L.forma]||'';
+  const st=[['Etapas',ets.length],['Torres',nT],['Pisos',pmin===maxP?maxP:pmin+' a '+maxP],['Apartamentos',nf(UA)],['Tipologías',tipos.length],['Área vendible',nf(AV)+' m²'],['Lote',fM(+L.valor||0)+(LF?`<small>${LF}</small>`:'')]];
+  return `<div class="card axo"><div class="axo-g"><svg viewBox="${vb.map(v=>v.toFixed(2)).join(' ')}" role="img" aria-label="Esquema del proyecto: ${nT} torres en ${ets.length} etapas">${s}</svg>
+      <div class="legend">${ets.map(e=>`<span style="--c:${AXO_COLS[e.i%AXO_COLS.length]}">${axoEt(e)} · ${e.tw.length} torre${e.tw.length>1?'s':''}</span>`).join('')}</div></div>
+    <div class="axo-d"><div class="axo-st">${st.map(([l,v])=>`<div><span>${l}</span><b>${v}</b></div>`).join('')}</div>
+      <div class="axo-tip">${tipos.slice(0,6).map(t=>`<span>${esc(t.n)} · ${nf(t.a,1)} m² · ${nf(t.u)} und</span>`).join('')}${tipos.length>6?`<span class="muted">y ${tipos.length-6} más</span>`:''}</div></div></div>`}
 function renderInicio(){
   const host=$('#s-inicio'),now=new Date(),h=now.getHours();
   // En Modo Escritorio con dos columnas, los gráficos que se ajustan al ancho se dibujan para media pantalla
@@ -1539,6 +1605,7 @@ function renderInicio(){
   }
   const P=ST.P,R=ST.R,G=P.general;
   html+=`<div class="card projcard"><div style="min-width:0"><div class="t">${esc(G.nombre)}</div><div class="d">${esc(G.ciudad||'Sin ciudad')} · ${P.etapas.length} etapa${P.etapas.length>1?'s':''} · ${G.vehiculo==='sociedad'?'Sociedad':'Fiducia'} · ${nf(sum(R.ets.map(e=>e.UA)))} viviendas</div></div><button class="btn sm" data-act="proj-open">Cambiar</button></div>
+  ${axoCard(P,R)}
   <div class="hero${R.utilNeta<0?' loss':''}">${PULSO_SVG}<div class="eyebrow">Utilidad antes de impuestos · margen ${fP(R.margen)}</div><div class="big">${fM(R.uai)}</div>
     <div class="mini"><div><span>TIR inv.</span>${fP(R.tirI)}</div><div><span>VPN</span>${fM(R.vpn)}</div><div><span>Neta</span>${fM(R.utilNeta)}</div></div>
     <button class="go" data-act="go" data-to="resultados" aria-label="Ver resultados"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div>
