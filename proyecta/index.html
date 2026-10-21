@@ -169,6 +169,7 @@ svg text{font-family:var(--font);font-size:10.5px;fill:var(--muted);font-weight:
 .switch input:checked+i::after{transform:translateX(18px);background:var(--on-acc)}
 .item{background:var(--sunk);border-radius:var(--r);padding:14px;display:grid;gap:12px}
 .item-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.item.torre{grid-template-columns:minmax(0,1fr) auto;align-items:end}
 .item-head .tag{flex:none}
 .item .f .box{background:var(--panel)}
 .item .f.sw{background:var(--panel)}
@@ -419,6 +420,11 @@ body.wizon{overflow:hidden}
 .wzsw input{width:22px;height:22px;accent-color:var(--acc);flex:none;margin-top:2px}
 .wzsw span{display:grid;gap:2px}.wzsw small{color:var(--muted)}
 .wztipos{display:grid;gap:10px}
+.wzets{display:grid;gap:12px;margin-bottom:10px}
+.wzet{background:var(--panel);border-radius:14px;padding:12px;display:grid;gap:10px}
+.wztorre{display:grid;grid-template-columns:64px minmax(0,1fr) minmax(0,1fr) 34px;gap:8px;align-items:end}
+.wztorre>b{align-self:center;font-size:13px}
+.wzet>.btn{justify-self:start}
 .wztipo{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:end;background:var(--panel);border-radius:14px;padding:10px}
 @media (max-width:480px){.wztipo{grid-template-columns:1fr 1fr}.wztipo .f:first-child{grid-column:1/-1}}
 .wzcalc{background:var(--panel);border-radius:14px;padding:12px 16px;display:grid;gap:4px}
@@ -732,6 +738,14 @@ function makeCal(P,M,H){
 function scurve(n){const F=x=>x*x*(3-2*x),w=[];for(let i=0;i<n;i++)w.push(F((i+1)/n)-F(i/n));return w}
 function spread(arr,a,b,total){if(!total)return;a=Math.max(0,Math.round(a));b=Math.max(a,Math.round(b));const n=b-a+1;for(let m=a;m<=b;m++)arr[m]+=total/n}
 
+/* ---- Torres ----
+   Las torres de una misma etapa se venden y se construyen a la vez; solo cambian sus pisos y sus unidades. Por eso el
+   calendario, la caja y el crédito siguen siendo de la etapa, y las torres solo definen la prima por piso promedio:
+   la de cada torre (unidad promedio a media altura) ponderada por sus unidades. Sin torres se usan los pisos de la etapa. */
+const torresDe=E=>(Array.isArray(E.torres)?E.torres:[]).filter(Boolean);
+function pisosMax(E){const T=torresDe(E);return T.length?Math.max(1,...T.map(x=>+x.pisos||1)):Math.max(1,+E.pisos||1)}
+function pisoFactor(E,prima){const T=torresDe(E),f=p=>1+prima*(Math.max(1,+p||1)-1)/2;if(!T.length)return f(E.pisos);
+  const tot=sum(T.map(x=>Math.max(0,+x.unidades||0)));return sum(T.map(x=>(tot>0?Math.max(0,+x.unidades||0)/tot:1/T.length)*f(x.pisos)))}
 /* ---- Una etapa ---- */
 function runEtapa(P,E,M,cal,H){
   const z=()=>new Array(H).fill(0);
@@ -740,10 +754,9 @@ function runEtapa(P,E,M,cal,H){
   const apt=tips.filter(t=>t.clase==='apto');
   const drv=apt.length?apt:tips;
   const UA=Math.max(1e-9,sum(drv.map(t=>+t.unidades||0)));
-  const pisos=Math.max(1,+E.pisos||1);
   const isVis=E.tipo==='VIS'||E.tipo==='VIP';
   const tope=E.tipo==='VIP'?M.topeVIP:(E.topeEsp?M.topeVISEsp:M.topeVIS);
-  const unitBase=t=>(t.clase==='parq'||t.clase==='deposito')?(+t.precio||0):(+t.area||0)*(+t.precio||0)*(1+pc(t.primaPiso)*(pisos-1)/2)*(1+pc(t.pctVista)*pc(t.primaVista));
+  const unitBase=t=>(t.clase==='parq'||t.clase==='deposito')?(+t.precio||0):(+t.area||0)*(+t.precio||0)*pisoFactor(E,pc(t.primaPiso))*(1+pc(t.pctVista)*pc(t.primaVista));
   const t0=Math.max(0,Math.round(+E.inicioVentas||0));
   const vel=t=>{const k=t-t0,b=Math.max(.2,+E.velocidad||1);
     if(E.curva==='personalizada'&&Array.isArray(E.curvaPers)&&E.curvaPers[k]!=null&&E.curvaPers[k]!=='')return Math.max(0,+E.curvaPers[k]);
@@ -1543,7 +1556,10 @@ function modeloSection(sub){
   if(sub==='producto')return P.etapas.map((E,i)=>`<div class="card"><div class="item-head" style="margin-bottom:12px"><h4>${esc(E.nombre)}</h4>${P.etapas.length>1?delBtn('del-etapa',i,'Eliminar etapa'):''}</div>
     <div class="fields">${fText(`etapas.${i}.nombre`,'Nombre de la etapa')}${fSel(`etapas.${i}.tipo`,'Tipo de vivienda',TIPOS,true)}
     ${E.tipo==='VIS'?fSw(`etapas.${i}.topeEsp`,'Tope VIS de 150 SMMLV (ciudades con tope especial)'):''}
-    ${fNum(`etapas.${i}.pisos`,'Pisos','pisos')}${fNum(`etapas.${i}.factorConst`,'Área construida / vendible','x')}</div>
+    ${torresDe(E).length?'':fNum(`etapas.${i}.pisos`,'Pisos','pisos')}${fNum(`etapas.${i}.factorConst`,'Área construida / vendible','x')}</div>
+    <div class="label" style="margin:16px 0 4px">Torres</div><p class="sub" style="margin:0 0 8px">Las torres de una etapa se venden y se construyen a la vez. Sus pisos y unidades definen la prima por piso promedio de la etapa.</p>
+    ${torresDe(E).length?`<div class="list">${E.torres.map((x,k)=>`<div class="item torre"><div class="fields tight">${fText(`etapas.${i}.torres.${k}.nombre`,'Nombre')}${fNum(`etapas.${i}.torres.${k}.pisos`,'Pisos','pisos')}${fNum(`etapas.${i}.torres.${k}.unidades`,'Unidades','und')}</div><button class="iconbtn" data-act="del-torre" data-i="${i}" data-k="${k}" aria-label="Eliminar ${esc(x.nombre||'torre')}" title="Eliminar torre">${ICON_DEL}</button></div>`).join('')}</div><div class="sub" data-calc="torres" data-i="${i}" style="margin-top:8px"></div>`:''}
+    <button class="addbtn" data-act="add-torre" data-i="${i}">${torresDe(E).length?'+ Agregar torre':'+ Dividir en torres'}</button>
     <div class="label" style="margin:16px 0 8px">Tipologías</div><div class="list">
     ${P.tipologias.map((t,j)=>t.etapa!==E.id?'':`<div class="item"><div class="item-head"><span class="tag acc">${esc((CLASES.find(c=>c[0]===t.clase)||[])[1]||'')}</span>${delBtn('del-tip',j,'Eliminar tipología')}</div>
       <div class="fields tight">${fText(`tipologias.${j}.nombre`,'Nombre')}${fSel(`tipologias.${j}.clase`,'Clase',CLASES,true)}${fNum(`tipologias.${j}.unidades`,'Unidades','und')}
@@ -1592,11 +1608,13 @@ function modeloSection(sub){
 function updModelo(){
   updLive();const P=ST.P,R=ST.R;if(!P||!R)return;
   $$('[data-calc]').forEach(el=>{const k=el.dataset.calc;
-    if(k==='resumen'){const UA=sum(R.ets.map(e=>e.UA)),AV=sum(R.ets.map(e=>e.AV));el.innerHTML=`<span>Viviendas</span><span>${nf(UA)}</span><span>Área vendible</span><span>${nf(AV)} m²</span><span>Área construida</span><span>${nf(sum(R.ets.map(e=>e.AC)))} m²</span><span>Ventas proyectadas</span><span>${fM(R.ventas)}</span><span>Precio promedio</span><span>${fPesos(AV?R.ventas/AV:0)}/m²</span><span>Costo directo</span><span>${fPesos(R.tot.dir/Math.max(1,sum(R.ets.map(e=>e.AC))))}/m² const.</span>`}
-    if(k==='price'){const t=P.tipologias[+el.dataset.j];if(!t)return;const E=P.etapas.find(e=>e.id===t.etapa)||{};const pisos=Math.max(1,+E.pisos||1);
+    if(k==='resumen'){const UA=sum(R.ets.map(e=>e.UA)),AV=sum(R.ets.map(e=>e.AV)),nT=P.etapas.some(e=>torresDe(e).length)?sum(P.etapas.map(e=>torresDe(e).length||1)):0;el.innerHTML=`<span>Viviendas</span><span>${nf(UA)}</span>${nT?`<span>Torres</span><span>${nT}</span>`:''}<span>Área vendible</span><span>${nf(AV)} m²</span><span>Área construida</span><span>${nf(sum(R.ets.map(e=>e.AC)))} m²</span><span>Ventas proyectadas</span><span>${fM(R.ventas)}</span><span>Precio promedio</span><span>${fPesos(AV?R.ventas/AV:0)}/m²</span><span>Costo directo</span><span>${fPesos(R.tot.dir/Math.max(1,sum(R.ets.map(e=>e.AC))))}/m² const.</span>`}
+    if(k==='torres'){const E=P.etapas[+el.dataset.i];if(!E)return;const T=torresDe(E),uT=sum(T.map(x=>+x.unidades||0)),apt=P.tipologias.filter(t=>t.etapa===E.id&&t.clase==='apto'),uA=sum((apt.length?apt:P.tipologias.filter(t=>t.etapa===E.id)).map(t=>+t.unidades||0));
+      el.innerHTML=`${T.length} torre${T.length>1?'s':''} · ${nf(uT)} unidades · hasta ${pisosMax(E)} pisos`+(Math.round(uT)===Math.round(uA)?' · coincide con las tipologías ✓':` · <b style="color:var(--warn)">las tipologías de vivienda de esta etapa suman ${nf(uA)}</b>`);return}
+    if(k==='price'){const t=P.tipologias[+el.dataset.j];if(!t)return;const E=P.etapas.find(e=>e.id===t.etapa)||{};const pisos=pisosMax(E),varias=torresDe(E).length>1;
       if(t.clase==='parq'||t.clase==='deposito'){el.innerHTML=`Precio unidad <b>${fM(t.precio)}</b>`;return}
-      const b=(+t.area||0)*(+t.precio||0),p1=b,pN=b*(1+pc(t.primaPiso)*(pisos-1)),vis=b*pc(t.primaVista),avg=b*(1+pc(t.primaPiso)*(pisos-1)/2)*(1+pc(t.pctVista)*pc(t.primaVista));
-      let s=`Piso 1 <b>${fM(p1)}</b> · Piso ${pisos} <b>${fM(pN)}</b> · Con vista +<b>${fM(vis)}</b> · Promedio <b>${fM(avg)}</b>`;
+      const b=(+t.area||0)*(+t.precio||0),p1=b,pN=b*(1+pc(t.primaPiso)*(pisos-1)),vis=b*pc(t.primaVista),avg=b*pisoFactor(E,pc(t.primaPiso))*(1+pc(t.pctVista)*pc(t.primaVista));
+      let s=`Piso 1 <b>${fM(p1)}</b> · Piso ${pisos}${varias?" (torre más alta)":""} <b>${fM(pN)}</b> · Con vista +<b>${fM(vis)}</b> · Promedio <b>${fM(avg)}</b>`;
       if(E.tipo&&E.tipo!=='NoVIS'&&t.clase==='apto'){const M=ST.macro,tp=E.tipo==='VIP'?M.topeVIP:(E.topeEsp?M.topeVISEsp:M.topeVIS),cap=tp*M.smmlv;s+=` · Tope ${E.tipo} ${M.anioBase} <b style="color:${pN>cap?'var(--neg)':'inherit'}">${fM(cap)}</b>`}
       el.innerHTML=s}
     if(k==='capTot'){const t=sum(P.costos.capitulos.map(c=>+c.valor||0));el.textContent=fPesos(t)}
@@ -1879,22 +1897,36 @@ function wzDefaults(tipo,keep){
   const und=sum(apt.map(t=>+t.unidades)),precio=Math.round(sum(apt.map(t=>t.precio*t.unidades))/und/10000)*10000,e=T.etapas[0];
   const d=new Date();d.setMonth(d.getMonth()+1);
   return Object.assign({nombre:'',ciudad:'',fecha:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')},keep||{},{
-    tipo,topeEsp:false,etapas:T.etapas.length,pisos:+e.pisos,tipos,precio,parq:sum(parq.map(t=>+t.unidades)),parqPrecio:parq[0]?+parq[0].precio:0,
+    tipo,topeEsp:false,et:T.etapas.map(x=>({torres:[{pisos:+x.pisos||1,und:Math.round(sum(T.tipologias.filter(t=>t.etapa===x.id&&t.clase==='apto').map(t=>+t.unidades||0)))}]})),tipos,precio,parq:sum(parq.map(t=>+t.unidades)),parqPrecio:parq[0]?+parq[0].precio:0,
     costo:sum(T.costos.capitulos.map(c=>+c.valor)),lote:+T.costos.lote.valor,loteForma:'contado',vel:+e.velocidad,ci:+T.ventas.ciPct,obra:+e.mesesObra,
     credito:true,cupo:+e.credPct,socios:2,part1:60,tio:+T.general.tasaDesc,margen:+T.general.margenMin});
 }
 const ESP_CIUDADES=/bogot|medell|cali|barranquilla|cartagena|bucaramanga|soacha|envigado|itag|bello|sabaneta|soledad|floridablanca|gir[oó]n|piedecuesta|jamund|palmira|mosquera|funza|madrid|ch[ií]a|cajic|zipaquir/i;
+// Reparte un total entero según pesos (mayor residuo): la suma siempre da exactamente el total
+function wzAlloc(tot,ws){tot=Math.max(0,Math.round(+tot||0));const W=sum(ws)||1,raw=ws.map(w=>tot*Math.max(0,+w||0)/W),out=raw.map(Math.floor);let r=tot-sum(out);
+  raw.map((x,i)=>[x-Math.floor(x),i]).sort((p,q)=>q[0]-p[0]).forEach(([,i])=>{if(r>0){out[i]++;r--}});return out}
+const wzUnd=e=>sum(e.torres.map(t=>Math.max(0,Math.round(+t.und||0))));
+const wzUndTot=a=>sum(a.et.map(wzUnd));
+// Si las torres cambiaron, los tipos se ajustan a su total conservando la proporción entre ellos
+function wzFit(a){const U=wzUndTot(a),S=sum(a.tipos.map(t=>Math.round(+t.und||0)));if(U>0&&S!==U){const n=wzAlloc(U,S>0?a.tipos.map(t=>+t.und||0):a.tipos.map(()=>1));a.tipos.forEach((t,j)=>t.und=n[j]);return true}return false}
+function wzTot(a){const nt=sum(a.et.map(e=>e.torres.length));return `<div><span>${a.et.length} etapa${a.et.length>1?'s':''} · ${nt} torre${nt>1?'s':''}</span><b>${nf(wzUndTot(a))} apartamentos</b></div>`}
+function wzTipTot(a){const U=wzUndTot(a),S=sum(a.tipos.map(t=>Math.round(+t.und||0)));
+  return `<div><span>Las torres suman</span><b>${nf(U)} apartamentos</b></div><div><span>Los tipos suman</span><b style="color:${S===U?'inherit':'var(--neg)'}">${nf(S)}${S===U?' ✓':''}</b></div>${S===U?'':`<button class="btn sm" data-act="wz-fit">Ajustar los tipos a ${nf(U)}</button>`}`}
 function wzBuild(a){
-  const T=newProject(kindOf(a.tipo)),P=T,n=Math.max(1,Math.min(4,Math.round(+a.etapas||1))),base=clone(T.etapas[0]),aptT=T.tipologias.find(t=>t.clase==='apto')||{};
-  const split=(tot,k)=>{tot=Math.max(0,Math.round(+tot||0));return Math.floor(tot/n)+(k<tot%n?1:0)};
+  const T=newProject(kindOf(a.tipo)),P=T,base=clone(T.etapas[0]),aptT=T.tipologias.find(t=>t.clase==='apto')||{};
+  // Cada etapa recibe los apartamentos de sus torres; los tipos y los parqueaderos se reparten en esa misma proporción
+  const ets=a.et,n=ets.length,U=ets.map(wzUnd),pq=wzAlloc(a.parq,U);let tn=0;
   P.general=Object.assign(P.general,{nombre:a.nombre||'Proyecto nuevo',ciudad:a.ciudad||'',fecha:a.fecha,tasaDesc:+a.tio,margenMin:+a.margen});
   P.etapas=[];P.tipologias=[];
-  for(let k=0;k<n;k++){const id='e'+(k+1);
-    P.etapas.push(Object.assign(clone(base),{id,nombre:n>1?`Etapa ${k+1} · Torre ${k+1}`:'Etapa 1',tipo:a.tipo,topeEsp:a.tipo==='VIS'&&!!a.topeEsp,pisos:+a.pisos,velocidad:+a.vel,mesesObra:+a.obra,
+  ets.forEach((e,k)=>{const id='e'+(k+1),ts=e.torres.length,first=tn+1;tn+=ts;
+    const lbl=ts>1?`Torres ${first} a ${tn}`:`Torre ${first}`,pis=Math.max(1,...e.torres.map(t=>+t.pisos||1));
+    P.etapas.push(Object.assign(clone(base),{id,nombre:n>1||ts>1?`Etapa ${k+1} · ${lbl}`:'Etapa 1',tipo:a.tipo,topeEsp:a.tipo==='VIS'&&!!a.topeEsp,pisos:pis,velocidad:+a.vel,mesesObra:+a.obra,
+      torres:ts>1?e.torres.map((t,m)=>({id:'w'+(k+1)+'_'+(m+1),nombre:'Torre '+(first+m),pisos:Math.max(1,Math.round(+t.pisos||1)),unidades:Math.max(0,Math.round(+t.und||0))})):[],
       credPct:a.credito?+a.cupo:0,inicioVentas:1+k*12,mesMinObra:(+base.mesMinObra||6)+k*12,curva:k?'constante':base.curva,salaVentas:k?Math.round((+base.salaVentas||0)*0.25):+base.salaVentas}));
-    a.tipos.forEach((t,j)=>{const u=split(t.und,k);if(u>0)P.tipologias.push({id:'t'+(k+1)+'_'+(j+1),etapa:id,nombre:t.n||('Tipo '+String.fromCharCode(65+j)),clase:'apto',unidades:u,area:+t.area,precio:+a.precio,primaPiso:+aptT.primaPiso||0,pctVista:+aptT.pctVista||0,primaVista:+aptT.primaVista||0})});
-    const pq=split(a.parq,k);if(pq>0)P.tipologias.push({id:'t'+(k+1)+'_p',etapa:id,nombre:'Parqueaderos',clase:'parq',unidades:pq,area:0,precio:+a.parqPrecio,primaPiso:0,pctVista:0,primaVista:0});
-  }
+    const ut=wzAlloc(U[k],a.tipos.map(t=>+t.und||0));
+    a.tipos.forEach((t,j)=>{const u=ut[j];if(u>0)P.tipologias.push({id:'t'+(k+1)+'_'+(j+1),etapa:id,nombre:t.n||('Tipo '+String.fromCharCode(65+j)),clase:'apto',unidades:u,area:+t.area,precio:+a.precio,primaPiso:+aptT.primaPiso||0,pctVista:+aptT.pctVista||0,primaVista:+aptT.primaVista||0})});
+    if(pq[k]>0)P.tipologias.push({id:'t'+(k+1)+'_p',etapa:id,nombre:'Parqueaderos',clase:'parq',unidades:pq[k],area:0,precio:+a.parqPrecio,primaPiso:0,pctVista:0,primaVista:0});
+  });
   const f=(+a.costo||1)/(sum(T.costos.capitulos.map(c=>+c.valor))||1);P.costos.capitulos.forEach(c=>c.valor=Math.round(c.valor*f/1000)*1000);
   P.costos.lote.valor=+a.lote;P.costos.lote.forma=a.loteForma;
   P.ventas.ciPct=+a.ci;
@@ -1920,14 +1952,17 @@ const WZ_STEPS=[
  {t:'El lote',q:'¿Cuánto vale el terreno y cómo se pagará?',
   h:'Escribe el valor total en pesos. Lo usual es que el lote valga entre el 8 % y el 18 % de las ventas del proyecto. “Aporte en especie” significa que el dueño del lote no lo vende sino que entra como socio con el terreno.',
   body:a=>wzF('money','lote','Valor del lote','')+wzRadio('loteForma',[['contado','De contado'],['diferido','En cuotas'],['especie','El dueño lo aporta como socio']])},
- {t:'¿Qué tan grande es?',q:'Cuántas torres o etapas y cuántos pisos tiene cada una.',
-  h:'Una etapa es una torre o grupo de casas que se vende y se construye por separado. Con varias etapas, la segunda empieza a venderse un año después de la primera, lo que reduce el riesgo. Los pisos influyen en el costo y en el precio de los apartamentos altos.',
-  body:a=>wzF('num','etapas','Torres o etapas','',{min:1,max:4,step:1})+wzF('num','pisos','Pisos por torre','',{min:1,max:60,step:1}),
-  ok:a=>(+a.etapas<1||+a.etapas>4)?'Elige entre 1 y 4 etapas.':''},
+ {t:'¿Qué tan grande es?',q:'Cuántas etapas tiene, cuántas torres hay en cada etapa y cuántos pisos y apartamentos tiene cada torre.',
+  h:'Una etapa es un grupo de torres que se vende y se construye al mismo tiempo. Agrega las etapas que necesites y, en cada una, sus torres. Cada etapa nueva empieza a venderse un año después de la anterior, lo que reduce el riesgo. Los pisos de cada torre definen el precio extra de los apartamentos altos.',
+  body:a=>{let n=0;return `<div class="wzets">${a.et.map((e,k)=>`<div class="wzet"><div class="between"><b>Etapa ${k+1}</b>${a.et.length>1?`<button class="iconbtn" data-act="wz-delet" data-i="${k}" aria-label="Quitar la etapa ${k+1}">${ICON_DEL}</button>`:''}</div>
+    ${e.torres.map((t,m)=>`<div class="wztorre"><b>Torre ${++n}</b><div class="f"><label>Pisos</label><div class="box"><input type="number" inputmode="numeric" min="1" max="80" data-wz="et.${k}.torres.${m}.pisos" value="${esc(t.pisos)}"><span class="u">pisos</span></div></div><div class="f"><label>Apartamentos</label><div class="box"><input type="number" inputmode="numeric" min="1" data-wz="et.${k}.torres.${m}.und" value="${esc(t.und)}"><span class="u">und</span></div></div>${e.torres.length>1?`<button class="iconbtn" data-act="wz-deltorre" data-i="${k}" data-m="${m}" aria-label="Quitar la torre ${n}">${ICON_DEL}</button>`:'<span></span>'}</div>`).join('')}
+    <button class="btn sm" data-act="wz-addtorre" data-i="${k}">+ Agregar torre a la etapa ${k+1}</button></div>`).join('')}</div>
+    <button class="btn" data-act="wz-addet">+ Agregar etapa</button><div class="wzcalc" data-wztot>${wzTot(a)}</div>`},
+  ok:a=>a.et.some(e=>e.torres.some(t=>!(Math.round(+t.pisos)>=1)))?'Cada torre necesita al menos 1 piso.':a.et.some(e=>e.torres.some(t=>!(Math.round(+t.und)>=1)))?'Cada torre necesita al menos 1 apartamento.':''},
  {t:'Tipos de apartamento',q:'Escribe cada tipo de apartamento con su área y cuántas unidades habrá en total.',
-  h:'El área es la que se vende al comprador (área privada), en metros cuadrados. Por ejemplo: “2 alcobas, 55 m², 120 unidades”. Puedes tener hasta 4 tipos. Las unidades se reparten por igual entre las etapas.',
-  body:a=>`<div class="wztipos">${a.tipos.map((t,j)=>`<div class="wztipo"><div class="f"><label>Nombre</label><div class="box"><input data-wz="tipos.${j}.n" value="${esc(t.n)}"></div></div><div class="f"><label>Área</label><div class="box"><input type="number" inputmode="decimal" data-wz="tipos.${j}.area" value="${esc(t.area)}"><span class="u">m²</span></div></div><div class="f"><label>Unidades</label><div class="box"><input type="number" inputmode="numeric" data-wz="tipos.${j}.und" value="${esc(t.und)}"><span class="u">und</span></div></div>${a.tipos.length>1?`<button class="iconbtn" data-act="wz-deltipo" data-i="${j}" aria-label="Quitar tipo">${ICON_DEL}</button>`:''}</div>`).join('')}</div>${a.tipos.length<4?'<button class="btn sm" data-act="wz-addtipo">+ Agregar otro tipo</button>':''}`,
-  ok:a=>a.tipos.some(t=>!(+t.area>0)||!(+t.und>0))?'Cada tipo necesita un área y unidades mayores que cero.':''},
+  h:'El área es la que se vende al comprador (área privada), en metros cuadrados. Por ejemplo: “2 alcobas, 55 m², 120 unidades”. Puedes tener hasta 4 tipos. Las unidades de los tipos deben sumar los apartamentos de las torres, y se reparten entre las etapas según los apartamentos de cada una.',
+  body:a=>`<div class="wztipos">${a.tipos.map((t,j)=>`<div class="wztipo"><div class="f"><label>Nombre</label><div class="box"><input data-wz="tipos.${j}.n" value="${esc(t.n)}"></div></div><div class="f"><label>Área</label><div class="box"><input type="number" inputmode="decimal" data-wz="tipos.${j}.area" value="${esc(t.area)}"><span class="u">m²</span></div></div><div class="f"><label>Unidades</label><div class="box"><input type="number" inputmode="numeric" data-wz="tipos.${j}.und" value="${esc(t.und)}"><span class="u">und</span></div></div>${a.tipos.length>1?`<button class="iconbtn" data-act="wz-deltipo" data-i="${j}" aria-label="Quitar tipo">${ICON_DEL}</button>`:''}</div>`).join('')}</div>${a.tipos.length<4?'<button class="btn sm" data-act="wz-addtipo">+ Agregar otro tipo</button>':''}<div class="wzcalc" data-wztip>${wzTipTot(a)}</div>`,
+  ok:a=>a.tipos.some(t=>!(+t.area>0)||!(+t.und>0))?'Cada tipo necesita un área y unidades mayores que cero.':sum(a.tipos.map(t=>Math.round(+t.und||0)))!==wzUndTot(a)?`Los tipos deben sumar ${nf(wzUndTot(a))} apartamentos, como las torres. Toca “Ajustar los tipos” o corrige las unidades.`:''},
  {t:'Precio de venta',q:'¿A cuánto venderás cada metro cuadrado?',
   h:'Es el precio por metro cuadrado de área privada al inicio de las ventas. Mira proyectos parecidos de la zona: es la mejor referencia. Después sube un poco cada mes según el avance. En VIS y VIP, si el precio pasa del tope legal, se ajusta al máximo permitido.',
   body:a=>wzF('money','precio','Precio por m²','')+`<div class="wzcalc">${a.tipos.map(t=>`<div><span>${esc(t.n)}</span><b>${pesos(t.area*a.precio)}</b></div>`).join('')}<small>Precio aproximado de cada apartamento</small></div>`},
@@ -1938,10 +1973,10 @@ const WZ_STEPS=[
   h:'Es el costo directo de la obra (materiales y mano de obra) por metro cuadrado construido, sin lote, diseños ni gerencia. Un constructor o un presupuesto de referencia te lo da. Si no lo sabes, deja el valor sugerido para este tipo de vivienda.',
   body:a=>wzF('money','costo','Costo directo por m² construido','')},
  {t:'Ventas',q:'¿Cuántos apartamentos esperas vender al mes y qué cuota inicial pedirás?',
-  h:'La velocidad de ventas es el promedio de unidades vendidas cada mes en cada torre; en proyectos medianos suele estar entre 6 y 15. La cuota inicial es el porcentaje del precio que el comprador paga antes de la entrega; el resto lo paga con su crédito hipotecario o subsidios.',
-  body:a=>wzF('num','vel','Ventas por mes en cada torre','',{min:1,step:1},'und/mes')+wzF('num','ci','Cuota inicial','',{min:0,max:100},'%')},
- {t:'Tiempo de obra',q:'¿Cuántos meses dura la construcción de cada torre?',
-  h:'La obra empieza cuando se vende el punto de equilibrio (el 60 % de las unidades). Como referencia, una torre de 10 a 20 pisos tarda entre 16 y 24 meses.',
+  h:'La velocidad de ventas es el promedio de unidades vendidas cada mes en cada etapa, sumando todas sus torres; en proyectos medianos suele estar entre 6 y 15. La cuota inicial es el porcentaje del precio que el comprador paga antes de la entrega; el resto lo paga con su crédito hipotecario o subsidios.',
+  body:a=>wzF('num','vel','Ventas por mes en cada etapa','',{min:1,step:1},'und/mes')+wzF('num','ci','Cuota inicial','',{min:0,max:100},'%')},
+ {t:'Tiempo de obra',q:'¿Cuántos meses dura la construcción de cada etapa?',
+  h:'Las torres de una etapa se construyen al mismo tiempo. La obra empieza cuando se vende el punto de equilibrio (el 60 % de las unidades de la etapa). Como referencia, una torre de 10 a 20 pisos tarda entre 16 y 24 meses.',
   body:a=>wzF('num','obra','Duración de la obra','',{min:6,max:60,step:1},'meses')},
  {t:'Crédito constructor',q:'¿Pedirás un crédito al banco para construir?',
   h:'Casi todos los proyectos usan un crédito constructor: el banco presta una parte del costo y se le paga cuando se entregan los apartamentos. El cupo es el porcentaje del costo que presta el banco; suele estar entre 50 % y 70 %. Sin crédito, los socios deben poner más dinero.',
@@ -2010,6 +2045,7 @@ function wzSay(){if(WZ.speaking){wzStop();wzBtn(false);return}
 function wzAuto(){if(prefs.wzMute)return;if(WZ.i===WZ_STEPS.length-1&&!WZ.opt)wzOptimize(true);wzStop();wzSay()}
 function wzNext(){const s=WZ_STEPS[WZ.i],err=s.ok&&s.ok(WZ.a);if(err){$('#wzErr').textContent=err;return}wzStop();
   if(WZ.i===1&&WZ.a.tipo==='VIS'&&ESP_CIUDADES.test(WZ.a.ciudad||''))WZ.a.topeEsp=true;
+  if(s.t==='¿Qué tan grande es?'&&wzFit(WZ.a))toast('Ajusté las unidades de los tipos al total de las torres');
   WZ.i=Math.min(WZ_STEPS.length-1,WZ.i+1);WZ.opt=null;wzRender();wzAuto()}
 const spM=v=>{v=Math.round(+v||0);const a=Math.abs(v),s=v<0?'menos ':'';return a>=1e6?s+nf(a/1e6,a>=1e8?0:1)+' millones de pesos':s+nf(a)+' pesos'};
 const spP=f=>'un '+nf(Math.abs(f-1)*100,1)+' % '+(f>=1?'más':'menos');
@@ -2078,7 +2114,8 @@ function wzApply(k,f){const a=WZ.a;
   wzStop();WZ.opt=null;wzRender();const ok=wzViable(WZ.P,WZ.R);toast(ok?'Ajuste aplicado: el proyecto ya es viable':'Ajuste aplicado; revisa las demás sugerencias');wzAuto()}
 function wzInput(el){const k=el.dataset.wz;if(!k||!WZ.a)return;
   const v=el.type==='checkbox'?el.checked:el.type==='number'?(el.value===''?'':+el.value):el.value;
-  const p=k.split('.');if(p.length===3)WZ.a[p[0]][+p[1]][p[2]]=v;else WZ.a[k]=v;
+  setPath(WZ.a,k,v);
+  const tt=$('#wiz [data-wztot]');if(tt)tt.innerHTML=wzTot(WZ.a);const tp=$('#wiz [data-wztip]');if(tp)tp.innerHTML=wzTipTot(WZ.a);
   const h=$(`#wiz [data-wzhint="${k}"]`);if(h)h.textContent=pesos(v)+(+v>=1e6?' · '+nf(v/1e6,v<1e8?1:0)+' millones':'');
   const er=$('#wzErr');if(er)er.textContent='';
   if(WZ.i===7||k==='part1'){const c=$('#wiz .wzcalc');if(c&&WZ.i===7)c.innerHTML=WZ.a.tipos.map(t=>`<div><span>${esc(t.n)}</span><b>${pesos(t.area*WZ.a.precio)}</b></div>`).join('')+'<small>Precio aproximado de cada apartamento</small>'}}
@@ -2100,7 +2137,7 @@ const HELP_STEPS=[
  {t:'Datos generales',w:'Modelo › General',go:'modelo:general',
   p:['Nombre del proyecto y ciudad.','Mes 0 del flujo: el mes en que arranca el proyecto; todos los meses se cuentan desde ahí.','Vehículo del negocio: fiducia (la renta la paga cada socio) o sociedad (la paga el proyecto).','Tasa de descuento (TIO): la rentabilidad mínima que esperan los socios; con ella se calcula el VPN y se compara la TIR.','Margen mínimo exigido: si el margen queda por debajo, aparece una alerta.']},
  {t:'Producto: etapas y tipologías',w:'Modelo › Producto',go:'modelo:producto',
-  p:['Crea una etapa por torre o fase que se venda y construya por separado.','En cada etapa: tipo de vivienda (No VIS, VIS o VIP), número de pisos y la relación área construida / área vendible.','Si es VIS en una ciudad con tope especial, activa “Tope VIS de 150 SMMLV”.','Agrega las tipologías de cada etapa: nombre, clase (apartamento, parqueadero, depósito o local), unidades, área vendible y precio.','El precio es por m² para apartamentos y locales, y por unidad para parqueaderos y depósitos.','Prima por piso y prima por vista suben el precio de las unidades más altas o con vista.']},
+  p:['Crea una etapa por cada grupo de torres que se venda y construya al mismo tiempo.','En cada etapa: tipo de vivienda (No VIS, VIS o VIP), número de pisos y la relación área construida / área vendible.','Si la etapa tiene varias torres, toca “Dividir en torres” y escribe los pisos y las unidades de cada una: definen la prima por piso promedio. Procura que las unidades de las torres sumen las de las tipologías de vivienda.','Si es VIS en una ciudad con tope especial, activa “Tope VIS de 150 SMMLV”.','Agrega las tipologías de cada etapa: nombre, clase (apartamento, parqueadero, depósito o local), unidades, área vendible y precio.','El precio es por m² para apartamentos y locales, y por unidad para parqueaderos y depósitos.','Prima por piso y prima por vista suben el precio de las unidades más altas o con vista.']},
  {t:'Ventas y plan de pagos',w:'Modelo › Ventas',go:'modelo:ventas',
   p:['Por etapa: mes de inicio de ventas, velocidad base (unidades por mes), curva de ventas, incremento mensual de precio y descuento promedio.','Punto de equilibrio: el % de unidades que debe venderse antes de iniciar obra.','Mes mínimo de inicio de obra, duración de obra y ventana de escrituración.','Sala de ventas y apartamento modelo.','Plan de pagos del comprador: separación, cuota inicial y abonos con cesantías y primas.','Desistimientos: qué % de las ventas se cae, cuántos meses después y qué penalidad se retiene.','Subsidios (solo VIS y VIP): % de compradores con subsidio nacional o de caja, su monto en SMMLV y el rezago de pago.']},
  {t:'Costos',w:'Modelo › Costos',go:'modelo:costos',
@@ -2128,6 +2165,7 @@ const GLOSARIO=[
  ['Aportes de socios','Dinero que los socios ponen cuando la caja del proyecto no alcanza. Se devuelven antes de repartir utilidades.'],
  ['Área construida','Metros cuadrados totales que se construyen, incluidas zonas comunes, muros y circulaciones.'],
  ['Área vendible','Metros cuadrados privados que se venden a los compradores.'],
+ ['Etapa','Grupo de torres o casas que se vende y se construye al mismo tiempo. Cada etapa tiene su propio lanzamiento, punto de equilibrio, obra y escrituración.'],
  ['Balance proyectado','Activos, pasivos y patrimonio del proyecto mes a mes. Debe cuadrar; si no, aparece una alerta.'],
  ['Capitalizar intereses','Sumar los intereses del crédito al saldo en vez de pagarlos cada mes durante la obra.'],
  ['Cesantías','Ahorro del trabajador que se retira en febrero y suele usarse para abonar a la cuota inicial.'],
@@ -2176,6 +2214,7 @@ const GLOSARIO=[
  ['Subsidio de caja','Ayuda de la caja de compensación familiar para comprar vivienda VIS o VIP.'],
  ['Subsidio nacional','Ayuda del Gobierno para comprar vivienda VIS o VIP (por ejemplo, Mi Casa Ya).'],
  ['Tipología','Tipo de unidad que se vende: un modelo de apartamento, parqueadero, depósito o local.'],
+ ['Torre','Edificio dentro de una etapa. Las torres de una misma etapa se venden y construyen a la vez; cada una tiene sus pisos y sus unidades.'],
  ['TIO (tasa de descuento)','Tasa interna de oportunidad: la rentabilidad mínima que exigen los socios.'],
  ['TIR del inversionista','Rentabilidad anual del dinero que ponen los socios, según sus aportes y distribuciones.'],
  ['TIR del proyecto','Rentabilidad anual del proyecto completo, antes de la financiación de los socios.'],
@@ -2200,7 +2239,7 @@ document.addEventListener('input',e=>{if(e.target.id!=='glosQ')return;
    Dentro de cada tema los términos siguen el orden en que aparecen al estructurar un proyecto, no el alfabético. */
 const GLOS_TEMAS=[
  ['Tipos de vivienda y subsidios',['VIS','VIP','No VIS','Tope VIS / VIP','SMMLV','Subsidio nacional','Subsidio de caja','Devolución de IVA']],
- ['Producto y áreas',['Tipología','Área vendible','Área construida','Prima por piso / vista']],
+ ['Producto y áreas',['Etapa','Torre','Tipología','Área vendible','Área construida','Prima por piso / vista']],
  ['Ventas y compradores',['Separación','Cuota inicial','Cesantías','Velocidad de ventas','Absorción','Curva de ventas','Encargo fiduciario','Punto de equilibrio','Desistimiento','Escrituración','Ventana de escrituración']],
  ['Costos y obra',['Indirectos','Imprevistos','ICCV','Curva S','Póliza decenal']],
  ['Crédito y financiación',['Crédito puente','Crédito constructor','Comisión de estructuración','IBR','Spread','Capitalizar intereses','Factor de liberación']],
@@ -2384,8 +2423,16 @@ document.addEventListener('click',async e=>{
     case 'col-left':moveCol(b.dataset.k,-1);break;
     case 'col-right':moveCol(b.dataset.k,1);break;
     case 'cuenta-close':ST.cuentaOpen=false;renderScreen();break;
-    case 'add-etapa':if(!W())break;{const last=P.etapas[P.etapas.length-1];const E=Object.assign(clone(last),{id:newId('e'),nombre:'Etapa '+(P.etapas.length+1),inicioVentas:(+last.inicioVentas||0)+12,mesMinObra:(+last.mesMinObra||0)+12,curvaPers:[]});P.etapas.push(E);P.tipologias.push({id:newId('t'),etapa:E.id,nombre:'Tipo A',clase:'apto',unidades:80,area:55,precio:7000000,primaPiso:0.5,pctVista:20,primaVista:3});onModelChange(1)}break;
+    case 'add-etapa':if(!W())break;{const last=P.etapas[P.etapas.length-1];const E=Object.assign(clone(last),{id:newId('e'),nombre:'Etapa '+(P.etapas.length+1),torres:[],pisos:pisosMax(last),inicioVentas:(+last.inicioVentas||0)+12,mesMinObra:(+last.mesMinObra||0)+12,curvaPers:[]});P.etapas.push(E);P.tipologias.push({id:newId('t'),etapa:E.id,nombre:'Tipo A',clase:'apto',unidades:80,area:55,precio:7000000,primaPiso:0.5,pctVista:20,primaVista:3});onModelChange(1)}break;
     case 'del-etapa':if(!W())break;{const E=P.etapas[i];P.etapas.splice(i,1);P.tipologias=P.tipologias.filter(t=>t.etapa!==E.id);onModelChange(1)}break;
+    // Torres: al dividir una etapa por primera vez, sus unidades de vivienda se reparten entre dos torres con los pisos de la etapa
+    case 'add-torre':if(!W())break;{const E=P.etapas[i];if(!E)break;const T=torresDe(E);
+      if(!T.length){const apt=P.tipologias.filter(t=>t.etapa===E.id&&t.clase==='apto'),u=Math.round(sum(apt.map(t=>+t.unidades||0))),p=Math.max(1,+E.pisos||1);
+        E.torres=[{id:newId('w'),nombre:'Torre 1',pisos:p,unidades:Math.ceil(u/2)},{id:newId('w'),nombre:'Torre 2',pisos:p,unidades:Math.floor(u/2)}]}
+      else E.torres=T.concat({id:newId('w'),nombre:'Torre '+(T.length+1),pisos:+T[T.length-1].pisos||1,unidades:0});
+      E.pisos=pisosMax(E);onModelChange(1)}break;
+    case 'del-torre':if(!W())break;{const E=P.etapas[i];if(!E)break;const T=torresDe(E);T.splice(+b.dataset.k,1);
+      if(T.length<=1){E.pisos=T.length?Math.max(1,+T[0].pisos||1):E.pisos;E.torres=[]}else{E.torres=T;E.pisos=pisosMax(E)}onModelChange(1)}break;
     case 'add-tip':if(!W())break;P.tipologias.push({id:newId('t'),etapa:b.dataset.e,nombre:'Nueva tipología',clase:'apto',unidades:20,area:55,precio:7000000,primaPiso:0,pctVista:0,primaVista:0});onModelChange(1);break;
     case 'del-tip':if(!W())break;P.tipologias.splice(i,1);onModelChange(1);break;
     case 'add-cap':if(!W())break;P.costos.capitulos.push({id:newId('c'),nombre:'Nuevo capítulo',valor:0,ini:0,fin:100});onModelChange(1);break;
@@ -2437,6 +2484,11 @@ document.addEventListener('click',async e=>{
     case 'wz-save':b.disabled=true;wzSave();break;
     case 'wz-tipo':if(WZ.a.tipo!==b.dataset.k){WZ.a=wzDefaults(b.dataset.k,{nombre:WZ.a.nombre,ciudad:WZ.a.ciudad,fecha:WZ.a.fecha});if(b.dataset.k==='VIS'&&ESP_CIUDADES.test(WZ.a.ciudad||''))WZ.a.topeEsp=true;wzRender()}break;
     case 'wz-set':{const v=b.dataset.v;WZ.a[b.dataset.k]=v==='true'?true:v==='false'?false:(isNaN(+v)?v:+v);wzRender();break}
+    case 'wz-addet':{const e=WZ.a.et[WZ.a.et.length-1];WZ.a.et.push({torres:[Object.assign({},e.torres[e.torres.length-1])]});wzRender();break}
+    case 'wz-delet':WZ.a.et.splice(i,1);wzRender();break;
+    case 'wz-addtorre':{const T=WZ.a.et[i].torres;T.push(Object.assign({},T[T.length-1]));wzRender();break}
+    case 'wz-deltorre':WZ.a.et[i].torres.splice(+b.dataset.m,1);wzRender();break;
+    case 'wz-fit':wzFit(WZ.a);wzRender();break;
     case 'wz-addtipo':WZ.a.tipos.push({n:'Tipo '+String.fromCharCode(65+WZ.a.tipos.length),area:60,und:40});wzRender();break;
     case 'wz-deltipo':WZ.a.tipos.splice(+b.dataset.i,1);wzRender();break;
     case 'wz-opt':wzOptimize();break;
