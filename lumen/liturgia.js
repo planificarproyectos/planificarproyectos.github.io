@@ -198,6 +198,8 @@ var BK={'genesis':1,'exodus':2,'leviticus':3,'numbers':4,'deuteronomy':5,'joshua
 var AB={'gn':1,'ex':2,'lv':3,'nm':4,'dt':5,'jos':6,'jgs':7,'ru':8,'1 sm':9,'2 sm':10,'1 kgs':11,'2 kgs':12,'1 chr':13,'2 chr':14,'ezr':15,'neh':16,'est':17,'jb':18,'ps':19,'prv':20,'eccl':21,'sg':22,'is':23,'jer':24,'lam':25,'ez':26,'dn':27,'hos':28,'jl':29,'am':30,'ob':31,'jon':32,'mi':33,'na':34,'hb':35,'zep':36,'hg':37,'zec':38,'mal':39,'mt':40,'mk':41,'lk':42,'jn':43,'acts':44,'rom':45,'1 cor':46,'2 cor':47,'gal':48,'eph':49,'phil':50,'col':51,'1 thes':52,'2 thes':53,'1 tm':54,'2 tm':55,'ti':56,'phlm':57,'heb':58,'jas':59,'1 pt':60,'2 pt':61,'1 jn':62,'2 jn':63,'3 jn':64,'jude':65,'rv':66};
 for(var _k in AB) BK[_k]=AB[_k];
 var DC={'tb':'Tobías','jdt':'Judit','wis':'Sabiduría','sir':'Eclesiástico','bar':'Baruc','1 mc':'1 Macabeos','2 mc':'2 Macabeos','tobit':'Tobías','tobiah':'Tobías','judith':'Judit','wisdom':'Sabiduría','sirach':'Eclesiástico','baruch':'Baruc','1 maccabees':'1 Macabeos','2 maccabees':'2 Macabeos'};
+// Libros deuterocanónicos: ahora están en la Biblia de la app (67-73)
+var DCB={'tb':67,'tobit':67,'tobiah':67,'jdt':68,'judith':68,'1 mc':69,'1 maccabees':69,'2 mc':70,'2 maccabees':70,'wis':71,'wisdom':71,'sir':72,'sirach':72,'bar':73,'baruch':73};
 var NAMES=null;
 // Diferencia de numeración de los salmos (el leccionario cuenta el título como versículo; la RV 1909 no)
 var PSOFF={3:1,4:1,5:1,6:1,7:1,8:1,9:1,12:1,13:1,18:1,19:1,20:1,21:1,22:1,30:1,31:1,34:1,36:1,38:1,39:1,40:1,41:1,42:1,44:1,45:1,46:1,47:1,48:1,49:1,51:2,52:2,53:1,54:2,55:1,56:1,57:1,58:1,59:1,60:2,61:1,62:1,63:1,64:1,65:1,67:1,68:1,69:1,70:1,75:1,76:1,77:1,80:1,81:1,83:1,84:1,85:1,88:1,89:1,92:1,102:1,108:1,140:1,142:1};
@@ -206,8 +208,10 @@ function parseRef(ref){
   ref=ref.replace(/^\s*Cf\.?\s*/i,'').replace(/[—–]/g,'-').replace(/\s+and\s+/g,', ').replace(/\s*\(\d+\)/g,'').trim();
   var m=/^(\d?\s?[A-Za-z][A-Za-z ]*?)\s+([\dA-Z].*)$/.exec(ref); if(!m) return null;
   var bname=m[1].toLowerCase().replace(/\s+/g,' '), spec=m[2];
-  var bi=BK[bname]; if(bname==='maccabees') return {dc:'Macabeos',ref:ref};
-  if(bname==='est'&&/^[A-F]/.test(spec)) return {dc:'Ester',spec:spec,ref:ref};
+  var bi=BK[bname]||DCB[bname]; if(bname==='maccabees') return {dc:'Macabeos',ref:ref};
+  // Ester griego: la sección C del leccionario (oraciones de Mardoqueo y Ester) es Ester 4:18-47 en la Biblia de la app
+  if(bname==='est'&&/^C:/.test(spec)){ spec='4:'+spec.slice(2).replace(/\d+/g,function(n){ return String(17+(+n)); }); bi=17; }
+  else if(bname==='est'&&/^[A-F]/.test(spec)) return {dc:'Ester',spec:spec,ref:ref};
   if(!bi) return DC[bname]?{dc:DC[bname],spec:spec,ref:ref}:null;
   if((bi===31||bi===57||bi===63||bi===64||bi===65)&&spec.indexOf(':')<0) spec='1:'+spec;     // libros de un solo capítulo
   var segs=[], ch=null;
@@ -223,7 +227,6 @@ function parseRef(ref){
     });
   });
   if(!segs.length&&/^\d+$/.test(spec.trim())) segs.push([+spec,1,+spec,999]);
-  if(bi===27&&segs.some(function(g){ return g[0]>=13||(g[0]===3&&g[1]>=24&&g[1]<=90); })) return {dc:'Daniel (texto griego)',spec:spec,ref:ref};
   return {book:bi,segs:segs,spec:spec,ref:ref};
 }
 function refEs(p){
@@ -245,7 +248,9 @@ function mapCV(b,c,v){
   if(b===38&&c===2) return v>=5?[2,v-4]:[1,v+17];
   if(b===28&&c===2) return [2,Math.max(1,v-2)];
   if(b===28&&c===14) return [14,Math.max(1,v-1)];
-  if(b===27&&c===3&&v>=91) return [3,v-67];
+  // Daniel con el texto griego: 3:1-97 como el leccionario; 3:98-100 del leccionario son 4:1-3, y su 4:n es 4:n+3
+  if(b===27&&c===3&&v>=98) return [4,v-97];
+  if(b===27&&c===4) return [4,v+3];
   return [c,v];
 }
 function textOf(p,book){
@@ -264,6 +269,7 @@ function textOf(p,book){
   return out;
 }
 var INTRO={1:'Lectura del libro del Génesis',2:'Lectura del libro del Éxodo',3:'Lectura del libro del Levítico',4:'Lectura del libro de los Números',5:'Lectura del libro del Deuteronomio',6:'Lectura del libro de Josué',7:'Lectura del libro de los Jueces',8:'Lectura del libro de Rut',9:'Lectura del primer libro de Samuel',10:'Lectura del segundo libro de Samuel',11:'Lectura del primer libro de los Reyes',12:'Lectura del segundo libro de los Reyes',13:'Lectura del primer libro de las Crónicas',14:'Lectura del segundo libro de las Crónicas',15:'Lectura del libro de Esdras',16:'Lectura del libro de Nehemías',17:'Lectura del libro de Ester',18:'Lectura del libro de Job',20:'Lectura del libro de los Proverbios',21:'Lectura del libro del Eclesiastés',22:'Lectura del libro del Cantar de los Cantares',25:'Lectura del libro de las Lamentaciones',27:'Lectura de la profecía de Daniel',44:'Lectura del libro de los Hechos de los Apóstoles',45:'Lectura de la carta del apóstol san Pablo a los Romanos',46:'Lectura de la primera carta del apóstol san Pablo a los Corintios',47:'Lectura de la segunda carta del apóstol san Pablo a los Corintios',48:'Lectura de la carta del apóstol san Pablo a los Gálatas',49:'Lectura de la carta del apóstol san Pablo a los Efesios',50:'Lectura de la carta del apóstol san Pablo a los Filipenses',51:'Lectura de la carta del apóstol san Pablo a los Colosenses',52:'Lectura de la primera carta del apóstol san Pablo a los Tesalonicenses',53:'Lectura de la segunda carta del apóstol san Pablo a los Tesalonicenses',54:'Lectura de la primera carta del apóstol san Pablo a Timoteo',55:'Lectura de la segunda carta del apóstol san Pablo a Timoteo',56:'Lectura de la carta del apóstol san Pablo a Tito',57:'Lectura de la carta del apóstol san Pablo a Filemón',58:'Lectura de la carta a los Hebreos',59:'Lectura de la carta del apóstol Santiago',60:'Lectura de la primera carta del apóstol san Pedro',61:'Lectura de la segunda carta del apóstol san Pedro',62:'Lectura de la primera carta del apóstol san Juan',63:'Lectura de la segunda carta del apóstol san Juan',64:'Lectura de la tercera carta del apóstol san Juan',65:'Lectura de la carta del apóstol san Judas',66:'Lectura del libro del Apocalipsis',40:'Lectura del santo Evangelio según san Mateo',41:'Lectura del santo Evangelio según san Marcos',42:'Lectura del santo Evangelio según san Lucas',43:'Lectura del santo Evangelio según san Juan'};
+INTRO[67]='Lectura del libro de Tobías';INTRO[68]='Lectura del libro de Judit';INTRO[69]='Lectura del primer libro de los Macabeos';INTRO[70]='Lectura del segundo libro de los Macabeos';INTRO[71]='Lectura del libro de la Sabiduría';INTRO[72]='Lectura del libro del Eclesiástico';INTRO[73]='Lectura de la profecía de Baruc';
 function introOf(bi){ if(INTRO[bi]) return INTRO[bi]; if(bi>=23&&bi<=39) return 'Lectura del libro del profeta '+NAMES[bi-1][0]; return 'Lectura del libro de '+NAMES[bi-1][0]; }
 
 /* ---------- Partes fijas de la Misa ---------- */

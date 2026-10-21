@@ -1,8 +1,8 @@
 // Service worker: abre Lumen rápido y sin conexión (app, liturgia y Biblia completa).
-const CACHE = "lumen-v14";
+const CACHE = "lumen-v15";
 const SHELL = ["./", "./index.html", "./app.js", "./liturgia.js", "./firebase-config.js", "./manifest.webmanifest",
   "./icon.svg", "./icon-192.png", "./icon-512.png", "./datos/calendario.json", "./datos/leccionario.json", "./biblia/indice.json"];
-const BIBLIA = Array.from({length: 66}, (_, i) => "./biblia/" + (i + 1) + ".json");
+const BIBLIA = Array.from({length: 73}, (_, i) => "./biblia/" + (i + 1) + ".json");
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
