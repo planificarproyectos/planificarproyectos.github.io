@@ -463,9 +463,20 @@ button.ghost:hover{background:var(--surface2)}
 .tnav{display:none}
 @media (hover:hover) and (pointer:fine){.tnav{display:grid;place-items:center;position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:34px;height:34px;min-height:0;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink,inherit);font-size:20px;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,.25)}.tnav.prev{left:-12px}.tnav.next{right:-12px}.tnav[hidden]{display:none}}
 @media (prefers-reduced-motion:reduce){.tiles.anim .tile{animation:none}.tdots button{transition:none}}
+/* Actividad en curso: latido doble (como un pulso) alrededor de la tarjeta y un punto "en vivo" */
+@keyframes curBeat{0%,30%,100%{box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--ink)}10%,24%{box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--ink),0 0 0 10px color-mix(in srgb,var(--tc) 45%,transparent)}}
+.tile.cur::after{content:"";position:absolute;top:9px;right:9px;width:8px;height:8px;border-radius:50%;background:currentColor;animation:liveDot 1.6s ease-in-out infinite}
+@keyframes liveDot{0%,30%,100%{opacity:.35;transform:scale(.8)}10%,24%{opacity:1;transform:scale(1.15)}}
+.tpage{padding:8px 4px}
+.tiles.anim .tile.cur{animation:tileIn .38s cubic-bezier(.2,.7,.3,1) both,curBeat 1.6s ease-in-out .5s infinite}
+/* Toque: onda circular desde el dedo, del color del texto de la tarjeta */
+.ripbox{position:absolute;z-index:3;border-radius:16px;overflow:hidden;pointer-events:none}
+.ripbox .rip{position:absolute;border-radius:50%;background:currentColor;opacity:.3;transform:scale(0);animation:rip .55s ease-out forwards}
+@keyframes rip{to{transform:scale(1);opacity:0}}
+@media (prefers-reduced-motion:reduce){.tile.cur,.tile.cur::after{animation:none}.ripbox{display:none}}
 .tile::before{display:none}
 .tile:hover{background:var(--tc)!important;filter:brightness(1.08)}
-.tile.cur{box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--ink)!important}
+.tile.cur{box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--ink);animation:curBeat 1.6s ease-in-out infinite}
 .modebar{background:var(--accent);color:var(--accent-ink);border-radius:16px}
 .modebar .ghost{color:var(--accent-ink);border-color:rgba(17,19,21,.35)}
 .pomogo{border-radius:16px;min-height:52px}
@@ -1761,7 +1772,7 @@ const TILE_GRUPOS=[
 function tileGrupo(c){const n=nk(c.n);for(let i=0;i<TILE_GRUPOS.length;i++)if(TILE_GRUPOS[i][0].includes(c.id))return i;
   for(let i=0;i<TILE_GRUPOS.length;i++)if(TILE_GRUPOS[i][1].test(n))return i;
   return c.tipo==="productiva"?0:c.tipo==="distraccion"?7:TILE_GRUPOS.length}
-let tilePage=0,tileAnim=true,tileQPrev="";
+let tilePage=0,tileAnim=true,tileQPrev="",tilePeeked=false;
 function tilePages(items,q){
   const tg=$("tiles"),w=tg.clientWidth||320,cols=w>=900?8:w>=520?4:2,per=cols*4,pages=Math.max(1,Math.ceil(items.length/per));
   if(q!==tileQPrev){tilePage=0;tileQPrev=q}tilePage=Math.min(tilePage,pages-1);
@@ -1773,7 +1784,21 @@ function tilePages(items,q){
   const d=$("tileDots");d.innerHTML="";d.hidden=pages<2;
   for(let p=0;p<pages;p++){const b=document.createElement("button");b.type="button";b.setAttribute("aria-label","Ir a la página "+(p+1));b.setAttribute("aria-current",String(p===tilePage));
     b.onclick=()=>{const pg=tg.children[p];if(pg)tg.scrollTo({left:pg.offsetLeft-tg.offsetLeft,behavior:"smooth"})};d.appendChild(b)}
-  $("tilePrev").hidden=$("tileNext").hidden=pages<2}
+  $("tilePrev").hidden=$("tileNext").hidden=pages<2;
+  if(pages>1&&!tilePeeked&&tilePage===0&&tg.offsetParent)tilePeek()}
+// Asomo de invitación: la primera vez que se ven las actividades, el carrusel se corre un poco y vuelve, para mostrar que se desliza
+function tilePeek(){tilePeeked=true;if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const tg=$("tiles");let tocado=false;const off=()=>{tocado=true};tg.addEventListener("pointerdown",off,{once:true});
+  setTimeout(()=>{if(tocado||tg.scrollLeft>2)return;tg.style.scrollSnapType="none";tg.scrollTo({left:56,behavior:"smooth"});
+    setTimeout(()=>{if(!tocado)tg.scrollTo({left:0,behavior:"smooth"});setTimeout(()=>{tg.style.scrollSnapType=""},450)},520)},900)}
+// Toque en una actividad: onda desde el dedo y una vibración corta en el celular. La onda va en una capa sobre la
+// tarjeta (dentro de .tcar) porque al tocar se vuelven a dibujar las actividades y la tarjeta original desaparece
+document.addEventListener("pointerdown",e=>{const t=e.target.closest&&e.target.closest("#tiles .tile");if(!t)return;
+  const car=t.closest(".tcar"),cr=car.getBoundingClientRect(),r=t.getBoundingClientRect(),d=Math.max(r.width,r.height)*2.2;
+  const box=document.createElement("span");box.className="ripbox";box.style.cssText=`left:${r.left-cr.left}px;top:${r.top-cr.top}px;width:${r.width}px;height:${r.height}px;color:${getComputedStyle(t).color}`;
+  const s=document.createElement("span");s.className="rip";s.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;
+  box.appendChild(s);car.appendChild(box);setTimeout(()=>box.remove(),600)});
+document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("#tiles .tile")&&navigator.vibrate)try{navigator.vibrate(12)}catch(_){}},true);
 // Página visible al deslizar: actualiza los puntos sin volver a dibujar
 $("tiles").addEventListener("scroll",()=>{const tg=$("tiles"),pgs=[...tg.children];if(!pgs.length)return;
   let best=0,bd=1e9;pgs.forEach((pg,i)=>{const dd=Math.abs(pg.offsetLeft-tg.offsetLeft-tg.scrollLeft);if(dd<bd){bd=dd;best=i}});
