@@ -413,6 +413,9 @@ body.wizon{overflow:hidden}
 .wzfoot{display:flex;justify-content:space-between;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
 .wzfoot .btn{min-width:120px;padding:13px 18px;font-size:15px}
 .wzopts{display:grid;gap:8px}
+.wzrel{grid-template-columns:1fr 1fr}
+.wzrel .wzopt{padding:12px}
+.wzrel .wzopt:last-child{grid-column:1/-1}
 .wzopt{display:grid;gap:2px;text-align:left;border:2px solid var(--line);background:var(--panel);border-radius:14px;padding:14px 16px;cursor:pointer;color:var(--ink);font:inherit}
 .wzopt span{color:var(--muted);font-size:13px}
 .wzopt[aria-pressed=true]{border-color:var(--acc);background:var(--acc-soft)}
@@ -1917,11 +1920,16 @@ function wzDefaults(tipo,keep){
   const und=sum(apt.map(t=>+t.unidades)),precio=Math.round(sum(apt.map(t=>t.precio*t.unidades))/und/10000)*10000,e=T.etapas[0];
   const d=new Date();d.setMonth(d.getMonth()+1);
   return Object.assign({nombre:'',ciudad:'',fecha:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')},keep||{},{
-    tipo,topeEsp:false,et:T.etapas.map(x=>({torres:[{pisos:+x.pisos||1,und:Math.round(sum(T.tipologias.filter(t=>t.etapa===x.id&&t.clase==='apto').map(t=>+t.unidades||0)))}]})),tipos,precio,parq:sum(parq.map(t=>+t.unidades)),parqPrecio:parq[0]?+parq[0].precio:0,
+    tipo,topeEsp:false,et:T.etapas.map(x=>({torres:[{pisos:+x.pisos||1,und:Math.round(sum(T.tipologias.filter(t=>t.etapa===x.id&&t.clase==='apto').map(t=>+t.unidades||0)))}]})),tipos,precio,parqRel:wzSnapRel(und,sum(parq.map(t=>+t.unidades))),parqPrecio:parq[0]?+parq[0].precio:0,
     costo:sum(T.costos.capitulos.map(c=>+c.valor)),lote:+T.costos.lote.valor,loteForma:'contado',vel:+e.velocidad,ci:+T.ventas.ciPct,obra:+e.mesesObra,
     credito:true,cupo:+e.credPct,socios:2,part1:60,tio:+T.general.tasaDesc,margen:+T.general.margenMin});
 }
 const ESP_CIUDADES=/bogot|medell|cali|barranquilla|cartagena|bucaramanga|soacha|envigado|itag|bello|sabaneta|soledad|floridablanca|gir[oó]n|piedecuesta|jamund|palmira|mosquera|funza|madrid|ch[ií]a|cajic|zipaquir/i;
+/* Parqueaderos: se piden como proporción (apartamentos por parqueadero) y se calculan con el total de apartamentos de las torres */
+const PARQ_REL=[[0.5,'1:2','Dos por apartamento'],[1,'1:1','Uno por apartamento'],[1.5,'1,5:1','2 por cada 3 apartamentos'],[2,'2:1','1 por cada 2 apartamentos'],
+  [3,'3:1','1 por cada 3 apartamentos'],[4,'4:1','1 por cada 4 apartamentos'],[5,'5:1','1 por cada 5 apartamentos'],[0,'No vendo parqueaderos','Son comunales o van incluidos']];
+const wzParq=a=>+a.parqRel>0?Math.ceil(wzUndTot(a)/+a.parqRel-1e-9):0;
+const wzSnapRel=(und,pq)=>{if(!(pq>0))return 0;const r=und/pq;return PARQ_REL.filter(x=>x[0]>0).reduce((b,x)=>Math.abs(x[0]-r)<Math.abs(b-r)?x[0]:b,1)};
 // Reparte un total entero según pesos (mayor residuo): la suma siempre da exactamente el total
 function wzAlloc(tot,ws){tot=Math.max(0,Math.round(+tot||0));const W=sum(ws)||1,raw=ws.map(w=>tot*Math.max(0,+w||0)/W),out=raw.map(Math.floor);let r=tot-sum(out);
   raw.map((x,i)=>[x-Math.floor(x),i]).sort((p,q)=>q[0]-p[0]).forEach(([,i])=>{if(r>0){out[i]++;r--}});return out}
@@ -1935,7 +1943,7 @@ function wzTipTot(a){const U=wzUndTot(a),S=sum(a.tipos.map(t=>Math.round(+t.und|
 function wzBuild(a){
   const T=newProject(kindOf(a.tipo)),P=T,base=clone(T.etapas[0]),aptT=T.tipologias.find(t=>t.clase==='apto')||{};
   // Cada etapa recibe los apartamentos de sus torres; los tipos y los parqueaderos se reparten en esa misma proporción
-  const ets=a.et,n=ets.length,U=ets.map(wzUnd),pq=wzAlloc(a.parq,U);let tn=0;
+  const ets=a.et,n=ets.length,U=ets.map(wzUnd),pq=wzAlloc(wzParq(a),U);let tn=0;
   P.general=Object.assign(P.general,{nombre:a.nombre||'Proyecto nuevo',ciudad:a.ciudad||'',fecha:a.fecha,tasaDesc:+a.tio,margenMin:+a.margen});
   P.etapas=[];P.tipologias=[];
   ets.forEach((e,k)=>{const id='e'+(k+1),ts=e.torres.length,first=tn+1;tn+=ts;
@@ -1986,9 +1994,10 @@ const WZ_STEPS=[
  {t:'Precio de venta',q:'¿A cuánto venderás cada metro cuadrado?',
   h:'Es el precio por metro cuadrado de área privada al inicio de las ventas. Mira proyectos parecidos de la zona: es la mejor referencia. Después sube un poco cada mes según el avance. En VIS y VIP, si el precio pasa del tope legal, se ajusta al máximo permitido.',
   body:a=>wzF('money','precio','Precio por m²','')+`<div class="wzcalc">${a.tipos.map(t=>`<div><span>${esc(t.n)}</span><b>${pesos(t.area*a.precio)}</b></div>`).join('')}<small>Precio aproximado de cada apartamento</small></div>`},
- {t:'Parqueaderos',q:'¿Venderás parqueaderos aparte? Escribe cuántos y a qué precio.',
-  h:'En muchos proyectos No VIS el parqueadero se vende por separado. En VIS y VIP casi siempre son comunales y no se venden: en ese caso deja 0.',
-  body:a=>wzF('num','parq','Parqueaderos para vender','',{min:0,step:1})+wzF('money','parqPrecio','Precio de cada parqueadero','')},
+ {t:'Parqueaderos',q:'¿Cuántos apartamentos hay por cada parqueadero que vendes, y a qué precio?',
+  h:'La proporción dice cuántos apartamentos hay por cada parqueadero: 3 a 1 significa un parqueadero por cada 3 apartamentos. Revisa lo que exige la norma de tu municipio. Con la proporción calculo cuántos parqueaderos hay para vender. En VIS y VIP casi siempre son comunales y no se venden: en ese caso elige “No vendo parqueaderos”.',
+  body:a=>`<div class="wzopts wzrel">${PARQ_REL.map(([v,l,d])=>`<button class="wzopt" data-act="wz-set" data-k="parqRel" data-v="${v}" aria-pressed="${+a.parqRel===v}"><b>${l}</b><small>${d}</small></button>`).join('')}</div>`
+   +(+a.parqRel>0?`<div class="wzcalc"><div><span>${nf(wzUndTot(a))} apartamentos ÷ ${nf(a.parqRel,a.parqRel%1?1:0)}</span><b>${nf(wzParq(a))} parqueaderos</b></div><small>Se redondea hacia arriba para cumplir la proporción</small></div>`+wzF('money','parqPrecio','Precio de cada parqueadero','')+`<div class="wzcalc"><div><span>Ventas por parqueaderos</span><b data-wzpq>${pesos(wzParq(a)*(+a.parqPrecio||0))}</b></div></div>`:'')},
  {t:'Costo de construcción',q:'¿Cuánto cuesta construir cada metro cuadrado?',
   h:'Es el costo directo de la obra (materiales y mano de obra) por metro cuadrado construido, sin lote, diseños ni gerencia. Un constructor o un presupuesto de referencia te lo da. Si no lo sabes, deja el valor sugerido para este tipo de vivienda.',
   body:a=>wzF('money','costo','Costo directo por m² construido','')},
@@ -2174,6 +2183,7 @@ function wzInput(el){const k=el.dataset.wz;if(!k||!WZ.a)return;
   if(k==='ciudad'&&el.tagName==='SELECT'){WZ.a.ciudadOtra=v==='__otra';setPath(WZ.a,k,WZ.a.ciudadOtra?'':v);wzRender();if(WZ.a.ciudadOtra){const t=$('#wiz input[data-wz="ciudad"]');if(t)t.focus()}return}
   setPath(WZ.a,k,v);if(el.dataset.num||el.type==='range')wzSlSync(k,v===''?0:v,el);
   const p2=$('#wiz [data-wzp2]');if(p2)p2.textContent=nf(100-(+WZ.a.part1||0));
+  const pq=$("#wiz [data-wzpq]");if(pq)pq.textContent=pesos(wzParq(WZ.a)*(+WZ.a.parqPrecio||0));
   const tt=$('#wiz [data-wztot]');if(tt)tt.innerHTML=wzTot(WZ.a);const tp=$('#wiz [data-wztip]');if(tp)tp.innerHTML=wzTipTot(WZ.a);
   const h=$(`#wiz [data-wzhint="${k}"]`);if(h)h.textContent=wzMill(v);
   const er=$('#wzErr');if(er)er.textContent='';
