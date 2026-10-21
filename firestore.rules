@@ -1,0 +1,57 @@
+rules_version = '2';
+// Reglas de Firestore del proyecto bitacora-jornada (Wellness Apps). Se publican en la consola de Firebase:
+// Firestore › Reglas. Este archivo es la copia de referencia; mantenlo igual a lo publicado.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() { return signedIn() && request.auth.uid == 'AQaEMcKNYfWEhcHVdc8N0ghxeZk1'; }
+    function myEmail() { return request.auth.token.email.lower(); }
+    function invitePath() { return /databases/$(database)/documents/invitaciones/$(myEmail()); }
+    function invited() {
+      return signedIn() && request.auth.token.email != null
+        && exists(invitePath()) && get(invitePath()).data.estado != 'revocado';
+    }
+    // Pedir acceso a Proyecta: la persona solo puede dejar su solicitud en "pendiente" (aprobar o denegar lo hace el administrador)
+    function proyectaRequest() {
+      return !('proyecta' in request.resource.data)
+        || request.resource.data.proyecta == resource.data.get('proyecta', null)
+        || request.resource.data.proyecta == 'pendiente';
+    }
+
+    match /invitaciones/{email} {
+      allow read: if isAdmin() || (signedIn() && myEmail() == email);
+      allow delete: if isAdmin();
+      allow create: if isAdmin() || (signedIn() && myEmail() == email && request.resource.data.estado == 'activo' && request.resource.data.uid == request.auth.uid);
+      allow update: if isAdmin() || (signedIn() && myEmail() == email && resource.data.estado != 'revocado'
+        && request.resource.data.estado == 'activo' && request.resource.data.uid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'uid', 'activado', 'ultimoUso', 'email', 'proyecta', 'proyectaSol'])
+        && proyectaRequest());
+    }
+
+    match /users/{uid}/{document=**} {
+      allow read, write: if isAdmin() || (signedIn() && request.auth.uid == uid && invited());
+    }
+
+    // Proyectos de Proyecta compartidos: los correos de compartidoCon pueden leerlos; los de editores pueden editarlos,
+    // sin cambiar con quién se comparte. Solo el propietario (regla de arriba) puede compartir, dejar de compartir o eliminar.
+    match /users/{uid}/proyecta/{doc} {
+      allow read: if doc.matches('p_.*') && invited() && myEmail() in resource.data.get('compartidoCon', []);
+      allow update: if doc.matches('p_.*') && invited() && myEmail() in resource.data.get('editores', [])
+        && request.resource.data.get('compartidoCon', []) == resource.data.get('compartidoCon', [])
+        && request.resource.data.get('editores', []) == resource.data.get('editores', []);
+    }
+
+    // Índice de lo que le compartieron a cada correo: lo escribe quien comparte; lo lee y lo limpia quien lo recibe
+    match /compartidos/{email} {
+      allow read: if isAdmin() || (signedIn() && myEmail() == email);
+      allow create, update: if invited();
+      allow delete: if isAdmin() || (signedIn() && myEmail() == email);
+    }
+
+    match /stats/{uid} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow create, update: if isAdmin() || (signedIn() && request.auth.uid == uid && invited());
+      allow delete: if isAdmin();
+    }
+  }
+}
