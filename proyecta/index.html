@@ -165,6 +165,26 @@ button,input,select,textarea{font:inherit;color:inherit}
 .port .n{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .port .k{font-weight:700;text-align:right}
 .port .m{grid-column:1/-1;color:var(--muted);font-size:12px}
+/* Cómo llegar al mínimo (Inicio) y "dónde ajustar" en las alertas */
+.plan{display:grid;gap:10px}
+.plan h3{display:flex;align-items:center;gap:6px}
+.plan-steps{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.plan-steps li{display:grid;gap:4px;background:var(--sunk);border-radius:var(--r-sm);padding:10px 12px}
+.plan-steps .btn{justify-self:start;margin-top:4px}
+.pl-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.pl-h b{display:flex;align-items:baseline;gap:8px}
+.pl-n{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:50%;background:var(--acc);color:var(--on-acc);font-size:11.5px;flex:none}
+.pl-g{color:var(--acc-ink);font-weight:700;font-size:12.5px;white-space:nowrap}
+.pl-r{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--muted)}
+.pl-d{font-size:13px}
+.plan-steps small{color:var(--muted);font-size:12px}
+.pl-end{margin:0;font-size:13.5px}
+.plan details summary{cursor:pointer;font-weight:700;font-size:13px;padding:4px 0}
+.plan details .plan-steps{margin-top:8px}
+.al-go{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:4px;font-size:12px;color:var(--muted)}
+.al-go .lnk{padding:0 2px;flex:none}
+.plan-hl{animation:planhl 2.4s ease;border-radius:10px}
+@keyframes planhl{0%,60%{box-shadow:0 0 0 3px var(--acc)}100%{box-shadow:0 0 0 3px transparent}}
 /* Compartir proyectos */
 .port .shby{display:flex;align-items:center;gap:5px;color:var(--acc-ink);font-weight:600}
 .sheet .chips.shsel,.sheet .chips.shem{position:static;flex-wrap:wrap;overflow:visible;background:none}
@@ -1674,24 +1694,123 @@ function lineChart(series,n,labels){
 function alertsFor(P,R){
   const a=[],G=P.general;
   if(!R)return a;
-  if(R.utilNeta<0)a.push(['crit','Pérdida',`El proyecto pierde ${fM(-R.utilNeta)} después de impuestos.`]);
-  else if(R.margen*100<+G.margenMin)a.push(['crit','Margen',`El margen antes de impuestos es ${fP(R.margen)}, bajo el mínimo de ${nf(G.margenMin,1)} %.`]);
-  if(R.tirI!=null&&R.tirI*100<+G.tasaDesc)a.push(['warn','Rentabilidad',`La TIR del inversionista (${fP(R.tirI)}) no alcanza la TIO de ${nf(G.tasaDesc,1)} %.`]);
-  R.ets.forEach(e=>{const x=entregaInfo(P,e);if(x&&x.d>0)a.push(['crit','Entrega',`${e.E.nombre}: el modelo entrega en ${mesLargo(e.fo).toLowerCase()}, ${x.d} mes${x.d>1?'es':''} después de lo comprometido (${mesLargo(x.ci).toLowerCase()}).`])});
-  R.ets.forEach(e=>{const mp=e.eq-e.t0+1;if(mp>12)a.push(['warn','Preventa',`${e.E.nombre}: llegar al punto de equilibrio toma ${mp} meses.`]);
-    if(e.lastSale>e.fo)a.push(['warn','Inventario',`${e.E.nombre}: quedan unidades por vender al entregar la obra (última venta ${mL(e.lastSale)}).`]);
-    if(e.capped)a.push(['warn','Tope VIS',`${e.E.nombre}: algunos precios se limitaron al tope de ${e.E.tipo} (${e.E.tipo==='VIP'?ST.macro.topeVIP:(e.E.topeEsp?ST.macro.topeVISEsp:ST.macro.topeVIS)} SMMLV).`]);
-    if(!P.tipologias.some(t=>t.etapa===e.E.id))a.push(['crit','Producto',`${e.E.nombre} no tiene tipologías.`])});
-  if(R.expo/R.ventas>.25)a.push(['warn','Aportes',`Los socios deben aportar hasta ${fM(R.expo)}, ${fP(R.expo/R.ventas)} de las ventas.`]);
-  const lt=R.tot.lote/R.ventas;if(lt>.2)a.push(['warn','Lote',`El lote pesa ${fP(lt)} de las ventas; lo usual es 10–18 %.`]);
-  const sp=sum((P.socios||[]).map(s=>+s.part||0));if(P.socios&&P.socios.length&&Math.abs(sp-100)>.01)a.push(['crit','Socios',`Las participaciones suman ${nf(sp,1)} %, deben sumar 100 %.`]);
-  if(P.costos.lote.forma==='especie'&&!(P.socios||[]).some(s=>s.aportaLote))a.push(['warn','Lote',`El lote es aporte en especie pero ningún socio está marcado como aportante; se repartió entre todos.`]);
+  const pl={how:'Mira «Cómo llegar al mínimo» arriba: dice qué ajustar y dónde.'};
+  if(R.utilNeta<0)a.push(['crit','Pérdida',`El proyecto pierde ${fM(-R.utilNeta)} después de impuestos.`,pl]);
+  else if(R.margen*100<+G.margenMin)a.push(['crit','Margen',`El margen antes de impuestos es ${fP(R.margen)}, bajo el mínimo de ${nf(G.margenMin,1)} %.`,pl]);
+  if(R.tirI!=null&&R.tirI*100<+G.tasaDesc)a.push(['warn','Rentabilidad',`La TIR del inversionista (${fP(R.tirI)}) no alcanza la TIO de ${nf(G.tasaDesc,1)} %.`,
+    R.margen*100<+G.margenMin?{how:'Al mejorar el margen también sube la TIR. Pagar el lote en cuotas ayuda: Modelo › Costos › Lote · Forma de pago.',to:'modelo:costos',path:'costos.lote.forma'}:pl]);
+  const vn=i=>`Modelo › Ventas › ${P.etapas[i]?P.etapas[i].nombre:'la etapa'}`;
+  R.ets.forEach((e,i)=>{const x=entregaInfo(P,e);if(x&&x.d>0)a.push(['crit','Entrega',`${e.E.nombre}: el modelo entrega en ${mesLargo(e.fo).toLowerCase()}, ${x.d} mes${x.d>1?'es':''} después de lo comprometido (${mesLargo(x.ci).toLowerCase()}).`,
+    e.io>e.eq+1?{how:`${vn(i)}: baja el «Mes mínimo de inicio de obra» (la obra espera ${e.io-e.eq-1} meses después del punto de equilibrio), acorta la «Duración de obra» o corrige la «Entrega comprometida».`,to:'modelo:ventas',path:`etapas.${i}.mesMinObra`}
+      :{how:`${vn(i)}: acorta la «Duración de obra», baja el «Punto de equilibrio» o sube la «Velocidad base» para empezar antes; o corrige la «Entrega comprometida».`,to:'modelo:ventas',path:`etapas.${i}.mesesObra`}])});
+  R.ets.forEach((e,i)=>{const mp=e.eq-e.t0+1;if(mp>12)a.push(['warn','Preventa',`${e.E.nombre}: llegar al punto de equilibrio toma ${mp} meses.`,{how:`${vn(i)}: sube la «Velocidad base» o baja el «Punto de equilibrio».`,to:'modelo:ventas',path:`etapas.${i}.velocidad`}]);
+    if(e.lastSale>e.fo)a.push(['warn','Inventario',`${e.E.nombre}: quedan unidades por vender al entregar la obra (última venta ${mL(e.lastSale)}).`,{how:`${vn(i)}: sube la «Velocidad base», adelanta el «Mes de inicio de ventas» o alarga la «Duración de obra».`,to:'modelo:ventas',path:`etapas.${i}.velocidad`}]);
+    if(e.capped){const j=P.tipologias.findIndex(t=>t.etapa===e.E.id&&t.clase!=='parq');a.push(['warn','Tope VIS',`${e.E.nombre}: algunos precios se limitaron al tope de ${e.E.tipo} (${e.E.tipo==='VIP'?ST.macro.topeVIP:(e.E.topeEsp?ST.macro.topeVISEsp:ST.macro.topeVIS)} SMMLV).`,
+      {how:`Modelo › Producto › ${e.E.nombre} · Tipologías: baja el «Precio base», el «Incremento de precio» en Ventas o el área; o cambia el «Tipo de vivienda».`,to:'modelo:producto',path:j>=0?`tipologias.${j}.precio`:`etapas.${i}.tipo`}])}
+    if(!P.tipologias.some(t=>t.etapa===e.E.id))a.push(['crit','Producto',`${e.E.nombre} no tiene tipologías.`,{how:`Modelo › Producto › ${e.E.nombre}: toca «+ Agregar tipología».`,to:'modelo:producto',path:`etapas.${i}.nombre`}])});
+  if(R.expo/R.ventas>.25)a.push(['warn','Aportes',`Los socios deben aportar hasta ${fM(R.expo)}, ${fP(R.expo/R.ventas)} de las ventas.`,{how:'Modelo › Costos › Lote: paga el lote en cuotas; o en Modelo › Financiación sube el cupo del crédito constructor.',to:'modelo:costos',path:'costos.lote.forma'}]);
+  const lt=R.tot.lote/R.ventas;if(lt>.2)a.push(['warn','Lote',`El lote pesa ${fP(lt)} de las ventas; lo usual es 10–18 %.`,{how:'Modelo › Costos › Lote · Valor del lote: negocia el precio o págalo con área.',to:'modelo:costos',path:'costos.lote.valor'}]);
+  const sp=sum((P.socios||[]).map(s=>+s.part||0));if(P.socios&&P.socios.length&&Math.abs(sp-100)>.01)a.push(['crit','Socios',`Las participaciones suman ${nf(sp,1)} %, deben sumar 100 %.`,{how:'Modelo › Socios · Participación de cada socio.',to:'modelo:socios',path:'socios.0.part'}]);
+  if(P.costos.lote.forma==='especie'&&!(P.socios||[]).some(s=>s.aportaLote))a.push(['warn','Lote',`El lote es aporte en especie pero ningún socio está marcado como aportante; se repartió entre todos.`,{how:'Modelo › Socios: marca al socio que aporta el lote.',to:'modelo:socios',path:'socios.0.part'}]);
   if(R.maxDif>1000)a.push(['crit','Balance',`El balance proyectado no cuadra por ${fM(R.maxDif)}.`]);
   const sg=segData();if(sg&&sg.cpi!=null&&sg.cpi<.95)a.push(['warn','Costos',`Al corte, el costo real va ${fP(1/sg.cpi-1)} por encima del valor ganado (CPI ${nf(sg.cpi,2)}).`]);
   if(!a.length)a.push(['ok','En rango','Margen, TIR, preventa, aportes y balance dentro de los parámetros definidos.']);
   return a;
 }
-const alertHtml=list=>list.map(([c,t,m])=>`<div class="alert ${c}"><b>${t}</b><div>${esc(m)}</div></div>`).join('');
+// n (opcional): dónde ajustarlo, con un botón que lleva a ese campo del Modelo
+const alertHtml=list=>list.map(([c,t,m,n])=>`<div class="alert ${c}"><b>${t}</b><div>${esc(m)}${n?`<div class="al-go"><span>${esc(n.how)}</span>${n.to?`<button class="lnk" data-act="plan-go" data-to="${n.to}" data-path="${esc(n.path||'')}">Ir</button>`:''}</div>`:''}</div></div>`).join('');
+
+/* ---------- Cómo llegar al mínimo ----------
+   Si el margen no llega al «Margen mínimo exigido» (o, con margen suficiente, la TIR del inversionista no llega a la
+   TIO), Inicio dice qué ajustar: en qué pantalla, sección y campo está cada dato, de qué valor a qué valor y cuántos
+   puntos sube. Cada ajuste se prueba sobre una copia del proyecto: nada cambia hasta que la persona lo edita.
+   - Ajustes graduales (precio, incremento mensual, costo de obra, área construida, lote, indirectos, velocidad): se
+     busca el cambio mínimo que alcanza la meta por sí solo, dentro de un rango razonable.
+   - Ajustes puntuales: adelantar la obra que espera sin razón después del punto de equilibrio, acortar la obra,
+     quitar el descuento y, para la TIR, pagar el lote en cuotas.
+   - Ruta recomendada: los ajustes puntuales y luego un poco de cada ajuste gradual, en vez de mucho de uno solo.
+   El cálculo corre un momento después de dejar de editar y se reutiliza mientras el proyecto no cambie. */
+const PL={key:null,res:null,pid:null,t:0};
+const PL_IND=[['imprev','Imprevistos'],['disenos','Diseños'],['interventoria','Interventoría'],['otrosInd','Otros indirectos'],['gerencia','Gerencia']];
+function planGoal(P,R){if(!R)return null;const mn=+P.general.margenMin||0,tio=+P.general.tasaDesc||0;
+  if(R.utilNeta<0||R.margen*100<mn)return {k:'margen',t:'margen mínimo',now:R.margen*100,min:Math.max(mn,0.1),val:r=>r.margen*100};
+  if(R.tirI!=null&&R.tirI*100<tio)return {k:'tir',t:'rentabilidad mínima (TIO)',now:R.tirI*100,min:tio,val:r=>r.tirI==null?-99:r.tirI*100};
+  return null}
+function planLevers(P,R,g){const L=[],ai=P.tipologias.findIndex(t=>t.clase==='apto'||t.clase==='local'),e0=P.etapas[0]||{},cap=sum(P.costos.capitulos.map(c=>+c.valor||0)),
+    many=P.etapas.length>1,each=many?'cada etapa':esc(e0.nombre||'la etapa');
+  if(ai>=0){const t=P.tipologias[ai];L.push({t:'Subir el precio de venta',ruta:'Modelo › Producto › Tipologías · Precio base',to:'modelo:producto',path:`tipologias.${ai}.precio`,
+    ap:(Q,x)=>Q.tipologias.forEach(t=>{if(t.clase!=='parq')t.precio*=1+0.2*x}),
+    de:x=>`${t.nombre}: ${fPesos(t.precio)} → ${fPesos(Math.ceil(t.precio*(1+0.2*x)/1000)*1000)} por m² (+${nf(20*x,1)} %). Sube en la misma proporción las demás tipologías.`,
+    tip:'Compáralo con proyectos de la zona.'+(P.etapas.some(e=>e.tipo!=='NoVIS')?' En VIS y VIP el precio no puede pasar del tope legal.':'')})}
+  L.push({t:'Subir el incremento de precio mensual',ruta:`Modelo › Ventas › ${each} · Incremento de precio`,to:'modelo:ventas',path:'etapas.0.incPrecio',
+    ap:(Q,x)=>Q.etapas.forEach(e=>e.incPrecio=(+e.incPrecio||0)+0.6*x),
+    de:x=>`${nf(e0.incPrecio,2)} % → ${nf((+e0.incPrecio||0)+Math.ceil(60*x)/100,2)} % al mes${many?', en todas las etapas':''}`,tip:'Es cuánto sube la lista de precios cada mes mientras se vende.'});
+  if(cap>0)L.push({t:'Bajar el costo directo de obra',ruta:'Modelo › Costos › Presupuesto de obra por capítulos · $/m²',to:'modelo:costos',path:'costos.capitulos.0.valor',
+    ap:(Q,x)=>Q.costos.capitulos.forEach(c=>c.valor*=1-0.15*x),
+    de:x=>`Total ${fPesos(cap)} → ${fPesos(Math.floor(cap*(1-0.15*x)/1000)*1000)} por m² construido (−${nf(15*x,1)} % en cada capítulo)`,tip:'Revisa el presupuesto con el constructor o simplifica acabados.'});
+  L.push({t:'Bajar el área construida por m² vendible',ruta:`Modelo › Producto › ${each} · Área construida / vendible`,to:'modelo:producto',path:'etapas.0.factorConst',
+    ap:(Q,x)=>Q.etapas.forEach(e=>e.factorConst=(+e.factorConst||1)*(1-0.08*x)),
+    de:x=>`${nf(e0.factorConst,2)} → ${nf(Math.floor((+e0.factorConst||1)*(1-0.08*x)*100)/100,2)}`,tip:'Menos circulaciones y áreas comunes por cada m² que se vende. Depende del diseño arquitectónico.'});
+  if(+P.costos.lote.valor>0)L.push({t:'Negociar un lote más barato',ruta:'Modelo › Costos › Lote · Valor del lote',to:'modelo:costos',path:'costos.lote.valor',
+    ap:(Q,x)=>Q.costos.lote.valor*=1-0.3*x,
+    de:x=>`${fM(P.costos.lote.valor)} → ${fM(Math.floor(P.costos.lote.valor*(1-0.3*x)/1e6)*1e6)} (−${nf(30*x,1)} %)`,tip:'Es lo máximo que conviene pagar por el terreno; úsalo para negociar.'});
+  const ind=PL_IND.filter(([k])=>+P.costos[k]>0);
+  if(ind.length)L.push({t:'Bajar costos indirectos',ruta:'Modelo › Costos · '+ind.map(x=>x[1]).join(', '),to:'modelo:costos',path:'costos.'+ind[0][0],
+    ap:(Q,x)=>ind.forEach(([k])=>Q.costos[k]=(+Q.costos[k]||0)*(1-0.3*x)),
+    de:x=>ind.map(([k,l])=>`${l} ${nf(P.costos[k],1)} → ${nf(Math.floor(P.costos[k]*(1-0.3*x)*10)/10,1)} %`).join(' · '),tip:'Negocia honorarios y ajusta los imprevistos a lo que muestra el presupuesto.'});
+  L.push({t:'Vender más rápido',ruta:`Modelo › Ventas › ${each} · Velocidad base`,to:'modelo:ventas',path:'etapas.0.velocidad',
+    ap:(Q,x)=>Q.etapas.forEach(e=>e.velocidad*=1+0.5*x),
+    de:x=>P.etapas.map(e=>`${many?esc(e.nombre)+': ':''}${nf(e.velocidad,1)} → ${nf(Math.ceil(e.velocidad*(1+0.5*x)*10)/10,1)} und/mes`).join(' · '),tip:'Implica más publicidad, mejor sala de ventas o mejor precio.'});
+  L.forEach(l=>l.kind='grad');
+  // Ajustes puntuales
+  R.ets.forEach((e,i)=>{const E=P.etapas[i];if(!E||e.io<=e.eq+1)return;const nm=Math.max(0,Math.round(+E.mesMinObra||0)-(e.io-(e.eq+1)));if(nm>=Math.round(+E.mesMinObra||0))return;
+    L.push({kind:'paso',t:`Iniciar antes la obra de ${esc(E.nombre)}`,ruta:`Modelo › Ventas › ${esc(E.nombre)} · Mes mínimo de inicio de obra`,to:'modelo:ventas',path:`etapas.${i}.mesMinObra`,
+      ap:Q=>{Q.etapas[i].mesMinObra=nm},de:()=>`Mes ${nf(E.mesMinObra)} → mes ${nm}: la obra empezaría en ${mesLargo(e.eq+1).toLowerCase()} y no en ${mesLargo(e.io).toLowerCase()}`,
+      tip:`Llega al punto de equilibrio en ${mesLargo(e.eq).toLowerCase()} y la obra espera ${e.io-e.eq-1} meses más. Si ningún trámite lo impide (por ejemplo, la licencia), adelántala.`})});
+  if(P.etapas.some(E=>+E.mesesObra>8))L.push({kind:'paso',t:'Acortar la duración de la obra',ruta:`Modelo › Ventas › ${each} · Duración de obra`,to:'modelo:ventas',path:'etapas.0.mesesObra',
+    ap:Q=>Q.etapas.forEach(E=>{if(+E.mesesObra>8)E.mesesObra=Math.max(8,Math.round(+E.mesesObra*0.9))}),
+    de:()=>P.etapas.map(E=>`${many?esc(E.nombre)+': ':''}${nf(E.mesesObra)} → ${+E.mesesObra>8?Math.max(8,Math.round(+E.mesesObra*0.9)):nf(E.mesesObra)} meses`).join(' · '),
+    tip:'Una obra más corta adelanta las escrituras y paga menos intereses. Confírmalo con el constructor.'});
+  if(P.etapas.some(E=>+E.descuento>0))L.push({kind:'paso',t:'Quitar el descuento promedio',ruta:`Modelo › Ventas › ${each} · Descuento promedio`,to:'modelo:ventas',path:'etapas.0.descuento',
+    ap:Q=>Q.etapas.forEach(E=>E.descuento=0),de:()=>`${nf(e0.descuento,1)} % → 0 %`,tip:'Vende a precio de lista; usa el incremento mensual para premiar a los primeros compradores.'});
+  if(g.k==='tir'&&P.costos.lote.forma==='contado'&&+P.costos.lote.valor>0)L.push({kind:'paso',t:'Pagar el lote en cuotas',ruta:'Modelo › Costos › Lote · Forma de pago',to:'modelo:costos',path:'costos.lote.forma',
+    ap:Q=>{Q.costos.lote.forma='diferido';Q.costos.lote.pctInicial=30;Q.costos.lote.cuotas=24},de:()=>'Contado → Diferido en cuotas (30 % inicial y 24 cuotas)',tip:'No cambia la utilidad, pero los socios ponen menos dinero al comienzo y sube la TIR.'});
+  return L}
+function planCompute(P,R){const g=planGoal(P,R);if(!g)return null;
+  const val=Q=>{try{return g.val(runProject(Q,ST.macro))}catch(e){return -99}},mk=fs=>{const Q=clone(P);fs.forEach(f=>f(Q));return Q};
+  const L=planLevers(P,R,g),single=[];
+  L.forEach(l=>{if(l.kind==='paso'){const v=val(mk([Q=>l.ap(Q,1)]));if(v-g.now>0.05)single.push(Object.assign({},l,{x:1,gain:v-g.now,reach:v>=g.min,txt:l.de(1)}));return}
+    const v1=val(mk([Q=>l.ap(Q,1)]));if(v1-g.now<=0.05)return;
+    let x=1;if(v1>=g.min){let lo=0,hi=1;for(let k=0;k<12;k++){const m=(lo+hi)/2;if(val(mk([Q=>l.ap(Q,m)]))>=g.min)hi=m;else lo=m}x=hi}
+    const v=x<1?val(mk([Q=>l.ap(Q,x)])):v1;single.push(Object.assign({},l,{x,g1:v1-g.now,gain:v-g.now,reach:v>=g.min,txt:l.de(x)}))});
+  // Primero los que alcanzan solos con el menor cambio; luego los que más suben
+  single.sort((a,b)=>(b.reach-a.reach)||(a.reach?a.x-b.x:b.gain-a.gain));
+  // Ruta recomendada: los puntuales que suben al menos 0,2 puntos + un poco de los 3 graduales que más ayudan (sin velocidad ni área, que dependen del mercado y del diseño)
+  const pasos=single.filter(s=>s.kind==='paso'&&s.gain>=0.2),grad=single.filter(s=>s.kind==='grad'&&!/Vender|área/.test(s.t)).sort((a,b)=>b.g1-a.g1).slice(0,3);
+  const fx=s=>pasos.map(p=>Q=>p.ap(Q,1)).concat(grad.map(l=>Q=>l.ap(Q,s)));
+  let combo=null;const reach=s=>val(mk(fx(s)))>=g.min+0.3;   // 0,3 puntos de holgura
+  if(pasos.length||grad.length){let s=null;if(reach(0))s=0;else if(reach(1)){let lo=0,hi=1;for(let k=0;k<12;k++){const m=(lo+hi)/2;if(reach(m))hi=m;else lo=m}s=hi}
+    if(s!=null){const steps=[];let acc=[],prev=g.now;
+      pasos.concat(s>0?grad:[]).forEach(l=>{const x=l.kind==='paso'?1:s;acc.push(Q=>l.ap(Q,x));const v=val(mk(acc));steps.push(Object.assign({},l,{txt:l.de(x),gain:v-prev}));prev=v});
+      combo={steps,end:prev}}}
+  return {g:{k:g.k,t:g.t,now:g.now,min:g.min},single,combo,ventas:R.ventas,uai:R.uai}}
+function planCard(P,R){const g=planGoal(P,R);if(!g)return '';
+  const key=JSON.stringify(P)+'|'+JSON.stringify(ST.macro);
+  if(PL.key!==key){clearTimeout(PL.t);PL.t=setTimeout(()=>{if(!ST.P||!ST.R)return;PL.res=planCompute(ST.P,ST.R);PL.pid=ST.pid;PL.key=JSON.stringify(ST.P)+'|'+JSON.stringify(ST.macro);softRender('inicio')},400);
+    if(!PL.res||PL.pid!==ST.pid)return `<div class="card span2 plan"><h3>${ki('margen')}Cómo llegar al ${g.t}</h3><p class="sub">Calculando qué ajustar…</p></div>`}
+  const r=PL.res;if(!r)return '';const G=r.g,pts=v=>nf(v,1)+(G.k==='margen'?' %':' % E.A.');
+  const row=(s,n)=>`<li><div class="pl-h"><b>${n?`<span class="pl-n">${n}</span>`:''}${s.t}</b><span class="pl-g">+${nf(s.gain,1)} pts${!n&&s.reach?' · alcanza solo':''}</span></div>
+    <div class="pl-r">${ki('area',12)}${s.ruta}</div><div class="pl-d">${s.txt}</div><small>${s.tip}</small>
+    <button class="btn sm" data-act="plan-go" data-to="${s.to}" data-path="${esc(s.path)}">Ir a ajustarlo</button></li>`;
+  const gap=G.k==='margen'?Math.max(0,G.min/100*r.ventas-r.uai):0;
+  return `<div class="card span2 plan"><h3>${ki('margen')}Cómo llegar al ${G.t}</h3>
+    <p class="sub">${G.k==='margen'?`El margen antes de impuestos es ${pts(G.now)} y el mínimo exigido es ${pts(G.min)}: faltan ${nf(G.min-G.now,1)} puntos, unos ${fM(gap)} más de utilidad.`
+      :`La TIR del inversionista es ${pts(G.now)} y la TIO es ${pts(G.min)}: faltan ${nf(G.min-G.now,1)} puntos.`} Ve a cada lugar, haz el ajuste y mira cómo mejora. Nada cambia solo.</p>
+    ${r.combo?`<div class="label">Ruta recomendada</div><ol class="plan-steps">${r.combo.steps.map((s,i)=>row(s,i+1)).join('')}</ol>
+      <p class="pl-end">Con ${r.combo.steps.length===1?'este ajuste':'estos '+r.combo.steps.length+' ajustes'} ${G.k==='margen'?'el margen llega a':'la TIR llega a'} <b>${pts(r.combo.end)}</b>.</p>`
+      :`<p class="pl-end">Con ajustes razonables no se alcanza. Revisa el tamaño del proyecto, el tipo de vivienda, el lote o la ubicación.</p>`}
+    ${r.single.length?`<details${r.combo?'':' open'}><summary>Otras opciones, cada una por sí sola (${r.single.length})</summary><ol class="plan-steps">${r.single.map(s=>row(s,0)).join('')}</ol></details>`:''}
+    <p class="sub" style="margin:0">También puedes revisar el mínimo en <button class="lnk" data-act="plan-go" data-to="modelo:general" data-path="general.${G.k==='margen'?'margenMin':'tasaDesc'}">Modelo › General · ${G.k==='margen'?'Margen mínimo exigido':'Tasa de descuento (TIO)'}</button>.</p></div>`}
 
 /* ---------- INICIO ---------- */
 /* Íconos de los indicadores: cada dato lleva un dibujo que lo ilustra (billete para ventas, moneda para utilidad,
@@ -1782,6 +1901,7 @@ function renderInicio(){
     <button class="go" data-act="go" data-to="resultados" aria-label="Ver resultados"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div>
   <div class="tiles">${[['Ventas totales',fM(R.ventas)],['TIR proyecto',fP(R.tirP)],['Exposición máx.',fM(R.expo)],['Múltiplo socios',fX(R.aportes?R.distribuciones/R.aportes:null)],['Margen neto',fP(R.margenNeto),R.margenNeto<0],['Duración',(R.N-1)+' meses']].map(([l,v,b])=>`<div class="tile"><div class="l">${kl(l)}</div><div class="v${b?" bad":""}">${v}</div></div>`).join("")}</div>
   <div class="grid2">
+    ${planCard(P,R)}
     <div class="blk span2">Salud del proyecto</div>
     ${healthCard(P,R)}
     <div class="card"><h3>Alertas</h3><p class="sub">Se revisan solas con cada cambio.</p><div class="alerts">${alertHtml(alertsFor(P,R))}</div></div>
@@ -2841,6 +2961,10 @@ document.addEventListener('click',async e=>{
     case 'cancel-sheet':ST.confirm=null;openProjects();break;
     case 'proj-del':if(!isShared(ST.pid)&&!W())break;ST.confirm=null;deleteProject(ST.pid);break;
     case 'sh-open':ST.confirm=null;openShare();break;
+    // Lleva al campo que hay que ajustar: abre la pantalla y la sección, lo centra y lo resalta un momento
+    case 'plan-go':{const [scr,sub]=String(b.dataset.to||'').split(':');if(!scr)break;if(sub){prefs.sub[scr]=sub;savePrefs()}go(scr);const p=b.dataset.path;
+      if(p)setTimeout(()=>{const el=$(`#s-${scr} [data-path="${CSS.escape(p)}"]`);if(!el)return;const f=el.closest('.f')||el.closest('td')||el;
+        f.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});f.classList.remove('plan-hl');void f.offsetWidth;f.classList.add('plan-hl')},140);break}
     case 'sh-pick':ST.sh.em=b.dataset.em;$$('[data-act=sh-pick]').forEach(c=>c.setAttribute('aria-pressed',c===b));{const x=$('#shEm');if(x)x.value=ST.sh.em}break;
     case 'sh-rol':ST.sh.rol=b.dataset.k;$$('[data-act=sh-rol]').forEach(c=>c.setAttribute('aria-pressed',c===b));break;
     case 'sh-tog':{const s=ST.sh.sel,id=b.dataset.id;if(s.has(id))s.delete(id);else s.add(id);shSync();break}
