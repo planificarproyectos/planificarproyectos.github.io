@@ -379,6 +379,61 @@ body.authing .nav,body.authing .appbar{visibility:hidden}
 @keyframes pj-word{from{opacity:0;transform:translateY(12px);letter-spacing:.4em}to{opacity:1;transform:none;letter-spacing:.06em}}
 @keyframes pj-auto{to{opacity:0;visibility:hidden}}
 @media (prefers-reduced-motion:reduce){#splash *{animation:none!important;stroke-dashoffset:0!important;opacity:1!important}#splash .fl{opacity:0!important}}
+/* Botón flotante y asistente de proyecto nuevo */
+.fab{position:fixed;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 18px);z-index:25;width:58px;height:58px;border-radius:50%;border:0;background:var(--acc);color:var(--on-acc);display:grid;place-items:center;box-shadow:0 10px 26px rgba(0,0,0,.35);cursor:pointer;transition:transform .15s}
+.fab[hidden]{display:none}
+.fab:hover{transform:scale(1.06)}
+.fab svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round}
+body.desk .fab{bottom:24px;right:24px}
+body:has(#instbar:not([hidden])) .fab{bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 170px)}
+body.desk:has(#instbar:not([hidden])) .fab{bottom:24px;right:490px}
+body.wizon{overflow:hidden}
+.wiz{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.55);display:flex;align-items:stretch;justify-content:center}
+.wiz[hidden]{display:none}
+.wzbox{background:var(--bg);width:100%;max-width:640px;display:flex;flex-direction:column;height:100%;padding-top:env(safe-area-inset-top,0px)}
+@media (min-width:700px){.wiz{align-items:center}.wzbox{height:min(92vh,860px);border-radius:24px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.5)}}
+.wzhead{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.wzprog{flex:1;height:6px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.wzprog i{display:block;height:100%;background:var(--acc);border-radius:99px;transition:width .25s}
+.wzbody{flex:1;overflow-y:auto;padding:20px 18px;display:grid;gap:14px;align-content:start}
+.wzbody h2{margin:0;font-size:24px;font-weight:800;letter-spacing:-.01em}
+.wzq{margin:0;font-size:16px;line-height:1.45}
+.wzhelp{background:var(--panel);border-radius:16px;padding:14px 16px;display:grid;gap:8px}
+.wzhelp p{margin:0;color:var(--muted);font-size:14px;line-height:1.5}
+.wzfields{display:grid;gap:12px}
+.wzfields .f label{font-size:13px}
+.wzfields input{font-size:17px}
+.wzerr{margin:0;color:var(--neg);font-weight:700;min-height:1em}
+.wzfoot{display:flex;justify-content:space-between;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+.wzfoot .btn{min-width:120px;padding:13px 18px;font-size:15px}
+.wzopts{display:grid;gap:8px}
+.wzopt{display:grid;gap:2px;text-align:left;border:2px solid var(--line);background:var(--panel);border-radius:14px;padding:14px 16px;cursor:pointer;color:var(--ink);font:inherit}
+.wzopt span{color:var(--muted);font-size:13px}
+.wzopt[aria-pressed=true]{border-color:var(--acc);background:var(--acc-soft)}
+.wzsw{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border-radius:14px;padding:14px 16px;cursor:pointer}
+.wzsw input{width:22px;height:22px;accent-color:var(--acc);flex:none;margin-top:2px}
+.wzsw span{display:grid;gap:2px}.wzsw small{color:var(--muted)}
+.wztipos{display:grid;gap:10px}
+.wztipo{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:end;background:var(--panel);border-radius:14px;padding:10px}
+@media (max-width:480px){.wztipo{grid-template-columns:1fr 1fr}.wztipo .f:first-child{grid-column:1/-1}}
+.wzcalc{background:var(--panel);border-radius:14px;padding:12px 16px;display:grid;gap:4px}
+.wzcalc div{display:flex;justify-content:space-between;gap:10px;font-size:14px}
+.wzcalc small{color:var(--muted)}
+.wzverdict{border-radius:16px;padding:16px;display:grid;gap:4px}
+.wzverdict b{font-size:18px}
+.wzverdict.ok{background:var(--acc);color:var(--on-acc)}
+.wzverdict.no{background:var(--neg-soft);color:var(--neg)}
+.wzverdict span{font-size:14px;line-height:1.45}
+.wzkpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.wzkpis div{background:var(--panel);border-radius:14px;padding:12px 14px;display:grid;gap:2px;min-width:0}
+.wzkpis span{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.wzkpis b{font-size:16px}
+.wzsugs{display:grid;gap:8px}
+.wzsug{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid var(--line);padding-top:10px}
+.wzsug div{display:grid;gap:2px;min-width:0}
+.wzsug span{font-size:14px}.wzsug small{color:var(--muted);font-size:12.5px;line-height:1.4}
+.wzsug.best{background:var(--acc-soft);border:0;border-radius:12px;padding:12px}
+.wzsug .btn{flex:none}
 /* Ayuda: manual y glosario */
 .hsteps{display:grid;gap:8px}
 .hstep{background:var(--sunk);border-radius:var(--r-sm)}
@@ -558,6 +613,8 @@ body.desk .dtabs{display:block}
 <div class="auth" id="auth" hidden><div class="auth-card"><div class="auth-brand"><svg class="logo-lg" viewBox="0 0 64 64" aria-hidden="true"><rect x="1" y="1" width="62" height="62" rx="15" fill="#111315" stroke="#2B2D2A" stroke-width="1.2"/><path d="M15 27V15h12M15 37v12h12M37 49h12V37" fill="none" stroke="#F2F2EE" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 40 47 17" stroke="var(--acc)" stroke-width="6" stroke-linecap="round"/><path d="M33 15h16v16" fill="none" stroke="var(--acc)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="nm"><span>PRO</span>YECTA</div><div class="muted">Modelo financiero inmobiliario</div></div><div class="card" id="authBody" style="display:grid;gap:14px"></div></div></div>
 <div class="toast" id="toast" role="status" hidden></div>
 <div class="instbar" id="instbar" role="dialog" aria-label="Instalar Proyecta" hidden></div>
+<button class="fab" id="fab" data-act="wz-open" aria-label="Crear un proyecto nuevo paso a paso" title="Nuevo proyecto paso a paso" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+<div class="wiz" id="wiz" role="dialog" aria-modal="true" aria-label="Asistente de proyecto nuevo" hidden></div>
 
 <script>
 /* ===================== MOTOR FINANCIERO PROYECTA ===================== */
@@ -1053,14 +1110,14 @@ function subscribeVersions(){
   else if(ST.mode==='fb')ST.versions=((ST.fbVers||{})[ST.pid]||[]).slice().sort((a,b)=>b.fecha-a.fecha);
   else ST.versions=Local.vers(ST.pid).sort((a,b)=>b.fecha-a.fecha);
 }
-async function createProject(kind,from){
+async function createProject(kind,from,opt){
   if(ST.readOnly)return;
   const id='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
-  const P=from?clone(from):newProject(kind);if(from)P.general.nombre=(P.general.nombre||'Proyecto')+' (copia)';
+  const P=from?clone(from):newProject(kind);if(from&&!(opt&&opt.keepName))P.general.nombre=(P.general.nombre||'Proyecto')+' (copia)';
   const R=runProject(P,ST.macro);
   const doc={nombre:P.general.nombre,ciudad:P.general.ciudad,actualizado:Date.now(),actualizadoPor:ST.me&&ST.me.id||null,creadoPor:ST.me&&ST.me.id||null,creado:Date.now(),kpis:kpisOf(R),data:P};
   try{if(ST.mode==='db')await ST.db.collection('projects').doc(id).set(doc);else if(ST.mode==='fb')await ST.fbCol.doc('p_'+id).set(doc);else Local.save(id,doc);
-    ST.projects[id]=doc;selectProject(id);closeSheet();go('modelo');toast('Proyecto creado')}catch(e){dbError(e)}
+    ST.projects[id]=doc;selectProject(id);closeSheet();go(opt&&opt.goTo||'modelo');toast(opt&&opt.msg||'Proyecto creado');return true}catch(e){dbError(e)}
 }
 async function deleteProject(id){
   try{if(ST.mode==='db'){const vs=await ST.db.collection('projects/'+id+'/versiones').get();for(const d of vs.docs)await ST.db.doc('projects/'+id+'/versiones/'+d.id).delete();await ST.db.collection('projects').doc(id).delete()}
@@ -1196,7 +1253,7 @@ function renderScreen(){
   $('#cols').style.setProperty('--n',vis.length);
   layout();
   vis.forEach(renderOne);if(ST.web&&ST.cuentaOpen)renderOne('cuenta');
-  navState();updateAppbar();
+  navState();updateAppbar();fabSync();
 }
 function refreshScreen(){
   const a=document.activeElement;const ids=visible().concat(ST.web&&ST.cuentaOpen?['cuenta']:[]);
@@ -1802,6 +1859,187 @@ function roleName(){if(ST.mode==='fb')return 'Tu cuenta';if(ST.mode!=='db')retur
 function canMacro(){return ST.mode!=='db'||ST.role.edit||ST.role.owner}
 const WI={manual:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19a2 2 0 0 1 2-2h13M9 7h6M9 11h6"/>',glos:'<path d="M5 3h10l4 4v14H5zM15 3v4h4M8 11h8M8 15h8M8 19h5"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',key:'<circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M14 9l2 2"/>',xls:'<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 12l6 6M15 12l-6 6"/>',dl:'<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',chk:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',chat:'<path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/>',bulb:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',out:'<path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 8l-4 4 4 4M6 12h10"/>',trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',apps:'<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',chev:'<path d="m9 6 6 6-6 6"/>'};
 const wic=(k,s=22,w=1.8)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${WI[k]}</svg>`;
+/* ---------- Asistente de proyecto nuevo (botón +) ----------
+   Pide la información en pasos cortos con ayuda leída y escuchada, propone valores típicos según el tipo de vivienda,
+   calcula si el proyecto es viable y sugiere qué ajustar para que lo sea. Al guardar crea un proyecto normal. */
+const WZ={i:0,a:null,P:null,R:null,opt:null};
+const pesos=v=>'$ '+nf(Math.round(+v||0));
+const kindOf=t=>t==='VIS'?'vis':t==='VIP'?'vip':'example';
+function wzDefaults(tipo,keep){
+  const T=newProject(kindOf(tipo)),apt=T.tipologias.filter(t=>t.clase==='apto'),parq=T.tipologias.filter(t=>t.clase==='parq');
+  const tipos=[];apt.forEach(t=>{const x=tipos.find(y=>y.n===t.nombre);if(x)x.und+=+t.unidades;else tipos.push({n:t.nombre,area:+t.area,und:+t.unidades})});
+  const und=sum(apt.map(t=>+t.unidades)),precio=Math.round(sum(apt.map(t=>t.precio*t.unidades))/und/10000)*10000,e=T.etapas[0];
+  const d=new Date();d.setMonth(d.getMonth()+1);
+  return Object.assign({nombre:'',ciudad:'',fecha:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')},keep||{},{
+    tipo,topeEsp:false,etapas:T.etapas.length,pisos:+e.pisos,tipos,precio,parq:sum(parq.map(t=>+t.unidades)),parqPrecio:parq[0]?+parq[0].precio:0,
+    costo:sum(T.costos.capitulos.map(c=>+c.valor)),lote:+T.costos.lote.valor,loteForma:'contado',vel:+e.velocidad,ci:+T.ventas.ciPct,obra:+e.mesesObra,
+    credito:true,cupo:+e.credPct,socios:2,part1:60,tio:+T.general.tasaDesc,margen:+T.general.margenMin});
+}
+const ESP_CIUDADES=/bogot|medell|cali|barranquilla|cartagena|bucaramanga|soacha|envigado|itag|bello|sabaneta|soledad|floridablanca|gir[oó]n|piedecuesta|jamund|palmira|mosquera|funza|madrid|ch[ií]a|cajic|zipaquir/i;
+function wzBuild(a){
+  const T=newProject(kindOf(a.tipo)),P=T,n=Math.max(1,Math.min(4,Math.round(+a.etapas||1))),base=clone(T.etapas[0]),aptT=T.tipologias.find(t=>t.clase==='apto')||{};
+  const split=(tot,k)=>{tot=Math.max(0,Math.round(+tot||0));return Math.floor(tot/n)+(k<tot%n?1:0)};
+  P.general=Object.assign(P.general,{nombre:a.nombre||'Proyecto nuevo',ciudad:a.ciudad||'',fecha:a.fecha,tasaDesc:+a.tio,margenMin:+a.margen});
+  P.etapas=[];P.tipologias=[];
+  for(let k=0;k<n;k++){const id='e'+(k+1);
+    P.etapas.push(Object.assign(clone(base),{id,nombre:n>1?`Etapa ${k+1} · Torre ${k+1}`:'Etapa 1',tipo:a.tipo,topeEsp:a.tipo==='VIS'&&!!a.topeEsp,pisos:+a.pisos,velocidad:+a.vel,mesesObra:+a.obra,
+      credPct:a.credito?+a.cupo:0,inicioVentas:1+k*12,mesMinObra:(+base.mesMinObra||6)+k*12,curva:k?'constante':base.curva,salaVentas:k?Math.round((+base.salaVentas||0)*0.25):+base.salaVentas}));
+    a.tipos.forEach((t,j)=>{const u=split(t.und,k);if(u>0)P.tipologias.push({id:'t'+(k+1)+'_'+(j+1),etapa:id,nombre:t.n||('Tipo '+String.fromCharCode(65+j)),clase:'apto',unidades:u,area:+t.area,precio:+a.precio,primaPiso:+aptT.primaPiso||0,pctVista:+aptT.pctVista||0,primaVista:+aptT.primaVista||0})});
+    const pq=split(a.parq,k);if(pq>0)P.tipologias.push({id:'t'+(k+1)+'_p',etapa:id,nombre:'Parqueaderos',clase:'parq',unidades:pq,area:0,precio:+a.parqPrecio,primaPiso:0,pctVista:0,primaVista:0});
+  }
+  const f=(+a.costo||1)/(sum(T.costos.capitulos.map(c=>+c.valor))||1);P.costos.capitulos.forEach(c=>c.valor=Math.round(c.valor*f/1000)*1000);
+  P.costos.lote.valor=+a.lote;P.costos.lote.forma=a.loteForma;
+  P.ventas.ciPct=+a.ci;
+  P.socios=+a.socios===1?[{id:'s1',nombre:'Socio único',part:100,aportaLote:a.loteForma==='especie'}]
+    :[{id:'s1',nombre:'Socio gestor',part:+a.part1,aportaLote:false},{id:'s2',nombre:a.loteForma==='especie'?'Propietario del lote':'Socio inversionista',part:100-(+a.part1),aportaLote:a.loteForma==='especie'}];
+  return P;
+}
+function wzViable(P,R,buf){buf=buf||0;return !!R&&R.utilNeta>0&&R.margen*100>=+P.general.margenMin+buf&&R.tirI!=null&&R.tirI*100>=+P.general.tasaDesc+buf}
+const WZ_STEPS=[
+ {t:'Vamos a crear tu proyecto',q:'Te haré preguntas sencillas, una por pantalla. Si no sabes qué responder, deja el valor sugerido: es un dato típico del mercado.',
+  h:'Al final verás si el proyecto es viable, es decir, si deja la ganancia mínima que esperas. Si no lo es, te diré qué ajustar: el precio de venta, el costo del lote, el costo de la obra o el ritmo de ventas. Puedes volver atrás cuando quieras.',body:()=>''},
+ {t:'¿Cómo se llama y dónde queda?',q:'Escribe un nombre para reconocer el proyecto y la ciudad o municipio donde se construirá.',
+  h:'El nombre es solo para ti, por ejemplo “Torres del Parque”. La ciudad sirve para saber si aplica el tope especial de vivienda VIS de las grandes ciudades.',
+  body:a=>wzF('text','nombre','Nombre del proyecto','Ej.: Torres del Parque')+wzF('text','ciudad','Ciudad o municipio','Ej.: Medellín'),
+  ok:a=>!String(a.nombre||'').trim()?'Escribe un nombre para el proyecto.':''},
+ {t:'¿Qué tipo de vivienda vas a vender?',q:'Elige según el precio de las viviendas.',
+  h:'VIS (vivienda de interés social) y VIP (vivienda de interés prioritario) tienen un precio máximo fijado por ley en salarios mínimos; a cambio, los compradores pueden recibir subsidios y el proyecto puede pedir devolución de IVA. No VIS es cualquier vivienda por encima de ese precio. Al elegir, ajusto todos los valores sugeridos a ese tipo.',
+  body:a=>`<div class="wzopts">${[['NoVIS','No VIS','Precio libre, sin tope ni subsidios'],['VIS','VIS','Hasta 135 salarios mínimos (150 en grandes ciudades)'],['VIP','VIP','Hasta 90 salarios mínimos']].map(([k,l,d])=>`<button class="wzopt" data-act="wz-tipo" data-k="${k}" aria-pressed="${a.tipo===k}"><b>${l}</b><span>${d}</span></button>`).join('')}</div>`
+   +(a.tipo==='VIS'?wzSw('topeEsp','La ciudad tiene tope especial de 150 salarios mínimos','Bogotá, Medellín, Cali, Barranquilla, Cartagena, Bucaramanga y sus áreas metropolitanas'):'')},
+ {t:'¿Cuándo empezaría el proyecto?',q:'El mes en que arrancan los primeros gastos, como la compra del lote o los diseños.',
+  h:'Todo el flujo de caja se cuenta desde este mes. Las ventas empiezan el mes siguiente. Si no lo sabes con certeza, deja el mes sugerido.',
+  body:a=>wzF('month','fecha','Mes de inicio')},
+ {t:'El lote',q:'¿Cuánto vale el terreno y cómo se pagará?',
+  h:'Escribe el valor total en pesos. Lo usual es que el lote valga entre el 8 % y el 18 % de las ventas del proyecto. “Aporte en especie” significa que el dueño del lote no lo vende sino que entra como socio con el terreno.',
+  body:a=>wzF('money','lote','Valor del lote','')+wzRadio('loteForma',[['contado','De contado'],['diferido','En cuotas'],['especie','El dueño lo aporta como socio']])},
+ {t:'¿Qué tan grande es?',q:'Cuántas torres o etapas y cuántos pisos tiene cada una.',
+  h:'Una etapa es una torre o grupo de casas que se vende y se construye por separado. Con varias etapas, la segunda empieza a venderse un año después de la primera, lo que reduce el riesgo. Los pisos influyen en el costo y en el precio de los apartamentos altos.',
+  body:a=>wzF('num','etapas','Torres o etapas','',{min:1,max:4,step:1})+wzF('num','pisos','Pisos por torre','',{min:1,max:60,step:1}),
+  ok:a=>(+a.etapas<1||+a.etapas>4)?'Elige entre 1 y 4 etapas.':''},
+ {t:'Tipos de apartamento',q:'Escribe cada tipo de apartamento con su área y cuántas unidades habrá en total.',
+  h:'El área es la que se vende al comprador (área privada), en metros cuadrados. Por ejemplo: “2 alcobas, 55 m², 120 unidades”. Puedes tener hasta 4 tipos. Las unidades se reparten por igual entre las etapas.',
+  body:a=>`<div class="wztipos">${a.tipos.map((t,j)=>`<div class="wztipo"><div class="f"><label>Nombre</label><div class="box"><input data-wz="tipos.${j}.n" value="${esc(t.n)}"></div></div><div class="f"><label>Área</label><div class="box"><input type="number" inputmode="decimal" data-wz="tipos.${j}.area" value="${esc(t.area)}"><span class="u">m²</span></div></div><div class="f"><label>Unidades</label><div class="box"><input type="number" inputmode="numeric" data-wz="tipos.${j}.und" value="${esc(t.und)}"><span class="u">und</span></div></div>${a.tipos.length>1?`<button class="iconbtn" data-act="wz-deltipo" data-i="${j}" aria-label="Quitar tipo">${ICON_DEL}</button>`:''}</div>`).join('')}</div>${a.tipos.length<4?'<button class="btn sm" data-act="wz-addtipo">+ Agregar otro tipo</button>':''}`,
+  ok:a=>a.tipos.some(t=>!(+t.area>0)||!(+t.und>0))?'Cada tipo necesita un área y unidades mayores que cero.':''},
+ {t:'Precio de venta',q:'¿A cuánto venderás cada metro cuadrado?',
+  h:'Es el precio por metro cuadrado de área privada al inicio de las ventas. Mira proyectos parecidos de la zona: es la mejor referencia. Después sube un poco cada mes según el avance. En VIS y VIP, si el precio pasa del tope legal, se ajusta al máximo permitido.',
+  body:a=>wzF('money','precio','Precio por m²','')+`<div class="wzcalc">${a.tipos.map(t=>`<div><span>${esc(t.n)}</span><b>${pesos(t.area*a.precio)}</b></div>`).join('')}<small>Precio aproximado de cada apartamento</small></div>`},
+ {t:'Parqueaderos',q:'¿Venderás parqueaderos aparte? Escribe cuántos y a qué precio.',
+  h:'En muchos proyectos No VIS el parqueadero se vende por separado. En VIS y VIP casi siempre son comunales y no se venden: en ese caso deja 0.',
+  body:a=>wzF('num','parq','Parqueaderos para vender','',{min:0,step:1})+wzF('money','parqPrecio','Precio de cada parqueadero','')},
+ {t:'Costo de construcción',q:'¿Cuánto cuesta construir cada metro cuadrado?',
+  h:'Es el costo directo de la obra (materiales y mano de obra) por metro cuadrado construido, sin lote, diseños ni gerencia. Un constructor o un presupuesto de referencia te lo da. Si no lo sabes, deja el valor sugerido para este tipo de vivienda.',
+  body:a=>wzF('money','costo','Costo directo por m² construido','')},
+ {t:'Ventas',q:'¿Cuántos apartamentos esperas vender al mes y qué cuota inicial pedirás?',
+  h:'La velocidad de ventas es el promedio de unidades vendidas cada mes en cada torre; en proyectos medianos suele estar entre 6 y 15. La cuota inicial es el porcentaje del precio que el comprador paga antes de la entrega; el resto lo paga con su crédito hipotecario o subsidios.',
+  body:a=>wzF('num','vel','Ventas por mes en cada torre','',{min:1,step:1},'und/mes')+wzF('num','ci','Cuota inicial','',{min:0,max:100},'%')},
+ {t:'Tiempo de obra',q:'¿Cuántos meses dura la construcción de cada torre?',
+  h:'La obra empieza cuando se vende el punto de equilibrio (el 60 % de las unidades). Como referencia, una torre de 10 a 20 pisos tarda entre 16 y 24 meses.',
+  body:a=>wzF('num','obra','Duración de la obra','',{min:6,max:60,step:1},'meses')},
+ {t:'Crédito constructor',q:'¿Pedirás un crédito al banco para construir?',
+  h:'Casi todos los proyectos usan un crédito constructor: el banco presta una parte del costo y se le paga cuando se entregan los apartamentos. El cupo es el porcentaje del costo que presta el banco; suele estar entre 50 % y 70 %. Sin crédito, los socios deben poner más dinero.',
+  body:a=>wzRadio('credito',[[true,'Sí, con crédito'],[false,'No, solo con recursos propios']])+(a.credito?wzF('num','cupo','Cupo del crédito','',{min:10,max:90},'% del costo'):'')},
+ {t:'Socios',q:'¿Cuántos socios participan y en qué porcentaje?',
+  h:'Los socios ponen el dinero que falta cuando la caja del proyecto no alcanza y se reparten las utilidades según su participación. Si el lote se aporta como socio, el segundo socio es el dueño del lote.',
+  body:a=>wzRadio('socios',[[1,'Un solo socio'],[2,'Dos socios']])+(+a.socios===2?wzF('num','part1','Participación del primer socio','',{min:1,max:99},'%')+`<p class="muted" style="margin:0">El segundo socio tiene el ${nf(100-(+a.part1||0))} %.</p>`:'')},
+ {t:'¿Qué ganancia esperas?',q:'La rentabilidad mínima que deben dejar el proyecto y el dinero de los socios.',
+  h:'Margen mínimo: la utilidad antes de impuestos dividida entre las ventas; en vivienda se suele pedir entre 10 % y 15 %. Rentabilidad mínima (TIO): lo que esperan ganar los socios al año por su dinero; suele estar entre 12 % y 18 %. Con estos dos datos decido si el proyecto es viable.',
+  body:a=>wzF('num','margen','Margen mínimo','',{min:1,max:40},'% de las ventas')+wzF('num','tio','Rentabilidad mínima de los socios (TIO)','',{min:1,max:60},'% al año')},
+ {t:'Resultado',q:'',h:'',body:()=>wzResult()}];
+function wzF(type,k,label,ph,o,unit){const a=WZ.a,v=a[k];o=o||{};
+  if(type==='month')return `<div class="f"><label>${label}</label><div class="box"><input type="month" data-wz="${k}" value="${esc(v)}"></div></div>`;
+  if(type==='text')return `<div class="f"><label>${label}</label><div class="box"><input data-wz="${k}" value="${esc(v)}" placeholder="${esc(ph||'')}" autocomplete="off"></div></div>`;
+  const money=type==='money';
+  return `<div class="f"><label>${label}</label><div class="box"><input type="number" inputmode="decimal" data-wz="${k}" value="${esc(v)}"${o.min!=null?` min="${o.min}"`:''}${o.max!=null?` max="${o.max}"`:''} step="${o.step||'any'}">${unit?`<span class="u">${unit}</span>`:money?'<span class="u">$</span>':''}</div>${money?`<div class="hint" data-wzhint="${k}">${pesos(v)}${+v>=1e6?' · '+nf(v/1e6,v<1e8?1:0)+' millones':''}</div>`:''}</div>`}
+function wzRadio(k,opts){return `<div class="wzopts">${opts.map(([v,l])=>`<button class="wzopt" data-act="wz-set" data-k="${k}" data-v="${String(v)}" aria-pressed="${String(WZ.a[k])===String(v)}"><b>${l}</b></button>`).join('')}</div>`}
+function wzSw(k,label,d){return `<label class="wzsw"><input type="checkbox" data-wz="${k}"${WZ.a[k]?' checked':''}><span><b>${label}</b><small>${d||''}</small></span></label>`}
+function wzOpen(){if(ST.readOnly){toast('Tienes acceso de solo lectura');return}
+  WZ.i=0;WZ.a=wzDefaults('NoVIS');WZ.P=null;WZ.R=null;WZ.opt=null;$('#wiz').hidden=false;document.body.classList.add('wizon');wzRender()}
+function wzClose(force){if(!force&&WZ.i>0&&!confirm('¿Salir del asistente? Se perderán los datos que ingresaste.'))return;wzStop();$('#wiz').hidden=true;document.body.classList.remove('wizon')}
+function wzRender(){const s=WZ_STEPS[WZ.i],n=WZ_STEPS.length,last=WZ.i===n-1;
+  if(last){WZ.P=wzBuild(WZ.a);WZ.R=runProject(WZ.P,ST.macro)}
+  $('#wiz').innerHTML=`<div class="wzbox"><div class="wzhead"><button class="iconbtn" data-act="wz-close" aria-label="Cerrar asistente"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="wzprog"><i style="width:${(WZ.i/(n-1))*100}%"></i></div><span class="muted">${WZ.i+1} / ${n}</span></div>
+   <div class="wzbody"><h2>${esc(s.t)}</h2>${s.q?`<p class="wzq">${esc(s.q)}</p>`:''}
+   ${s.h?`<div class="wzhelp"><div class="between"><b>¿Qué significa?</b><button class="btn sm" data-act="wz-say">${WZ.speaking?'■ Detener':'🔊 Escuchar'}</button></div><p>${esc(s.h)}</p></div>`:''}
+   <div class="wzfields">${s.body(WZ.a)}</div><p class="wzerr" id="wzErr" role="alert"></p></div>
+   <div class="wzfoot">${WZ.i>0?'<button class="btn" data-act="wz-back">Atrás</button>':'<span></span>'}${last?`<button class="btn pri" data-act="wz-save">Guardar proyecto</button>`:`<button class="btn pri" data-act="wz-next">${WZ.i===0?'Empezar':'Siguiente'}</button>`}</div></div>`;
+  const b=$('#wiz .wzbody');if(b)b.scrollTop=0}
+function wzStop(){WZ.speaking=false;try{speechSynthesis.cancel()}catch(e){}}
+function wzSay(){if(WZ.speaking){wzStop();wzRender();return}
+  if(!('speechSynthesis' in window)){toast('Tu navegador no permite leer en voz alta');return}
+  const s=WZ_STEPS[WZ.i],u=new SpeechSynthesisUtterance([s.t,s.q,s.h].filter(Boolean).join('. '));
+  const v=speechSynthesis.getVoices().filter(x=>/^es/i.test(x.lang)).sort((x,y)=>(/google|natural|neural|premium/i.test(y.name)?1:0)-(/google|natural|neural|premium/i.test(x.name)?1:0))[0];
+  if(v){u.voice=v;u.lang=v.lang}else u.lang='es-CO';u.onend=u.onerror=()=>{WZ.speaking=false;const btn=$('#wiz [data-act="wz-say"]');if(btn)btn.textContent='🔊 Escuchar'};
+  wzStop();WZ.speaking=true;speechSynthesis.speak(u);const btn=$('#wiz [data-act="wz-say"]');if(btn)btn.textContent='■ Detener'}
+function wzNext(){const s=WZ_STEPS[WZ.i],err=s.ok&&s.ok(WZ.a);if(err){$('#wzErr').textContent=err;return}wzStop();
+  if(WZ.i===1&&WZ.a.tipo==='VIS'&&ESP_CIUDADES.test(WZ.a.ciudad||''))WZ.a.topeEsp=true;
+  WZ.i=Math.min(WZ_STEPS.length-1,WZ.i+1);WZ.opt=null;wzRender()}
+/* Resultado: indicadores, veredicto y sugerencias para viabilizar */
+function wzReasons(P,R){const r=[],mn=+P.general.margenMin,tio=+P.general.tasaDesc;
+  if(R.utilNeta<=0)r.push('El proyecto pierde dinero.');
+  if(R.margen*100<mn)r.push(`El margen es ${fP(R.margen)}, menor al mínimo de ${nf(mn,1)} %.`);
+  if(R.tirI==null||R.tirI*100<tio)r.push(`La rentabilidad de los socios (TIR) es ${fP(R.tirI)}, menor a la mínima de ${nf(tio,1)} %.`);
+  return r}
+function wzResult(){const P=WZ.P,R=WZ.R,ok=wzViable(P,R),rs=wzReasons(P,R);
+  const k=[['Ventas totales',fM(R.ventas)],['Utilidad antes de impuestos',fM(R.uai)],['Margen',fP(R.margen)+' (mín. '+nf(P.general.margenMin,1)+' %)'],['Rentabilidad de los socios (TIR)',fP(R.tirI)+' (mín. '+nf(P.general.tasaDesc,1)+' %)'],['Dinero máximo que ponen los socios',fM(R.expo)],['Duración',(R.N-1)+' meses']];
+  return `<div class="wzverdict ${ok?'ok':'no'}"><b>${ok?'✓ Tu proyecto es viable':'✕ Tu proyecto todavía no es viable'}</b><span>${ok?'Cumple el margen y la rentabilidad mínima que definiste.':esc(rs.join(' '))}</span></div>
+   <div class="wzkpis">${k.map(([l,v])=>`<div><span>${l}</span><b>${v}</b></div>`).join('')}</div>
+   <div class="wzhelp"><div class="between"><b>${ok?'¿Qué tan firme es?':'¿Cómo hacerlo viable?'}</b><button class="btn sm pri" data-act="wz-opt">${WZ.opt?'Recalcular':'Optimizar'}</button></div><p>${ok?'Calculo cuánto pueden cambiar los precios, los costos y las ventas antes de que deje de ser viable.':'Calculo, uno por uno, cuánto debería cambiar cada dato para que el proyecto sea viable, y una combinación equilibrada de todos.'}</p>${WZ.opt||''}</div>
+   <p class="muted" style="margin:0">Al guardar se crea el proyecto completo. Después puedes afinar cada detalle en Modelo.</p>`}
+/* Búsqueda binaria del valor mínimo o máximo de un supuesto que deja el proyecto en el límite de viabilidad */
+function wzSolve(apply,lo,hi,wantMin,buf){const ok=f=>{const P=clone(WZ.P);apply(P,f);return wzViable(P,runProject(P,ST.macro),buf)};
+  if(wantMin){if(!ok(hi))return null;for(let i=0;i<16;i++){const m=(lo+hi)/2;if(ok(m))hi=m;else lo=m}return hi}
+  if(!ok(lo))return null;for(let i=0;i<16;i++){const m=(lo+hi)/2;if(ok(m))lo=m;else hi=m}return lo}
+const WZ_LEV={
+ precio:(P,f)=>P.tipologias.forEach(t=>{if(t.clase!=='parq')t.precio*=f}),
+ lote:(P,f)=>P.costos.lote.valor*=f,
+ costo:(P,f)=>P.costos.capitulos.forEach(c=>c.valor*=f),
+ vel:(P,f)=>P.etapas.forEach(e=>e.velocidad*=f),
+ mix:(P,s)=>{WZ_LEV.precio(P,1+0.12*s);WZ_LEV.lote(P,1-0.35*s);WZ_LEV.costo(P,1-0.12*s);WZ_LEV.vel(P,1+0.4*s)}};
+function wzOptimize(){const a=WZ.a,ok=wzViable(WZ.P,WZ.R),pct=f=>(f>=1?'+':'−')+nf(Math.abs(f-1)*100,1)+' %',rows=[];
+  // Mismo redondeo que al aplicar: aumentos hacia arriba, reducciones hacia abajo
+  const rPrecio=v=>Math.ceil(v/1000)*1000,rLote=v=>Math.floor(v/1e6)*1e6,rCosto=v=>Math.floor(v/1000)*1000,rVel=v=>Math.ceil(v*10)/10;
+  const row=(t,from,to,f,lev,why)=>rows.push(`<div class="wzsug"><div><b>${t}</b><span>${from} → <strong>${to}</strong> (${pct(f)})</span><small>${why}</small></div>${ok?'':`<button class="btn sm" data-act="wz-apply" data-k="${lev}" data-f="${f}">Aplicar</button>`}</div>`);
+  const nope=(t,why)=>rows.push(`<div class="wzsug"><div><b>${t}</b><small>${why}</small></div></div>`);
+  if(!ok){
+    const fp=wzSolve(WZ_LEV.precio,1,1.6,true);fp?row('Precio de venta mínimo',pesos(a.precio)+'/m²',pesos(rPrecio(a.precio*fp))+'/m²',fp,'precio','Sube el precio por m² hasta este valor. Compáralo con proyectos de la zona.'+(a.tipo!=='NoVIS'?' En VIS y VIP el precio no puede pasar del tope legal.':'')):nope('Precio de venta','Ni subiéndolo 60 % alcanza'+(a.tipo!=='NoVIS'?' (y en '+a.tipo+' lo limita el tope legal)':'')+'.');
+    const fl=wzSolve(WZ_LEV.lote,0,1,false);fl!=null?row('Valor máximo del lote',pesos(a.lote),pesos(rLote(a.lote*fl)),fl,'lote','Es lo máximo que puedes pagar por el terreno para que el proyecto sea viable. Úsalo para negociar.'):nope('Valor del lote','Aunque el lote fuera gratis no alcanza: hay que ajustar otros datos.');
+    const fc=wzSolve(WZ_LEV.costo,0.6,1,false);fc!=null?row('Costo de obra máximo',pesos(a.costo)+'/m²',pesos(rCosto(a.costo*fc))+'/m²',fc,'costo','Es el costo directo máximo por m² construido. Revisa el presupuesto con el constructor o simplifica acabados.'):nope('Costo de obra','Ni bajándolo 40 % alcanza.');
+    const fv=wzSolve(WZ_LEV.vel,1,3,true);fv?row('Ventas mínimas por mes',nf(a.vel,1)+' und',nf(rVel(a.vel*fv),1)+' und',fv,'vel','Vender más rápido reduce intereses y el dinero que ponen los socios. Implica más publicidad o mejor precio.'):nope('Velocidad de ventas','Vender más rápido no alcanza por sí solo: mejora la rentabilidad de los socios, pero casi no cambia el margen.');
+    // El ajuste combinado deja 1 punto de holgura en margen y rentabilidad, para no quedar justo en el límite
+    const sm=wzSolve(WZ_LEV.mix,0,1,true,1);
+    rows.push(sm!=null?`<div class="wzsug best"><div><b>Ajuste combinado (recomendado)</b><span>Precio ${pct(1+0.12*sm)} · lote ${pct(1-0.35*sm)} · obra ${pct(1-0.12*sm)} · ventas ${pct(1+0.4*sm)}</span><small>Mueve un poco cada dato en lugar de mucho uno solo, y deja 1 punto de holgura en margen y rentabilidad. Suele ser lo más realista.</small></div><button class="btn sm pri" data-act="wz-apply" data-k="mix" data-f="${sm}">Aplicar</button></div>`
+      :`<div class="wzsug"><div><b>Ajuste combinado</b><small>Con cambios razonables no alcanza. Revisa el tamaño del proyecto, el tipo de vivienda o la ubicación.</small></div></div>`);
+  }else{
+    const fp=wzSolve(WZ_LEV.precio,0.5,1,true),fc=wzSolve(WZ_LEV.costo,1,1.8,false),fl=wzSolve(WZ_LEV.lote,1,4,false),fv=wzSolve(WZ_LEV.vel,0.2,1,true);
+    if(fp)nope('El precio puede bajar hasta '+pesos(rPrecio(a.precio*fp))+'/m² ('+pct(fp)+')','Por debajo de eso deja de ser viable.');
+    if(fc!=null)nope('El costo de obra puede subir hasta '+pesos(rCosto(a.costo*fc))+'/m² ('+pct(fc)+')','Es tu margen de seguridad ante sobrecostos.');
+    if(fl!=null)nope('Podrías pagar por el lote hasta '+pesos(rLote(a.lote*fl))+' ('+pct(fl)+')','Útil para negociar o comparar otros terrenos.');
+    if(fv)nope('Las ventas pueden bajar hasta '+nf(a.vel*fv,1)+' und/mes ('+pct(fv)+')','Si se vende más lento, el proyecto aguanta hasta ahí.');
+  }
+  WZ.opt=`<div class="wzsugs">${rows.join('')}</div>`;wzRender();
+  setTimeout(()=>{const x=$('#wiz .wzsugs');if(x)x.scrollIntoView({block:'start',behavior:'smooth'})},50)}
+function wzApply(k,f){const a=WZ.a;
+  // Los aumentos se redondean hacia arriba y las reducciones hacia abajo, para no quedar justo por debajo del límite
+  if(k==='precio'||k==='mix')a.precio=Math.ceil(a.precio*(k==='mix'?1+0.12*f:f)/1000)*1000;
+  if(k==='lote'||k==='mix')a.lote=Math.floor(a.lote*(k==='mix'?1-0.35*f:f)/1e6)*1e6;
+  if(k==='costo'||k==='mix')a.costo=Math.floor(a.costo*(k==='mix'?1-0.12*f:f)/1000)*1000;
+  if(k==='vel'||k==='mix')a.vel=Math.ceil(a.vel*(k==='mix'?1+0.4*f:f)*10)/10;
+  WZ.opt=null;wzRender();const ok=wzViable(WZ.P,WZ.R);toast(ok?'Ajuste aplicado: el proyecto ya es viable':'Ajuste aplicado; revisa las demás sugerencias')}
+function wzInput(el){const k=el.dataset.wz;if(!k||!WZ.a)return;
+  const v=el.type==='checkbox'?el.checked:el.type==='number'?(el.value===''?'':+el.value):el.value;
+  const p=k.split('.');if(p.length===3)WZ.a[p[0]][+p[1]][p[2]]=v;else WZ.a[k]=v;
+  const h=$(`#wiz [data-wzhint="${k}"]`);if(h)h.textContent=pesos(v)+(+v>=1e6?' · '+nf(v/1e6,v<1e8?1:0)+' millones':'');
+  const er=$('#wzErr');if(er)er.textContent='';
+  if(WZ.i===7||k==='part1'){const c=$('#wiz .wzcalc');if(c&&WZ.i===7)c.innerHTML=WZ.a.tipos.map(t=>`<div><span>${esc(t.n)}</span><b>${pesos(t.area*WZ.a.precio)}</b></div>`).join('')+'<small>Precio aproximado de cada apartamento</small>'}}
+document.addEventListener('input',e=>{if(e.target.closest&&e.target.closest('#wiz'))wzInput(e.target)});
+document.addEventListener('change',e=>{if(e.target.type==='checkbox'&&e.target.closest&&e.target.closest('#wiz'))wzInput(e.target)});
+document.addEventListener('keydown',e=>{const w=$('#wiz');if(!w||w.hidden)return;
+  if(e.key==='Escape'){e.stopPropagation();wzClose();return}
+  if(e.key==='Enter'&&e.target.tagName==='INPUT'&&e.target.closest('#wiz')){e.preventDefault();if(WZ.i<WZ_STEPS.length-1)wzNext()}},true);
+function fabSync(){const f=$('#fab');if(f)f.hidden=!(ST.ready&&!ST.readOnly)}
+async function wzSave(){const P=wzBuild(WZ.a);wzClose(true);
+  await createProject(null,P,{keepName:true,goTo:'inicio',msg:'Proyecto guardado. Revisa el detalle en Inicio y afínalo en Modelo.'})}
+
 /* ---------- Ayuda: manual paso a paso y glosario (solo en Cuenta) ---------- */
 const HELP_STEPS=[
  {t:'Crea o elige el proyecto',w:'Nombre del proyecto en la barra superior › Proyectos',go:'proj',
@@ -2112,6 +2350,18 @@ document.addEventListener('click',async e=>{
     case 'install':if(ST.instP){const ev=ST.instP;ST.instP=null;instBar();ev.prompt();ev.userChoice.finally(()=>rr('cuenta'))}break;
     case 'inst-no':prefs.instNo=Date.now();savePrefs();instBar();break;
     case 'help-manual':helpManual();break;
+    case 'wz-open':wzOpen();break;
+    case 'wz-close':wzClose();break;
+    case 'wz-next':wzNext();break;
+    case 'wz-back':wzStop();WZ.i=Math.max(0,WZ.i-1);WZ.opt=null;wzRender();break;
+    case 'wz-say':wzSay();break;
+    case 'wz-save':b.disabled=true;wzSave();break;
+    case 'wz-tipo':if(WZ.a.tipo!==b.dataset.k){WZ.a=wzDefaults(b.dataset.k,{nombre:WZ.a.nombre,ciudad:WZ.a.ciudad,fecha:WZ.a.fecha});if(b.dataset.k==='VIS'&&ESP_CIUDADES.test(WZ.a.ciudad||''))WZ.a.topeEsp=true;wzRender()}break;
+    case 'wz-set':{const v=b.dataset.v;WZ.a[b.dataset.k]=v==='true'?true:v==='false'?false:(isNaN(+v)?v:+v);wzRender();break}
+    case 'wz-addtipo':WZ.a.tipos.push({n:'Tipo '+String.fromCharCode(65+WZ.a.tipos.length),area:60,und:40});wzRender();break;
+    case 'wz-deltipo':WZ.a.tipos.splice(+b.dataset.i,1);wzRender();break;
+    case 'wz-opt':wzOptimize();break;
+    case 'wz-apply':wzApply(b.dataset.k,+b.dataset.f);break;
     case 'help-glos':helpGlos();setTimeout(()=>{const q=$('#glosQ');if(q&&!('ontouchstart' in window))q.focus()},80);break;
     case 'help-go':{const to=b.dataset.to;closeSheet();
       if(to==='proj'){openProjects();break}
@@ -2168,7 +2418,7 @@ addEventListener('resize',()=>{if(ST.ready)layout()});
     if(!s||s.scrollWidth-s.clientWidth<4)return;const before=s.scrollLeft;s.scrollLeft+=e.deltaY;if(s.scrollLeft!==before)e.preventDefault()},{passive:false});
 })();
 /* Deslizar para cambiar de sección en celular y tablet (no en la vista de columnas del computador) */
-if(window.swipeNav)swipeNav({items:()=>ST.desk?$$('#dt1 button'):$$('.nav button'),enabled:()=>ST.ready&&!ST.web&&!$('#sheetHost').innerHTML&&!document.body.classList.contains('authing'),content:()=>$('#cols')});
+if(window.swipeNav)swipeNav({items:()=>ST.desk?$$('#dt1 button'):$$('.nav button'),enabled:()=>ST.ready&&!ST.web&&!$('#sheetHost').innerHTML&&$('#wiz').hidden&&!document.body.classList.contains('authing'),content:()=>$('#cols')});
 function webHint(){if(prefs.webHint2)return;prefs.webHint2=1;savePrefs();setTimeout(()=>toast('Toca las secciones de abajo para sumarlas como columnas. Arrastra el encabezado de una columna para reordenarla.'),600)}
 /* Arrastrar columnas para reordenarlas */
 let DRAG=null;
@@ -2245,7 +2495,7 @@ function watchApproval(u){
     if(ST.mode==='fb')stopFb();
     showApproval(u,st,d)},e=>{console.warn('aprobación',e);showApproval(u,'error')});
 }
-function stopFb(){if(FB.unsub){FB.unsub();FB.unsub=null}if(FB.unsubP){FB.unsubP();FB.unsubP=null}
+function stopFb(){const fb=$('#fab');if(fb)fb.hidden=true;if(FB.unsub){FB.unsub();FB.unsub=null}if(FB.unsubP){FB.unsubP();FB.unsubP=null}
   ST.ready=false;ST.mode='local';ST.pid=null;ST.P=null;ST.R=null;ST.projects={};closeSheet()}
 function showApproval(u,st,d){hideSplash();const a=$('#auth');a.hidden=false;document.body.classList.add('authing');$('#s-loading').hidden=true;
   const em=esc(u&&u.email||'tu cuenta'),f=d&&d.proyectaSol?fDate(d.proyectaSol).split(' · ')[0]:'';
@@ -2334,7 +2584,7 @@ function startFb(u){
     updateAppbar();
   },e=>{console.warn('firestore',e);if(e&&e.code==='permission-denied')showNoAccess(u);else toast('No se pudieron leer tus proyectos. Revisa tu conexión.')});
 }
-function showAuth(mode){hideSplash();
+function showAuth(mode){hideSplash();fabSync();
   const a=$('#auth');a.hidden=false;document.body.classList.add('authing');$('#s-loading').hidden=true;
   const m=mode||'login';ST.authMode=m;
   const T={login:['Inicia sesión','Entrar'],register:['Crea tu cuenta','Crear cuenta'],reset:['Recupera tu contraseña','Enviar enlace']}[m];
