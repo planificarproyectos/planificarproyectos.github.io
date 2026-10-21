@@ -59,6 +59,7 @@ html{background:var(--bg)}
 body{background:transparent;color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
 .wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:28px 56px}
 header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 24px;margin-bottom:22px}
+[data-reload]{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity .15s}[data-reload]:active{opacity:.6}[data-reload]:focus-visible{outline:2px solid currentColor;outline-offset:4px;border-radius:8px}
 .brand{display:flex;align-items:center;gap:14px;min-width:0}
 .logo{width:48px;height:48px;flex:0 0 auto;color:var(--ink)}
 .logo .hands{stroke:var(--accent);stroke-width:2.2}
@@ -583,7 +584,7 @@ a.card{text-decoration:none}
 <canvas id="neuralBg" aria-hidden="true"></canvas>
 <div class="wrap" id="appView" hidden>
   <header class="top">
-    <div class="brand"><svg class="logo" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 8c-3-3-9-3-11 1-4 0-7 4-6 8-3 2-3 7 0 9-1 4 2 8 6 8 2 4 8 5 11 2"/><path d="M24 8c3-3 9-3 11 1 4 0 7 4 6 8 3 2 3 7 0 9 1 4-2 8-6 8-2 4-8 5-11 2"/><path d="M24 8v7M24 29v7M13 17c2 0 4 1 5 3M35 17c-2 0-4 1-5 3M12 27c2-1 4-1 6 0M36 27c-2-1-4-1-6 0"/><circle cx="24" cy="22" r="7"/><path class="hands" d="M24 22v-4M24 22l3 2"/></svg>
+    <div class="brand" data-reload role="button" tabindex="0" title="Actualizar la página" aria-label="Mind Focus · actualizar la página"><svg class="logo" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 8c-3-3-9-3-11 1-4 0-7 4-6 8-3 2-3 7 0 9-1 4 2 8 6 8 2 4 8 5 11 2"/><path d="M24 8c3-3 9-3 11 1 4 0 7 4 6 8 3 2 3 7 0 9 1 4-2 8-6 8-2 4-8 5-11 2"/><path d="M24 8v7M24 29v7M13 17c2 0 4 1 5 3M35 17c-2 0-4 1-5 3M12 27c2-1 4-1 6 0M36 27c-2-1-4-1-6 0"/><circle cx="24" cy="22" r="7"/><path class="hands" d="M24 22v-4M24 22l3 2"/></svg>
     <h1 class="wordmark">MIND <span>FOCUS</span></h1></div>
     <div class="clock" aria-live="off" aria-label="Fecha y hora actual">
       <div class="clk-time" id="clkTime">--:--<span>:--</span></div>
@@ -1532,6 +1533,9 @@ function onCfg(d){
 }
 async function saveCur(){lsSet("mf_actual",cur);if(cfgDoc)try{await cfgDoc.set({actual:cur||null},{merge:true})}catch(e){}}
 async function saveFavs(){lsSet("mf_favs",favs);if(cfgDoc)try{await cfgDoc.set({favs},{merge:true})}catch(e){}}
+// Tocar el nombre de la app (arriba a la izquierda) actualiza la página
+document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("[data-reload]")){e.preventDefault();location.reload()}});
+document.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches&&e.target.matches("[data-reload]")){e.preventDefault();location.reload()}});
 let toastT;function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2800)}
 const hmT=t=>{const d=new Date(t);return pad(d.getHours())+":"+pad(d.getMinutes())};
 const tsOf=(f,hm)=>{const [h,m]=hm.split(":").map(Number);const d=new Date(f+"T00:00:00");d.setMinutes(h*60+m);return d.getTime()};

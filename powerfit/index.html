@@ -33,6 +33,8 @@ window.pfApplyTheme=function(t){ t=t||{}; var h=pfAccHex(t.accent), k=Object.key
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap">
 <style>
+/* Nombre de la app: al tocarlo se actualiza la página */
+[data-reload]{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity .15s}[data-reload]:active{opacity:.6}[data-reload]:focus-visible{outline:2px solid currentColor;outline-offset:4px;border-radius:8px}
 /* Layout: una columna tipo app móvil (máx 480px), navegación fija abajo; entreno a pantalla completa. */
 :root{
   color-scheme: dark;
@@ -268,7 +270,7 @@ function ic(n,s,w){ s=s||20; w=w||2;
   if(n==='play') return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>';
   return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+w+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+IP[n]+'"/></svg>'; }
 function logo(s){ return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 200 200" role="img" aria-label="PowerFit"><g style="fill:var(--fg)"><rect x="40" y="94" width="120" height="12" rx="4"/><rect x="26" y="62" width="20" height="76" rx="6"/><rect x="154" y="62" width="20" height="76" rx="6"/><rect x="12" y="78" width="12" height="44" rx="4"/><rect x="176" y="78" width="12" height="44" rx="4"/></g><path d="M112 22 L78 104 L100 104 L86 180 L128 88 L106 88 L122 22 Z" style="fill:var(--accent);stroke:var(--bg)" stroke-width="6" stroke-linejoin="round"/></svg>'; }
-function brand(s,fs){ return '<span class="row" style="gap:6px">'+logo(s)+'<span style="font-family:var(--f-display);font-weight:700;font-size:'+fs+'px;letter-spacing:1.5px;line-height:1">POWER<span style="color:var(--accent-fg)">FIT</span></span></span>'; }
+function brand(s,fs){ return '<span class="row" style="gap:6px" data-reload role="button" tabindex="0" title="Actualizar la página" aria-label="PowerFit · actualizar la página">'+logo(s)+'<span style="font-family:var(--f-display);font-weight:700;font-size:'+fs+'px;letter-spacing:1.5px;line-height:1">POWER<span style="color:var(--accent-fg)">FIT</span></span></span>'; }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 
 /* ---------- Ejercicios ---------- */
@@ -1360,6 +1362,9 @@ var A={
     S.se=null; toast(x.isNew?'Entreno registrado':'Sesión actualizada'); S.prev='progress'; go('progress'); },
   delS:function(v){ Store.delSession(v); S.ask=null; toast('Sesión borrada'); render(); }
 };
+// Tocar el nombre de la app (arriba a la izquierda) actualiza la página
+document.addEventListener('click',function(e){ if(e.target.closest&&e.target.closest('[data-reload]')){ e.preventDefault(); e.stopPropagation(); location.reload(); } },true);
+document.addEventListener('keydown',function(e){ if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('[data-reload]')){ e.preventDefault(); location.reload(); } });
 function keep(fn){ var y=window.scrollY; fn(); window.scrollTo(0,y); }
 document.addEventListener('click',function(ev){
   var el=ev.target.closest('[data-a]'); if(!el||el.disabled) return;

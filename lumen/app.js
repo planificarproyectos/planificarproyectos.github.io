@@ -154,6 +154,10 @@ function chunks(t){
   if(p) out.push(p); });
  return out;
 }
+// Tocar el nombre de la app (arriba a la izquierda) actualiza la página; antes se manda a la cuenta lo pendiente
+function recargar(){ try{ saveLocal(); if(Cloud.ref) Cloud.push(true); }catch(e){} setTimeout(function(){ location.reload(); },350); }
+document.addEventListener('click',function(e){ if(e.target.closest&&e.target.closest('[data-reload]')){ e.preventDefault(); e.stopPropagation(); recargar(); } },true);
+document.addEventListener('keydown',function(e){ if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('[data-reload]')){ e.preventDefault(); recargar(); } });
 function isIOS(){ var u=navigator.userAgent||''; return /iphone|ipad|ipod/i.test(u)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1); }
 function ttsHelp(){
  if(!TTS) return toast('Este navegador no tiene lectura en voz alta. Abre Lumen en Chrome (Android) o Safari (iPhone).',6000);
@@ -539,7 +543,7 @@ function vHome(){
  var wk=''; for(var i=6;i>=0;i--){ var d=new Date(); d.setDate(d.getDate()-i); var on=(S.done[dkey(d)]||[]).length>0;
   wk+='<div><span'+(i===0?' style="color:var(--fg);font-weight:700"':'')+'>'+'DLMMJVS'.charAt(d.getDay())+'</span><i class="dot'+(on?' on':'')+(i===0?' today':'')+'" style="display:block"></i></div>'; }
  var fr=LIT.frase, st=streak(), next=RUT.filter(function(r){ return !isDone(r[0]); })[0];
- return '<header class="between"><span class="row" style="gap:8px">'+logo(30)+'<span style="font-family:var(--f-display);font-weight:700;font-size:24px;letter-spacing:2px">LU<span style="color:var(--accent-fg)">MEN</span></span></span><span class="small muted">'+longDate(NOW)+'</span></header>'
+ return '<header class="between"><span class="row" style="gap:8px" data-reload role="button" tabindex="0" title="Actualizar la página" aria-label="Lumen · actualizar la página">'+logo(30)+'<span style="font-family:var(--f-display);font-weight:700;font-size:24px;letter-spacing:2px">LU<span style="color:var(--accent-fg)">MEN</span></span></span><span class="small muted">'+longDate(NOW)+'</span></header>'
   +((!S.name&&!needAuth())?'<button class="card" data-a="tab" data-v="me" style="border:1px solid var(--accent-fg)">'+ic('user',24)+'<span class="grow"><b>Configura tu nombre</b><span>Ve a Cuenta y escribe cómo quieres que te saludemos</span></span>'+ic('chevR',20)+'</button>':'')
   +'<div class="stack" style="gap:6px"><h1>'+greet()+(S.name?',<br>'+esc(S.name):'')+'</h1>'+(info?litBadge(info):'')+'</div>'
   +(info?'<div class="daycard"><span class="lbar" style="background:'+(LCOL[info.cel.c]||'#999')+'"></span><div class="stack" style="gap:4px;min-width:0"><span class="label">Hoy celebramos</span><b>'+esc(info.cel.n)+'</b>'+(info.commem?'<span class="small muted">Santo del día: '+esc(info.commem.n)+'</span>':'')+'</div></div>':'')
