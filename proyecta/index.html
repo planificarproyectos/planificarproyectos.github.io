@@ -587,7 +587,16 @@ body.desk .instbar{left:auto;right:20px;bottom:20px;transform:none}
 .cmpt tr.sec td{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--muted);padding-top:14px}
 .cmpt td.best{color:var(--acc-ink);font-weight:800}
 .cmpt .win{display:inline-block;margin-left:5px;font-size:11px}
-.rank{display:grid;gap:22px}
+.rank{display:grid;gap:14px 22px}
+/* Ranking compacto: filas más bajas y letra menor; en pantallas anchas, dos listas por fila */
+.rank .sut{margin-bottom:6px}
+.rank .bars{gap:4px}
+.rank .bar{grid-template-columns:minmax(0,130px) minmax(0,1fr) 50px;gap:8px;font-size:12px}
+.rank .bar>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank .bar small{display:inline-block;min-width:16px;color:var(--muted);font-weight:700;margin-right:3px}
+.rank .bar .track{height:6px}
+.rank .bar .amt{font-size:12px}
+@container scr (min-width:640px){.rank{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .pdot{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none}
 @container scr (min-width:760px){.rank{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .cmpt th.c0,.cmpt td.c0{position:sticky;left:0;z-index:2;background:var(--panel)}
@@ -2049,13 +2058,16 @@ function cmpBars(L){
     s+=`<text x="${Lp+i*g+g/2}" y="${H-10}" text-anchor="middle" style="fill:var(--ink)">${l}</text>`});
   return s+'</svg>';
 }
-/* Más de 4 proyectos: un ranking por indicador, un solo color y el proyecto abierto resaltado */
+/* Más de 4 proyectos: un ranking compacto por indicador (en dos columnas si hay espacio). Muestra los 5 primeros con
+   su puesto y, si el proyecto abierto queda más abajo, también su fila; "Ver todos" despliega cada lista completa */
 function cmpRank(L){
   const ms=[['Margen antes de impuestos',r=>r.margen,1],['Margen neto',r=>r.margenNeto,1],['TIR inversionista',r=>r.tirI,1],['Exposición sobre ventas',r=>r.expo/(r.ventas||1),-1]];
-  return `<div class="rank">${ms.map(([l,f,dir])=>{const rows=L.map(p=>({p,v:f(p.R)})).filter(x=>x.v!=null&&isFinite(x.v)).sort((a,b)=>dir*(b.v-a.v));
-    const mx=Math.max(...rows.map(x=>Math.abs(x.v)))||1;
-    return `<div><div class="sut"><b>${l}</b><span>${dir>0?'Mayor es mejor':'Menor es mejor'}</span></div><div class="bars">${rows.map(({p,v})=>`<div class="bar" title="${esc(p.d.nombre)}: ${fP(v)}"><span${p.id===ST.pid?' style="font-weight:800"':''}>${esc(p.d.nombre||'Proyecto')}</span><div class="track"><div class="fill${v<0?" neg":""}" style="width:${Math.abs(v)/mx*100}%;background:${v<0?"":projColor(p.id)}"></div></div><span class="amt">${fP(v)}</span></div>`).join('')}</div></div>`}).join('')}</div>`;
-}
+  const N=5,all=!!ST.rk2All;let hay=false;
+  const out=`<div class="rank">${ms.map(([l,f,dir])=>{const rows=L.map(p=>({p,v:f(p.R)})).filter(x=>x.v!=null&&isFinite(x.v)).sort((a,b)=>dir*(b.v-a.v));
+    const mx=Math.max(...rows.map(x=>Math.abs(x.v)))||1;if(rows.length>N+1)hay=true;
+    const vis=all||rows.length<=N+1?rows.map((x,i)=>[x,i]):rows.map((x,i)=>[x,i]).filter(([x,i])=>i<N||x.p.id===ST.pid);
+    return `<div><div class="sut"><b>${l}</b><span>${dir>0?'Mayor es mejor':'Menor es mejor'}</span></div><div class="bars">${vis.map(([{p,v},i])=>`<div class="bar" title="${esc(p.d.nombre)}: ${fP(v)}"><span${p.id===ST.pid?' style="font-weight:800"':''}><small>${i+1}</small>${esc(p.d.nombre||'Proyecto')}</span><div class="track"><div class="fill${v<0?" neg":""}" style="width:${Math.abs(v)/mx*100}%;background:${v<0?"":projColor(p.id)}"></div></div><span class="amt">${fP(v)}</span></div>`).join('')}</div></div>`}).join('')}</div>`;
+  return out+(hay?`<button class="lnk rkmore" data-act="rk2-all">${all?'Ver solo los 5 primeros':'Ver todos los proyectos'}</button>`:'')}
 function cmpCash(L){
   const many=L.length>4,col=p=>projColor(p.id);
   if(many)L=L.slice().sort((a,b)=>(a.id===ST.pid)-(b.id===ST.pid));
@@ -2703,6 +2715,7 @@ document.addEventListener('click',async e=>{
       prefs.cmp=s;savePrefs();rr('comparar');break}
     case 'cmp-open':ST.cmpOpen=!ST.cmpOpen;rr('comparar');break;
     case 'rk-all':ST.rkAll=!ST.rkAll;rr('comparar');break;
+    case 'rk2-all':ST.rk2All=!ST.rk2All;rr('comparar');break;
     case 'cmp-all':prefs.cmp=byUpd(Object.keys(ST.projects));savePrefs();rr('comparar');break;
     case 'cmp-none':prefs.cmp=[];savePrefs();rr('comparar');break;
     case 'per':prefs.per=b.dataset.k;savePrefs();rr('resultados');break;
