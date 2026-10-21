@@ -146,6 +146,10 @@ button,input,select,textarea{font:inherit;color:inherit}
 @container scr (min-width:560px){.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @container scr (min-width:900px){.tiles{grid-template-columns:repeat(6,minmax(0,1fr))}}
 .tile{background:var(--panel);border-radius:var(--r-sm);padding:12px 14px;min-width:0}
+/* Ícono de cada indicador: junto a su etiqueta, en el color de énfasis (en la tarjeta verde toma el color del texto) */
+.ki{display:inline-block;vertical-align:-2px;margin-right:5px;flex:none;color:var(--acc-ink)}
+.hero .ki{color:inherit;opacity:.85}
+.axo-st span .ki{margin-right:4px}
 .tile .l{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tile .v{font-size:17px;font-weight:700;white-space:nowrap;margin-top:2px;overflow:hidden;text-overflow:ellipsis}
 .tile .v.bad{color:var(--neg)}
@@ -1310,7 +1314,7 @@ function deskBar(){if(!ST.desk)return;const t1=$('#dt1');
   $('#dsub').innerHTML=s?s[0].map(([k,l])=>`<button data-act="${s[1]}" data-k="${k}" aria-pressed="${k===prefs.sub[ST.screen]}">${l}</button>`).join(''):'';
   deskKpi()}
 function deskKpi(){const el=$('#dkpi');if(!ST.desk||!el)return;const R=ST.R;
-  el.innerHTML=R?[['Ventas',fM(R.ventas)],['Utilidad antes de impuestos',fM(R.uai),R.uai<0],['Margen antes de impuestos',fP(R.margen),R.margen<0],['TIR inversionista',fP(R.tirI)],['Utilidad neta',fM(R.utilNeta),R.utilNeta<0]].map(([l,v,n])=>`<div><span class="l" title="${l}">${l}</span><span class="v${n?' neg':''}">${v}</span></div>`).join(''):''}
+  el.innerHTML=R?[['Ventas',fM(R.ventas)],['Utilidad antes de impuestos',fM(R.uai),R.uai<0],['Margen antes de impuestos',fP(R.margen),R.margen<0],['TIR inversionista',fP(R.tirI)],['Utilidad neta',fM(R.utilNeta),R.utilNeta<0]].map(([l,v,n])=>`<div><span class="l" title="${l}">${kl(l)}</span><span class="v${n?" neg":""}">${v}</span></div>`).join(""):""}
 const RENDER={inicio:()=>renderInicio(),modelo:()=>renderModelo(),resultados:()=>renderResultados(),control:()=>renderControl(),comparar:()=>renderComparar(),cuenta:()=>renderCuenta()};
 const NAMES={inicio:'Inicio',modelo:'Modelo',resultados:'Resultados',control:'Control',comparar:'Comparar',cuenta:'Cuenta'};
 function visible(){return ST.web?prefs.cols.slice():[ST.screen==='cuenta'?'cuenta':ST.screen]}
@@ -1505,7 +1509,7 @@ function m2Card(R){
   const AV=sum(R.ets.map(e=>e.AV))||1,AC=sum(R.ets.map(e=>e.AC))||1,t=R.tot,u=R.uai/AV;
   const parts=[['Lote',t.lote],['Costos directos',t.dir],['Indirectos y otros',t.ind+t.lic+t.mkt+t.ger+t.fid+t.post+t.predial+t.imp],['Financieros',t.fin]].map(([n,v])=>[n,v/AV]);
   const mx=Math.max(...parts.map(p=>p[1]),Math.abs(u))||1;
-  return `<div class="tiles m2">${[['Precio / m² vendible',fM2(R.ventas/AV)],['Costo / m² vendible',fM2((R.ventas-R.uai)/AV)],['Utilidad AI / m²',fM2(u),u<0],['Directo / m² construido',fM2(t.dir/AC)]].map(([l,v,b])=>`<div class="tile"><div class="l">${l}</div><div class="v${b?' bad':''}">${v}</div></div>`).join('')}</div>
+  return `<div class="tiles m2">${[['Precio / m² vendible',fM2(R.ventas/AV)],['Costo / m² vendible',fM2((R.ventas-R.uai)/AV)],['Utilidad AI / m²',fM2(u),u<0],['Directo / m² construido',fM2(t.dir/AC)]].map(([l,v,b])=>`<div class="tile"><div class="l">${kl(l)}</div><div class="v${b?" bad":""}">${v}</div></div>`).join("")}</div>
   <div class="bars">${parts.map(([n,v])=>`<div class="bar"><span>${n}</span><div class="track"><div class="fill" style="width:${v/mx*100}%"></div></div><span class="amt">${nf(v/1e3)} mil</span></div>`).join('')}<div class="bar" style="border-top:1px solid var(--line);padding-top:11px"><strong>Utilidad AI</strong><div class="track"><div class="fill ${u<0?'neg':'util'}" style="width:${Math.abs(u)/mx*100}%"></div></div><span class="amt"><strong>${nf(u/1e3)} mil</strong></span></div></div>`;
 }
 function tornadoSvg(R){
@@ -1554,6 +1558,29 @@ function alertsFor(P,R){
 const alertHtml=list=>list.map(([c,t,m])=>`<div class="alert ${c}"><b>${t}</b><div>${esc(m)}</div></div>`).join('');
 
 /* ---------- INICIO ---------- */
+/* Íconos de los indicadores: cada dato lleva un dibujo que lo ilustra (billete para ventas, moneda para utilidad,
+   % para márgenes, flecha que sube para TIR, escudo para exposición, monedas apiladas para el múltiplo, reloj para
+   tiempos, edificio para torres, capas para pisos, casa para apartamentos, plano para áreas y mapa para el lote).
+   kl(etiqueta) devuelve el ícono que corresponde a esa etiqueta seguido del texto. */
+const KI={
+  ventas:'<rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.5v5M18 9.5v5"/>',
+  utilidad:'<circle cx="12" cy="12" r="9"/><path d="M14.6 9c-.5-.8-1.4-1.2-2.6-1.2-1.6 0-2.7.8-2.7 2 0 2.8 5.5 1.5 5.5 4.3 0 1.2-1.2 2-2.8 2-1.2 0-2.2-.5-2.8-1.3M12 6.2v1.6M12 16.2v1.6"/>',
+  margen:'<path d="M19 5 5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/>',
+  tir:'<path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+  vpn:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/><path d="M8 3.5 6 2M16 3.5 18 2"/>',
+  neta:'<path d="M3 7a2 2 0 0 1 2-2h12v3"/><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M16 14h2"/>',
+  expo:'<path d="M12 3 5 6v6c0 4.5 3 7.8 7 9 4-1.2 7-4.5 7-9V6z"/><path d="M12 8v5M12 16v.01"/>',
+  multiplo:'<ellipse cx="12" cy="6" rx="7" ry="2.5"/><path d="M5 6v4c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6M5 10v4c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-4M5 14v4c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-4"/>',
+  tiempo:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  torres:'<path d="M4 21V6l7-3v18M11 21V9l8 3v9M2 21h20M7 8h.01M7 12h.01M7 16h.01M15 14h.01M15 18h.01"/>',
+  pisos:'<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>',
+  aptos:'<path d="m3 11 9-7 9 7"/><path d="M5 10v10h14V10M10 20v-6h4v6"/>',
+  area:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h4M3 15h4M9 3v4M15 3v4"/>',
+  lote:'<path d="m3 7 6-3 6 3 6-3v13l-6 3-6-3-6 3z"/><path d="M9 4v13M15 7v13"/>'};
+const KI_RE=[[/tir|rentabilidad/i,'tir'],[/vpn/i,'vpn'],[/margen/i,'margen'],[/neta/i,'neta'],[/utilidad/i,'utilidad'],[/venta/i,'ventas'],[/exposici|dinero m[aá]ximo/i,'expo'],
+  [/m[uú]ltiplo/i,'multiplo'],[/duraci|mes|recuperaci/i,'tiempo'],[/torre/i,'torres'],[/piso/i,'pisos'],[/apto|apartamento|vivienda/i,'aptos'],[/vendible|[aá]rea/i,'area'],[/lote/i,'lote']];
+const ki=(k,s=13)=>KI[k]?`<svg class="ki" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${KI[k]}</svg>`:'';
+const kl=l=>{const m=KI_RE.find(([re])=>re.test(l));return (m?ki(m[1]):'')+l};
 /* Resumen gráfico del proyecto en Inicio: un lote en axonométrico con las torres de cada etapa levantadas encima.
    Cada etapa ocupa una zona del lote, con su color y su rótulo; cada torre es un volumen con altura proporcional a sus
    pisos y las líneas de piso dibujadas. Es una representación esquemática (no es la implantación real del lote).
@@ -1597,7 +1624,7 @@ function axoCard(P,R){
   const st=[['Torres',nT+' en '+ets.length+' etapa'+(ets.length>1?'s':'')],['Pisos',pmin===maxP?maxP:pmin+'–'+maxP],['Aptos',nf(UA)],['Vendible',nf(AV)+' m²'],['Lote',fM(+L.valor||0)]];
   const tl=tipos.map(t=>`${t.n} ${nf(t.a,1)} m² (${nf(t.u)})`).join(' · ');
   return `<div class="card axo"><div class="axo-g"><svg viewBox="${vb.map(v=>v.toFixed(2)).join(' ')}" role="img" aria-label="Esquema del proyecto: ${nT} torres en ${ets.length} etapas">${s}</svg></div>
-    <div class="axo-d"><div class="axo-st">${st.map(([l,v])=>`<div><span>${l}</span><b>${v}</b></div>`).join('')}</div>
+    <div class="axo-d"><div class="axo-st">${st.map(([l,v])=>`<div><span>${kl(l)}</span><b>${v}</b></div>`).join("")}</div>
       <div class="axo-tip" title="${esc(tl)}"><span>${tipos.length} tipología${tipos.length===1?'':'s'}:</span> ${esc(tl)}</div></div></div>`}
 function renderInicio(){
   const host=$('#s-inicio'),now=new Date(),h=now.getHours();
@@ -1613,10 +1640,10 @@ function renderInicio(){
   const P=ST.P,R=ST.R,G=P.general;
   html+=`<div class="card projcard"><div style="min-width:0"><div class="t">${esc(G.nombre)}</div><div class="d">${esc(G.ciudad||'Sin ciudad')} · ${P.etapas.length} etapa${P.etapas.length>1?'s':''} · ${G.vehiculo==='sociedad'?'Sociedad':'Fiducia'} · ${nf(sum(R.ets.map(e=>e.UA)))} viviendas</div></div><button class="btn sm" data-act="proj-open">Cambiar</button></div>
   ${axoCard(P,R)}
-  <div class="hero${R.utilNeta<0?' loss':''}">${PULSO_SVG}<div class="eyebrow">Utilidad antes de impuestos · margen ${fP(R.margen)}</div><div class="big">${fM(R.uai)}</div>
-    <div class="mini"><div><span>TIR inv.</span>${fP(R.tirI)}</div><div><span>VPN</span>${fM(R.vpn)}</div><div><span>Neta</span>${fM(R.utilNeta)}</div></div>
+  <div class="hero${R.utilNeta<0?' loss':''}">${PULSO_SVG}<div class="eyebrow">${ki("utilidad")}Utilidad antes de impuestos · margen ${fP(R.margen)}</div><div class="big">${fM(R.uai)}</div>
+    <div class="mini"><div><span>${ki("tir")}TIR inv.</span>${fP(R.tirI)}</div><div><span>${ki("vpn")}VPN</span>${fM(R.vpn)}</div><div><span>${ki("neta")}Neta</span>${fM(R.utilNeta)}</div></div>
     <button class="go" data-act="go" data-to="resultados" aria-label="Ver resultados"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div>
-  <div class="tiles">${[['Ventas totales',fM(R.ventas)],['TIR proyecto',fP(R.tirP)],['Exposición máx.',fM(R.expo)],['Múltiplo socios',fX(R.aportes?R.distribuciones/R.aportes:null)],['Margen neto',fP(R.margenNeto),R.margenNeto<0],['Duración',(R.N-1)+' meses']].map(([l,v,b])=>`<div class="tile"><div class="l">${l}</div><div class="v${b?' bad':''}">${v}</div></div>`).join('')}</div>
+  <div class="tiles">${[['Ventas totales',fM(R.ventas)],['TIR proyecto',fP(R.tirP)],['Exposición máx.',fM(R.expo)],['Múltiplo socios',fX(R.aportes?R.distribuciones/R.aportes:null)],['Margen neto',fP(R.margenNeto),R.margenNeto<0],['Duración',(R.N-1)+' meses']].map(([l,v,b])=>`<div class="tile"><div class="l">${kl(l)}</div><div class="v${b?" bad":""}">${v}</div></div>`).join("")}</div>
   <div class="grid2">
     <div class="blk span2">Salud del proyecto</div>
     ${healthCard(P,R)}
@@ -2275,7 +2302,7 @@ function wzReasons(P,R,say){const r=[],mn=+P.general.margenMin,tio=+P.general.ta
 function wzResult(){const P=WZ.P,R=WZ.R,ok=wzViable(P,R),rs=wzReasons(P,R);
   const k=[['Ventas totales',fM(R.ventas)],['Utilidad antes de impuestos',fM(R.uai)],['Margen',fP(R.margen)+' (mín. '+nf(P.general.margenMin,1)+' %)'],['Rentabilidad de los socios (TIR)',fP(R.tirI)+' (mín. '+nf(P.general.tasaDesc,1)+' %)'],['Dinero máximo que ponen los socios',fM(R.expo)],['Duración',(R.N-1)+' meses']];
   return `<div class="wzverdict ${ok?'ok':'no'}"><div class="between"><b>${ok?'✓ Tu proyecto es viable':'✕ Tu proyecto todavía no es viable'}</b><button class="btn sm" data-act="wz-say">${WZ.speaking?'■ Detener':'🔊 Escuchar'}</button></div><span>${ok?'Cumple el margen y la rentabilidad mínima que definiste.':esc(rs.join(' '))}</span></div>
-   <div class="wzkpis">${k.map(([l,v])=>`<div><span>${l}</span><b>${v}</b></div>`).join('')}</div>
+   <div class="wzkpis">${k.map(([l,v])=>`<div><span>${kl(l)}</span><b>${v}</b></div>`).join("")}</div>
    <div class="wzhelp"><div class="between"><b>${ok?'¿Qué tan firme es?':'¿Cómo hacerlo viable?'}</b><button class="btn sm pri" data-act="wz-opt">${WZ.opt?'Recalcular':'Optimizar'}</button></div><p>${ok?'Calculo cuánto pueden cambiar los precios, los costos y las ventas antes de que deje de ser viable.':'Calculo, uno por uno, cuánto debería cambiar cada dato para que el proyecto sea viable, y una combinación equilibrada de todos.'}</p>${WZ.opt||''}</div>
    <p class="muted" style="margin:0">Al guardar se crea el proyecto completo. Después puedes afinar cada detalle en Modelo.</p>`}
 /* Búsqueda binaria del valor mínimo o máximo de un supuesto que deja el proyecto en el límite de viabilidad */
