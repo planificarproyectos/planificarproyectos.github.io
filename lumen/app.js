@@ -56,14 +56,14 @@ var Cloud={auth:null,db:null,user:null,wait:false,ref:null,unsub:null,prof:null,
   self.wait=true;
   self.auth.onAuthStateChanged(function(u){
    self.wait=false; if(self.unsub){ self.unsub(); self.unsub=null; } if(self.unsubP){ self.unsubP(); self.unsubP=null; } self.perfilOk=false; self.prof=null; clearTimeout(self.t);
-   if(!u){ self.user=null; self.ref=null; self.noAccess=false; if(window.Apariencia) Apariencia.disconnect(); loadLocal(); applyTheme(); render(); return; }
+   if(!u){ self.user=null; self.ref=null; self.noAccess=false; if(window.Apariencia) Apariencia.disconnect(); if(window.Uso) Uso.stop(); loadLocal(); applyTheme(); render(); return; }
    if(self.loginPending){ self.loginPending=false; playSplash(); }
    self.user={email:u.email,uid:u.uid,created:u.metadata&&Date.parse(u.metadata.creationTime)}; self.noAccess=false; loadLocal(); applyTheme(); U.tab='home';
    self.ref=self.db.collection('users').doc(u.uid).collection('lumen').doc('data');
    if(window.Apariencia) Apariencia.connect(self.db,u.uid,function(){ return {accent:accHex(S.accent),mode:S.mode}; });
    render();
    var me=u.uid;
-   self.ensureAccess(u).then(function(ok){ if(!self.user||self.user.uid!==me) return; if(!ok){ self.noAccess=true; render(); return; } self.sub(); });
+   self.ensureAccess(u).then(function(ok){ if(!self.user||self.user.uid!==me) return; if(!ok){ self.noAccess=true; render(); return; } if(window.Uso) Uso.start(self.db,u,'lumen'); self.sub(); }); // la sesión cuenta para el dashboard de Wellness Apps
   });
  },
  ensureAccess:function(u){
@@ -479,7 +479,7 @@ function stepText(s){
 var R={playing:false,
  play:function(){ var i=rosI(); if(i>=STEPS.length) return;
   R.playing=true; speak(stepText(STEPS[i]),'rosa:'+i,function(){ if(!R.playing) return; var k=rosI()+1; S.ros[rosKey()]=k; save();
-   if(k>=STEPS.length){ R.playing=false; AUD=null; setDone('ros',true); toast('Rosario completado'); }
+   if(k>=STEPS.length){ R.playing=false; AUD=null; setDone('ros',true); uso('rosario'); toast('Rosario completado'); }
    if(U.tab==='rosary') render(); setTimeout(function(){ if(R.playing&&!speaking) R.play(); },600); });
   R.playing=true; updRos(); }
 };
@@ -632,7 +632,7 @@ function parseCita(q){
  var m=/^\s*((?:[1-3]|i{1,3})?\s*[a-zA-ZáéíóúñÁÉÍÓÚÑ ]+?)\.?\s*(\d+)(?:\s*[,:.]\s*(\d+)(?:\s*[-–]\s*(\d+))?)?\s*$/.exec(q||''); if(!m) return null;
  var b=findBook(m[1]); if(!b) return null; var c=+m[2]; if(c<1||c>IDX[b-1][1]) return null;
  return {b:b,c:c,v1:m[3]?+m[3]:0,v2:m[4]?+m[4]:(m[3]?+m[3]:0)}; }
-function goCita(ci,from){ U.vsel=null; U.tab='bible'; U.bk=ci.b; U.ch=ci.c; U.hl=ci.v1?[ci.v1,ci.v2]:null; U.from=from||null; stopSpeak(); render(); setTimeout(scrollHl,60); }
+function goCita(ci,from){ uso('biblia'); U.vsel=null; U.tab='bible'; U.bk=ci.b; U.ch=ci.c; U.hl=ci.v1?[ci.v1,ci.v2]:null; U.from=from||null; stopSpeak(); render(); setTimeout(scrollHl,60); }
 function scrollHl(){ var el=document.querySelector('.reader .hlv'); if(el) try{ el.scrollIntoView({block:'center'}); }catch(e){} else try{ window.scrollTo(0,0); }catch(e){} }
 var BS={q:'',busy:false,items:null,done:0};
 function bibleSearch(q){
@@ -716,7 +716,7 @@ function remPanel(){ var st=remState();
  return '<div class="panel"><span class="small muted">Elige tus recordatorios y agrégalos al calendario de tu celular. Te avisará cada día a la hora que escojas, aunque Lumen esté cerrada.</span>'
   +REMS.map(function(r){ var s=st[r[0]]; return '<div class="remrow"><label class="row" style="gap:10px;flex:1;min-width:0"><input type="checkbox" class="rchk" data-a="remOn" data-v="'+r[0]+'"'+(s.on?' checked':'')+'><span class="stack" style="gap:0;min-width:0"><b>'+r[1]+'</b><span class="small muted">'+(r[3]==='w'?'Cada domingo':'Todos los días')+'</span></span></label><input type="time" class="inp rtime" data-a="remT" data-v="'+r[0]+'" value="'+esc(s.t)+'" aria-label="Hora de '+esc(r[1])+'"></div>'; }).join('')
   +'<button class="btn" data-a="remIcs">'+ic('cal',20)+'Agregar al calendario</button><span class="small muted">Para cambiarlos más adelante, bórralos de tu calendario y vuelve a agregarlos desde aquí.</span></div>'; }
-function remIcs(){ var st=remState(), on=REMS.filter(function(r){ return st[r[0]].on; }); if(!on.length){ toast('Elige al menos un recordatorio'); return; }
+function remIcs(){ var st=remState(), on=REMS.filter(function(r){ return st[r[0]].on; }); if(!on.length){ toast('Elige al menos un recordatorio'); return; } uso('recordatorio');
  var p2=function(n){ return String(n).padStart(2,'0'); }, now=new Date(), stamp=now.toISOString().replace(/[-:]/g,'').replace(/\.\d+/,''), url='https://www.planificarproyectos.com/lumen/';
  var L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Planificar Proyectos//Lumen//ES','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Lumen'];
  on.forEach(function(r){ var t=(st[r[0]].t||r[2]).split(':'), d=new Date(now.getFullYear(),now.getMonth(),now.getDate(),+t[0],+t[1]);
@@ -780,7 +780,7 @@ function heavenBg(x,W,H){
  g=x.createRadialGradient(W/2,H/2,H*.35,W/2,H/2,H*.8); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.4)'); x.fillStyle=g; x.fillRect(0,0,W,H);
  return s;
 }
-function shareImage(text,ref){
+function shareImage(text,ref){ uso('compartir');
  var W=1080,H=1350,P=96, cv=document.createElement('canvas'); cv.width=W; cv.height=H; var x=cv.getContext('2d');
  var disp='"Barlow Condensed","Arial Narrow",sans-serif', body='"DM Sans",system-ui,sans-serif';
  /* Texto que acompaña la imagen: WhatsApp, Telegram, X, correo, etc. lo ponen solos. Facebook e Instagram no permiten
@@ -935,15 +935,16 @@ function sayText(id){
  if(id.indexOf('cap-')===0){ var a=id.slice(4).split(':'), bk=BOOKS_DATA[+a[0]]; return bk?IDX[+a[0]-1][0]+', capítulo '+a[1]+'. '+(bk.c[+a[1]-1]||[]).join(' '):''; }
  return '';
 }
-function go(tab){ U.tab=tab; U.confirmReset=false; render(); try{ window.scrollTo(0,0); }catch(e){} }
+function uso(ev){ if(window.Uso) Uso.ev(ev); }
+function go(tab){ if(tab==='misa'&&U.tab!=='misa') uso('misa'); U.tab=tab; U.confirmReset=false; render(); try{ window.scrollTo(0,0); }catch(e){} }
 
 /* ---------- Eventos ---------- */
 document.addEventListener('click',function(e){
  var el=e.target.closest('[data-a]'); if(!el||el.disabled) return; var a=el.getAttribute('data-a'), v=el.getAttribute('data-v');
  if(el.closest('summary')&&el.tagName==='BUTTON') e.preventDefault();
  if(a==='tab'){ if(v==='bible'&&U.tab==='bible'){ U.bk=null; U.ch=null; U.plan=null; } go(v); return; }
- if(a==='say'){ var id=el.getAttribute('data-id'); speak(sayText(id),id); return; }
- if(a==='done'){ var id2=el.getAttribute('data-id'); setDone(id2,!isDone(id2)); render(); return; }
+ if(a==='say'){ var id=el.getAttribute('data-id'); if(speaking!==id) uso('voz'); speak(sayText(id),id); return; }
+ if(a==='done'){ var id2=el.getAttribute('data-id'); if(!isDone(id2)) uso('oracion'); setDone(id2,!isDone(id2)); render(); return; }
  if(a==='open'){ if(v==='misa'){ go('misa'); return; } if(v==='ros'){ go('rosary'); return; } U.pid=v; go('pray'); return; }
  if(a==='pback'){ go('home'); return; }
  if(a==='manual'){ go('manual'); return; }
@@ -961,12 +962,12 @@ document.addEventListener('click',function(e){
  if(a==='remIcs'){ remIcs(); return; }
  if(a==='planStart'){ S.plans=S.plans||{}; S.plans[v]={start:TODAY,done:{}}; save(); U.plan=v; render(); toast('Plan iniciado. ¡Buena lectura!'); return; }
  if(a==='planStop'){ if(S.plans){ delete S.plans[v]; save(); } U.plan='*'; render(); toast('Dejaste el plan'); return; }
- if(a==='planDay'){ var pv=v.split(':'), st=S.plans&&S.plans[pv[0]]; if(!st) return; st.done=st.done||{}; if(st.done[pv[1]]) delete st.done[pv[1]]; else st.done[pv[1]]=1; save(); render(); var pp=planById(pv[0]); if(pp&&planDone(pv[0])>=pp.days) toast('¡Completaste el plan! Gloria a Dios.'); return; }
- if(a==='planRead'){ var pb=+el.getAttribute('data-b'), pc=+el.getAttribute('data-c'); U.vsel=null; U.bk=pb; U.ch=pc; U.hl=null; U.from=null; stopSpeak(); render(); window.scrollTo(0,0); return; }
- if(a==='planGoNext'){ var p3=planById(v), i3=planNext(p3); if(i3<0) return; var x3=planDays(p3)[i3][0]; U.vsel=null; U.bk=x3[0]; U.ch=x3[1]; U.hl=null; U.from=null; stopSpeak(); render(); window.scrollTo(0,0); return; }
+ if(a==='planDay'){ var pv=v.split(':'), st=S.plans&&S.plans[pv[0]]; if(!st) return; st.done=st.done||{}; if(st.done[pv[1]]) delete st.done[pv[1]]; else { st.done[pv[1]]=1; uso('plan'); } save(); render(); var pp=planById(pv[0]); if(pp&&planDone(pv[0])>=pp.days) toast('¡Completaste el plan! Gloria a Dios.'); return; }
+ if(a==='planRead'){ uso('biblia'); var pb=+el.getAttribute('data-b'), pc=+el.getAttribute('data-c'); U.vsel=null; U.bk=pb; U.ch=pc; U.hl=null; U.from=null; stopSpeak(); render(); window.scrollTo(0,0); return; }
+ if(a==='planGoNext'){ var p3=planById(v), i3=planNext(p3); if(i3<0) return; uso('biblia'); var x3=planDays(p3)[i3][0]; U.vsel=null; U.bk=x3[0]; U.ch=x3[1]; U.hl=null; U.from=null; stopSpeak(); render(); window.scrollTo(0,0); return; }
  if(a==='vcopy'){ var pk=vselPick(); if(!pk) return; var tx=pk.text+' ('+pk.ref+')'; if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(tx).then(function(){ toast('Versículos copiados'); },function(){ toast(tx,5000); }); else toast(tx,5000); return; }
  if(a==='vshare'){ var pk2=vselPick(); if(pk2) shareImage(pk2.text,pk2.ref); return; }
- if(a==='massPlay'){ if(M.playing) M.stop(); else M.play(M.idx); return; }
+ if(a==='massPlay'){ if(M.playing) M.stop(); else { uso('voz'); M.play(M.idx); } return; }
  if(a==='afToggle'){ audToggle(); return; }
  if(a==='afGo'){ audGo(); return; }
  if(a==='afStop'){ audStop(); return; }
@@ -975,10 +976,10 @@ document.addEventListener('click',function(e){
  if(a==='mtoday'){ setMassDate(null); return; }
  if(a==='massRestart'){ M.stop(); M.idx=0; if(AUD&&AUD.kind==='misa') AUD=null; render(); return; }
  if(a==='rset'){ R.playing=false; stopSpeak(); if(AUD&&AUD.kind==='rosa') AUD=null; U.rosSet=v; render(); return; }
- if(a==='rosPlay'){ if(R.playing){ R.playing=false; stopSpeak(); updSay(); } else R.play(); return; }
+ if(a==='rosPlay'){ if(R.playing){ R.playing=false; stopSpeak(); updSay(); } else { uso('voz'); R.play(); } return; }
  if(a==='rnext'||a==='rprev'){
   var i=rosI(); i=a==='rnext'?Math.min(STEPS.length,i+1):Math.max(0,i-1); S.ros[rosKey()]=i;
-  if(i>=STEPS.length){ setDone('ros',true); toast('Rosario completado'); }
+  if(i>=STEPS.length){ setDone('ros',true); uso('rosario'); toast('Rosario completado'); }
   save(); var wasPlaying=R.playing; R.playing=false; stopSpeak(); render(); if(wasPlaying&&i<STEPS.length) R.play(); return; }
  if(a==='rosRestart'){ R.playing=false; stopSpeak(); if(AUD&&AUD.kind==='rosa') AUD=null; S.ros[rosKey()]=0; save(); render(); return; }
  if(a==='rreset'){ S.ros[rosKey()]=0; save(); render(); return; }
@@ -987,7 +988,7 @@ document.addEventListener('click',function(e){
  if(a==='test'){ U.test=v; U.bk=null; U.ch=null; U.vsel=null; render(); return; }
  if(a==='bsClear'){ BS={q:'',busy:false,items:null,done:0}; render(); return; }
  if(a==='book'){ U.vsel=null; U.bk=+v; U.ch=null; render(); window.scrollTo(0,0); return; }
- if(a==='chap'){ U.vsel=null; U.hl=null; U.ch=+v; stopSpeak(); render(); window.scrollTo(0,0); return; }
+ if(a==='chap'){ uso('biblia'); U.vsel=null; U.hl=null; U.ch=+v; stopSpeak(); render(); window.scrollTo(0,0); return; }
  if(a==='bback'){ U.vsel=null; U.bk=null; render(); return; }
  if(a==='cback'){ U.vsel=null; if(U.plan) U.bk=null; U.hl=null; U.from=null; U.ch=null; stopSpeak(); render(); return; }
  if(a==='mode'){ if(window.Apariencia){ Apariencia.set({mode:v}); return; } S.mode=v; applyTheme(); save(); render(); return; }

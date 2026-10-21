@@ -18,6 +18,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script src="../uso.js"></script>
 <script src="../wellness-soporte.js"></script>
 <script src="../apariencia.js"></script><script>if(window.Apariencia)Apariencia.noLocal=true</script>
 <script src="../swipe-nav.js"></script>
@@ -500,18 +501,6 @@ body.wizon{overflow:hidden}
 .glos-g h3{margin:14px 0 2px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--acc-ink)}
 .glos-g h3 .muted{font-weight:600;letter-spacing:0}
 .glos>div.on{background:var(--acc-soft);border-radius:10px;padding-left:10px;padding-right:10px;transition:background .2s}
-/* Solicitudes de acceso */
-[data-go="cuenta"][data-badge]{position:relative}
-[data-go="cuenta"][data-badge]::after{content:attr(data-badge);position:absolute;top:4px;left:calc(50% + 6px);min-width:17px;height:17px;padding:0 5px;border-radius:99px;background:var(--neg);color:#fff;font-size:10.5px;font-weight:800;line-height:17px;text-align:center;box-sizing:border-box}
-#dt1 [data-go="cuenta"][data-badge]::after{position:static;display:inline-block;margin-left:2px}
-.reqs{display:grid;gap:2px}
-.reqrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
-.reqs>.reqrow:first-child{border-top:0;padding-top:0}
-.reqrow b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.reqrow small{color:var(--muted)}
-.reqrow .row{flex:none}
-.reqs details{border-top:1px solid var(--line);padding-top:10px;margin-top:4px}
-.reqs summary{cursor:pointer;font-weight:700;font-size:13px;color:var(--muted)}
 /* Aviso de instalar app */
 .instbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 12px);z-index:40;width:calc(100% - 32px);max-width:448px;background:var(--panel);border:1px solid var(--acc);border-radius:20px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.35);display:grid;gap:12px}
 .instbar[hidden]{display:none}
@@ -1183,7 +1172,7 @@ async function createProject(kind,from,opt){
   const R=runProject(P,ST.macro);
   const doc={nombre:P.general.nombre,ciudad:P.general.ciudad,actualizado:Date.now(),actualizadoPor:ST.me&&ST.me.id||null,creadoPor:ST.me&&ST.me.id||null,creado:Date.now(),kpis:kpisOf(R),data:P};
   try{if(ST.mode==='db')await ST.db.collection('projects').doc(id).set(doc);else if(ST.mode==='fb')await ST.fbCol.doc('p_'+id).set(doc);else Local.save(id,doc);
-    ST.projects[id]=doc;selectProject(id);closeSheet();go(opt&&opt.goTo||'modelo');toast(opt&&opt.msg||'Proyecto creado');return true}catch(e){dbError(e)}
+    ST.projects[id]=doc;if(window.Uso)Uso.ev('proyecto_creado');selectProject(id);closeSheet();go(opt&&opt.goTo||'modelo');toast(opt&&opt.msg||'Proyecto creado');return true}catch(e){dbError(e)}
 }
 async function deleteProject(id){
   try{if(ST.mode==='db'){const vs=await ST.db.collection('projects/'+id+'/versiones').get();for(const d of vs.docs)await ST.db.doc('projects/'+id+'/versiones/'+d.id).delete();await ST.db.collection('projects').doc(id).delete()}
@@ -1198,7 +1187,7 @@ async function saveVersion(tipo,label,nota){
   try{if(ST.mode==='db')await ST.db.collection('projects/'+ST.pid+'/versiones').add(v);
     else if(ST.mode==='fb'){const vid='v_'+ST.pid+'_'+Date.now().toString(36);await ST.fbCol.doc(vid).set(Object.assign({pid:ST.pid},v))}
     else{const l=Local.vers(ST.pid);l.push(Object.assign({id:'v'+Date.now().toString(36)},v));Local.saveVers(ST.pid,l);ST.versions=l.sort((a,b)=>b.fecha-a.fecha)}
-    toast('Versión «'+v.label+'» guardada');rr('control')}catch(e){dbError(e)}
+    toast('Versión «'+v.label+'» guardada');if(window.Uso)Uso.ev('version');rr('control')}catch(e){dbError(e)}
 }
 async function deleteVersion(vid){
   try{if(ST.mode==='db')await ST.db.doc('projects/'+ST.pid+'/versiones/'+vid).delete();
@@ -1277,7 +1266,7 @@ const WEBQ=matchMedia('(min-width:1024px)'),DESKQ=matchMedia('(min-width:768px)'
 function applyDesk(){ST.desk=!!prefs.desk&&DESKQ.matches;ST.web=WEBQ.matches&&!ST.desk;document.body.classList.toggle('desk',ST.desk);if(ST.desk)ST.cuentaOpen=false}
 applyDesk();
 function deskBar(){if(!ST.desk)return;const t1=$('#dt1');
-  if(!t1.firstChild)t1.innerHTML=$$('.nav button').map(b=>(b.dataset.go==='cuenta'?'<span class="sp"></span>':'')+`<button role="tab" data-go="${b.dataset.go}">${b.innerHTML}</button>`).join('');reqBadge();
+  if(!t1.firstChild)t1.innerHTML=$$('.nav button').map(b=>(b.dataset.go==='cuenta'?'<span class="sp"></span>':'')+`<button role="tab" data-go="${b.dataset.go}">${b.innerHTML}</button>`).join('');
   $$('#dt1 button').forEach(b=>{const on=b.dataset.go===ST.screen;b.setAttribute('aria-selected',on);on?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current')});
   const s={modelo:[MSUBS,'msub'],resultados:[RSUBS,'rsub'],control:[CSUBS,'csub']}[ST.screen];
   $('#dsub').innerHTML=s?s[0].map(([k,l])=>`<button data-act="${s[1]}" data-k="${k}" aria-pressed="${k===prefs.sub[ST.screen]}">${l}</button>`).join(''):'';
@@ -2224,7 +2213,7 @@ document.addEventListener('keydown',e=>{const w=$('#wiz');if(!w||w.hidden)return
   if(e.key==='Enter'&&e.target.tagName==='INPUT'&&e.target.closest('#wiz')){e.preventDefault();if(WZ.i<WZ_STEPS.length-1)wzNext()}},true);
 function fabSync(){const f=$('#fab');if(f)f.hidden=!(ST.ready&&!ST.readOnly)}
 async function wzSave(){const P=wzBuild(WZ.a);wzClose(true);
-  await createProject(null,P,{keepName:true,goTo:'inicio',msg:'Proyecto guardado. Revisa el detalle en Inicio y afínalo en Modelo.'})}
+  if(await createProject(null,P,{keepName:true,goTo:'inicio',msg:'Proyecto guardado. Revisa el detalle en Inicio y afínalo en Modelo.'})&&window.Uso)Uso.ev('asistente')}
 
 /* ---------- Ayuda: manual paso a paso y glosario (solo en Cuenta) ---------- */
 const HELP_STEPS=[
@@ -2379,7 +2368,6 @@ function renderCuenta(){
   host.innerHTML=`<div class="screen-head"><div><h1>Cuenta</h1><p>Tu perfil, ajustes y supuestos de la empresa.</p></div></div>
   <div class="card profile"><div class="avatar">${me&&me.avatarUrl&&me.id?`<img src="${esc(me.avatarUrl)}" alt="">`:wic('user',26,2.2)}</div><div style="flex:1;min-width:0;display:grid;gap:2px"><b class="pname">${esc(nm||email||'Sin sesión')}</b>${nm&&email?`<small>${esc(email)}</small>`:''}<small>${cr?'Cuenta creada el '+cr.getDate()+' '+MES[cr.getMonth()]+' '+cr.getFullYear():ST.mode==='fb'?'':esc(rn)+(ST.mode==='db'?' · base central de proyectos':'')}</small></div></div>
   <div class="card namecard${nm?'':' need'}">${nm?'':'<b>Configura tu nombre para personalizar Proyecta</b>'}<label class="lbl" for="pname">Tu nombre</label><div class="namerow"><input id="pname" maxlength="30" placeholder="¿Cómo te llamas?" autocomplete="given-name" value="${esc(nm)}"><button class="btn${nm?'':' pri'}" data-act="save-name">Guardar</button></div><small>${ST.mode==='fb'?'Se usa en Mind Focus, PowerFit, Lumen y Proyecta.':'Se guarda en este dispositivo.'}</small></div>
-  ${requestsHtml()}
   <div class="label">Ayuda</div>
   <div class="astack">${acard('help-manual','manual','Manual paso a paso','Qué configurar y en qué orden, sección por sección')}${acard('help-glos','glos','Glosario',GLOSARIO.length+' términos del modelo explicados')}</div>
   <div class="acckpis"><div><b>${nProj}</b><span>Proyectos</span></div><div><b>${countVersions()}</b><span>Versiones</span></div><div><b>${ventas>=1e9?'$'+nf(ventas/1e9,ventas<1e11?1:0)+' mil M':fM(ventas)}</b><span>Ventas modeladas</span></div></div>
@@ -2469,7 +2457,7 @@ async function exportXlsx(){
   X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet([['Socio','Participación','Aportes','Distribuciones','Utilidad','Renta socio','TIR antes','TIR después','Múltiplo'],...R.socios.map(s=>[s.nombre,s.part,M(s.aportes),M(s.distribuciones),M(s.utilidad),M(s.impuesto),s.tir,R.soc?s.tir:s.tirDesp,s.multiplo])]),'Socios');
   X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet([['Etapa','Capítulo','Valor total indexado'],...R.ets.flatMap(e=>P.costos.capitulos.map(c=>[e.E.nombre,c.nombre,M(e.chapTot[c.id]||0)]))]),'Presupuesto');
   const out=X.write(wb,{bookType:'xlsx',type:'array'});
-  if(await saveFile(fname('xlsx'),new Uint8Array(out)))toast('Excel descargado');
+  if(await saveFile(fname('xlsx'),new Uint8Array(out))){toast('Excel descargado');if(window.Uso)Uso.ev('excel')}
 }
 function reportBody(standalone){
   const P=ST.P,R=ST.R,G=P.general;const k=[['Ventas',fM(R.ventas)],['Utilidad antes de impuestos',fM(R.uai)],['Margen antes de impuestos',fP(R.margen)],['Utilidad neta',fM(R.utilNeta)],['TIR proyecto',fP(R.tirP)],['TIR inversionista',fP(R.tirI)],['VPN a la TIO',fM(R.vpn)],['Exposición máxima',fM(R.expo)]];
@@ -2492,7 +2480,7 @@ async function exportReport(){
   table{border-collapse:collapse;width:100%;font-size:12px}th,td{padding:6px 8px;border-bottom:1px solid #E4E5E0;text-align:right;white-space:nowrap}th{color:#676A63}td.c0,th.c0{text-align:left}
   svg text{font-family:inherit;font-size:10px;fill:#676A63}.legend{display:none}@media print{body{padding:0}}
   </style><style>:root{--chart-pos:${cs.getPropertyValue('--chart-pos')};--chart-neu:${cs.getPropertyValue('--chart-neu')};--ink:#111210;--line:#E4E5E0;--neg:#C63D2B;--muted:#676A63;--band1:rgba(0,0,0,.015);--band2:rgba(0,0,0,.04);--band3:rgba(0,0,0,.03)}</style></head><body>${reportBody(true)}<p class="muted" style="margin-top:28px">Generado con Proyecta. Cifras en pesos colombianos; tablas en millones.</p></body></html>`;
-  if(await saveFile(fname('html'),html))toast('Informe descargado. Ábrelo en el navegador para imprimirlo o guardarlo en PDF.');
+  if(await saveFile(fname('html'),html)){toast('Informe descargado. Ábrelo en el navegador para imprimirlo o guardarlo en PDF.');if(window.Uso)Uso.ev('informe')}
 }
 function tsvFlow(){const fm=flowMatrix(ST.R,prefs.per);return [['Concepto','Total',...fm.C.map(c=>c.l)].join('\t'),...fm.rows.filter(r=>!r.sec).map(r=>[r.l,r.total==null?'':Math.round(r.total),...r.vals.map(v=>r.m==='u'?v.toFixed(2):Math.round(v))].join('\t'))].join('\n')}
 
@@ -2500,8 +2488,8 @@ function tsvFlow(){const fm=flowMatrix(ST.R,prefs.per);return [['Concepto','Tota
 function newId(p){return p+Math.random().toString(36).slice(2,7)}
 document.addEventListener('click',async e=>{
   const bg=e.target.closest('[data-bg]');if(bg&&e.target===bg){closeSheet();return}
-  const nav=e.target.closest('.nav button');if(nav){navTap(nav.dataset.go);return}
-  const dt=e.target.closest('#dt1 button');if(dt){go(dt.dataset.go);return}
+  const nav=e.target.closest('.nav button');if(nav){if(nav.dataset.go==='comparar'&&window.Uso)Uso.ev('comparar');navTap(nav.dataset.go);return}
+  const dt=e.target.closest('#dt1 button');if(dt){if(dt.dataset.go==='comparar'&&window.Uso)Uso.ev('comparar');go(dt.dataset.go);return}
   if(e.target.id==='scrim'){ST.cuentaOpen=false;renderScreen();return}
   if(e.target.closest('#projBtn')){ST.confirm=null;openProjects();return}
   const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,i=+b.dataset.i,P=ST.P;
@@ -2560,8 +2548,6 @@ document.addEventListener('click',async e=>{
     case 'theme':prefs.theme=b.dataset.k;savePrefs();applyTheme();rr('cuenta');break;
     case 'accent':prefs.accent=b.dataset.k;savePrefs();applyAccent();rr('cuenta');break;
     case 'logout':if(FB.auth){FB.auth.signOut()}break;
-    case 'acc-set':if(ST.isAdmin){const k=b.dataset.k;b.disabled=true;
-      FB.db.collection('invitaciones').doc(b.dataset.id).update({proyecta:k,proyectaRes:Date.now()}).then(()=>toast(k==='aprobado'?'Acceso aprobado':'Acceso denegado'),()=>{b.disabled=false;toast('No se pudo actualizar la solicitud')})}break;
     case 'acc-retry':{const u=FB.auth&&FB.auth.currentUser;if(!u)break;b.disabled=true;
       FB.db.collection('invitaciones').doc((u.email||'').toLowerCase()).set({proyecta:'pendiente',proyectaSol:Date.now()},{merge:true}).catch(()=>{b.disabled=false;toast('No se pudo enviar la solicitud')});break}
     case 'save-name':{const v=(($('#pname')||{}).value||'').trim().slice(0,30);if(!v){toast('Escribe tu nombre.');break}
@@ -2703,12 +2689,12 @@ function startFirebase(){
   catch(e){console.warn(e);showOffline();return}
   FB.auth.onAuthStateChanged(async u=>{
     if(FB.unsub){FB.unsub();FB.unsub=null}if(FB.unsubP){FB.unsubP();FB.unsubP=null}
-    if(FB.unsubA){FB.unsubA();FB.unsubA=null}if(FB.unsubR){FB.unsubR();FB.unsubR=null}ST.reqs=[];reqBadge();
+    if(FB.unsubA){FB.unsubA();FB.unsubA=null}if(window.Uso)Uso.stop();
     if(!u){ST.ready=false;ST.pid=null;ST.P=null;ST.R=null;ST.projects={};ST.mode='local';closeSheet();showAuth('login');return}
     hideAuth();
     const ok=await ensureAccess(u);
     if(!ok){showNoAccess(u);return}
-    if(u.uid===ADMIN_UID){startFb(u);watchRequests();return}
+    if(u.uid===ADMIN_UID){startFb(u);return}
     watchApproval(u);
   });
 }
@@ -2725,7 +2711,7 @@ function watchApproval(u){
     if(ST.mode==='fb')stopFb();
     showApproval(u,st,d)},e=>{console.warn('aprobación',e);showApproval(u,'error')});
 }
-function stopFb(){if(window.Apariencia)Apariencia.disconnect();const fb=$('#fab');if(fb)fb.hidden=true;if(FB.unsub){FB.unsub();FB.unsub=null}if(FB.unsubP){FB.unsubP();FB.unsubP=null}
+function stopFb(){if(window.Apariencia)Apariencia.disconnect();if(window.Uso)Uso.stop();const fb=$('#fab');if(fb)fb.hidden=true;if(FB.unsub){FB.unsub();FB.unsub=null}if(FB.unsubP){FB.unsubP();FB.unsubP=null}
   ST.ready=false;ST.mode='local';ST.pid=null;ST.P=null;ST.R=null;ST.projects={};closeSheet()}
 function showApproval(u,st,d){hideSplash();const a=$('#auth');a.hidden=false;document.body.classList.add('authing');$('#s-loading').hidden=true;
   const em=esc(u&&u.email||'tu cuenta'),f=d&&d.proyectaSol?fDate(d.proyectaSol).split(' · ')[0]:'';
@@ -2734,24 +2720,6 @@ function showApproval(u,st,d){hideSplash();const a=$('#auth');a.hidden=false;doc
     ?`<h2>Solicitud denegada</h2><p class="muted" style="margin:0">El administrador no aprobó el acceso de ${em} a Proyecta. Puedes volver a solicitarlo.</p><button class="btn pri" data-act="acc-retry" style="width:100%;padding:13px">Volver a solicitar</button>${out}`
     :st==='error'?`<h2>No pudimos verificar tu acceso</h2><p class="muted" style="margin:0">Revisa tu conexión e inténtalo de nuevo.</p><button class="btn pri" onclick="location.reload()" style="width:100%;padding:13px">Reintentar</button>${out}`
     :`<h2>Solicitud en espera de aprobación</h2><p class="muted" style="margin:0">Enviamos tu solicitud para usar Proyecta con ${em}${f?' el '+f:''}. Podrás entrar en cuanto el administrador la apruebe; esta pantalla se actualiza sola.</p>${out}`}
-/* Administrador: escucha todas las solicitudes, muestra el contador en Cuenta y avisa al abrir */
-function watchRequests(){if(FB.unsubR)FB.unsubR();let seen=null;
-  FB.unsubR=FB.db.collection('invitaciones').where('proyecta','in',['pendiente','aprobado','denegado']).onSnapshot(snap=>{
-    ST.reqs=snap.docs.map(d=>Object.assign({id:d.id},d.data())).filter(r=>r.uid!==ADMIN_UID);reqBadge();
-    const pend=ST.reqs.filter(r=>r.proyecta==='pendiente').map(r=>r.id),n=pend.length;
-    if(!seen){if(n)setTimeout(()=>toast(`Tienes ${n} solicitud${n>1?'es':''} de acceso a Proyecta. Revísala${n>1?'s':''} en Cuenta.`),2600)}
-    else if(pend.some(id=>!seen.includes(id)))toast('Nueva solicitud de acceso a Proyecta. Revísala en Cuenta.');
-    seen=pend;if(ST.ready)softRender('cuenta')},e=>console.warn('solicitudes',e))}
-function reqBadge(){const n=(ST.reqs||[]).filter(r=>r.proyecta==='pendiente').length;
-  $$('[data-go="cuenta"]').forEach(b=>n?b.setAttribute('data-badge',n):b.removeAttribute('data-badge'))}
-function requestsHtml(){if(!ST.isAdmin)return '';const L=(ST.reqs||[]).slice().sort((a,b)=>(b.proyectaSol||0)-(a.proyectaSol||0));
-  const pend=L.filter(r=>r.proyecta==='pendiente'),ok=L.filter(r=>r.proyecta==='aprobado'),no=L.filter(r=>r.proyecta==='denegado');
-  const row=(r,btns)=>`<div class="reqrow"><div style="min-width:0"><b>${esc(r.id)}</b><small>${r.proyecta==='pendiente'?'Solicitó el ':r.proyecta==='aprobado'?'Aprobada el ':'Denegada el '}${fDate(r.proyecta==='pendiente'?r.proyectaSol:(r.proyectaRes||r.proyectaSol)).split(' · ')[0]}</small></div><div class="row">${btns}</div></div>`;
-  const b=(id,k,l,c)=>`<button class="btn sm${c?' '+c:''}" data-act="acc-set" data-id="${esc(id)}" data-k="${k}">${l}</button>`;
-  return `<div class="label">Solicitudes de acceso${pend.length?` · ${pend.length} pendiente${pend.length>1?'s':''}`:''}</div>
-  <div class="card reqs">${pend.length?pend.map(r=>row(r,b(r.id,'denegado','Denegar')+b(r.id,'aprobado','Aprobar','pri'))).join(''):'<p class="sub" style="margin:0">No hay solicitudes pendientes.</p>'}
-  ${ok.length?`<details><summary>Con acceso (${ok.length})</summary>${ok.map(r=>row(r,b(r.id,'denegado','Quitar acceso','danger'))).join('')}</details>`:''}
-  ${no.length?`<details><summary>Denegadas (${no.length})</summary>${no.map(r=>row(r,b(r.id,'aprobado','Aprobar','pri'))).join('')}</details>`:''}</div>`}
 function ensureAccess(u){
   // Mismo esquema de Mind Focus y PowerFit: autorregistro como "activo"; "revocado" = sin acceso.
   const em=(u.email||'').toLowerCase(),ref=FB.db.collection('invitaciones').doc(em),now=Date.now();
@@ -2763,6 +2731,7 @@ function ensureAccess(u){
   }).catch(e=>{console.warn('acceso',e);return true});
 }
 function startFb(u){
+  if(window.Uso)Uso.start(FB.db,u,'proyecta');   // medición de uso para el dashboard de Wellness Apps (/uso.js)
   ST.mode='fb';ST.isAdmin=u.uid===ADMIN_UID;ST.fbEmail=u.email||'';ST.created=u.metadata&&Date.parse(u.metadata.creationTime)||null;ST.me={id:u.uid,name:'',email:u.email};ST.readOnly=false;
   ST.fbCol=FB.db.collection('users').doc(u.uid).collection('proyecta');
   FB.profRef=FB.db.collection('users').doc(u.uid).collection('perfil').doc('datos');

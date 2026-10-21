@@ -244,6 +244,7 @@ nav.tabs button.on{color:var(--accent-fg);font-weight:700}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script src="/uso.js"></script>
 <script src="../wellness-soporte.js"></script>
 <script>
 (function(){
@@ -652,9 +653,9 @@ var Store={mode:'local',col:null,months:{},
     self.auth.onAuthStateChanged(function(u){
       S.authWait=false;
       if(self.unsub){ self.unsub(); self.unsub=null; } if(self.unsubP){ self.unsubP(); self.unsubP=null; } S.perfilOk=false;
-      if(!u){ if(window.Apariencia) Apariencia.disconnect(); Act.ready=false; S.pendingW=null; S.user=null; S.local=true; self.mode='local'; S.sessions=[]; S.routines=[]; S.w=null; S.view='auth'; render(); return; }
+      if(!u){ if(window.Apariencia) Apariencia.disconnect(); if(window.Uso) Uso.stop(); Act.ready=false; S.pendingW=null; S.user=null; S.local=true; self.mode='local'; S.sessions=[]; S.routines=[]; S.w=null; S.view='auth'; render(); return; }
       if(S.loginPending){ S.loginPending=false; playSplash(); }
-      self.gotFirst=false; S.equip=(function(){ try{ return JSON.parse(localStorage.getItem('powerfit:equip:'+u.uid)||'null'); }catch(e){ return null; } })(); S.user={email:u.email,uid:u.uid,created:u.metadata&&Date.parse(u.metadata.creationTime)}; S.isAdmin=u.uid===ADMIN_UID; S.adm=null; S.noAccess=false; S.local=false; self.mode='db'; self.months={};
+      self.gotFirst=false; S.equip=(function(){ try{ return JSON.parse(localStorage.getItem('powerfit:equip:'+u.uid)||'null'); }catch(e){ return null; } })(); S.user={email:u.email,uid:u.uid,created:u.metadata&&Date.parse(u.metadata.creationTime)}; S.noAccess=false; S.local=false; self.mode='db'; self.months={};
       self.col=self.fdb.collection('users').doc(u.uid).collection('powerfit');
       if(window.Apariencia) Apariencia.connect(self.fdb,u.uid,function(){ return {accent:PF_THEME.accent,mode:PF_THEME.mode}; });
       var loc=self.readLocal(), first=true;
@@ -663,6 +664,7 @@ var Store={mode:'local',col:null,months:{},
       self.ensureAccess(u).then(function(ok){
         if(!S.user||S.user.uid!==me) return;
         if(!ok){ S.noAccess=true; render(); return; }
+        if(window.Uso) Uso.start(self.fdb,u,'powerfit');   // cuenta la sesión para el dashboard de Wellness Apps
         self.subscribe(loc);
       });
     });
@@ -1050,7 +1052,6 @@ function vSedit(){
 }
 
 /* Cuenta */
-var ADMIN_UID='AQaEMcKNYfWEhcHVdc8N0ghxeZk1';
 function fmtDate(t){ if(!t) return '—'; var d=new Date(t); return d.getDate()+' '+MES[d.getMonth()]+' '+d.getFullYear(); }
 function ago(t){ if(!t) return 'nunca'; var m=Math.round((Date.now()-t)/6e4); if(m<60) return 'hace '+Math.max(1,m)+' min'; var h=Math.round(m/60); if(h<24) return 'hace '+h+' h'; var d=Math.round(h/24); return d<60?'hace '+d+' días':fmtDate(t); }
 function vAccount(){
@@ -1061,7 +1062,7 @@ function vAccount(){
   var nmp='<div class="panel"'+(S.name?'':' style="background:var(--accent);color:var(--accent-ink)"')+'>'+(S.name?'':'<b>Configura tu nombre para personalizar PowerFit</b>')+'<label class="field" for="pname" style="'+(S.name?'':'background:rgba(0,0,0,.13);color:var(--accent-ink)')+'">'+ic('user',18)+'<input id="pname" type="text" placeholder="Tu nombre" maxlength="30" autocomplete="given-name" value="'+esc(S.name)+'"></label><button class="btn'+(S.name?' soft':'')+'" data-a="saveName" style="'+(S.name?'':'background:var(--accent-ink);color:var(--accent)')+'">Guardar nombre</button><span class="small" style="opacity:.75">Se usa en Mind Focus, PowerFit y Lumen.</span></div>';
   var h='<div class="wrap">'+head('Cuenta')+
    '<div class="panel"><div class="row"><span class="go" style="width:52px;height:52px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;flex-shrink:0">'+ic('user',26,2.2)+'</span>'+
-   '<div class="stack" style="gap:2px;min-width:0"><b style="overflow-wrap:anywhere">'+esc(S.name||u.email||'Sin sesión')+'</b>'+(S.name?'<span class="muted small" style="overflow-wrap:anywhere">'+esc(u.email||'')+'</span>':'')+'<span class="muted small">'+(u.created?'Cuenta creada el '+fmtDate(u.created):'')+(S.isAdmin?' · Administrador':'')+'</span></div></div></div>'+nmp+
+   '<div class="stack" style="gap:2px;min-width:0"><b style="overflow-wrap:anywhere">'+esc(S.name||u.email||'Sin sesión')+'</b>'+(S.name?'<span class="muted small" style="overflow-wrap:anywhere">'+esc(u.email||'')+'</span>':'')+'<span class="muted small">'+(u.created?'Cuenta creada el '+fmtDate(u.created):'')+'</span></div></div></div>'+nmp+
    '<div class="kpis"><div class="kpi"><b class="num">'+tot.s+'</b><span>Sesiones</span></div><div class="kpi"><b class="num">'+Math.round(tot.m)+'</b><span>Minutos</span></div><div class="kpi"><b class="num">'+tot.r+'</b><span>Repeticiones</span></div></div>'+
    '<p class="muted small">'+(first?'Entrenando desde el '+fmtDate(first)+' · racha actual: '+streak()+' días':'Aún no has registrado entrenos.')+'</p>'+
    '<section class="stack"><h2>Ajustes</h2>'+
@@ -1073,7 +1074,6 @@ function vAccount(){
    '<a class="card" target="_blank" rel="noopener" style="text-decoration:none" href="'+esc((window.wellnessWA||function(a,t){return "https://wa.me/573204451740"})('PowerFit','recomendacion',u.email))+'">'+ic('bulb',22)+'<span class="grow"><b>Enviar recomendaciones</b><span class="muted small">Cuéntanos qué mejorarías, por WhatsApp</span></span>'+ic('chevR',20)+'</a>'+
    '<button class="card" data-a="logout">'+ic('out',22)+'<span class="grow"><b>Cerrar sesión</b><span class="muted small">Tus datos quedan guardados en tu cuenta</span></span>'+ic('chevR',20)+'</button>'+
    del+'</section>'+vEquip()+vTheme();
-  if(S.isAdmin) h+=vAdmin();
   return h+'<a class="card" target="_blank" rel="noopener" style="text-decoration:none;border:1px solid var(--accent-fg)" href="'+esc((window.WELLNESS_APPS_URL||"https://www.planificarproyectos.com/wellness-apps/"))+'">'+ic('apps',22)+'<span class="grow"><b>Conoce más Wellness Apps</b><span class="muted small">Mind Focus, PowerFit y Lumen en un solo lugar</span></span>'+ic('chevR',20)+'</a>'+'<p class="muted small" style="text-align:center">Una cuenta para Mind Focus, PowerFit y Lumen</p></div>';
 }
 /* Manual paso a paso: el orden recomendado para usar PowerFit, en lenguaje simple. Cada paso se despliega; "Ir a" lleva a la sección (s = sección dentro de la pantalla) */
@@ -1099,34 +1099,6 @@ function vManual(){
     return '<details class="mstep"><summary><span class="n num">'+(i+1)+'</span><span class="grow"><b>'+esc(m.t)+'</b><span class="muted small">'+esc(m.w)+'</span></span><span class="chev">'+ic('down',18)+'</span></summary>'+
      '<ul>'+m.p.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>'+
      (m.go?'<button class="btn ghost" data-a="mGo" data-v="'+m.go+'"'+(m.s?' data-s="'+m.s+'"':'')+'>Ir a '+esc(m.s?m.w.split(' › ').slice(-1)[0]:{home:'Inicio',routines:'Rutinas',lib:'Ejercicios',progress:'Progreso',account:'Cuenta'}[m.go])+'</button>':'')+'</details>'; }).join('')+'</div></div>';
-}
-function vAdmin(){
-  var A=S.adm;
-  if(!A) return '<section class="stack"><h2>Usuarios</h2><span class="muted small">Cargando usuarios…</span></section>';
-  if(A.err) return '<section class="stack"><h2>Usuarios</h2><span class="muted small">'+esc(A.err)+'</span></section>';
-  var act=A.list.filter(function(x){return x.estado!=='revocado';}).length, wk=A.list.filter(function(x){return x.ultimoUso&&Date.now()-x.ultimoUso<7*864e5;}).length;
-  var q=(S.admQ||'').toLowerCase();
-  var rows=A.list.filter(function(x){return !q||x.id.indexOf(q)>=0;}).map(function(x){
-    var rev=x.estado==='revocado', me=x.uid===S.user.uid, conf=S.ask==='rev:'+x.id;
-    var pill='<span class="pill" style="padding:4px 10px;font-size:12px;'+(rev?'background:transparent;border:1px solid var(--danger);color:var(--danger)':x.estado==='pendiente'?'background:var(--surface2);color:var(--muted)':'background:var(--surface2);color:var(--accent)')+'">'+(rev?'Revocado':x.estado==='pendiente'?'Pendiente':'Activo')+'</span>';
-    var btn=me?'<span class="muted small">Tú</span>':rev?'<button class="link" data-a="admSet" data-v="'+esc(x.id)+'" data-s="activo" style="color:var(--accent-fg)">Reactivar</button>'
-      :conf?'<button class="link" data-a="cancelAsk">No</button><button class="link" data-a="admSet" data-v="'+esc(x.id)+'" data-s="revocado" style="color:var(--danger)">Sí, revocar</button>'
-      :'<button class="link" data-a="ask" data-v="rev:'+esc(x.id)+'">Revocar</button>';
-    return '<div class="hist" style="flex-wrap:wrap"><div style="flex:1;min-width:0"><b style="overflow-wrap:anywhere;font-size:14px">'+esc(x.id)+'</b><div class="muted small">'+(x.autoregistro?'Se registró solo':'Invitado')+' · '+fmtDate(x.activado||x.invitado)+' · último uso '+ago(x.ultimoUso)+'</div></div>'+pill+btn+'</div>';
-  }).join('');
-  return '<section class="stack"><div class="between"><h2>Usuarios</h2><button class="link" data-a="admLoad">Actualizar</button></div>'+
-   '<div class="kpis"><div class="kpi"><b class="num">'+A.list.length+'</b><span>Cuentas</span></div><div class="kpi"><b class="num">'+act+'</b><span>Activas</span></div><div class="kpi"><b class="num">'+wk+'</b><span>Usaron esta semana</span></div></div>'+
-   '<label class="field" for="admQ">'+ic('search',18)+'<input id="admQ" type="text" placeholder="Buscar correo" value="'+esc(S.admQ||'')+'"></label>'+
-   '<div class="panel" style="gap:0">'+(rows||'<span class="muted small">Sin resultados.</span>')+'</div>'+
-   '<p class="muted small">Revocar quita el acceso a PowerFit y Mindfocus; sus datos no se borran.</p></section>';
-}
-function admLoad(){
-  if(!Store.fdb||!S.isAdmin) return;
-  Store.fdb.collection('invitaciones').get().then(function(sn){
-    var list=sn.docs.map(function(d){ var x=d.data()||{}; x.id=d.id; return x; });
-    list.sort(function(a,b){ return (b.ultimoUso||b.activado||b.invitado||0)-(a.ultimoUso||a.activado||a.invitado||0); });
-    S.adm={list:list}; if(S.view==='account') keep(render);
-  }).catch(function(e){ S.adm={err:'No se pudo cargar la lista de usuarios.'}; if(S.view==='account') render(); });
 }
 function csvExport(){
   var q=function(v){ v=String(v==null?'':v); return /[",;\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
@@ -1255,6 +1227,7 @@ function audio(){ try{ if(!actx){ var A=window.AudioContext||window.webkitAudioC
 function beep(f,d){ try{ if(!actx) return; var o=actx.createOscillator(), g=actx.createGain(); o.frequency.value=f||880; g.gain.value=0.08; o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime+(d||0.15)); }catch(e){} }
 function buzz(){ try{ navigator.vibrate&&navigator.vibrate(12); }catch(e){} }
 function startW(r){
+  if(window.Uso) Uso.ev('entreno_iniciado');
   var items=r.items.map(function(i){return {id:i.id,s:i.s,r:i.r,t:i.t};});
   S.w={n:r.n,combo:r.combo||null,items:items,ei:0,si:0,count:items[0].r||0,log:items.map(function(i){var a=[];for(var k=0;k<i.s;k++)a.push(null);return a;}),start:Date.now(),phase:'work',restEnd:0,tLeft:items[0].t,running:false,endAt:0};
   wakeOn();
@@ -1280,7 +1253,7 @@ function finish(){
   releaseWake();
   if(!sets){ S.w=null; Act.persist(true); toast('No registraste series, no se guardó nada.'); go('home'); return; }
   var now=new Date(), rec={id:'s'+now.getTime(),ts:now.getTime(),d:dk(now),n:w.n,combo:w.combo||null,sec:Math.round((now-w.start)/1000),reps:reps,hold:hold,sets:sets,zones:zones,ex:ex};
-  Store.addSession(rec); S.last=rec; S.w=null; Act.persist(true); beep(660,.12); setTimeout(function(){beep(990,.2);},140); go('done');
+  Store.addSession(rec); if(window.Uso) Uso.ev('entreno_terminado'); S.last=rec; S.w=null; Act.persist(true); beep(660,.12); setTimeout(function(){beep(990,.2);},140); go('done');
 }
 function releaseWake(){ try{ wake&&wake.release(); }catch(e){} wake=null; }
 setInterval(function(){
@@ -1297,7 +1270,7 @@ setInterval(function(){
 /* ---------- Acciones ---------- */
 function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(function(){t.hidden=true;},2600); }
 var A={
-  tab:function(v){ go(v); if(v==='account'&&S.isAdmin&&!S.adm) admLoad(); },
+  tab:function(v){ if(v==='progress'&&S.view!=='progress'&&window.Uso) Uso.ev('progreso'); go(v); },
   back:function(){ go(S.prev&&S.prev!==S.view&&S.prev!=='work'&&S.prev!=='done'?S.prev:'home'); },
   zone:function(v){ var i=S.zones.indexOf(v); if(i>=0) S.zones.splice(i,1); else S.zones.push(v); render(); },
   zoneAll:function(){ S.zones=S.zones.length===ZONES.length?[]:ZONES.slice(); render(); },
@@ -1319,7 +1292,7 @@ var A={
   saveB:function(){ var b=S.builder; if(!b.items.length) return;
     var n=(b.n||'').trim()||('Mi rutina '+(S.routines.length+1));
     var r={id:b.id||('u'+Date.now()),n:n,lvl:'Personal',items:b.items};
-    var i=S.routines.map(function(x){return x.id;}).indexOf(r.id); if(i>=0) S.routines[i]=r; else S.routines.push(r);
+    var i=S.routines.map(function(x){return x.id;}).indexOf(r.id); if(i>=0) S.routines[i]=r; else { S.routines.push(r); if(window.Uso) Uso.ev('rutina_creada'); }
     Store.saveRoutines(); S.builder=null; S.detail=r; toast('Rutina guardada'); S.prev='routines'; S.view='detail'; render(); },
   startB:function(){ var b=S.builder; if(!b.items.length) return; startW({n:(b.n||'').trim()||'Rutina libre',items:b.items}); },
   libZone:function(v){ S.libZone=v; render(); },
@@ -1332,7 +1305,7 @@ var A={
   tool:function(v){ var i=S.tools.indexOf(v); if(i>=0) S.tools.splice(i,1); else S.tools.push(v); syncTools(); },
   toolClear:function(){ S.tools=[]; syncTools(); },
   libBuild:function(){ S.builder={id:null,n:'',items:[]}; S.bQ=''; S.bZone=S.libZone; go('builder'); },
-  openEx:function(v){ S.ex=v; go('ex'); },
+  openEx:function(v){ S.ex=v; if(window.Uso) Uso.ev('ejercicio_visto'); go('ex'); },
   addToB:function(v){ if(!S.builder) S.builder={id:null,n:'',items:[]};
     if(!S.builder.items.some(function(i){return i.id===v;})) S.builder.items.push(itemOf(v));
     toast('Agregado a tu rutina'); S.prev='lib'; S.view='builder'; render(); window.scrollTo(0,0); },
@@ -1369,9 +1342,6 @@ var A={
   resetPass:function(){ if(!Store.auth||!S.user) return; Store.auth.sendPasswordResetEmail(S.user.email,{url:"https://www.planificarproyectos.com/powerfit/"}).then(function(){ toast('Te enviamos un correo a '+S.user.email); },function(e){ toast(authErr(e)); }); },
   exportCsv:function(){ if(S.sessions.length) csvExport(); },
   wipe:function(){ S.ask=null; Store.wipe(); toast('Historial borrado'); render(); },
-  admLoad:function(){ S.adm=null; render(); admLoad(); },
-  admSet:function(v,el){ var st=el.dataset.s; S.ask=null;
-    Store.fdb.collection('invitaciones').doc(v).set({estado:st},{merge:true}).then(function(){ toast(st==='revocado'?'Acceso revocado':'Acceso reactivado'); admLoad(); },function(){ toast('No se pudo cambiar el acceso.'); }); },
   sEdit:function(v){ var r=S.sessions.filter(function(x){return x.id===v;})[0]; if(!r) return; S.se=JSON.parse(JSON.stringify(r)); S.se.ex=S.se.ex||[]; S.sePick=false; go('sedit'); },
   sNew:function(){ S.se={isNew:true,id:'s'+Date.now(),n:'Entreno registrado',d:dk(new Date()),ts:Date.now(),sec:1800,ex:[]}; S.sePick=true; S.seQ=''; go('sedit'); },
   sePick:function(){ S.sePick=true; S.seQ=''; keep(render); },
@@ -1402,7 +1372,6 @@ document.addEventListener('input',function(ev){
   if(ev.target.id==='seN'&&S.se) S.se.n=ev.target.value;
   if(ev.target.id==='seD'&&S.se&&ev.target.value) S.se.d=ev.target.value;
   if(ev.target.id==='seM'&&S.se) S.se.sec=(+ev.target.value||1)*60;
-  if(ev.target.id==='admQ'){ S.admQ=ev.target.value; var pos=ev.target.selectionStart; keep(render); var i=document.getElementById('admQ'); if(i){ i.focus(); try{i.setSelectionRange(pos,pos);}catch(e){} } }
   if(ev.target.id==='bq'){ S.bQ=ev.target.value; renderBLib(); }
   if(ev.target.id==='lq'){ S.libQ=ev.target.value; var g=document.getElementById('libgrid'); if(g){ g.innerHTML=libGrid(); setupCanvases(); } }
 });
