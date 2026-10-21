@@ -458,6 +458,7 @@ var STEPS=(function(){ var st=[{k:'cr',b:'cross'},{k:'pn',b:'b0'}];
  for(var d=0;d<5;d++){ st.push({k:'pn',b:'D'+d,d:d}); for(var n=1;n<=10;n++) st.push({k:'am',b:'d'+d+'s'+n,d:d,n:n}); st.push({k:'gl',b:'g'+(d+1),d:d}); }
  st.push({k:'salve',b:'medal'}); return st; })();
 var U={mdate:null,tab:'home',test:'nt',q:'',bk:null,ch:null,pid:null,confirmReset:false,rosSet:BYDAY[new Date().getDay()]};
+if(/[?&]registro\b/.test(location.search)) U.authMode='register';   // enlace de las imágenes compartidas: abre directo en "Crear cuenta"
 function rosKey(){ return TODAY+':'+U.rosSet; }
 function rosI(){ return Math.min(S.ros[rosKey()]||0,STEPS.length); }
 function stepTitle(s){ return s.k==='cr'?'Señal de la cruz y Credo':s.k==='pn'?'Padre Nuestro':s.k==='am'?'Ave María':s.k==='gl'?'Gloria':'Salve'; }
@@ -746,6 +747,7 @@ var SKY=[
  {g:['#260407','#7e1716','#d24d26'],b:['#ffd36b','#ff6b3d','#fff3c4','#ff9f5a'],l:'#fff6d6',a:'#FFE08A'},
  {g:['#050f28','#103a66','#1b9696'],b:['#fff6c9','#7cf0e0','#8fb8ff','#ffffff'],l:'#fffbe6',a:'#FFF0A8'}
 ];
+var SHARE_URL='https://www.planificarproyectos.com/lumen/?registro';
 function rnd(a,b){ return a+Math.random()*(b-a); }
 function rgba(hex,al){ var n=parseInt(hex.slice(1),16); return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+al+')'; }
 function heavenBg(x,W,H){
@@ -775,6 +777,10 @@ function heavenBg(x,W,H){
 function shareImage(text,ref){
  var W=1080,H=1350,P=96, cv=document.createElement('canvas'); cv.width=W; cv.height=H; var x=cv.getContext('2d');
  var disp='"Barlow Condensed","Arial Narrow",sans-serif', body='"DM Sans",system-ui,sans-serif';
+ /* Texto que acompaña la imagen: WhatsApp, Telegram, X, correo, etc. lo ponen solos. Facebook e Instagram no permiten
+    texto precargado, así que también queda copiado (se copia ya, mientras el toque del usuario sigue vigente). */
+ var msg=ref+' · Lumen\n\nOración, liturgia y la Biblia católica cada día. Pruébala y crea tu cuenta: '+SHARE_URL;
+ try{ navigator.clipboard&&navigator.clipboard.writeText(msg).catch(function(){}); }catch(e){}
  var ready=document.fonts&&document.fonts.load?Promise.all([document.fonts.load('700 48px "Barlow Condensed"'),document.fonts.load('600 60px "Barlow Condensed"'),document.fonts.load('700 36px "DM Sans"')]).catch(function(){}):Promise.resolve();
  return ready.then(function(){
   var s=heavenBg(x,W,H), fg='#FFFFFF', afg=s.a;
@@ -785,7 +791,15 @@ function shareImage(text,ref){
   x.fillStyle='rgba(10,6,30,.34)'; x.fillRect(bx,by,bw,bh); x.restore();
   x.strokeStyle='rgba(255,255,255,.3)'; x.lineWidth=2; x.beginPath(); if(x.roundRect) x.roundRect(bx,by,bw,bh,44); else x.rect(bx,by,bw,bh); x.stroke();
   x.shadowColor='rgba(0,0,0,.45)'; x.shadowBlur=14; x.shadowOffsetY=2;
-  x.textBaseline='alphabetic'; x.font='700 56px '+disp; x.fillStyle=fg; x.fillText('LU',P,140); var lw=x.measureText('LU').width; x.fillStyle=afg; x.fillText('MEN',P+lw,140);
+  var L=76, ly=82, k=L/48;   // el logo de Lumen (el mismo de icon.svg) y la palabra LUMEN
+  x.fillStyle='#111315'; x.beginPath(); if(x.roundRect) x.roundRect(P,ly,L,L,10.5*k); else x.rect(P,ly,L,L); x.fill();
+  x.shadowColor='transparent';
+  x.strokeStyle='#C6F432'; x.lineWidth=3.5*k; x.beginPath(); x.arc(P+24*k,ly+24*k,15*k,0,6.283); x.stroke();
+  x.strokeStyle='#F2F2EE'; x.lineWidth=4.5*k; x.lineCap='round'; x.beginPath(); x.moveTo(P+24*k,ly+12*k); x.lineTo(P+24*k,ly+36*k); x.moveTo(P+17*k,ly+19*k); x.lineTo(P+31*k,ly+19*k); x.stroke(); x.lineCap='butt';
+  x.shadowColor='rgba(0,0,0,.45)';
+  x.textBaseline='alphabetic'; x.font='700 56px '+disp; x.fillStyle=fg; x.fillText('LU',P+L+20,140); var lw=x.measureText('LU').width; x.fillStyle=afg; x.fillText('MEN',P+L+20+lw,140);
+  var hoy=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  x.font='500 30px '+body; x.fillStyle='rgba(255,255,255,.9)'; x.textAlign='right'; x.fillText(hoy.charAt(0).toUpperCase()+hoy.slice(1),W-P,132); x.textAlign='left';
   var maxW=W-2*P-20, top=300, bottom=H-200-150, fs=86, lines, lh;
   for(;fs>=34;fs-=2){ x.font='600 '+fs+'px '+disp; lines=wrapLines(x,text,maxW); lh=Math.round(fs*1.14); if(lines.length*lh<=bottom-top) break; }
   if(lines.length*lh>bottom-top){ var maxL=Math.floor((bottom-top)/lh); lines=lines.slice(0,maxL); lines[maxL-1]=lines[maxL-1].replace(/\s*\S*$/,'')+' …'; }
@@ -798,8 +812,8 @@ function shareImage(text,ref){
  }).then(function(blob){ if(!blob){ toast('No se pudo crear la imagen'); return; }
   var name='lumen-'+ref.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.png', file=null;
   try{ file=new File([blob],name,{type:'image/png'}); }catch(e){}
-  if(file&&navigator.canShare&&navigator.canShare({files:[file]})) return navigator.share({files:[file],title:ref,text:ref+' · Lumen'}).catch(function(e){ if(e&&e.name!=='AbortError') toast('No se pudo compartir'); });
-  var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(a.href); },4000); toast('Imagen guardada en tus descargas');
+  if(file&&navigator.canShare&&navigator.canShare({files:[file]})) return navigator.share({files:[file],title:ref,text:msg}).then(function(){ toast('Si la app no puso el enlace, pégalo: ya está copiado',5000); }).catch(function(e){ if(e&&e.name!=='AbortError') toast('No se pudo compartir'); });
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(a.href); },4000); toast('Imagen guardada. El texto con el enlace quedó copiado para pegarlo al publicar',6000);
  });
 }
 
