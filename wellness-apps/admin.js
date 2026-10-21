@@ -6,7 +6,7 @@
      analisis, csv): se suman a sus métricas.
    - Gráficas: personas activas, sesiones y minutos por día, horario de uso (hora y día de la semana), funciones en
      detalle con su tendencia, comparación entre apps, crecimiento de cuentas y el detalle de cada persona.
-   - Acciones: invitar, revocar o reactivar el acceso, aprobar o denegar Proyecta y eliminar los datos de una cuenta.
+   - Acciones: invitar, revocar o reactivar el acceso, aprobar o denegar Proyecta (también con el interruptor de cada cuenta) y eliminar los datos de una cuenta.
      La cuenta de inicio de sesión solo se puede borrar en la consola de Firebase (desde la web no hay permisos). */
 (function(){
   var ADMIN_UID='AQaEMcKNYfWEhcHVdc8N0ghxeZk1';
@@ -188,11 +188,14 @@
       else acts+='<button class="sbtn warn'+(S.sure==='rev:'+u.id?' sure':'')+'" data-adm="rev" data-id="'+esc(u.id)+'">'+(S.sure==='rev:'+u.id?'¿Seguro? Toca de nuevo':'Revocar acceso')+'</button>';
     }
     if(!u.admin)acts+='<button class="sbtn warn" data-adm="del" data-id="'+esc(u.id)+'">Eliminar datos</button>';
+    // Interruptor de Proyecta: encendido = aprobado, apagado = denegado. Proyecta lo escucha en vivo y deja entrar o saca a la persona
+    var pry=u.admin?'':'<div class="pry-sw"><span>Acceso a Proyecta'+(i.proyecta==='pendiente'?' <span class="pill wait">Pidió acceso</span>':'')+'</span>'
+      +'<button type="button" class="sw" role="switch" aria-checked="'+(i.proyecta==='aprobado')+'" data-adm="prysw" data-id="'+esc(u.id)+'" aria-label="Acceso a Proyecta de '+esc(u.email)+'"><i></i></button></div>';
     var h='<div class="urow"><div class="top"><span class="em">'+esc(u.email)+'</span>'+pill(u)+'</div>'
       +'<div class="meta"><span>'+(i.autoregistro?'Se registró solo':i.invitado?'Invitado':'Cuenta')+(desde?' · '+fecha(+desde):'')+'</span><span>Último uso: '+hace(u.last)+'</span><span>Sesiones: '+nf(ses)+'</span>'
-      +(i.proyecta?'<span>Proyecta: '+esc(i.proyecta)+'</span>':'')+'</div>'
+      +'</div>'
       +(apps.length?'<div class="row2">'+apps.map(function(a){return '<span class="tag">'+esc(APPS[a])+'</span>'}).join('')+'</div>':'')
-      +(acts?'<div class="acts">'+acts+'</div>':'');
+      +pry+(acts?'<div class="acts">'+acts+'</div>':'');
     if(S.del===u.id)h+='<div class="confirm" role="alert"><b>¿Eliminar los datos de '+esc(u.email)+'?</b><span>Se borran para siempre, sin forma de recuperarlos:</span><ul><li>Sus registros, configuración, entrenos, oraciones y proyectos en todas las apps.</li><li>Su perfil, sus estadísticas de uso y su registro de acceso.</li></ul><span>La cuenta para iniciar sesión se borra aparte, en la consola de Firebase.</span><div class="row2"><button class="sbtn" data-adm="delno">Cancelar</button><button class="sbtn warn sure" data-adm="delsi" data-id="'+esc(u.id)+'">Sí, eliminar todo</button></div></div>';
     return h+'</div>'}
   function resultadoEliminar(){var o=S.delOut;
@@ -259,6 +262,9 @@
     if(a==='ver'){S.ver=id;S.verFoco=true;return pintar()}
     if(a==='verx'){var vid=S.ver;S.ver=null;pintar();var vb=document.querySelector('[data-adm="ver"][data-id="'+(window.CSS&&CSS.escape?CSS.escape(vid):vid)+'"]');if(vb)vb.focus();return}
     if(a==='pry')return upd(id,{proyecta:b.getAttribute('data-v'),proyectaRes:Date.now()});
+    if(a==='prysw'){var w=porId(id);if(!w)return;var on=b.getAttribute('aria-checked')!=='true';b.setAttribute('aria-checked',on);b.disabled=true;
+      return S.db.collection('invitaciones').doc(id).set({email:w.email,proyecta:on?'aprobado':'denegado',proyectaRes:Date.now()},{merge:true})
+        .then(cargarSilencio,function(e){b.setAttribute('aria-checked',!on);b.disabled=false;alert('No se pudo guardar: '+(e.code||e.message))})}
     if(a==='pryq'){if(seguro('pq:'+id))upd(id,{proyecta:'denegado',proyectaRes:Date.now()});return}
     if(a==='rev'){if(seguro('rev:'+id))upd(id,{estado:'revocado',revocado:Date.now()});return}
     if(a==='react'){var u=porId(id);return upd(id,{estado:u&&u.uid?'activo':'pendiente'})}
