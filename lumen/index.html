@@ -273,5 +273,10 @@ body.afon .installbar{bottom:calc(180px + env(safe-area-inset-bottom,0px))}
 <script src="../wellness-soporte.js"></script>
 <script src="liturgia.js"></script>
 <script src="app.js"></script>
+<script src="../swipe-nav.js"></script>
+<script>/* Deslizar para cambiar de sección (celular y tablet) */
+if(window.swipeNav)swipeNav({items:function(){ return document.querySelectorAll("#navIn button"); },
+ enabled:function(){ var sp=document.getElementById("splash"), pk=document.getElementById("pocket"), nb=document.getElementById("namebox"); return (!sp||sp.classList.contains("out"))&&(!pk||pk.hidden)&&(!nb||nb.hidden); },
+ content:function(){ return document.getElementById("app"); }});</script>
 </body>
 </html>

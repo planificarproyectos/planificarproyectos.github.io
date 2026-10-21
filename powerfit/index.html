@@ -1423,5 +1423,10 @@ if("serviceWorker" in navigator) window.addEventListener("load",function(){ navi
 })();
 </script>
 
+<script src="../swipe-nav.js"></script>
+<script>/* Deslizar para cambiar de sección (celular y tablet); no se activa durante un entrenamiento */
+if(window.swipeNav)swipeNav({items:function(){ return document.querySelectorAll("#nav [data-a=tab]"); },
+ enabled:function(){ var sp=document.getElementById("splash"); return !sp||sp.classList.contains("out"); },
+ content:function(){ return document.getElementById("app"); }});</script>
 </body>
 </html>

@@ -19,6 +19,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script src="../wellness-soporte.js"></script>
+<script src="../swipe-nav.js"></script>
 <style>:root{color-scheme:dark;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Proyecta</title>
 <script>/* Arranca siempre en oscuro hasta que llega el tema de la cuenta; nada se guarda en el navegador */
@@ -2166,6 +2167,8 @@ addEventListener('resize',()=>{if(ST.ready)layout()});
   document.addEventListener('wheel',e=>{if(!FINE.matches||e.shiftKey||Math.abs(e.deltaX)>Math.abs(e.deltaY))return;const s=e.target.closest(STRIP);
     if(!s||s.scrollWidth-s.clientWidth<4)return;const before=s.scrollLeft;s.scrollLeft+=e.deltaY;if(s.scrollLeft!==before)e.preventDefault()},{passive:false});
 })();
+/* Deslizar para cambiar de sección en celular y tablet (no en la vista de columnas del computador) */
+if(window.swipeNav)swipeNav({items:()=>ST.desk?$$('#dt1 button'):$$('.nav button'),enabled:()=>ST.ready&&!ST.web&&!$('#sheetHost').innerHTML&&!document.body.classList.contains('authing'),content:()=>$('#cols')});
 function webHint(){if(prefs.webHint2)return;prefs.webHint2=1;savePrefs();setTimeout(()=>toast('Toca las secciones de abajo para sumarlas como columnas. Arrastra el encabezado de una columna para reordenarla.'),600)}
 /* Arrastrar columnas para reordenarlas */
 let DRAG=null;
