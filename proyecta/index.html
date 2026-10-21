@@ -352,6 +352,9 @@ body.web .cols{display:grid;grid-template-columns:repeat(var(--n,1),minmax(0,560
 body.web.grid .cols{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(var(--rows,2),minmax(0,1fr));justify-content:stretch}
 body.web.grid .cols>.screen{min-height:0}
 body.web .cols>.screen{grid-auto-rows:max-content;overflow-y:auto;overscroll-behavior:contain;background:var(--col);border-radius:22px;padding:0 14px 14px;min-width:0;scrollbar-width:thin}
+/* Borde delgado del color de énfasis en cada ventana (columnas y cuadrícula), para ver dónde empieza y termina cada una en modo oscuro y claro */
+body.web .cols>.screen{border:1.5px solid var(--acc)}
+body.web .cols>.screen.dragging{border-color:var(--acc)}
 body.web .colcap{display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:6;background:var(--col);margin:0 -14px;padding:10px 8px 6px 18px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:800;color:var(--muted)}
 body.web .colcap{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
 body.web .colcap .cap-t{display:flex;align-items:center;gap:6px}
@@ -367,7 +370,7 @@ body.web .screen-head h1{font-size:22px}
 body.web .live{bottom:6px}
 body.web #s-cuenta{position:fixed;z-index:25;top:calc(var(--top,60px) + 4px);bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 10px);right:max(16px,env(safe-area-inset-right,0px));width:min(480px,calc(100% - 32px));background:var(--bg);border:1px solid var(--line);box-shadow:0 18px 50px rgba(0,0,0,.35)}
 /* Modo cuadrícula: Cuenta va anclada en su casilla como una sección más (sin panel flotante ni botón de cerrar) */
-body.web.grid #s-cuenta{position:relative;z-index:auto;top:auto;bottom:auto;right:auto;width:auto;background:var(--col);border:0;box-shadow:none;min-height:0}
+body.web.grid #s-cuenta{position:relative;z-index:auto;top:auto;bottom:auto;right:auto;width:auto;background:var(--col);border:1.5px solid var(--acc);box-shadow:none;min-height:0}
 body.web.grid #s-cuenta [data-act="cuenta-close"]{display:none}
 .scrim{position:fixed;inset:0;z-index:24;background:rgba(0,0,0,.35)}
 @media (prefers-reduced-motion:no-preference){.screen.flash{animation:fl .7s ease}@keyframes fl{0%{box-shadow:inset 0 0 0 2px var(--acc)}100%{box-shadow:inset 0 0 0 2px transparent}}}
