@@ -595,6 +595,8 @@ body.desk .instbar{left:auto;right:20px;bottom:20px;transform:none}
 .cmpsel{display:flex;gap:6px;flex-wrap:wrap}
 /* Comparar compacto: selector desplegable y ranking en tabla */
 .cmpbox{gap:8px;padding-block:12px}
+.cmptipo{margin-bottom:8px}
+.cmptipo small{opacity:.65;font-weight:600;margin-left:2px}
 .cmpdd{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--ink);font:inherit;font-size:14px;cursor:pointer;padding:4px 0}
 .cmpdd svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;transition:transform .2s}
 .cmpdd[aria-expanded=true] svg{transform:rotate(180deg)}
@@ -2243,8 +2245,13 @@ function ensureColors(){if(ST.readOnly||ST.coloring)return;const miss=Object.key
     const a=Local.all();if(a[id]){a[id].color=c;Local.save(id,a[id])}return null});
   Promise.all(jobs).catch(()=>{}).then(()=>{ST.coloring=false})}
 const byUpd=ids=>ids.sort((a,b)=>(ST.projects[b].actualizado||0)-(ST.projects[a].actualizado||0));
-function cmpSlots(){
-  let s=Array.isArray(prefs.cmp)?prefs.cmp.map(id=>id&&ST.projects[id]?id:null):byUpd(Object.keys(ST.projects));
+/* Filtro por tipo de vivienda en Comparar: solo se comparan proyectos del mismo tipo (VIS con VIS, No VIS con No VIS…).
+   Un proyecto con etapas de varios tipos entra en cada uno de ellos. */
+const CMP_TIPOS=[['todos','Todos'],['VIS','VIS'],['NoVIS','No VIS'],['VIP','VIP']];
+const tiposDeDoc=d=>new Set(((d&&d.data||{}).etapas||[]).map(e=>e.tipo||'NoVIS'));
+function cmpPool(){const t=prefs.cmpTipo||'todos',ids=Object.keys(ST.projects);return t==='todos'?ids:ids.filter(id=>tiposDeDoc(ST.projects[id]).has(t))}
+function cmpSlots(){const pool=new Set(cmpPool());
+  let s=Array.isArray(prefs.cmp)?prefs.cmp.map(id=>id&&ST.projects[id]&&pool.has(id)?id:null):byUpd([...pool]);
   if(s.length>4&&s.filter(Boolean).length<=4)s=s.filter(Boolean);
   while(s.length<4)s.push(null);return s;
 }
@@ -2333,15 +2340,17 @@ function renderComparar(){
   const host=$('#s-comparar'),ids=Object.keys(ST.projects);
   let h=`<div class="screen-head"><div><h1>Comparar</h1><p>Elige los proyectos que quieras ver lado a lado, o todos.</p></div></div>`;
   if(ids.length<2){host.innerHTML=h+`<div class="card"><h3>Necesitas al menos 2 proyectos</h3><p class="sub">Crea otro proyecto o un ejemplo para comparar.</p><div class="row">${ST.readOnly?'':exBtns('','Ejemplo ')}</div></div>`;return}
-  const slots=cmpSlots(),nSel=slots.filter(Boolean).length,many=nSel>4;
-  // Selector compacto: cerrado muestra en una línea los proyectos elegidos; al abrirlo aparecen los botones pequeños
-  const selN=slots.filter(Boolean),selOpen=!!ST.cmpOpen;
-  h+=`<div class="card cmpbox"><div class="between"><button class="cmpdd" data-act="cmp-open" aria-expanded="${selOpen}"><b>${nSel} de ${ids.length} proyectos</b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="row"><button class="btn sm" data-act="cmp-all"${nSel===ids.length?' disabled':''}>Todos</button><button class="btn sm" data-act="cmp-none"${nSel?'':' disabled'}>Ninguno</button></div></div>
-    ${selOpen?`<div class="cmpsel">${byUpd(ids).map(id=>{const k=slots.indexOf(id);
+  const slots=cmpSlots(),nSel=slots.filter(Boolean).length,many=nSel>4,pool=cmpPool(),tp=prefs.cmpTipo||'todos';
+  // Selector compacto: cerrado muestra en una línea los proyectos elegidos; al abrirlo aparecen los botones pequeños.
+  // Arriba, el tipo de vivienda: al elegir uno se comparan todos los proyectos de ese tipo
+  const selN=slots.filter(Boolean),selOpen=!!ST.cmpOpen,nT=t=>t==='todos'?ids.length:ids.filter(id=>tiposDeDoc(ST.projects[id]).has(t)).length;
+  h+=`<div class="card cmpbox"><div class="seg cmptipo" role="group" aria-label="Tipo de vivienda">${CMP_TIPOS.filter(([t])=>t==='todos'||nT(t)).map(([t,l])=>`<button data-act="cmp-tipo" data-k="${t}" aria-pressed="${tp===t}">${l} <small>${nT(t)}</small></button>`).join('')}</div>
+    <div class="between"><button class="cmpdd" data-act="cmp-open" aria-expanded="${selOpen}"><b>${nSel} de ${pool.length} proyectos${tp==='todos'?'':' '+(CMP_TIPOS.find(x=>x[0]===tp)||[])[1]}</b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="row"><button class="btn sm" data-act="cmp-all"${nSel===pool.length?' disabled':''}>Todos</button><button class="btn sm" data-act="cmp-none"${nSel?'':' disabled'}>Ninguno</button></div></div>
+    ${selOpen?`<div class="cmpsel">${byUpd(pool.slice()).map(id=>{const k=slots.indexOf(id);
       return `<button class="chip" data-act="cmp-toggle" data-id="${id}" aria-pressed="${k>=0}"><i style="background:${projColor(id)}"></i>${esc(ST.projects[id].nombre||'Proyecto')}</button>`}).join('')}</div>`
       :`<div class="cmpsum">${selN.map(id=>`<span><i style="background:${projColor(id)}"></i>${esc(ST.projects[id].nombre||'Proyecto')}</span>`).join('')||'<span class="muted">Ninguno elegido</span>'}</div>`}</div>`;
   const L=slots.map((id,slot)=>{if(!id)return null;const c=cmpResult(id);return c&&c.R?{id,slot,d:ST.projects[id],P:c.P,R:c.R}:null}).filter(Boolean);
-  if(L.length<2){host.innerHTML=h+`<div class="empty">Elige al menos 2 proyectos.</div>`;return}
+  if(L.length<2){host.innerHTML=h+`<div class="empty">${pool.length<2?`Solo hay ${pool.length} proyecto de este tipo. Elige otro tipo de vivienda.`:'Elige al menos 2 proyectos.'}</div>`;return}
   const head=`<tr><th class="c0">Indicador</th>${L.map(p=>`<th class="cmph"><span class="cmpn"><i style="background:${projColor(p.id)}"></i>${esc(p.d.nombre||'Proyecto')}</span><small>${esc(p.d.ciudad||'')} · ${tipoDe(p.P)}</small>${p.id===ST.pid?'<small class="cur">Abierto</small>':`<button class="lnk" data-act="proj-select" data-id="${p.id}">Abrir</button>`}</th>`).join('')}</tr>`;
   const body=CMP_ROWS.map(r=>{if(r.length===1)return `<tr class="sec"><td class="c0" colspan="${L.length+1}">${r[0]}</td></tr>`;
     const [l,g,f,dir]=r,vs=L.map(p=>{const v=g(p.P,p.R);return v==null||!isFinite(v)?null:v});const ok=vs.filter(v=>v!=null);
@@ -2954,7 +2963,8 @@ document.addEventListener('click',async e=>{
     case 'cmp-open':ST.cmpOpen=!ST.cmpOpen;rr('comparar');break;
     case 'rk-all':ST.rkAll=!ST.rkAll;rr('comparar');break;
     case 'rk2-all':ST.rk2All=!ST.rk2All;rr('comparar');break;
-    case 'cmp-all':prefs.cmp=byUpd(Object.keys(ST.projects));savePrefs();rr('comparar');break;
+    case 'cmp-all':prefs.cmp=byUpd(cmpPool());savePrefs();rr('comparar');break;
+    case 'cmp-tipo':prefs.cmpTipo=b.dataset.k;prefs.cmp=byUpd(cmpPool());savePrefs();rr('comparar');break;
     case 'cmp-none':prefs.cmp=[];savePrefs();rr('comparar');break;
     case 'per':prefs.per=b.dataset.k;savePrefs();rr('resultados');break;
     case 'col-hide':navTap(b.dataset.k);break;
