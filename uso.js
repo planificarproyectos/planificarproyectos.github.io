@@ -36,8 +36,14 @@
   function sesion(){ var d=hoy(); if(U.dia===d) return; U.dia=d; var dias={}; dias[d]=inc(1); put(cuando({sesiones:inc(1),ultimoUso:Date.now(),dias:dias})); }
   function flush(){ if(!U.pend||!U.uid) return; var n=U.pend, md={}; U.pend=0; md[hoy()]=inc(n); put({min:inc(n),minDia:md}); }
   U.start=function(db,user,app){ if(!db||!user||!window.firebase||!firebase.firestore) return;
-    U.db=db; U.uid=user.uid; U.email=String(user.email||'').toLowerCase(); U.app=app; U.dia=null; U.pend=0; sesion(); };
-  U.stop=function(){ flush(); U.db=null; U.uid=null; U.dia=null; };
+    U.db=db; U.uid=user.uid; U.email=String(user.email||'').toLowerCase(); U.app=app; U.dia=null; U.pend=0; sesion(); vigilar(); };
+  U.stop=function(){ flush(); if(U.unsubA){ U.unsubA(); U.unsubA=null; } U.db=null; U.uid=null; U.dia=null; };
+  /* Acceso en vivo: si desde el panel de Wellness Apps el administrador revoca la cuenta o le quita esta app
+     (invitaciones/{correo}.apps.{app} = false), la app se recarga y muestra que no tiene acceso. Proyecta vigila su
+     propia aprobación, así que aquí no se incluye. */
+  function vigilar(){ if(U.unsubA){ U.unsubA(); U.unsubA=null; } if(!U.email||U.app==='proyecta') return; var app=U.app;
+    U.unsubA=U.db.collection('invitaciones').doc(U.email).onSnapshot(function(sn){ var d=sn.exists?sn.data():null;
+      if(d&&!d.admin&&(d.estado==='revocado'||(d.apps&&d.apps[app]===false))) location.reload(); },function(){}); }
   U.ev=function(nombre,n){ if(!U.uid||!U.app||!(EVENTOS[U.app]||{})[nombre]) return; var ev={}, ed={}; ev[nombre]=inc(n); ed[hoy()]={}; ed[hoy()][nombre]=inc(n);
     put(cuando({ultimoUso:Date.now(),ev:ev,evDia:ed})); };
   // Minutos de uso: uno por cada minuto con la app visible; se guardan cada 5 o al ocultarla

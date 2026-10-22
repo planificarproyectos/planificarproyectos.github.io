@@ -28,8 +28,16 @@ service cloud.firestore {
         && proyectaRequest());
     }
 
-    match /users/{uid}/{document=**} {
+    // Acceso por app que el administrador da o quita en el panel: invitaciones/{correo}.apps.{app} = false la bloquea
+    // (sin dato = con acceso). Cada subcolección de users/{uid} pertenece a una app; perfil y las demás son compartidas.
+    function appOf(sub) { return sub == 'entradas' || sub == 'config' ? 'mindfocus' : sub; }
+    function appOn(sub) { return get(invitePath()).data.get('apps', {}).get(appOf(sub), true) != false; }
+
+    match /users/{uid} {
       allow read, write: if isAdmin() || (signedIn() && request.auth.uid == uid && invited());
+    }
+    match /users/{uid}/{sub}/{rest=**} {
+      allow read, write: if isAdmin() || (signedIn() && request.auth.uid == uid && invited() && appOn(sub));
     }
 
     // Proyectos de Proyecta compartidos: los correos de compartidoCon pueden leerlos; los de editores pueden editarlos,

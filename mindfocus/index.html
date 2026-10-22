@@ -1490,7 +1490,7 @@ async function checkAccess(user){
     catch(e){return false}
   }
   const inv=snap.data();
-  if(inv.estado==="revocado")return false;
+  if(inv.estado==="revocado"||(inv.apps&&inv.apps.mindfocus===false))return false;   // apps.mindfocus=false: el administrador le quitó Mind Focus
   const upd={estado:"activo",uid:user.uid,ultimoUso:Date.now()};if(!inv.activado)upd.activado=Date.now();
   try{await ref.update(upd)}catch(e){}
   return true;

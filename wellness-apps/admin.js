@@ -12,6 +12,9 @@
   var ADMIN_UID='AQaEMcKNYfWEhcHVdc8N0ghxeZk1';
   var APPS=(window.Uso&&Uso.APPS)||{mindfocus:'Mind Focus',powerfit:'PowerFit',lumen:'Lumen',proyecta:'Proyecta'};
   var EVENTOS=(window.Uso&&Uso.EVENTOS)||{};
+  // Acceso por app (sin dato = con acceso; Proyecta usa su aprobación)
+  var APP_ORD=['mindfocus','powerfit','lumen','proyecta'];
+  function appOn(i){var ap=(i&&i.apps)||{},o={};APP_ORD.forEach(function(a){o[a]=a==='proyecta'?(i&&i.proyecta)==='aprobado':ap[a]!==false});return o}
   var DIA=864e5, SUBS=['entradas','config','powerfit','lumen','proyecta','perfil'];
   var S={db:null,me:null,inv:[],stats:{},users:[],upd:0,app:'mindfocus',q:'',sure:'',del:null,delOut:null,invMsg:null,busy:false,err:'',ver:null,verFoco:false};
   var $=function(id){return document.getElementById(id)};
@@ -188,9 +191,14 @@
       else acts+='<button class="sbtn warn'+(S.sure==='rev:'+u.id?' sure':'')+'" data-adm="rev" data-id="'+esc(u.id)+'">'+(S.sure==='rev:'+u.id?'¿Seguro? Toca de nuevo':'Revocar acceso')+'</button>';
     }
     if(!u.admin)acts+='<button class="sbtn warn" data-adm="del" data-id="'+esc(u.id)+'">Eliminar datos</button>';
-    // Interruptor de Proyecta: encendido = aprobado, apagado = denegado. Proyecta lo escucha en vivo y deja entrar o saca a la persona
-    var pry=u.admin?'':'<div class="pry-sw"><span>Acceso a Proyecta'+(i.proyecta==='pendiente'?' <span class="pill wait">Pidió acceso</span>':'')+'</span>'
-      +'<button type="button" class="sw" role="switch" aria-checked="'+(i.proyecta==='aprobado')+'" data-adm="prysw" data-id="'+esc(u.id)+'" aria-label="Acceso a Proyecta de '+esc(u.email)+'"><i></i></button></div>';
+    // Acceso por app: un interruptor por cada una, más "Todas" y "Ninguna". Cada app lo escucha en vivo y deja entrar o
+    // saca a la persona. Mind Focus, PowerFit y Lumen: apps.{app} (sin dato = con acceso). Proyecta: aprobado / denegado.
+    var on=appOn(i),nOn=APP_ORD.filter(function(a){return on[a]}).length,
+      pry=u.admin?'':'<div class="app-acc"><div class="app-acc-h"><b>Acceso a apps</b><span>'+(nOn===APP_ORD.length?'Todas':nOn?nOn+' de '+APP_ORD.length:'Ninguna')+'</span>'
+      +'<button type="button" class="sbtn sm" data-adm="appall" data-v="1" data-id="'+esc(u.id)+'"'+(nOn===APP_ORD.length?' disabled':'')+'>Todas</button>'
+      +'<button type="button" class="sbtn sm" data-adm="appall" data-v="0" data-id="'+esc(u.id)+'"'+(nOn?'':' disabled')+'>Ninguna</button></div><div class="app-sws">'
+      +APP_ORD.map(function(a){return '<div class="pry-sw"><span>'+esc(APPS[a])+(a==='proyecta'&&i.proyecta==='pendiente'?' <span class="pill wait">Pidió acceso</span>':'')+'</span>'
+        +'<button type="button" class="sw" role="switch" aria-checked="'+on[a]+'" data-adm="appsw" data-app="'+a+'" data-id="'+esc(u.id)+'" aria-label="Acceso a '+esc(APPS[a])+' de '+esc(u.email)+'"><i></i></button></div>'}).join('')+'</div></div>';
     var h='<div class="urow"><div class="top"><span class="em">'+esc(u.email)+'</span>'+pill(u)+'</div>'
       +'<div class="meta"><span>'+(i.autoregistro?'Se registró solo':i.invitado?'Invitado':'Cuenta')+(desde?' · '+fecha(+desde):'')+'</span><span>Último uso: '+hace(u.last)+'</span><span>Sesiones: '+nf(ses)+'</span>'
       +'</div>'
@@ -262,9 +270,12 @@
     if(a==='ver'){S.ver=id;S.verFoco=true;return pintar()}
     if(a==='verx'){var vid=S.ver;S.ver=null;pintar();var vb=document.querySelector('[data-adm="ver"][data-id="'+(window.CSS&&CSS.escape?CSS.escape(vid):vid)+'"]');if(vb)vb.focus();return}
     if(a==='pry')return upd(id,{proyecta:b.getAttribute('data-v'),proyectaRes:Date.now()});
-    if(a==='prysw'){var w=porId(id);if(!w)return;var on=b.getAttribute('aria-checked')!=='true';b.setAttribute('aria-checked',on);b.disabled=true;
-      return S.db.collection('invitaciones').doc(id).set({email:w.email,proyecta:on?'aprobado':'denegado',proyectaRes:Date.now()},{merge:true})
-        .then(cargarSilencio,function(e){b.setAttribute('aria-checked',!on);b.disabled=false;alert('No se pudo guardar: '+(e.code||e.message))})}
+    if(a==='appsw'||a==='appall'){var w=porId(id);if(!w)return;var data={email:w.email},
+        list=a==='appsw'?[b.getAttribute('data-app')]:APP_ORD,on=a==='appsw'?b.getAttribute('aria-checked')!=='true':b.getAttribute('data-v')==='1';
+      list.forEach(function(k){if(k==='proyecta'){data.proyecta=on?'aprobado':'denegado';data.proyectaRes=Date.now()}else{data.apps=data.apps||{};data.apps[k]=on}});
+      if(a==='appsw')b.setAttribute('aria-checked',on);b.disabled=true;
+      return S.db.collection('invitaciones').doc(id).set(data,{merge:true})
+        .then(cargarSilencio,function(e){if(a==='appsw')b.setAttribute('aria-checked',!on);b.disabled=false;alert('No se pudo guardar: '+(e.code||e.message))})}
     if(a==='pryq'){if(seguro('pq:'+id))upd(id,{proyecta:'denegado',proyectaRes:Date.now()});return}
     if(a==='rev'){if(seguro('rev:'+id))upd(id,{estado:'revocado',revocado:Date.now()});return}
     if(a==='react'){var u=porId(id);return upd(id,{estado:u&&u.uid?'activo':'pendiente'})}

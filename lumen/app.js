@@ -71,7 +71,7 @@ var Cloud={auth:null,db:null,user:null,wait:false,ref:null,unsub:null,prof:null,
   var em=(u.email||'').toLowerCase(), ref=this.db.collection('invitaciones').doc(em), now=Date.now();
   return ref.get().then(function(sn){
    if(!sn.exists) return ref.set({email:em,estado:'activo',uid:u.uid,activado:now,ultimoUso:now,autoregistro:true}).then(function(){return true;});
-   var d=sn.data()||{}; if(d.estado==='revocado') return false;
+   var d=sn.data()||{}; if(d.estado==='revocado'||(d.apps&&d.apps.lumen===false)) return false;   // apps.lumen=false: el administrador le quitó Lumen
    var upd={estado:'activo',uid:u.uid,ultimoUso:now}; if(!d.activado) upd.activado=now;
    return ref.update(upd).then(function(){return true;},function(){return true;});
   }).catch(function(e){ console.warn('acceso',e); return true; });

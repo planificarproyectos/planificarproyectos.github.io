@@ -677,7 +677,7 @@ var Store={mode:'local',col:null,months:{},
     return ref.get().then(function(sn){
       if(!sn.exists) return ref.set({email:em,estado:'activo',uid:u.uid,activado:now,ultimoUso:now,autoregistro:true}).then(function(){return true;});
       var d=sn.data()||{};
-      if(d.estado==='revocado') return false;
+      if(d.estado==='revocado'||(d.apps&&d.apps.powerfit===false)) return false;   // apps.powerfit=false: el administrador le quitó PowerFit
       var upd={estado:'activo',uid:u.uid,ultimoUso:now}; if(!d.activado) upd.activado=now;
       return ref.update(upd).then(function(){return true;},function(){return true;});
     }).catch(function(e){ console.warn('acceso',e); return true; });
