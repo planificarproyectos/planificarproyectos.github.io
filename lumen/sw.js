@@ -1,5 +1,5 @@
 // Service worker: abre Lumen rápido y sin conexión (app, liturgia y Biblia completa).
-const CACHE = "lumen-v19";
+const CACHE = "lumen-v20";
 const SHELL = ["./", "./index.html", "./app.js", "./liturgia.js", "./firebase-config.js", "./manifest.webmanifest",
   "./icon.svg", "./icon-192.png", "./icon-512.png", "./datos/calendario.json", "./datos/leccionario.json", "./biblia/indice.json", "../apariencia.js", "../uso.js"];
 const BIBLIA = Array.from({length: 73}, (_, i) => "./biblia/" + (i + 1) + ".json");

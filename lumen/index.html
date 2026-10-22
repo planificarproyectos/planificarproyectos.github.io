@@ -255,6 +255,16 @@ body.afon .installbar{bottom:calc(180px + env(safe-area-inset-bottom,0px))}
 @keyframes lm-flash{0%{opacity:0;transform:scale(.2)}1%{opacity:.85;transform:scale(.2)}100%{opacity:0;transform:scale(2.6)}}
 @keyframes lm-word{from{opacity:0;transform:translateY(12px);letter-spacing:10px}to{opacity:1;transform:none;letter-spacing:3px}}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}#splash *{animation:none!important;stroke-dashoffset:0!important;opacity:1!important}#splash .fl{opacity:0!important}}
+/* ================= DISEÑO COMPACTO =================
+   Menos relleno, márgenes y separaciones para que quepa más en pantalla (mismo criterio que Wellness Apps). */
+.wrap{padding-block:12px 108px;gap:14px}
+.hero{padding:14px;gap:8px;border-radius:18px}
+.card{padding:10px 12px;gap:10px;border-radius:16px}
+.panel{padding:12px 14px;gap:8px;border-radius:18px}
+.tile{padding:10px 12px;border-radius:16px}
+.item{padding:8px 10px;min-height:50px;border-radius:14px}
+.grid2{gap:8px}
+.btn{min-height:46px;border-radius:14px}
 </style></head>
 <body>
 <div id="splash" role="img" aria-label="Lumen">
