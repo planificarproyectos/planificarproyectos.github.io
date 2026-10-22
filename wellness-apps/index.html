@@ -132,7 +132,9 @@ body.admin .apps{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1f
 .app-acc-h b{font-size:.88rem;margin-right:auto}
 .app-acc-h span{font-size:.8rem;color:var(--muted);margin-right:4px}
 .sbtn.sm{padding:.35rem .75rem;font-size:.8rem}
-.app-sws{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px 18px}
+.app-sws{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px 18px}
+/* Cada interruptor va pegado a la izquierda de su app, para que se lea "interruptor · nombre" sin confusión */
+.app-sws .pry-sw{flex-direction:row-reverse;justify-content:flex-end;gap:10px}
 .sw{flex:none;width:46px;height:26px;border-radius:99px;border:1px solid var(--line);background:var(--surface2);position:relative;cursor:pointer;padding:0;transition:background .2s,border-color .2s}
 .sw i{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--muted);transition:transform .2s,background .2s}
 .sw[aria-checked=true]{background:var(--accent);border-color:var(--accent)}
