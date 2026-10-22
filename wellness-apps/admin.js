@@ -180,7 +180,7 @@
     return e==='activo'?'<span class="pill ok">Activo</span>':e==='revocado'?'<span class="pill no">Revocado</span>':e==='pendiente'?'<span class="pill wait">Pendiente</span>':'<span class="pill">Sin registro de acceso</span>'}
   function cuentas(){var q=S.q.trim().toLowerCase(),L=S.users.filter(function(u){return !q||u.email.indexOf(q)>=0});
     var h='<section class="card wide"><h3>Cuentas de <span>usuario</span></h3><p class="sub">Revocar quita el acceso a todas las apps (Mind Focus, PowerFit, Lumen y Proyecta); sus datos no se borran. Eliminar borra sus datos para siempre.</p>'
-      +'<div class="searchrow"><label class="field"><input id="admQ" type="search" placeholder="Buscar por correo" value="'+esc(S.q)+'" autocomplete="off" aria-label="Buscar cuenta por correo"></label><span class="adm-upd">'+L.length+' de '+S.users.length+'</span></div>';
+      +'<div class="searchrow"><label class="field"><input id="admQ" type="search" placeholder="Buscar usuario por correo" value="'+esc(S.q)+'" autocomplete="off" aria-label="Buscar cuenta por correo"></label><span class="adm-upd">'+L.length+' de '+S.users.length+'</span></div>';
     if(S.delOut)h+=resultadoEliminar();
     h+='<div class="ulist">'+(L.length?L.map(cuentaRow).join(''):'<div class="empty">Ninguna cuenta coincide.</div>')+'</div>';
     return h+invitar()+'</section>'}
@@ -245,7 +245,7 @@
     el.hidden=false;
     el.innerHTML='<div class="adm-head wide"><div><div class="kicker">Solo administración</div><h2>Panel de <span>control</span></h2></div><div class="adm-upd"><span>'+(S.busy?'Cargando…':S.upd?'Actualizado '+new Date(S.upd).toLocaleTimeString('es-CO',{hour:'numeric',minute:'2-digit'}):'')+'</span><button class="sbtn" data-adm="load" type="button"'+(S.busy?' disabled':'')+'>Actualizar</button></div></div>'
       +(S.err?'<div class="empty wide" role="alert">'+esc(S.err)+'</div>':'')
-      +(S.upd?resumen()+comparar()+porApp()+ranking()+crecimiento()+solicitudes()+cuentas()+detalle():'');
+      +(S.upd?resumen()+cuentas()+solicitudes()+detalle()+comparar()+porApp()+ranking()+crecimiento():'');   // primero lo que se administra (cuentas y accesos), luego las métricas
     sinTip();document.body.classList.toggle('adm-sheet',!!(S.ver&&porId(S.ver)));
     if(S.verFoco){S.verFoco=false;var cx=document.querySelector('#adm .sheet .x');if(cx)cx.focus()}
     else if(f==='admQ'){var q=$('admQ');if(q){q.focus();if(pos!=null)q.setSelectionRange(pos,pos)}}}

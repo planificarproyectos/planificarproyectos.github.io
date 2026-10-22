@@ -289,7 +289,12 @@ function render(u){document.body.classList.remove('loading');document.body.class
  $('authCard').hidden=!!u;$('userCard').hidden=!u;
  $('lead').textContent=u?'Tus apps de bienestar en un solo lugar.':'Tus apps de bienestar en un solo lugar. Crea tu cuenta para empezar.';
  if(u){var n=(u.displayName||u.email.split('@')[0]).split(' ')[0];$('uName').textContent=n;$('uDot').textContent=n.charAt(0).toUpperCase();$('uMail').textContent=u.email}
+ if(u)registrar(u);
  if(window.Adm)Adm.user(u)}
+/* Quien crea su cuenta aquí queda registrado de una vez (como en las apps): con acceso a Mind Focus, PowerFit y Lumen,
+   y visible en el panel del administrador. Proyecta sigue esperando a que el administrador lo active. */
+function registrar(u){if(!u.email)return;try{var em=u.email.toLowerCase(),ref=firebase.firestore().collection('invitaciones').doc(em),now=Date.now();
+ ref.get().then(function(sn){if(!sn.exists)return ref.set({email:em,estado:'activo',uid:u.uid,activado:now,ultimoUso:now,autoregistro:true})}).catch(function(){})}catch(e){}}
 $('aSwitch').onclick=function(){setMode(mode==='login'?'register':'login')};
 $('aForgot').onclick=function(){setMode('reset')};
 $('aForm').onsubmit=function(e){e.preventDefault();if(!auth){msg('Sin conexión. Revisa tu internet.');return}
