@@ -557,6 +557,11 @@ a.card{text-decoration:none}
 .hnum{flex:none;width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:800;font-size:13px}
 .hstep ul{margin:0;padding:0 16px 6px 54px;display:grid;gap:6px;font-size:14px;line-height:1.45}
 .hgo{margin:6px 14px 14px 54px;border-radius:14px;background:var(--surface2);color:var(--ink);font-weight:700}
+/* Descripción y nota de Mind Focus: cuadro de varias líneas que crece con el texto */
+textarea.grow{display:block;width:100%;font:inherit;color:var(--ink);padding:10px 12px;line-height:1.4;resize:vertical;min-height:64px;overflow:hidden}
+textarea.grow:focus{border-color:var(--accent-fg,var(--accent));outline:none}
+textarea.grow::placeholder{color:var(--faint)}
+.entry .body p{white-space:pre-line}
 /* ================= DISEÑO COMPACTO =================
    Menos relleno, márgenes y separaciones para que quepa más en pantalla (mismo criterio que Wellness Apps). */
 .wrap{padding-block:10px 18px}
@@ -638,7 +643,7 @@ h1{font-size:1.6rem}
           <h2 class="now-t" id="nowAct"></h2>
           <div class="now-time" id="nowTime">00:00:00</div>
           <p class="status" id="nowSince"></p>
-          <div class="now-note" id="nowNoteBox" hidden><input id="nowNote" placeholder="Nota opcional: con quién o qué lograste" maxlength="140"></div>
+          <div class="now-note" id="nowNoteBox" hidden><textarea id="nowNote" class="grow" rows="2" placeholder="Nota opcional: con quién o qué lograste" maxlength="600"></textarea></div>
           <div class="now-btns">
             <button class="stopbtn" id="nowStop" type="button">■ Terminar</button>
             <button id="nowNoteBtn" type="button">✎ Nota</button>
@@ -747,7 +752,7 @@ h1{font-size:1.6rem}
           <div class="field"><div class="lrow"><label class="label" for="fFin">Fin</label><button type="button" class="nowbtn" id="finNow">Ahora</button></div><div class="tz"><input id="fFin" type="time" required><span class="zero" aria-hidden="true">00:00 00</span></div></div>
           <div class="field half"><label class="label" for="fCat">Categoría</label><select id="fCat"></select></div>
           <div class="field full"><label class="label" for="fAct">Qué hice</label><input id="fAct" required placeholder="Ej. reunión, almuerzo, dormir"></div>
-          <div class="field full"><label class="label" for="fDesc">Descripción breve</label><input id="fDesc" placeholder="Opcional: con quién o qué lograste"></div>
+          <div class="field full"><label class="label" for="fDesc">Descripción breve</label><textarea id="fDesc" class="grow" rows="2" maxlength="600" placeholder="Opcional: con quién o qué lograste"></textarea></div>
           <div class="row full" style="justify-content:flex-end">
             <button type="button" id="cancelEdit" class="ghost" hidden>Cancelar edición</button>
             <button type="submit" class="primary" id="saveBtn">Guardar registro</button>
@@ -1021,7 +1026,7 @@ async function removeEntry(id){
 }
 const newId=()=>"e"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const nowHM=()=>{const d=new Date();return pad(d.getHours())+":"+pad(d.getMinutes())};
-function resetForm(){$("entryForm").reset();renderCatSelect();editing=null;$("cancelEdit").hidden=true;$("saveBtn").textContent="Guardar registro";if(typeof gateBtns==="function")try{gateBtns()}catch(e){}}
+function resetForm(){$("entryForm").reset();$("fDesc").style.height="";renderCatSelect();editing=null;$("cancelEdit").hidden=true;$("saveBtn").textContent="Guardar registro";if(typeof gateBtns==="function")try{gateBtns()}catch(e){}}
 $("cancelEdit").onclick=resetForm;
 $("iniNow").onclick=()=>{$("fInicio").value=nowHM();$("formStatus").textContent="Inicio ajustado a la hora actual: "+hm12($("fInicio").value);};
 $("finNow").onclick=()=>{$("fFin").value=nowHM();if($("fInicio").value&&toMin($("fFin").value)<=toMin($("fInicio").value))$("formStatus").textContent="Fin ajustado a la hora actual: "+hm12($("fFin").value)+" Cruza la medianoche: se guardará en dos días.";else $("formStatus").textContent="Fin ajustado a la hora actual: "+hm12($("fFin").value);};
@@ -1225,7 +1230,7 @@ function renderEntries(st){
       <div class="body"><span class="chip">${esc(c.n)}</span><h3>${esc(e.actividad)}</h3><p>${esc(e.descripcion||"")}</p></div>
       <div class="acts"><button data-a="edit">Editar</button><button data-a="del">Borrar</button></div>`;
     const acts=row.querySelector(".acts");
-    acts.querySelector('[data-a="edit"]').onclick=()=>{editing=e.id;$("fInicio").value=e.inicio;$("fFin").value=e.fin==="24:00"?"00:00":e.fin;$("fAct").value=e.actividad;$("fDesc").value=e.descripcion||"";$("fCat").value=cats.some(x=>x.id===e.categoria)?e.categoria:"auto";$("cancelEdit").hidden=false;openForm();$("saveBtn").textContent="Actualizar registro";$("fAct").focus();$("entryForm").scrollIntoView({behavior:"smooth",block:"center"})};
+    acts.querySelector('[data-a="edit"]').onclick=()=>{editing=e.id;$("fInicio").value=e.inicio;$("fFin").value=e.fin==="24:00"?"00:00":e.fin;$("fAct").value=e.actividad;$("fDesc").value=e.descripcion||"";setTimeout(()=>grow($("fDesc")),60);$("fCat").value=cats.some(x=>x.id===e.categoria)?e.categoria:"auto";$("cancelEdit").hidden=false;openForm();$("saveBtn").textContent="Actualizar registro";$("fAct").focus();$("entryForm").scrollIntoView({behavior:"smooth",block:"center"})};
     acts.querySelector('[data-a="del"]').onclick=()=>{acts.innerHTML='<span class="confirm">¿Borrar? <button data-y>Sí</button><button data-n>No</button></span>';acts.querySelector("[data-y]").onclick=()=>removeEntry(e.id);acts.querySelector("[data-n]").onclick=renderRegistro};
     box.appendChild(row);
   }
@@ -1614,7 +1619,7 @@ function renderHome(){
   $("nowIdle").hidden=run||pomoOn;$("nowRun").hidden=!run||pomoOn;$("nowCard").classList.toggle("run",run&&!pomoOn);
   if(run){const c=catById(cur.cat);$("nowAct").textContent=cur.act;$("nowCat").innerHTML=`<i style="background:${catColor(c)}"></i>${esc(c.n)}`;$("nowCard").style.setProperty("--nowc",catColor(c));
     $("nowSince").textContent="Desde las "+hm12(hmT(cur.start));const isFav=favs.some(f=>nk(f.act)===nk(cur.act));$("nowFav").textContent=isFav?"★ Favorito":"☆ Favorito";
-    if(document.activeElement!==$("nowNote"))$("nowNote").value=cur.desc||""}
+    if(document.activeElement!==$("nowNote")){$("nowNote").value=cur.desc||"";grow($("nowNote"))}}
   else{const le=lastEnd();$("nowLast").textContent=le?"Tu último registro terminó a las "+hm12(hmT(le))+(Date.now()-le>60000?" (hace "+fmtH((Date.now()-le)/60000)+").":".")+" Toca una actividad para empezar a contar.":"Toca una actividad para empezar a contar."}
   $("pomoGo").hidden=pomoOn;$("pomoGo").textContent=run?"◷ Pomodoro con «"+cur.act+"»":"◷ Iniciar pomodoro";
   $("sleepBtn").hidden=run&&cur.cat==="sueno";$("wakeBtn").classList.toggle("primary",run&&cur.cat==="sueno");
@@ -1702,7 +1707,11 @@ function drawGaps(tl,st){
 function tickNow(){if(!cur||$("nowRun").hidden)return;const s=Math.max(0,Math.floor((Date.now()-cur.start)/1000));$("nowTime").textContent=pad(Math.floor(s/3600))+":"+pad(Math.floor(s/60)%60)+":"+pad(s%60)}
 setInterval(tickNow,1000);
 $("nowStop").onclick=async()=>{await finishCur(Date.now());renderHome()};
-$("nowNoteBtn").onclick=()=>{const b=$("nowNoteBox");b.hidden=!b.hidden;if(!b.hidden)$("nowNote").focus()};
+// Descripción y nota: el cuadro crece con el texto para que se lea completo (también al abrirlo o editar un registro)
+function grow(el){if(!el||!el.offsetParent)return;el.style.height="auto";el.style.height=(el.scrollHeight+2)+"px"}
+document.addEventListener("input",ev=>{if(ev.target.classList&&ev.target.classList.contains("grow"))grow(ev.target)});
+document.addEventListener("focusin",ev=>{if(ev.target.classList&&ev.target.classList.contains("grow"))grow(ev.target)});
+$("nowNoteBtn").onclick=()=>{const b=$("nowNoteBox");b.hidden=!b.hidden;if(!b.hidden){grow($("nowNote"));$("nowNote").focus()}};
 $("nowNote").addEventListener("change",async()=>{if(!cur)return;cur.desc=$("nowNote").value.trim();await saveCur();toast("Nota guardada")});
 $("nowFav").onclick=async()=>{if(!cur)return;const i=favs.findIndex(f=>nk(f.act)===nk(cur.act));if(i>=0)favs.splice(i,1);else{favs.push({act:cur.act,cat:cur.cat});track("favorito")}await saveFavs();renderHome();toast(i>=0?"Quitado de favoritos":"Guardado en favoritos")};
 $("favEdit").onclick=()=>{favEditing=!favEditing;renderHome()};
