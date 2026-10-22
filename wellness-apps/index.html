@@ -127,9 +127,17 @@ body.admin .wrap{max-width:1040px}
 .rk small{display:block;color:var(--muted);font-size:.8rem;margin-top:2px}
 .rk>b{font-family:"Barlow Condensed",sans-serif;font-size:1.4rem}
 .badge{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 7px;border-radius:99px;background:#FF6B57;color:#111315;font-size:.8rem;font-weight:700;vertical-align:middle;margin-left:6px;font-family:"DM Sans",sans-serif}
-.ulist{display:grid;gap:10px}
-.urow{background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:grid;gap:8px}
+.ulist{display:grid;gap:6px}
+.urow{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:grid;gap:0}
+.urow.open{gap:10px}
 .urow .top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+/* Línea de la cuenta: se toca para ver los detalles */
+.utop{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap;cursor:pointer;border-radius:10px}
+.utop:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.utop .usum{font-size:.8rem;color:var(--muted);white-space:nowrap}
+.utop .chev{width:18px;height:18px;flex:none;fill:none;stroke:var(--muted);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+.urow.open .utop .chev{transform:rotate(180deg)}
+.urow:not(.open):hover{border-color:var(--accent)}
 .urow .em{font-weight:700;overflow-wrap:anywhere;margin-right:auto}
 .urow .meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.82rem;color:var(--muted)}
 .urow .acts{display:flex;flex-wrap:wrap;gap:8px}

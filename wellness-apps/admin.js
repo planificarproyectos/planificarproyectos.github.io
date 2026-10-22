@@ -16,7 +16,7 @@
   var APP_ORD=['mindfocus','powerfit','lumen','proyecta'];
   function appOn(i){var ap=(i&&i.apps)||{},o={};APP_ORD.forEach(function(a){o[a]=a==='proyecta'?(i&&i.proyecta)==='aprobado':ap[a]!==false});return o}
   var DIA=864e5, SUBS=['entradas','config','powerfit','lumen','proyecta','perfil'];
-  var S={db:null,me:null,inv:[],stats:{},admins:{},users:[],upd:0,app:'mindfocus',q:'',sure:'',del:null,delOut:null,invMsg:null,busy:false,err:'',ver:null,verFoco:false};
+  var S={db:null,me:null,inv:[],stats:{},admins:{},uopen:null,users:[],upd:0,app:'mindfocus',q:'',sure:'',del:null,delOut:null,invMsg:null,busy:false,err:'',ver:null,verFoco:false};
   var $=function(id){return document.getElementById(id)};
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function nf(n){return (+n||0).toLocaleString('es-CO')}
@@ -170,7 +170,7 @@
 
   function solicitudes(){var L=S.users.filter(function(u){return u.inv&&u.inv.proyecta&&!u.admin}),pend=L.filter(function(u){return u.inv.proyecta==='pendiente'}).sort(function(a,b){return (+a.inv.proyectaSol||0)-(+b.inv.proyectaSol||0)}),
       ok=L.filter(function(u){return u.inv.proyecta==='aprobado'}),no=L.filter(function(u){return u.inv.proyecta==='denegado'});
-    var row=function(u,btns,info){return '<div class="urow"><div class="top"><span class="em">'+esc(u.email)+'</span></div><div class="meta"><span>'+info+'</span></div><div class="acts">'+btns+'</div></div>'};
+    var row=function(u,btns,info){return '<div class="urow open"><div class="top"><span class="em">'+esc(u.email)+'</span></div><div class="meta"><span>'+info+'</span></div><div class="acts">'+btns+'</div></div>'};
     return '<section class="card"><h3>Solicitudes de <span>Proyecta</span>'+(pend.length?'<span class="badge">'+pend.length+'</span>':'')+'</h3><p class="sub">Proyecta pide aprobación antes de dar acceso.</p>'
       +(pend.length?'<div class="ulist">'+pend.map(function(u){return row(u,'<button class="sbtn" data-adm="pry" data-v="denegado" data-id="'+esc(u.id)+'">Denegar</button><button class="sbtn pri" data-adm="pry" data-v="aprobado" data-id="'+esc(u.id)+'">Aprobar</button>','Pidió acceso '+hace(+u.inv.proyectaSol))}).join('')+'</div>':'<div class="empty">No hay solicitudes pendientes.</div>')
       +(ok.length?'<details><summary>Con acceso ('+ok.length+')</summary><div class="ulist">'+ok.map(function(u){return row(u,'<button class="sbtn warn'+(S.sure==='pq:'+u.id?' sure':'')+'" data-adm="pryq" data-id="'+esc(u.id)+'">'+(S.sure==='pq:'+u.id?'¿Seguro? Toca de nuevo':'Quitar acceso')+'</button>','Aprobado '+fecha(+u.inv.proyectaRes))}).join('')+'</div></details>':'')
@@ -205,8 +205,14 @@
       +'<button type="button" class="sbtn sm" data-adm="appall" data-v="0" data-id="'+esc(u.id)+'"'+(nOn?'':' disabled')+'>Ninguna</button></div><div class="app-sws">'
       +APP_ORD.map(function(a){return '<div class="pry-sw"><span>'+esc(APPS[a])+(a==='proyecta'&&i.proyecta==='pendiente'?' <span class="pill wait">Pidió acceso</span>':'')+'</span>'
         +'<button type="button" class="sw" role="switch" aria-checked="'+on[a]+'" data-adm="appsw" data-app="'+a+'" data-id="'+esc(u.id)+'" aria-label="Acceso a '+esc(APPS[a])+' de '+esc(u.email)+'"><i></i></button></div>'}).join('')+'</div></div>';
-    var h='<div class="urow"><div class="top"><span class="em">'+esc(u.email)+'</span>'+pill(u)+'</div>'
-      +'<div class="meta"><span>'+(i.autoregistro?'Se registró solo':i.invitado?'Invitado':'Cuenta')+(desde?' · '+fecha(+desde):'')+'</span><span>Último uso: '+hace(u.last)+'</span><span>Sesiones: '+nf(ses)+'</span>'
+    // Cerrada, la cuenta es una sola línea (correo, estado, apps con acceso y último uso); al tocarla se despliegan los
+    // detalles para activar, desactivar y administrar. Solo una abierta a la vez
+    var abierta=S.uopen===u.id||S.del===u.id,
+      resumen=u.admin?'Todas las apps':u.estado==='revocado'?'Sin acceso':nOn+' de '+APP_ORD.length+' apps';
+    var h='<div class="urow'+(abierta?' open':'')+'"><button type="button" class="utop" data-adm="uopen" data-id="'+esc(u.id)+'" aria-expanded="'+abierta+'">'
+      +'<span class="em">'+esc(u.email)+'</span>'+(i.proyecta==='pendiente'&&!u.admin?'<span class="pill wait">Pidió Proyecta</span>':'')+pill(u)
+      +'<span class="usum">'+resumen+' · '+hace(u.last)+'</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>';
+    if(abierta)h+='<div class="meta"><span>'+(i.autoregistro?'Se registró solo':i.invitado?'Invitado':'Cuenta')+(desde?' · '+fecha(+desde):'')+'</span><span>Último uso: '+hace(u.last)+'</span><span>Sesiones: '+nf(ses)+'</span>'
       +'</div>'
       +(apps.length?'<div class="row2">'+apps.map(function(a){return '<span class="tag">'+esc(APPS[a])+'</span>'}).join('')+'</div>':'')
       +pry+(acts?'<div class="acts">'+acts+'</div>':'');
@@ -273,6 +279,7 @@
   document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-adm]');if(!b||!S.me)return;var a=b.getAttribute('data-adm'),id=b.getAttribute('data-id');
     if(a==='load')return cargar();
     if(a==='app'){S.app=b.getAttribute('data-k');return pintar()}
+    if(a==='uopen'){S.uopen=S.uopen===id?null:id;S.del=null;return pintar()}
     if(a==='ver'){S.ver=id;S.verFoco=true;return pintar()}
     if(a==='verx'){var vid=S.ver;S.ver=null;pintar();var vb=document.querySelector('[data-adm="ver"][data-id="'+(window.CSS&&CSS.escape?CSS.escape(vid):vid)+'"]');if(vb)vb.focus();return}
     if(a==='pry')return upd(id,{proyecta:b.getAttribute('data-v'),proyectaRes:Date.now()});
