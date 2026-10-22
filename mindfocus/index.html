@@ -1459,7 +1459,7 @@ if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWor
 // Se cuentan con /uso.js (stats/{uid}.apps.mindfocus) para el dashboard de Wellness Apps; la administración vive allí.
 // Google Analytics solo recibe eventos si la persona aceptó la analítica.
 const ADMIN_UID="AQaEMcKNYfWEhcHVdc8N0ghxeZk1";
-let me=null,ga=null;
+let me=null,ga=null,meAdmin=false;   // meAdmin: cuenta principal o marcada como administradora en el panel
 function track(ev,metodo){
   if(ga){try{ga.logEvent(ev==="registro"?"registro_guardado":ev==="analisis"?"analisis_abierto":ev==="csv"?"csv_exportado":ev,metodo?{metodo}:{})}catch(e){}}
   if(!window.Uso)return;
@@ -1510,7 +1510,7 @@ else{
     if(!user){$("appView").hidden=true;$("authView").hidden=false;$("acctBar").hidden=true;return}
     $("authView").hidden=true;
     if(!(await checkAccess(user))){$("appView").hidden=true;$("acctBar").hidden=true;$("noAccessView").hidden=false;$("noAccessMsg").textContent="La cuenta "+user.email+" no tiene acceso activo. Pide al administrador que lo active.";return}
-    me=user;$("accEmail").textContent=user.email;if(view==="acc")setView("acc");
+    me=user;meAdmin=user.uid===ADMIN_UID;if(window.Uso&&Uso.esAdmin)Uso.esAdmin(db,user).then(a=>{meAdmin=a});$("accEmail").textContent=user.email;if(view==="acc")setView("acc");
     if(window.Uso)Uso.start(db,user,"mindfocus");
     $("appView").hidden=false;$("acctBar").hidden=false;$("acctEmail").textContent=user.email;
     const base=db.collection("users").doc(user.uid);
@@ -1837,7 +1837,7 @@ function renderTheme(){
 function renderAccTop(){
   const em=$("accEmail").textContent;$("waSup").href=(window.wellnessWA||function(a,t){return "https://wa.me/573204451740"})("Mind Focus","soporte",em);$("waRec").href=(window.wellnessWA||function(a,t){return "https://wa.me/573204451740"})("Mind Focus","recomendacion",em);$("accName").textContent=userName||em||"Sin sesión";$("accEmail2").textContent=userName?em:"";$("accEmail2").hidden=!userName;
   const cr=me&&me.metadata&&Date.parse(me.metadata.creationTime),MS=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"],fd=cr?new Date(cr):null;
-  $("accRole").textContent=[fd?"Cuenta creada el "+fd.getDate()+" "+MS[fd.getMonth()]+" "+fd.getFullYear():"",me&&me.uid===ADMIN_UID?"Administrador":""].filter(Boolean).join(" · ");
+  $("accRole").textContent=[fd?"Cuenta creada el "+fd.getDate()+" "+MS[fd.getMonth()]+" "+fd.getFullYear():"",me&&meAdmin?"Administrador":""].filter(Boolean).join(" · ");
   const mins=entries.reduce((a,e)=>a+Math.max(0,toMin(e.fin)-toMin(e.inicio)),0);
   $("akReg").textContent=entries.length;$("akHrs").textContent=Math.round(mins/60);$("akStk").textContent=streak();
 }

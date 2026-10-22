@@ -135,6 +135,8 @@ body.admin .apps{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1f
 .app-sws{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px 18px}
 /* Cada interruptor va pegado a la izquierda de su app, para que se lea "interruptor · nombre" sin confusión */
 .app-sws .pry-sw{flex-direction:row-reverse;justify-content:flex-end;gap:10px}
+.adm-sw{border-top:1px solid var(--line);padding-top:10px;flex-direction:row-reverse;justify-content:flex-end;gap:10px}
+.adm-sw small{font-weight:500;color:var(--muted)}
 .sw{flex:none;width:46px;height:26px;border-radius:99px;border:1px solid var(--line);background:var(--surface2);position:relative;cursor:pointer;padding:0;transition:background .2s,border-color .2s}
 .sw i{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--muted);transition:transform .2s,background .2s}
 .sw[aria-checked=true]{background:var(--accent);border-color:var(--accent)}
@@ -248,6 +250,13 @@ body.adm-sheet{overflow:hidden}
     <a class="app" href="/lumen/"><span class="lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
       <img src="/lumen/icon.svg" alt="" width="72" height="72">
       <div><h2>Lumen</h2><p>Reza el Rosario, lee el Evangelio del día y lleva tu rutina de oración.</p></div>
+      <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </a>
+    <!-- Apps solo para administradores (clase adm-only): admin.js las muestra cuando la cuenta es administradora.
+         Las apps nuevas que se creen se agregan aquí con la misma clase. -->
+    <a class="app adm-only" href="/proyecta/" hidden><span class="lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+      <img src="/proyecta/icon.svg" alt="" width="72" height="72">
+      <div><h2>Proyecta</h2><p>Modelo financiero de proyectos inmobiliarios: flujo de caja, utilidad, TIR y comparación de proyectos.</p></div>
       <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
     </a>
   </nav>

@@ -3170,12 +3170,13 @@ function startFirebase(){
     hideAuth();
     const ok=await ensureAccess(u);
     if(!ok){showNoAccess(u);return}
-    if(u.uid===ADMIN_UID){startFb(u);return}
+    // Administradores (la cuenta principal y los marcados en el panel de Wellness Apps) entran sin pedir aprobación
+    if(u.uid===ADMIN_UID||(window.Uso&&await Uso.esAdmin(FB.db,u))){startFb(u);return}
     watchApproval(u);
   });
 }
 /* ---------- Aprobación de acceso ----------
-   Cada cuenta, menos la del administrador, solicita acceso a Proyecta y espera aprobación.
+   Cada cuenta, menos las administradoras, solicita acceso a Proyecta y espera aprobación.
    El estado vive en invitaciones/{correo}.proyecta: "pendiente", "aprobado" o "denegado" */
 const ADMIN_UID='AQaEMcKNYfWEhcHVdc8N0ghxeZk1';
 function watchApproval(u){

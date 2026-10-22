@@ -1,6 +1,6 @@
-/* Dashboard de administración de Wellness Apps. Solo aparece con la cuenta administradora (ADMIN_UID); para cualquier
-   otra persona el hub queda igual.
-   - Lee solo dos colecciones: invitaciones (acceso de cada cuenta) y stats (conteos de uso que guarda /uso.js en cada
+/* Dashboard de administración de Wellness Apps. Solo aparece con una cuenta administradora: la principal (ADMIN_UID) o las que
+   se marquen como administradoras en el panel (admins/{uid}); para cualquier otra persona el hub queda igual.
+   - Lee invitaciones (acceso de cada cuenta), admins (administradores) y stats (conteos de uso que guarda /uso.js en cada
      app). Nunca lee el contenido de las personas (registros, entrenos, proyectos…).
    - Mind Focus guardaba antes sus conteos en la raíz de stats/{uid} (sesiones, dias, registros, cronometro, manual,
      analisis, csv): se suman a sus métricas.
@@ -16,7 +16,7 @@
   var APP_ORD=['mindfocus','powerfit','lumen','proyecta'];
   function appOn(i){var ap=(i&&i.apps)||{},o={};APP_ORD.forEach(function(a){o[a]=a==='proyecta'?(i&&i.proyecta)==='aprobado':ap[a]!==false});return o}
   var DIA=864e5, SUBS=['entradas','config','powerfit','lumen','proyecta','perfil'];
-  var S={db:null,me:null,inv:[],stats:{},users:[],upd:0,app:'mindfocus',q:'',sure:'',del:null,delOut:null,invMsg:null,busy:false,err:'',ver:null,verFoco:false};
+  var S={db:null,me:null,inv:[],stats:{},admins:{},users:[],upd:0,app:'mindfocus',q:'',sure:'',del:null,delOut:null,invMsg:null,busy:false,err:'',ver:null,verFoco:false};
   var $=function(id){return document.getElementById(id)};
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function nf(n){return (+n||0).toLocaleString('es-CO')}
@@ -64,11 +64,12 @@
       if(!u){u={id:em||uid,email:em||uid,inv:null,uid:uid,st:null};out.push(u)}u.st=st;if(!u.uid)u.uid=uid});
     out.forEach(function(u){u.apps={};var last=Math.max(+(u.inv&&u.inv.ultimoUso)||0,+(u.st&&u.st.ultimoUso)||0);
       Object.keys(APPS).forEach(function(a){var d=appData(u.st,a);u.apps[a]=d;if(d.ultimoUso>last)last=d.ultimoUso});
-      u.last=last;u.admin=u.uid===ADMIN_UID||!!(u.inv&&u.inv.admin);u.estado=(u.inv&&u.inv.estado)||'sin registro'});
+      u.last=last;u.admin=u.uid===ADMIN_UID||!!(u.uid&&S.admins[u.uid]);u.estado=(u.inv&&u.inv.estado)||'sin registro'});
     out.sort(function(a,b){return b.last-a.last});S.users=out}
 
   function cargar(){if(!S.db||S.busy)return;S.busy=true;S.err='';pintar();
-    Promise.all([S.db.collection('invitaciones').get(),S.db.collection('stats').get()]).then(function(r){
+    Promise.all([S.db.collection('invitaciones').get(),S.db.collection('stats').get(),S.db.collection('admins').get().catch(function(){return {docs:[]}})]).then(function(r){
+      S.admins={};r[2].docs.forEach(function(d){S.admins[d.id]=d.data()||{}});
       S.inv=r[0].docs.map(function(d){var x=d.data();x.id=d.id;return x});S.stats={};r[1].docs.forEach(function(d){S.stats[d.id]=d.data()});
       armar();S.upd=Date.now()}).catch(function(e){S.err='No se pudieron cargar los datos ('+(e.code||e.message)+').'}).then(function(){S.busy=false;pintar()})}
 
@@ -193,8 +194,13 @@
     if(!u.admin)acts+='<button class="sbtn warn" data-adm="del" data-id="'+esc(u.id)+'">Eliminar datos</button>';
     // Acceso por app: un interruptor por cada una, más "Todas" y "Ninguna". Cada app lo escucha en vivo y deja entrar o
     // saca a la persona. Mind Focus, PowerFit y Lumen: apps.{app} (sin dato = con acceso). Proyecta: aprobado / denegado.
+    // Administrador: mismas opciones que la cuenta principal (este panel, todas las apps, Proyecta sin aprobación).
+    // Se guarda en admins/{uid}; la cuenta principal no se puede quitar y nadie se quita a sí mismo (para no quedar fuera).
+    var root=u.uid===ADMIN_UID,yo=u.uid===S.me,
+      adm=root?'':!u.uid?'<div class="pry-sw adm-sw"><span>Administrador <small>· podrás activarlo cuando inicie sesión por primera vez</small></span></div>'
+        :'<div class="pry-sw adm-sw"><span>Administrador'+(yo?' <small>· no puedes quitártelo a ti mismo</small>':'')+'</span><button type="button" class="sw" role="switch" aria-checked="'+u.admin+'" data-adm="admsw" data-id="'+esc(u.id)+'"'+(yo?' disabled':'')+' aria-label="Administrador: '+esc(u.email)+'"><i></i></button></div>';
     var on=appOn(i),nOn=APP_ORD.filter(function(a){return on[a]}).length,
-      pry=u.admin?'':'<div class="app-acc"><div class="app-acc-h"><b>Acceso a apps</b><span>'+(nOn===APP_ORD.length?'Todas':nOn?nOn+' de '+APP_ORD.length:'Ninguna')+'</span>'
+      pry=u.admin?adm:adm+'<div class="app-acc"><div class="app-acc-h"><b>Acceso a apps</b><span>'+(nOn===APP_ORD.length?'Todas':nOn?nOn+' de '+APP_ORD.length:'Ninguna')+'</span>'
       +'<button type="button" class="sbtn sm" data-adm="appall" data-v="1" data-id="'+esc(u.id)+'"'+(nOn===APP_ORD.length?' disabled':'')+'>Todas</button>'
       +'<button type="button" class="sbtn sm" data-adm="appall" data-v="0" data-id="'+esc(u.id)+'"'+(nOn?'':' disabled')+'>Ninguna</button></div><div class="app-sws">'
       +APP_ORD.map(function(a){return '<div class="pry-sw"><span>'+esc(APPS[a])+(a==='proyecta'&&i.proyecta==='pendiente'?' <span class="pill wait">Pidió acceso</span>':'')+'</span>'
@@ -270,6 +276,12 @@
     if(a==='ver'){S.ver=id;S.verFoco=true;return pintar()}
     if(a==='verx'){var vid=S.ver;S.ver=null;pintar();var vb=document.querySelector('[data-adm="ver"][data-id="'+(window.CSS&&CSS.escape?CSS.escape(vid):vid)+'"]');if(vb)vb.focus();return}
     if(a==='pry')return upd(id,{proyecta:b.getAttribute('data-v'),proyectaRes:Date.now()});
+    if(a==='admsw'){var x=porId(id);if(!x||!x.uid||x.uid===ADMIN_UID||x.uid===S.me)return;var hacer=b.getAttribute('aria-checked')!=='true';b.setAttribute('aria-checked',hacer);b.disabled=true;
+      var ref=S.db.collection('admins').doc(x.uid);
+      // Al volverlo administrador también se le abren todas las apps, para que no quede bloqueado por un acceso anterior
+      return (hacer?ref.set({email:x.email,desde:Date.now(),por:S.me}).then(function(){return S.db.collection('invitaciones').doc(x.id)
+          .set({email:x.email,apps:{mindfocus:true,powerfit:true,lumen:true},proyecta:'aprobado',proyectaRes:Date.now()},{merge:true})}):ref.delete())
+        .then(cargarSilencio,function(e){b.setAttribute('aria-checked',!hacer);b.disabled=false;alert('No se pudo guardar: '+(e.code||e.message))})}
     if(a==='appsw'||a==='appall'){var w=porId(id);if(!w)return;var data={email:w.email},
         list=a==='appsw'?[b.getAttribute('data-app')]:APP_ORD,on=a==='appsw'?b.getAttribute('aria-checked')!=='true':b.getAttribute('data-v')==='1';
       list.forEach(function(k){if(k==='proyecta'){data.proyecta=on?'aprobado':'denegado';data.proyectaRes=Date.now()}else{data.apps=data.apps||{};data.apps[k]=on}});
@@ -292,7 +304,13 @@
     S.db.collection('invitaciones').doc(em).set(ex&&ex.inv?{estado:'pendiente',invitado:Date.now()}:{email:em,estado:'pendiente',invitado:Date.now()},{merge:true})
       .then(function(){S.invMsg={ok:true,st:'Invitación creada para '+em+'. Envíale el mensaje.',text:invTexto(em)};S.busy=false;cargar()},function(x){S.invMsg={st:'No se pudo invitar: '+(x.code||x.message)};pintar()})});
 
-  window.Adm={user:function(u){var admin=!!(u&&u.uid===ADMIN_UID);document.body.classList.toggle('admin',admin);
-    if(!admin){S.me=null;S.users=[];S.upd=0;return pintar()}
-    if(S.me===u.uid)return;S.me=u.uid;try{S.db=firebase.firestore()}catch(e){S.err='No se pudo conectar con la base de datos.'}cargar()}};
+  // Cuenta principal o marcada como administradora (admins/{uid}): ve el panel y las apps solo para administradores
+  // (los enlaces con la clase adm-only, como Proyecta)
+  var quien=null;
+  window.Adm={user:function(u){var uid=u&&u.uid;quien=uid;
+    var chk=!u?Promise.resolve(false):window.Uso&&Uso.esAdmin?Uso.esAdmin(firebase.firestore(),u):Promise.resolve(uid===ADMIN_UID);
+    chk.then(function(admin){if(quien!==uid)return;document.body.classList.toggle('admin',admin);
+      Array.prototype.forEach.call(document.querySelectorAll('.adm-only'),function(e){e.hidden=!admin});
+      if(!admin){S.me=null;S.users=[];S.upd=0;return pintar()}
+      if(S.me===uid)return;S.me=uid;try{S.db=firebase.firestore()}catch(e){S.err='No se pudo conectar con la base de datos.'}cargar()})}};
 })();

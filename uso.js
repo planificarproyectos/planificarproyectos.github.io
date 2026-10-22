@@ -51,5 +51,10 @@
   // Si la app queda abierta y se vuelve a usar otro día, cuenta una sesión nueva
   document.addEventListener('visibilitychange',function(){ if(!U.uid) return; if(document.visibilityState==='visible') sesion(); else flush(); });
   window.addEventListener('pagehide',flush);
+  /* Administradores: la cuenta principal (ROOT) y las que ella u otro administrador marquen en el panel, guardadas en
+     admins/{uid}. Las reglas de Firestore usan la misma lista. U.esAdmin(db,user) responde con una promesa true/false. */
+  U.ROOT='AQaEMcKNYfWEhcHVdc8N0ghxeZk1';
+  U.esAdmin=function(db,user){ if(!user) return Promise.resolve(false); if(user.uid===U.ROOT) return Promise.resolve(true);
+    try{ return db.collection('admins').doc(user.uid).get().then(function(sn){ return sn.exists; },function(){ return false; }); }catch(e){ return Promise.resolve(false); } };
   window.Uso=U;
 })();
