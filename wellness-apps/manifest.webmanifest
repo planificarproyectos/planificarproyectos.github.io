@@ -3,7 +3,7 @@
   "short_name": "Wellness",
   "id": "/wellness-apps/",
   "start_url": "/wellness-apps/",
-  "scope": "/wellness-apps/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#111315",
   "theme_color": "#111315",

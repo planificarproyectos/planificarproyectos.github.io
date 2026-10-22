@@ -56,5 +56,9 @@
   U.ROOT='AQaEMcKNYfWEhcHVdc8N0ghxeZk1';
   U.esAdmin=function(db,user){ if(!user) return Promise.resolve(false); if(user.uid===U.ROOT) return Promise.resolve(true);
     try{ return db.collection('admins').doc(user.uid).get().then(function(sn){ return sn.exists; },function(){ return false; }); }catch(e){ return Promise.resolve(false); } };
+  /* Sesión que no se borre: se pide al navegador guardar los datos de forma permanente. En iPhone (Safari y apps
+     agregadas a la pantalla de inicio) los datos de una página, incluida la sesión de Firebase, se pueden borrar si
+     no se usan por unos días o falta espacio; con este permiso el sistema los conserva. No muestra ningún aviso. */
+  try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persisted().then(function(p){ if(!p) return navigator.storage.persist(); }).catch(function(){}); }catch(e){}
   window.Uso=U;
 })();
