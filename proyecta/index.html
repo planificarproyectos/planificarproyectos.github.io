@@ -18,6 +18,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script src="/google-login.js"></script>
 <script src="../uso.js"></script>
 <script src="../wellness-soporte.js"></script>
 <script src="../apariencia.js"></script><script>if(window.Apariencia)Apariencia.noLocal=true</script>
@@ -3184,7 +3185,7 @@ function showOffline(){hideSplash();$('#s-loading').hidden=false;$('#s-loading')
 const FB={shUnsub:{}};
 const SITE_URL='https://www.planificarproyectos.com/proyecta/';
 function startFirebase(){
-  try{firebase.initializeApp(window.FIREBASE_CONFIG);FB.auth=firebase.auth();FB.auth.languageCode='es';FB.db=firebase.firestore()}
+  try{firebase.initializeApp(window.FIREBASE_CONFIG);FB.auth=firebase.auth();FB.auth.languageCode='es';FB.db=firebase.firestore();if(window.GoogleLogin)GoogleLogin.usar(FB.auth)}
   catch(e){console.warn(e);showOffline();return}
   FB.auth.onAuthStateChanged(async u=>{
     if(FB.unsub){FB.unsub();FB.unsub=null}if(FB.unsubP){FB.unsubP();FB.unsubP=null}
@@ -3288,7 +3289,7 @@ function showAuth(mode){hideSplash();fabSync();
   const a=$('#auth');a.hidden=false;document.body.classList.add('authing');$('#s-loading').hidden=true;
   const m=mode||'login';ST.authMode=m;
   const T={login:['Inicia sesión','Entrar'],register:['Crea tu cuenta','Crear cuenta'],reset:['Recupera tu contraseña','Enviar enlace']}[m];
-  $('#authBody').innerHTML=`<h2>${T[0]}</h2>
+  $('#authBody').innerHTML=`<h2>${T[0]}</h2>${m!=='reset'&&window.GoogleLogin?GoogleLogin.boton():''}
    <form id="authForm" novalidate>
     <div class="f"><label for="aEmail">Correo</label><div class="box"><input id="aEmail" type="email" autocomplete="email" required value="${esc(ST.authEmail||'')}" style="text-align:left"></div></div>
     ${m!=='reset'?`<div class="f"><label for="aPass">Contraseña</label><div class="box"><input id="aPass" type="password" autocomplete="${m==='register'?'new-password':'current-password'}" required minlength="6" style="text-align:left"></div></div>`:''}

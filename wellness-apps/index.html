@@ -232,6 +232,7 @@ body.adm-sheet{overflow:hidden}
   <section class="card" id="authCard" hidden>
     <h3 id="aTitle">Crea tu cuenta <span>gratis</span></h3>
     <p class="sub" id="aSub">Con una sola cuenta tendrás acceso a todas las apps de Wellness Apps: Mind Focus, PowerFit y Lumen.</p>
+    <div data-google-slot></div>
     <form id="aForm" novalidate>
       <label class="field" id="fName"><input id="aName" type="text" autocomplete="name" placeholder="Tu nombre"></label>
       <label class="field"><input id="aEmail" type="email" autocomplete="email" inputmode="email" placeholder="Correo" required></label>
@@ -286,6 +287,7 @@ body.adm-sheet{overflow:hidden}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script src="/google-login.js"></script>
 <script src="../uso.js"></script>
 <script src="admin.js"></script>
 <script>
@@ -355,7 +357,7 @@ $('uOut').onclick=function(){auth&&auth.signOut()};
 document.querySelectorAll('.app').forEach(function(a){a.addEventListener('click',function(e){
  if(document.body.classList.contains('guest')){e.preventDefault();$('authCard').scrollIntoView({behavior:'smooth',block:'center'});msg('Crea tu cuenta o inicia sesión para abrir las apps.');(mode==='register'?$('aName'):$('aEmail')).focus({preventScroll:true})}})});
 setMode('register');
-try{firebase.initializeApp(window.FIREBASE_CONFIG);auth=firebase.auth();auth.languageCode='es';
+try{firebase.initializeApp(window.FIREBASE_CONFIG);auth=firebase.auth();auth.languageCode='es';if(window.GoogleLogin)GoogleLogin.usar(auth);
  auth.onAuthStateChanged(render);}catch(e){render(null)}
 // Tocar el nombre de la app (arriba a la izquierda) actualiza la página
 document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('[data-reload]')){e.preventDefault();location.reload()}});

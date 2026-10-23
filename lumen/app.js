@@ -51,7 +51,7 @@ var Cloud={auth:null,db:null,user:null,wait:false,ref:null,unsub:null,prof:null,
  init:function(){
   var self=this;
   if(!window.firebase||!window.FIREBASE_CONFIG) return; // sin Firebase: funciona solo en este navegador
-  try{ firebase.initializeApp(window.FIREBASE_CONFIG); self.auth=firebase.auth(); self.auth.languageCode='es'; self.db=firebase.firestore(); }catch(e){ console.warn(e); self.auth=null; return; }
+  try{ firebase.initializeApp(window.FIREBASE_CONFIG); self.auth=firebase.auth(); self.auth.languageCode='es'; self.db=firebase.firestore(); if(window.GoogleLogin) GoogleLogin.usar(self.auth); }catch(e){ console.warn(e); self.auth=null; return; }
   try{ self.db.enablePersistence({synchronizeTabs:true}).catch(function(){}); }catch(e){}
   self.wait=true;
   self.auth.onAuthStateChanged(function(u){
@@ -1057,7 +1057,7 @@ function vAuth(){
  var T={login:['Inicia sesión','Entrar'],register:['Crea tu cuenta','Crear cuenta'],reset:['Recupera tu contraseña','Enviar correo']}[m];
  return '<div class="stack full" style="gap:20px">'+
   '<div class="stack" style="align-items:center;text-align:center;gap:10px">'+brandBig()+'<p class="muted">Reza, lee y vive tu fe cada día. Todo queda guardado en tu cuenta.</p></div>'+
-  '<form id="authForm" class="panel" novalidate><h2>'+T[0]+'</h2>'+
+  '<form id="authForm" class="panel" novalidate><h2>'+T[0]+'</h2>'+(m!=='reset'&&window.GoogleLogin?GoogleLogin.boton():'')+
   '<label class="stack" style="gap:6px" for="aEmail"><span class="label">Correo</span><input class="inp" id="aEmail" type="email" autocomplete="email" inputmode="email" required style="font-size:16px" value="'+esc(U.authEmail||'')+'"></label>'+
   (m!=='reset'?'<label class="stack" style="gap:6px" for="aPass"><span class="label">Contraseña</span><input class="inp" id="aPass" type="password" autocomplete="'+(m==='register'?'new-password':'current-password')+'" required minlength="6" style="font-size:16px"></label>':'')+
   (m==='register'?'<label class="stack" style="gap:6px" for="aPass2"><span class="label">Repite la contraseña</span><input class="inp" id="aPass2" type="password" autocomplete="new-password" required minlength="6" style="font-size:16px"></label>':'')+

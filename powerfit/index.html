@@ -255,6 +255,7 @@ nav.tabs button.on{color:var(--accent-fg);font-weight:700}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script src="/google-login.js"></script>
 <script src="/uso.js"></script>
 <script src="../wellness-soporte.js"></script>
 <script>
@@ -657,7 +658,7 @@ var Store={mode:'local',col:null,months:{},
   init:function(){
     var self=this;
     if(!window.firebase||!window.FIREBASE_CONFIG) return; // sin Firebase: funciona solo en este navegador
-    try{ firebase.initializeApp(window.FIREBASE_CONFIG); self.auth=firebase.auth(); self.auth.languageCode="es"; self.fdb=firebase.firestore(); }
+    try{ firebase.initializeApp(window.FIREBASE_CONFIG); self.auth=firebase.auth(); self.auth.languageCode="es"; self.fdb=firebase.firestore(); if(window.GoogleLogin) GoogleLogin.usar(self.auth); }
     catch(e){ console.warn(e); return; }
     try{ self.fdb.enablePersistence({synchronizeTabs:true}).catch(function(){}); }catch(e){}
     S.authWait=true; S.view='auth';
@@ -1156,7 +1157,7 @@ function vAuth(){
   var T={login:['Inicia sesión','Entrar'],register:['Crea tu cuenta','Crear cuenta'],reset:['Recupera tu contraseña','Enviar correo']}[m];
   return '<div class="wrap full" style="justify-content:center">'+
    '<div class="stack" style="align-items:center;text-align:center;gap:10px">'+brand(56,36)+'<p class="muted">Entrena en casa y guarda todo tu progreso en tu cuenta.</p></div>'+
-   '<form id="authForm" class="panel" novalidate><h2>'+T[0]+'</h2>'+
+   '<form id="authForm" class="panel" novalidate><h2>'+T[0]+'</h2>'+(m!=='reset'&&window.GoogleLogin?GoogleLogin.boton():'')+
    '<label class="stack" style="gap:6px" for="aEmail"><span class="label">Correo</span><span class="field" style="background:var(--surface2)"><input id="aEmail" type="email" autocomplete="email" inputmode="email" required style="font-size:16px" value="'+esc(S.authEmail||'')+'"></span></label>'+
    (m!=='reset'?'<label class="stack" style="gap:6px" for="aPass"><span class="label">Contraseña</span><span class="field" style="background:var(--surface2)"><input id="aPass" type="password" autocomplete="'+(m==='register'?'new-password':'current-password')+'" required minlength="6" style="font-size:16px"></span></label>':'')+
    (m==='register'?'<label class="stack" style="gap:6px" for="aPass2"><span class="label">Repite la contraseña</span><span class="field" style="background:var(--surface2)"><input id="aPass2" type="password" autocomplete="new-password" required minlength="6" style="font-size:16px"></span></label>':'')+

@@ -580,6 +580,7 @@ h1{font-size:1.6rem}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
 <script src="/uso.js"></script>
 <script src="firebase-config.js"></script>
+<script src="/google-login.js"></script>
 <script src="../wellness-soporte.js"></script>
 </head>
 <body>
@@ -869,6 +870,7 @@ h1{font-size:1.6rem}
     <svg class="logo" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 8c-3-3-9-3-11 1-4 0-7 4-6 8-3 2-3 7 0 9-1 4 2 8 6 8 2 4 8 5 11 2"/><path d="M24 8c3-3 9-3 11 1 4 0 7 4 6 8 3 2 3 7 0 9 1 4-2 8-6 8-2 4-8 5-11 2"/><path d="M24 8v7M24 29v7M13 17c2 0 4 1 5 3M35 17c-2 0-4 1-5 3M12 27c2-1 4-1 6 0M36 27c-2-1-4-1-6 0"/><circle cx="24" cy="22" r="7"/><path class="hands" d="M24 22v-4M24 22l3 2"/></svg>
     <h1 class="authh">Mind Focus</h1>
     <p class="status" id="authSub">Inicia sesión para ver tus registros.</p>
+    <div data-google-slot></div>
     <form id="authForm" class="authform" autocomplete="on">
       <label class="field"><span class="label">Correo</span><input id="aEmail" type="email" autocomplete="username" required></label>
       <label class="field"><span class="label">Contraseña</span><input id="aPass" type="password" autocomplete="current-password" minlength="6" required></label>
@@ -1519,7 +1521,7 @@ const CFG=window.FIREBASE_CONFIG||{};
 let auth=null;
 if(!CFG.apiKey||!window.firebase){$("cfgView").hidden=false}
 else{
-  firebase.initializeApp(CFG);auth=firebase.auth();auth.languageCode="es";db=firebase.firestore();
+  firebase.initializeApp(CFG);auth=firebase.auth();auth.languageCode="es";db=firebase.firestore();if(window.GoogleLogin)GoogleLogin.usar(auth);
   auth.onAuthStateChanged(async user=>{
     unsubs.forEach(u=>u());unsubs=[];entries=[];cats=DEFAULT_CATS.map(c=>({...c}));me=null;if(window.Uso)Uso.stop();
     $("noAccessView").hidden=true;

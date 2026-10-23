@@ -1,7 +1,7 @@
 // Configuración pública de Firebase (no es secreta; los datos se protegen con las reglas de Firestore).
 window.FIREBASE_CONFIG = {
   apiKey: "AIzaSyBwnBbuCgVqQlO0E9IpaRV0gvm5HkZ_WL0",
-  authDomain: "bitacora-jornada.firebaseapp.com",
+  authDomain: "www.planificarproyectos.com",   // ayudante de inicio de sesión alojado en este dominio (/__/auth/), necesario para Google en iPhone
   projectId: "bitacora-jornada",
   storageBucket: "bitacora-jornada.firebasestorage.app",
   messagingSenderId: "656940324264",
