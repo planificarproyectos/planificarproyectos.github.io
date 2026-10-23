@@ -112,6 +112,7 @@ function applyTheme(){
  var c=accTriple(S.accent), light=S.mode==='light', r=document.documentElement;
  r.setAttribute('data-theme',light?'light':'dark');
  r.style.setProperty('--accent',c[1]); r.style.setProperty('--accent-fg',light?c[2]:c[1]);
+ r.style.setProperty('--accent-ink',window.Apariencia?Apariencia.ink(c[1]):'#111315');   // texto sobre el énfasis: oscuro o blanco, el que más contraste
  var m=document.querySelector('meta[name=theme-color]'); if(m) m.setAttribute('content',light?'#F3F2EE':'#111315');
  var f=$('fav'); if(f) f.setAttribute('href','data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="11" fill="#111315"/><circle cx="24" cy="24" r="15" fill="none" stroke="'+c[1]+'" stroke-width="3.5"/><path d="M24 12v24M17 19h14" stroke="#F2F2EE" stroke-width="4.5" stroke-linecap="round"/></svg>'));
 }

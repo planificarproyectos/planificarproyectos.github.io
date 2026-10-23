@@ -103,11 +103,18 @@ p{margin:0}
 .ctl{display:flex;gap:10px}
 .ctl .icon-btn{width:72px;height:72px;border-radius:22px;background:transparent;border:1px solid var(--line)}
 .ctl .btn{min-height:72px;border-radius:22px;font-size:18px}
-.quote{background:var(--surface);border-radius:22px;padding:22px 20px;display:flex;flex-direction:column;gap:12px}
-.quote p{font-family:var(--f-display);font-weight:600;font-size:30px;line-height:1.12}
-.quote .fexp{display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line);padding-top:10px}
-.quote .fexp p{font-family:var(--f-body);font-weight:400;font-size:15px;line-height:1.45;color:var(--muted)}
-.quote .q{font-family:var(--f-display);font-weight:700;font-size:64px;line-height:.6;color:var(--accent-fg);height:28px}
+/* Frase del día: tarjeta en el color de énfasis, con todo el texto en el color que contrasta con él (--accent-ink) */
+.quote{background:var(--accent);color:var(--accent-ink);border-radius:22px;padding:22px 20px;display:flex;flex-direction:column;gap:12px}
+.quote p{font-family:var(--f-display);font-weight:600;font-size:30px;line-height:1.12;color:inherit}
+.quote p.muted{color:inherit;opacity:.7}
+.quote .label,.quote .label.ac,.quote .ref{color:inherit}
+.quote .label{opacity:.75}
+.quote .fexp{display:flex;flex-direction:column;gap:4px;border-top:1px solid color-mix(in srgb,currentColor 25%,transparent);padding-top:10px}
+.quote .fexp p{font-family:var(--f-body);font-weight:400;font-size:15px;line-height:1.45;color:inherit;opacity:.85}
+.quote .say{background:color-mix(in srgb,var(--accent-ink) 12%,transparent);color:inherit}
+.quote .say svg{color:inherit}
+.quote .say.on{background:var(--accent-ink);color:var(--accent)}
+.quote .q{font-family:var(--f-display);font-weight:700;font-size:64px;line-height:.6;color:inherit;height:28px}
 .ref{font-size:14px;font-weight:700;color:var(--accent-fg)}
 .kv{display:flex;justify-content:space-between;gap:10px;padding-block:6px;border-bottom:1px solid var(--surface2)}
 .kv:last-child{border-bottom:none}
