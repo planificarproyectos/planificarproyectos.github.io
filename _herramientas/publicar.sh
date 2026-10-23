@@ -6,13 +6,13 @@
 cd "$(git rev-parse --show-toplevel)" || exit 1
 SITIO="https://www.planificarproyectos.com"
 git fetch -q origin main
-archivos=$(git diff --name-only origin/main..HEAD | grep -v '^_herramientas/')
+archivos=$(git diff --name-only origin/main..HEAD | grep -v '^_')   # lo que empieza con "_" (herramientas, _config.yml) no se publica
 if [ "$1" != "--solo-verificar" ]; then
   [ -z "$(git log --oneline origin/main..HEAD)" ] && { echo "No hay commits por publicar."; exit 0; }
   git push -q origin HEAD:main || { echo "Falló el push."; exit 1; }
   echo "Push hecho: $(git log -1 --format=%h)"
 else
-  archivos=$(git diff --name-only HEAD~1..HEAD | grep -v '^_herramientas/')
+  archivos=$(git diff --name-only HEAD~1..HEAD | grep -v '^_')   # lo que empieza con "_" (herramientas, _config.yml) no se publica
 fi
 [ -z "$archivos" ] && { echo "Sin archivos del sitio que verificar."; exit 0; }
 inicio=$(date +%s)
