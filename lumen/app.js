@@ -381,6 +381,10 @@ function rutName(id){ if(id==='ang'&&easterSeason()) return 'Regina Coeli'; retu
 
 /* ---------- Liturgia del día ---------- */
 var LIT={ready:false,err:false,info:null,mass:null,key:null,frase:null};
+// Explicación de cada frase del día (versículo del Evangelio), por referencia: datos/explicaciones.json. Se carga aparte para no demorar el inicio
+var EXP=null;
+function loadExp(){ fetch('datos/explicaciones.json').then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(j){ EXP=j; render(); }).catch(function(){}); }
+function fraseExp(){ return LIT.frase&&EXP?EXP[LIT.frase.ref]||'':''; }
 function loadLit(){
  return Promise.all(['datos/calendario.json','datos/leccionario.json','biblia/indice.json'].map(function(u){ return fetch(u).then(function(r){ if(!r.ok) throw 0; return r.json(); }); }))
   .then(function(a){ L.setData(a[0],a[1]); L.setNames(a[2]); IDX=a[2]; LIT.ready=true; refreshDay(); })
@@ -547,7 +551,7 @@ function vHome(){
   +((!S.name&&!needAuth())?'<button class="card" data-a="tab" data-v="me" style="border:1px solid var(--accent-fg)">'+ic('user',24)+'<span class="grow"><b>Configura tu nombre</b><span>Ve a Cuenta y escribe cómo quieres que te saludemos</span></span>'+ic('chevR',20)+'</button>':'')
   +'<div class="stack" style="gap:6px"><h1>'+greet()+(S.name?',<br>'+esc(S.name):'')+'</h1>'+(info?litBadge(info):'')+'</div>'
   +(info?'<div class="daycard"><span class="lbar" style="background:'+(LCOL[info.cel.c]||'#999')+'"></span><div class="stack" style="gap:4px;min-width:0"><span class="label">Hoy celebramos</span><b>'+esc(info.cel.n)+'</b>'+(info.commem?'<span class="small muted">Santo del día: '+esc(info.commem.n)+'</span>':'')+'</div></div>':'')
-  +'<div class="quote"><div class="between"><span class="label ac">Frase del día</span>'+(fr?sayBtn('frase'):'')+'</div>'+(fr?'<p>'+esc(fr.t)+'</p><div class="between"><span class="ref">'+esc(fr.ref)+'</span><span class="row" style="gap:6px"><button class="say" data-a="copy">'+ic('copy',16)+'<span>Copiar</span></button><button class="say" data-a="shareFrase">'+ic('share',16)+'<span>Compartir</span></button></span></div>':'<p class="muted" style="font-size:18px">Cargando el Evangelio de hoy…</p>')+'</div>'
+  +'<div class="quote"><div class="between"><span class="label ac">Frase del día</span>'+(fr?sayBtn('frase'):'')+'</div>'+(fr?'<p>'+esc(fr.t)+'</p><div class="between"><span class="ref">'+esc(fr.ref)+'</span><span class="row" style="gap:6px"><button class="say" data-a="copy">'+ic('copy',16)+'<span>Copiar</span></button><button class="say" data-a="shareFrase">'+ic('share',16)+'<span>Compartir</span></button></span></div>'+(fraseExp()?'<div class="fexp"><span class="label">Qué quiere decir</span><p>'+esc(fraseExp())+'</p></div>':''):'<p class="muted" style="font-size:18px">Cargando el Evangelio de hoy…</p>')+'</div>'
   +homePlanCard()
   +'<div class="panel prog"><div class="row" style="gap:16px;align-items:center">'+ring(dn,RUT.length)
   +'<div class="stack" style="gap:6px;flex:1;min-width:0"><span class="label">Tu progreso</span><span class="row" style="gap:6px;align-items:baseline"><b class="big num">'+st+'</b><span class="small muted">'+(st===1?'día seguido':'días seguidos')+'</span></span>'
@@ -932,7 +936,7 @@ function render(){
 }
 
 function sayText(id){
- if(id==='frase') return LIT.frase?LIT.frase.t+' '+LIT.frase.ref:'';
+ if(id==='frase') return LIT.frase?LIT.frase.t+' '+LIT.frase.ref+(fraseExp()?'. Qué quiere decir. '+fraseExp():''):'';
  if(id==='test') return 'Paz y bien'+(S.name?', '+S.name:'')+'. Así sonará la lectura en voz alta.';
  if(id.indexOf('ros-')===0) return stepText(STEPS[+id.slice(4)]);
  if(id.indexOf('pray-')===0){ var pr=PRAY_CACHE[id.slice(5)]; return pr?prayerSay(pr):''; }
@@ -1118,6 +1122,6 @@ function playSplash(){ var el=document.getElementById('splash'); if(!el) return;
 
 
 /* ---------- Arranque ---------- */
-Cloud.init(); render(); hideSplash(); loadLit();
+Cloud.init(); render(); hideSplash(); loadLit(); loadExp();
 if('serviceWorker' in navigator) window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
 })();
