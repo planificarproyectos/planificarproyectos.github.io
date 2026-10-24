@@ -225,7 +225,8 @@
   function invitar(){var m=S.invMsg;
     return '<div class="lbl">Invitar a una persona</div><form id="admInv" class="searchrow" novalidate><label class="field"><input id="admInvEm" type="email" inputmode="email" placeholder="Correo de la persona" autocomplete="off"></label><button class="sbtn pri" type="submit">Invitar</button></form><div class="msg'+(m&&m.ok?' ok':'')+'" id="admInvSt">'+esc(m?m.st:'')+'</div>'
       +(m&&m.text?'<div class="invout"><textarea id="admInvTxt" readonly aria-label="Mensaje de invitación">'+esc(m.text)+'</textarea><div class="row2"><button class="sbtn" data-adm="copy" data-src="admInvTxt">Copiar mensaje</button><a class="sbtn pri" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent(m.text)+'">Enviar por WhatsApp</a></div></div>':'')}
-  function invTexto(em){return 'Hola, te invito a Planificar Proyectos Apps: Mind Focus (registro de actividades y productividad), PowerFit (entrenamiento en casa) y Lumen (oración diaria). Crea tu cuenta con este correo ('+em+') aquí: https://www.planificarproyectos.com/planificar-proyectos-apps/'}
+  // La invitación usa la marca de la persona: Planificar Proyectos Apps si tiene Proyecta aprobado; si no, Wellness Apps
+  function invTexto(em){var x=porId(em),pp=!!(x&&x.inv&&x.inv.proyecta==='aprobado');return 'Hola, te invito a '+(pp?'Planificar Proyectos Apps: Proyecta (gestión de proyectos), ':'Wellness Apps: ')+'Mind Focus (registro de actividades y productividad), PowerFit (entrenamiento en casa) y Lumen (oración diaria). Crea tu cuenta con este correo ('+em+') aquí: https://www.planificarproyectos.com/'+(pp?'planificar-proyectos-apps':'wellness-apps')+'/'}
 
   /* Detalle de una persona: sus sesiones, minutos y funciones en cada app, y a qué horas usa las apps */
   function detalle(){var u=S.ver&&porId(S.ver);if(!u)return '';

@@ -7,11 +7,18 @@
 <meta name="description" content="Acceso a las apps de bienestar: Mind Focus, PowerFit y Lumen.">
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#111315">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="manifest" href="manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="PP Apps">
+<script>/* Dos identidades: Wellness Apps (familiar: Mind Focus, PowerFit, Lumen) y Planificar Proyectos Apps (empresarial: con Proyecta).
+   La marca se decide al iniciar sesión según el acceso a Proyecta y se recuerda en el equipo; sin dato, Wellness Apps. */
+(function(){var m='w';try{m=localStorage.getItem('pp:marca')||'w'}catch(e){}
+ var pp=m==='pp',h=document.head,px=pp?'':'w-';document.documentElement.setAttribute('data-marca',m);
+ window.MARCA={id:m,nombre:pp?'Planificar Proyectos Apps':'Wellness Apps',corto:pp?'PP Apps':'Wellness',px:px};
+ document.title=MARCA.nombre+' · Planificar Proyectos';
+ function L(r,hr,t){var l=document.createElement('link');l.rel=r;l.href=hr;if(t)l.type=t;h.appendChild(l)}
+ L('icon',px+'icon.svg','image/svg+xml');L('apple-touch-icon',px+'apple-touch-icon.png');L('manifest',pp?'manifest.webmanifest':'manifest-wellness.webmanifest');
+ var t=document.createElement('meta');t.name='apple-mobile-web-app-title';t.content=MARCA.corto;h.appendChild(t);
+ window.setMarca=function(n){var o;try{o=localStorage.getItem('pp:marca')||'w';localStorage.setItem('pp:marca',n)}catch(e){}if(o!==n)location.reload()};})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -219,6 +226,7 @@ body.adm-sheet{overflow:hidden}
 .uev b{color:var(--fg);font-variant-numeric:tabular-nums}
 @media (min-width:700px){.duo,.mult,.fns{grid-template-columns:repeat(2,minmax(0,1fr))}.trio{grid-template-columns:repeat(3,minmax(0,1fr))}.adm>.sheet{left:50%;right:auto;top:50%;bottom:auto;width:min(620px,92vw);transform:translate(-50%,-50%);border-radius:22px}}
 @media (min-width:860px){.adm{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.adm>.wide{grid-column:1/-1}}
+[data-marca="w"] .m-pp,[data-marca="pp"] .m-w{display:none!important}
 /* Splash */
 #splash{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;align-items:center;justify-content:center;pointer-events:none}
 #splash svg{width:96px;height:96px;border-radius:22px;animation:sp-in .6s var(--ease) both}
@@ -229,18 +237,19 @@ body.adm-sheet{overflow:hidden}
 </head>
 <body class="loading">
 <div id="splash" aria-hidden="true">
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#04141b"/><g transform="translate(14.5 12) scale(0.02118)"><path fill="#cdfc54" fill-rule="evenodd" d="M0,478L826,0L910,49L910,573L167,1003L167,1335L371,1453L371,1120L1115,692L1115,263L1198,215L1653,478L1653,1432L826,1909L743,1860L743,1335L1486,907L1486,573L1282,456L1282,788L538,1217L538,1637L455,1686L0,1432ZM167,573L743,241L743,478L167,810ZM910,1432L1486,1099L1486,1335L910,1667Z"/></g></svg>
+  <svg class="m-pp" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#04141b"/><g transform="translate(14.5 12) scale(0.02118)"><path fill="#cdfc54" fill-rule="evenodd" d="M0,478L826,0L910,49L910,573L167,1003L167,1335L371,1453L371,1120L1115,692L1115,263L1198,215L1653,478L1653,1432L826,1909L743,1860L743,1335L1486,907L1486,573L1282,456L1282,788L538,1217L538,1637L455,1686L0,1432ZM167,573L743,241L743,478L167,810ZM910,1432L1486,1099L1486,1335L910,1667Z"/></g></svg>
+  <svg class="m-w" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" rx="44" fill="#111315"/><circle cx="100" cy="100" r="58" fill="none" stroke="#F2F2EE" stroke-width="10"/><path d="M34 104 H72 L84 80 L100 130 L114 92 L124 104 H166" fill="none" stroke="#C6F432" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
 </div>
 <div class="wrap">
-  <header data-reload role="button" tabindex="0" title="Actualizar la página" aria-label="Planificar Proyectos Apps · actualizar la página">
-    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#04141b"/><g transform="translate(14.5 12) scale(0.02118)"><path fill="#cdfc54" fill-rule="evenodd" d="M0,478L826,0L910,49L910,573L167,1003L167,1335L371,1453L371,1120L1115,692L1115,263L1198,215L1653,478L1653,1432L826,1909L743,1860L743,1335L1486,907L1486,573L1282,456L1282,788L538,1217L538,1637L455,1686L0,1432ZM167,573L743,241L743,478L167,810ZM910,1432L1486,1099L1486,1335L910,1667Z"/></g></svg>
-    <div><div class="kicker">Tus apps</div><h1>Planificar Proyectos <span>Apps</span></h1></div>
+  <header data-reload role="button" tabindex="0" title="Actualizar la página" aria-label="Actualizar la página">
+    <svg class="m-pp" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#04141b"/><g transform="translate(14.5 12) scale(0.02118)"><path fill="#cdfc54" fill-rule="evenodd" d="M0,478L826,0L910,49L910,573L167,1003L167,1335L371,1453L371,1120L1115,692L1115,263L1198,215L1653,478L1653,1432L826,1909L743,1860L743,1335L1486,907L1486,573L1282,456L1282,788L538,1217L538,1637L455,1686L0,1432ZM167,573L743,241L743,478L167,810ZM910,1432L1486,1099L1486,1335L910,1667Z"/></g></svg><svg class="m-w" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" rx="44" fill="#111315"/><circle cx="100" cy="100" r="58" fill="none" stroke="#F2F2EE" stroke-width="10"/><path d="M34 104 H72 L84 80 L100 130 L114 92 L124 104 H166" fill="none" stroke="#C6F432" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div><div class="kicker">Tus apps</div><h1><b class="m-pp" style="font-weight:inherit">Planificar Proyectos</b><b class="m-w" style="font-weight:inherit">Wellness</b> <span>Apps</span></h1></div>
   </header>
   <p class="lead" id="lead">Tus apps de bienestar en un solo lugar.</p>
 
   <section class="card" id="authCard" hidden>
     <h3 id="aTitle">Crea tu cuenta <span>gratis</span></h3>
-    <p class="sub" id="aSub">Con una sola cuenta tendrás acceso a todas las apps de Planificar Proyectos Apps: Mind Focus, PowerFit y Lumen.</p>
+    <p class="sub" id="aSub"></p>
     <div data-google-slot></div>
     <form id="aForm" novalidate>
       <label class="field" id="fName"><input id="aName" type="text" autocomplete="name" placeholder="Tu nombre"></label>
@@ -315,7 +324,7 @@ function msg(t,ok){var m=$('aMsg');m.textContent=t||'';m.className='msg'+(ok?' o
 function setMode(m){mode=m;msg('');
  var reg=m==='register',reset=m==='reset';
  $('aTitle').innerHTML=reg?'Crea tu cuenta <span>gratis</span>':reset?'Recupera tu <span>contraseña</span>':'Inicia <span>sesión</span>';
- $('aSub').textContent=reg?'Con una sola cuenta tendrás acceso a todas las apps de Planificar Proyectos Apps: Mind Focus, PowerFit y Lumen.':reset?'Te enviaremos un correo para crear una nueva contraseña.':'Entra con tu cuenta de Planificar Proyectos Apps. Si ya usas Mind Focus, PowerFit o Lumen, es la misma.';
+ $('aSub').textContent=reg?'Con una sola cuenta tendrás acceso a todas las apps de '+MARCA.nombre+': Mind Focus, PowerFit y Lumen.':reset?'Te enviaremos un correo para crear una nueva contraseña.':'Entra con tu cuenta de '+MARCA.nombre.replace(/s$/,'')+'s. Si ya usas Mind Focus, PowerFit o Lumen, es la misma.';
  $('fName').hidden=!reg;$('fPass').hidden=reset;
  $('aPass').autocomplete=reg?'new-password':'current-password';
  $('aBtn').textContent=reg?'Crear cuenta':reset?'Enviar correo':'Iniciar sesión';
@@ -323,7 +332,7 @@ function setMode(m){mode=m;msg('');
  $('aForgot').hidden=m!=='login';}
 function render(u){document.body.classList.remove('loading');document.body.classList.toggle('guest',!u);
  $('authCard').hidden=!!u;$('userCard').hidden=!u;
- $('lead').textContent=u?'Tus apps de bienestar en un solo lugar.':'Tus apps de bienestar en un solo lugar. Crea tu cuenta para empezar.';
+ var LD=MARCA.id==='pp'?'Tus apps de proyectos y bienestar en un solo lugar.':'Tus apps de bienestar en un solo lugar.';$('lead').textContent=u?LD:LD+' Crea tu cuenta para empezar.';
  if(u){var n=(u.displayName||u.email.split('@')[0]).split(' ')[0];$('uName').textContent=n;$('uDot').textContent=n.charAt(0).toUpperCase();$('uMail').textContent=u.email}
  accesoApps(u);
  if(window.Adm)Adm.user(u)}
@@ -342,12 +351,12 @@ function accesoApps(u){if(accUnsub){accUnsub();accUnsub=null}accUid=u&&u.uid;
  try{var db=firebase.firestore(),em=u.email.toLowerCase(),ref=db.collection('invitaciones').doc(em),uid=u.uid,
    adm=window.Uso&&Uso.esAdmin?Uso.esAdmin(db,u):Promise.resolve(false);
   adm.then(function(esAdm){if(accUid!==uid)return;
-   if(esAdm){pintarApps({mindfocus:1,powerfit:1,lumen:1,proyecta:1});return}
+   if(esAdm){setMarca('pp');pintarApps({mindfocus:1,powerfit:1,lumen:1,proyecta:1});return}
    accUnsub=ref.onSnapshot(function(sn){if(accUid!==uid)return;var now=Date.now();
-    if(!sn.exists){ref.set({email:em,estado:'activo',uid:uid,activado:now,ultimoUso:now,autoregistro:true}).catch(function(){});pintarApps({mindfocus:1,powerfit:1,lumen:1});return}
+    if(!sn.exists){ref.set({email:em,estado:'activo',uid:uid,activado:now,ultimoUso:now,autoregistro:true}).catch(function(){});setMarca('w');pintarApps({mindfocus:1,powerfit:1,lumen:1});return}
     var d=sn.data()||{},ap=d.apps||{};
     if(d.estado==='revocado'){pintarApps({});return}
-    pintarApps({mindfocus:ap.mindfocus!==false,powerfit:ap.powerfit!==false,lumen:ap.lumen!==false,proyecta:d.proyecta==='aprobado'})},
+    setMarca(d.proyecta==='aprobado'?'pp':'w');pintarApps({mindfocus:ap.mindfocus!==false,powerfit:ap.powerfit!==false,lumen:ap.lumen!==false,proyecta:d.proyecta==='aprobado'})},
     function(){pintarApps({mindfocus:1,powerfit:1,lumen:1})})})}
  catch(e){pintarApps({mindfocus:1,powerfit:1,lumen:1})}}
 $('aSwitch').onclick=function(){setMode(mode==='login'?'register':'login')};
@@ -377,7 +386,7 @@ setTimeout(function(){if(document.body.classList.contains('loading'))render(auth
 <script>document.getElementById('y').textContent=new Date().getFullYear();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 (()=>{const s=document.getElementById('splash');if(!s)return;const hide=()=>{s.classList.add('out');s.addEventListener('animationend',()=>s.remove(),{once:true})};setTimeout(hide,1800)})();
 </script>
-<div class="installbar" id="install" role="dialog" aria-label="Instalar Planificar Proyectos Apps" hidden></div>
+<div class="installbar" id="install" role="dialog" aria-label="Instalar la app" hidden></div>
 <script>
 /* Aviso de instalar app: en Chrome y Android con el instalador del navegador; en iPhone con instrucciones. "Ahora no" espera 12 horas */
 (()=>{const el=document.getElementById('install');let prompt=null;
@@ -385,7 +394,7 @@ setTimeout(function(){if(document.body.classList.contains('loading'))render(auth
   const ios=()=>/iphone|ipad|ipod/i.test(navigator.userAgent||'')||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
   const dismissed=()=>{try{return Date.now()-(+localStorage.getItem('wellness:installDismiss')||0)<12*36e5}catch(e){return false}};
   const show=()=>{if(standalone()||!(prompt||ios())||dismissed()){el.hidden=true;return}
-    const head=`<div class="ir"><img src="icon-192.png" alt=""><div><b>Instala Planificar Proyectos Apps${prompt?'':' en tu iPhone'}</b><span>${prompt?'Ábrela desde tu pantalla de inicio, a pantalla completa y más rápido.':'En Safari:'}</span></div></div>`;
+    const head=`<div class="ir"><img src="${MARCA.px}icon-192.png" alt=""><div><b>Instala ${MARCA.nombre}${prompt?'':' en tu iPhone'}</b><span>${prompt?'Ábrela desde tu pantalla de inicio, a pantalla completa y más rápido.':'En Safari:'}</span></div></div>`;
     el.innerHTML=prompt?head+'<div class="btns"><button class="btn soft" data-i="no">Ahora no</button><button class="btn" data-i="go">Instalar</button></div>'
       :head+'<ol><li>Toca <b>Compartir</b> (el cuadro con la flecha hacia arriba).</li><li>Elige <b>Agregar a pantalla de inicio</b> y luego <b>Agregar</b>.</li></ol><button class="btn soft" data-i="no">Entendido</button>';
     el.hidden=false;
