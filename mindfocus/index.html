@@ -1042,7 +1042,7 @@ $("entryForm").addEventListener("submit",async ev=>{
   const cat=$("fCat").value==="auto"?classify(act+" "+desc):$("fCat").value;
   const prev=editing?entries.find(x=>x.id===editing):null;
   const e={id:editing||newId(),fecha:prev?prev.fecha:day,inicio:ini,fin,actividad:act,descripcion:desc,categoria:cat,creado:prev?prev.creado:Date.now()};
-  try{if(finNext)await saveEntry({id:newId(),fecha:addDays(e.fecha,1),inicio:"00:00",fin:finNext,actividad:act,descripcion:desc,categoria:cat,creado:Date.now()});await saveEntry(e);if(!prev){track("registro",viaTimer?"cronometro":"manual")}viaTimer=false;resetForm();st.textContent="Registro guardado en «"+catById(cat).n+"»."+(finNext?" Cruzó la medianoche: quedó dividido en dos días.":"")}catch(err){st.textContent="No se pudo guardar: "+(err.message||err.code)}
+  try{if(finNext)await saveEntry({id:newId(),fecha:addDays(e.fecha,1),inicio:"00:00",fin:finNext,actividad:act,descripcion:desc,categoria:cat,creado:Date.now()});await saveEntry(e);chime();if(!prev){track("registro",viaTimer?"cronometro":"manual")}viaTimer=false;resetForm();st.textContent="Registro guardado en «"+catById(cat).n+"»."+(finNext?" Cruzó la medianoche: quedó dividido en dos días.":"")}catch(err){st.textContent="No se pudo guardar: "+(err.message||err.code)}
 });
 
 // cronómetro
@@ -1063,7 +1063,7 @@ $("timerBtn").onclick=()=>{
     $("fInicio").value=pad(d().getHours())+":"+pad(d().getMinutes());$("fFin").value="";$("formStatus").textContent="Cronómetro en marcha. Puedes ir escribiendo qué haces.";}
   else{$("fInicio").value=pad(d().getHours())+":"+pad(d().getMinutes());$("fFin").value=nowHM();
     viaTimer=true;if(day!==ymd(new Date()))setDay(ymd(new Date()));
-    timerStart=null;try{localStorage.removeItem("bitacora_timer")}catch(e){}
+    timerStart=null;chime();try{localStorage.removeItem("bitacora_timer")}catch(e){}
     $("fAct").focus();$("formStatus").textContent="Revisa qué hiciste y guarda.";}
   tickTimer();gateBtns();
 };
@@ -1084,8 +1084,11 @@ function tone(f,t,d,v,type){const a=ac();if(!a)return;const o=a.createOscillator
 function tick(tock){if(!sndOn||document.hidden)return;tone(tock?1300:1800,0,.035,.05,"triangle")}
 function chime(){if(!sndOn)return;tone(660,0,.5,.18);tone(990,.12,.6,.12)}
 function beep(){if(!sndOn)return;[0,.25,.5].forEach((t,i)=>tone(i===2?988:784,t,.22,.25))}
-function sndBtn(){const b=$("sndBtn");if(b){b.textContent=sndOn?"🔊 Sonido":"🔇 Sonido";b.setAttribute("aria-pressed",sndOn)}}
+// Tic-tac mientras algo cuenta tiempo: pomodoro, cronómetro o actividad en curso
+let sndN=0;function sndTick(){if((typeof pomo!=="undefined"&&pomo&&!pomo.pausedAt)||timerStart||(typeof cur!=="undefined"&&cur))tick(sndN++%2)}
+function sndBtn(){const b=$("sndBtn");if(b){b.textContent=sndOn?"🔊 Sonido":"🔇 Sonido";b.setAttribute("aria-pressed",sndOn)}const c=$("sndSt");if(c)c.textContent=sndOn?"Activados: tic-tac mientras cuentas tiempo y campana al iniciar o guardar":"Desactivados"}
 $("sndBtn").onclick=()=>{sndOn=!sndOn;lsSet("mf_sound",sndOn);sndBtn();if(sndOn)chime()};sndBtn();
+document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("#sndBtn2")){sndOn=!sndOn;lsSet("mf_sound",sndOn);sndBtn();if(sndOn)chime()}});
 function notify(msg){try{if(window.Notification&&Notification.permission==="granted")new Notification("Mind Focus",{body:msg})}catch(e){}}
 async function pomoLog(kind,t0,t1){
   if(t1-t0<60000)return;
@@ -1124,8 +1127,7 @@ async function tickPomo(){
     }
   }
   const left=Math.max(0,pEnd()-now),dur=pDur();
-  const s=Math.ceil(left/1000);if(!pomo.pausedAt&&s!==lastTickS){if(lastTickS!==null)tick(s%2);lastTickS=s}
-  $("pomoTime").textContent=pad(Math.floor(s/60))+":"+pad(s%60);
+  const s=Math.ceil(left/1000);$("pomoTime").textContent=pad(Math.floor(s/60))+":"+pad(s%60);
   $("pomoPhase").textContent=(pomo.phase==="work"?"Enfoque · sesión "+pomo.n:"Pausa · "+pomo.b+" min")+(pomo.pausedAt?" · en pausa":"");
   $("pomoPrg").style.strokeDashoffset=(PCIRC*(1-left/dur)).toFixed(2);
   $("pomoAct").textContent=pomo.phase==="work"?pomo.act:"Descansa: levántate, estira, toma agua.";
@@ -1145,7 +1147,7 @@ $("pomoStop").onclick=async()=>{
   if(!pomo)return;const p=pomo,now=p.pausedAt||Date.now();
   if(p.phase==="work"){try{await pomoLog("enfoque",p.start,now)}catch(e){}}
   const n=p.done+(p.phase==="work"&&now-p.start>=60000?1:0);
-  pomo=null;pomoSave();resetForm();gateBtns();tickPomo();
+  pomo=null;pomoSave();chime();resetForm();gateBtns();tickPomo();
   $("formStatus").textContent="Pomodoro detenido."+(p.phase==="work"&&now-p.start>=60000?" El tiempo de la sesión en curso quedó registrado.":"")+" Sesiones: "+n+".";
 };
 function tickClock(){
@@ -1153,7 +1155,7 @@ function tickClock(){
   const h=n.getHours();$("clkTime").innerHTML=(h%12||12)+":"+pad(n.getMinutes())+"<span>:"+pad(n.getSeconds())+" "+(h<12?"a.m.":"p.m.")+"</span>";
   $("clkDate").textContent=n.toLocaleDateString("es-CO",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 }
-setInterval(()=>{tickTimer();tickClock();tickPomo()},1000);tickTimer();tickClock();tickPomo();gateBtns();
+setInterval(()=>{tickTimer();tickClock();tickPomo();sndTick()},1000);tickTimer();tickClock();tickPomo();gateBtns();
 
 // ---------- métricas ----------
 let SC=new Map(),BYDATE=null;
@@ -1581,7 +1583,7 @@ async function logRange(t0,t1,act,desc,cat,extra){
 function lastEnd(){let m=0;for(const e of entries){const t=tsOf(e.fecha,e.fin==="24:00"?"24:00":e.fin);if(t>m&&t<=Date.now()+60000)m=t}return m}
 async function finishCur(t1){
   if(!cur)return;const c=cur;cur=null;await saveCur();
-  const ok=await logRange(c.start,t1||Date.now(),c.act,c.desc,c.cat);
+  const ok=await logRange(c.start,t1||Date.now(),c.act,c.desc,c.cat);if(ok)chime();
   if(ok)toast("Guardado: "+c.act+" · "+fmtH((( t1||Date.now())-c.start)/60000));
 }
 async function stopPomoIfAny(){if(typeof pomo!=="undefined"&&pomo){const p=pomo,now=p.pausedAt||Date.now();if(p.phase==="work"){try{await pomoLog("enfoque",p.start,now)}catch(e){}}pomo=null;pomoSave();tickPomo()}}
@@ -1774,7 +1776,7 @@ document.querySelectorAll("#bnav button").forEach(b=>b.onclick=()=>setView(b.dat
 setView("home");
 
 // ================= ESTÉTICA POWERFIT: CUENTA, APARIENCIA Y BIENVENIDA =================
-const IC={key:'<path d="M15 7a4 4 0 1 1-3.9 5H7v3H4v-3H2v-3h9.1A4 4 0 0 1 15 7z"/>',dl:'<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',ul:'<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>',csv:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h7"/>',out:'<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',chev:'<path d="M9 6l6 6-6 6"/>',check:'<path d="M5 12l5 5 9-10"/>',apps:'<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>',chat:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-5A8 8 0 1 1 21 12z"/>',bulb:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/>',trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',book:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M9 7h6M9 11h6"/>'};
+const IC={snd:'<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>',key:'<path d="M15 7a4 4 0 1 1-3.9 5H7v3H4v-3H2v-3h9.1A4 4 0 0 1 15 7z"/>',dl:'<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',ul:'<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>',csv:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h7"/>',out:'<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',chev:'<path d="M9 6l6 6-6 6"/>',check:'<path d="M5 12l5 5 9-10"/>',apps:'<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>',chat:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-5A8 8 0 1 1 21 12z"/>',bulb:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/>',trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',book:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M9 7h6M9 11h6"/>'};
 const icn=(k,sz,w)=>'<svg viewBox="0 0 24 24" width="'+(sz||22)+'" height="'+(sz||22)+'" fill="none" stroke="currentColor" stroke-width="'+(w||1.9)+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+IC[k]+'</svg>';
 /* Apariencia compartida con Proyecta, Lumen y PowerFit (/apariencia.js): los cambios se guardan en la cuenta y llegan
    en vivo desde cualquiera de las apps. El tema que Mind Focus guardaba aparte (config/categorias.tema) ya no se usa;
@@ -1795,6 +1797,7 @@ if(window.Apariencia)Apariencia.on((s,preview)=>{mfApplyTheme(s);if(!preview)ren
   '<button class="card" data-c="csvBtn">'+icn("csv")+'<span class="grow"><b>Exportar CSV</b><span>Registros del periodo elegido en Análisis, para Excel</span></span><span class="chev2">'+icn("chev",20)+'</span></button>'+
   '<button class="card" data-c="bkExport">'+icn("dl")+'<span class="grow"><b>Descargar respaldo</b><span>Copia completa de tus registros y categorías</span></span><span class="chev2">'+icn("chev",20)+'</span></button>'+
   '<button class="card" data-c="bkImportBtn">'+icn("ul")+'<span class="grow"><b>Importar respaldo</b><span>Recupera registros desde un archivo de respaldo</span></span><span class="chev2">'+icn("chev",20)+'</span></button>'+
+  '<button type="button" class="card" id="sndBtn2">'+icn("snd",22)+'<span class="grow"><b>Sonidos</b><span id="sndSt"></span></span><span class="chev2">'+icn("chev",20)+'</span></button>'+
   '<a class="card" id="waSup" target="_blank" rel="noopener">'+icn("chat")+'<span class="grow"><b>Contactar soporte</b><span>Escríbenos por WhatsApp si algo no funciona</span></span><span class="chev2">'+icn("chev",20)+'</span></a>'+
   '<a class="card" id="waRec" target="_blank" rel="noopener">'+icn("bulb")+'<span class="grow"><b>Enviar recomendaciones</b><span>Cuéntanos qué mejorarías, por WhatsApp</span></span><span class="chev2">'+icn("chev",20)+'</span></a>'+
   '<button class="card" data-c="logoutBtn">'+icn("out")+'<span class="grow"><b>Cerrar sesión</b><span>Tus datos quedan guardados en tu cuenta</span></span><span class="chev2">'+icn("chev",20)+'</span></button>'+
@@ -1867,7 +1870,7 @@ function renderTheme(){
   const dark=MF_THEME.mode!=="light";$("modeSw").setAttribute("aria-checked",dark);$("modeSub").textContent=(dark?"Activado":"Desactivado")+" · no depende del celular";
 }
 function renderAccTop(){
-  const em=$("accEmail").textContent;$("waSup").href=(window.wellnessWA||function(a,t){return "https://wa.me/573204451740"})("Mind Focus","soporte",em);$("waRec").href=(window.wellnessWA||function(a,t){return "https://wa.me/573204451740"})("Mind Focus","recomendacion",em);$("accName").textContent=userName||em||"Sin sesión";$("accEmail2").textContent=userName?em:"";$("accEmail2").hidden=!userName;
+  sndBtn();const em=$("accEmail").textContent;$("waSup").href=(window.wellnessWA||function(a,t){return "https://wa.me/573204451740"})("Mind Focus","soporte",em);$("waRec").href=(window.wellnessWA||function(a,t){return "https://wa.me/573204451740"})("Mind Focus","recomendacion",em);$("accName").textContent=userName||em||"Sin sesión";$("accEmail2").textContent=userName?em:"";$("accEmail2").hidden=!userName;
   const cr=me&&me.metadata&&Date.parse(me.metadata.creationTime),MS=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"],fd=cr?new Date(cr):null;
   $("accRole").textContent=[fd?"Cuenta creada el "+fd.getDate()+" "+MS[fd.getMonth()]+" "+fd.getFullYear():"",me&&meAdmin?"Administrador":""].filter(Boolean).join(" · ");
   const mins=entries.reduce((a,e)=>a+Math.max(0,toMin(e.fin)-toMin(e.inicio)),0);

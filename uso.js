@@ -42,7 +42,9 @@
      cualquier elemento con el atributo data-cuenta-tipo la recibe, también si la app lo vuelve a dibujar. Se actualiza en vivo. */
   U.cuenta=null; U.adm=false;
   U.setCuenta=function(d,adm){ U.cuenta=d||{}; if(adm!=null) U.adm=adm; pintarCuenta(); arco(); };
-  function arco(){ if(window.Apariencia&&Apariencia.arcoiris) Apariencia.arcoiris(!!U.adm); }
+  // Administrador: la primera vez queda con el arcoíris elegido (luego puede cambiarlo en el selector de color, como cualquiera)
+  function arco(){ if(!U.adm||!window.Apariencia||!Apariencia.set) return; try{ if(localStorage.getItem('pp:rbInit')) return; localStorage.setItem('pp:rbInit','1'); }catch(e){ return; }
+    setTimeout(function(){ if(!(Apariencia.real&&Apariencia.real.rb)) Apariencia.set({rb:true}); },1500); }
   function etiqueta(){ if(U.adm) return ['Administrador','adm'];
     var d=U.cuenta; if(!d) return null; var t=U.tipoDe(d), e=String(d.empresa||'').trim();
     return [(t==='familiar'?'Cuenta familiar':t==='empresarial'?'Cuenta empresarial':'Cuenta empresarial y familiar')+(e&&t!=='familiar'?' · '+e:''),t]; }

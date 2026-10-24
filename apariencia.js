@@ -21,7 +21,7 @@
   // Versión del color para textos y detalles en modo claro: se oscurece hasta leerse bien sobre fondo claro (4,5:1)
   function forLight(h){ var c=rgb(h), bg=[243,242,238]; for(var i=0;i<20&&contrast(c,bg)<4.5;i++) c=c.map(function(v){ return v*.9; }); return toHex(c); }
   var ALIAS={'#C6F135':'#C6F432'};   // el lima que usaba Proyecta es el mismo de las demás apps
-  function norm(s){ s=s||{}; var h=hex(s.accent); return {accent:ALIAS[h]||h||DEF.accent, mode:s.mode==='light'?'light':'dark'}; }
+  function norm(s){ s=s||{}; var h=hex(s.accent); return {accent:ALIAS[h]||h||DEF.accent, mode:s.mode==='light'?'light':'dark', rb:!!s.rb}; }
 
   var A={accents:ACC, state:null, noLocal:false, ref:null, unsub:null, fns:[], hex:hex, ink:ink, forLight:forLight, norm:norm};
   A.local=function(){ try{ var t=JSON.parse(localStorage.getItem(KEY)||'null'); return t?norm(t):null; }catch(e){ return null; } };
@@ -31,38 +31,41 @@
   A.on=function(f){ A.fns.push(f); };
   // Cambia la apariencia: se aplica de inmediato y se guarda en la cuenta (si hay sesión). preview = solo mostrar, sin guardar
   // A.real es la apariencia elegida por la persona; A.state es la que se ve (en modo arcoíris, el color va cambiando)
-  A.set=function(p,preview){ var s=norm(Object.assign({},A.real||A.state||A.local()||DEF,p)); A.real=s; A.state=A.rb?{accent:A.state.accent,mode:s.mode}:s; emit(preview);
+  A.set=function(p,preview){ p=Object.assign({},p); if(p.accent&&p.rb==null) p.rb=false;
+    var s=norm(Object.assign({},A.real||A.state||A.local()||DEF,p)); A.real=s; arco(); A.state=A.rb?{accent:(A.state||s).accent,mode:s.mode,rb:true}:s; emit(preview);
     if(preview) return; keep();
-    if(A.ref) A.ref.set({accent:s.accent,mode:s.mode,upd:Date.now()},{merge:true}).catch(function(){}); };
+    if(A.ref) A.ref.set({accent:s.accent,mode:s.mode,rb:s.rb,upd:Date.now()},{merge:true}).catch(function(){}); };
   // Escucha la apariencia de la cuenta. seed() da el color y modo actuales de la app, para crearla si aún no existe
   A.connect=function(db,uid,seed){ A.disconnect(); if(!db||!uid) return;
     A.ref=db.collection('users').doc(uid).collection('perfil').doc('apariencia');
     A.unsub=A.ref.onSnapshot(function(sn){
       if(sn.metadata&&sn.metadata.hasPendingWrites) return;
-      if(!sn.exists){ var s=norm(seed&&seed()); A.real=s; if(!A.rb) A.state=s; keep(); A.ref.set({accent:s.accent,mode:s.mode,upd:Date.now()},{merge:true}).catch(function(){}); return; }
-      var d=norm(sn.data()); if(A.real&&d.accent===A.real.accent&&d.mode===A.real.mode) return;
-      A.real=d; A.state=A.rb?{accent:A.state.accent,mode:d.mode}:d; keep(); emit();
+      if(!sn.exists){ var s=norm(seed&&seed()); A.real=s; if(!A.rb) A.state=s; keep(); arco(); A.ref.set({accent:s.accent,mode:s.mode,rb:s.rb,upd:Date.now()},{merge:true}).catch(function(){}); return; }
+      var d=norm(sn.data()); if(A.real&&d.accent===A.real.accent&&d.mode===A.real.mode&&d.rb===A.real.rb) return;
+      A.real=d; A.state=A.rb?{accent:A.state.accent,mode:d.mode,rb:true}:d; keep(); arco(); emit();
     },function(e){ console.warn('apariencia',e); }); };
   A.disconnect=function(){ if(A.unsub){ try{ A.unsub(); }catch(e){} } A.unsub=null; A.ref=null; };
 
-  /* Modo arcoíris (cuentas de administrador): el color de énfasis recorre el círculo cromático, una vuelta cada 20 s, en
-     todas las apps. Solo se muestra: no se guarda (el color elegido queda intacto). Con «reducir movimiento» queda fijo. */
+  /* Arcoíris: opción del selector (círculo «Arcoíris», guardada como rb:true). El color de énfasis recorre el círculo
+     cromático, una vuelta cada 20 s, en todas las apps; el color elegido antes queda guardado. Con «reducir movimiento» queda fijo. */
   function hsl(h,s,l){ s/=100; l/=100; var k=function(n){ return (n+h/30)%12; }, a=s*Math.min(l,1-l), f=function(n){ return l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1))); };
     return toHex([f(0)*255,f(8)*255,f(4)*255]); }
   A.rb=false; var rbT=null;
   A.arcoiris=function(on){ on=!!on; if(on===A.rb) return; A.rb=on; clearInterval(rbT); rbT=null;
     if(!A.real) A.real=A.state||A.local()||norm(DEF);
-    if(!on){ A.state=A.real; emit(); return; }
+    if(!on){ A.state=A.real; return; }
     var quieto=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
     var paso=function(){ if(document.hidden&&A.state&&A.state.accent) return; var h=quieto?280:(Date.now()/20000*360)%360;
-      A.state={accent:hsl(h,90,62),mode:(A.real||DEF).mode}; emit(true); };
-    paso(); emit(); if(!quieto) rbT=setInterval(paso,150); };
-  A.picker=function(acc){ if(A.rb) return '<p class="ap-rb">Administrador: color arcoíris en todas las apps. Tu color elegido se conserva.</p>';
-    acc=hex(acc)||DEF.accent; var own=!ACC.some(function(x){ return x[1]===acc; });
+      A.state={accent:hsl(h,90,62),mode:(A.real||DEF).mode,rb:true}; emit(true); };
+    paso(); if(!quieto) rbT=setInterval(paso,150); };
+  function arco(){ A.arcoiris(!!(A.real&&A.real.rb)); }
+  A.picker=function(acc){ var rbOn=!!(A.real&&A.real.rb); if(A.real) acc=A.real.accent; acc=hex(acc)||DEF.accent; var own=!rbOn&&!ACC.some(function(x){ return x[1]===acc; });
     return '<div class="ap-row" role="radiogroup" aria-label="Color de énfasis">'
-      +ACC.map(function(x){ return '<button type="button" class="ap-sw" role="radio" data-ap-acc="'+x[1]+'" aria-checked="'+(x[1]===acc)+'" aria-label="'+x[0]+'" title="'+x[0]+'" style="--c:'+x[1]+'"></button>'; }).join('')
-      +'<label class="ap-sw ap-own" role="radio" aria-checked="'+own+'" title="Elegir otro color" style="--c:'+(own?acc:'transparent')+'"><input type="color" data-ap-own value="'+acc.toLowerCase()+'" aria-label="Elegir otro color"></label></div>'; };
-  document.addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('[data-ap-acc]'); if(b){ e.preventDefault(); e.stopPropagation(); A.set({accent:b.getAttribute('data-ap-acc')}); } },true);
+      +ACC.map(function(x){ return '<button type="button" class="ap-sw" role="radio" data-ap-acc="'+x[1]+'" aria-checked="'+(!rbOn&&x[1]===acc)+'" aria-label="'+x[0]+'" title="'+x[0]+'" style="--c:'+x[1]+'"></button>'; }).join('')
+      +'<label class="ap-sw ap-own" role="radio" aria-checked="'+own+'" title="Elegir otro color" style="--c:'+(own?acc:'transparent')+'"><input type="color" data-ap-own value="'+acc.toLowerCase()+'" aria-label="Elegir otro color"></label>'
+      +'<button type="button" class="ap-sw ap-rbw" role="radio" data-ap-rb aria-checked="'+rbOn+'" aria-label="Arcoíris" title="Arcoíris: el color va cambiando" style="--c:#A97BFF"></button></div>'; };
+  document.addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('[data-ap-acc]'); if(b){ e.preventDefault(); e.stopPropagation(); A.set({accent:b.getAttribute('data-ap-acc')}); return; }
+    var r=e.target.closest&&e.target.closest('[data-ap-rb]'); if(r){ e.preventDefault(); e.stopPropagation(); A.set({rb:true}); } },true);
   // El selector de color avisa mientras se arrastra (vista previa) y al cerrarlo (se guarda)
   document.addEventListener('input',function(e){ if(e.target.matches&&e.target.matches('[data-ap-own]')) A.set({accent:e.target.value},true); },true);
   document.addEventListener('change',function(e){ if(e.target.matches&&e.target.matches('[data-ap-own]')) A.set({accent:e.target.value}); },true);
@@ -78,7 +81,9 @@
     +'.ap-own[aria-checked=true]{box-shadow:0 0 0 2px var(--ap-bg,#111315),0 0 0 4px var(--c)}'
     +'.ap-own input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0}'
     +'.ap-sw:focus-visible,.ap-own:focus-within{outline:2px solid var(--c);outline-offset:4px}'
-    +'.ap-rb{margin:0;font-size:.85rem;font-weight:600;background:linear-gradient(90deg,#ff4f4f,#ffd60a,#c6f432,#22e0e0,#3d8bff,#a97bff,#ff4fa3);-webkit-background-clip:text;background-clip:text;color:transparent}';
+    +'.ap-row>.ap-rbw{background:conic-gradient(#ff4f4f,#ffd60a,#c6f432,#22e0e0,#3d8bff,#a97bff,#ff4fa3,#ff4f4f)}';
   document.head.appendChild(css);
   window.Apariencia=A;
+  // Si el arcoíris está elegido en este equipo, arranca de una vez (antes de que cargue la cuenta)
+  A.real=A.local(); if(A.real&&A.real.rb) setTimeout(arco,0);
 })();
