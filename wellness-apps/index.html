@@ -219,9 +219,18 @@ body.adm-sheet{overflow:hidden}
 .uev b{color:var(--fg);font-variant-numeric:tabular-nums}
 @media (min-width:700px){.duo,.mult,.fns{grid-template-columns:repeat(2,minmax(0,1fr))}.trio{grid-template-columns:repeat(3,minmax(0,1fr))}.adm>.sheet{left:50%;right:auto;top:50%;bottom:auto;width:min(620px,92vw);transform:translate(-50%,-50%);border-radius:22px}}
 @media (min-width:860px){.adm{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.adm>.wide{grid-column:1/-1}}
+/* Splash */
+#splash{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;align-items:center;justify-content:center;pointer-events:none}
+#splash svg{width:96px;height:96px;border-radius:22px;animation:sp-in .6s var(--ease) both}
+@keyframes sp-in{from{opacity:0;transform:scale(.82)}to{opacity:1;transform:scale(1)}}
+#splash.out{animation:sp-out .45s var(--ease) forwards}
+@keyframes sp-out{to{opacity:0}}
 </style>
 </head>
 <body class="loading">
+<div id="splash" aria-hidden="true">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" rx="44" fill="#111315"/><circle cx="100" cy="100" r="58" fill="none" stroke="#F2F2EE" stroke-width="10"/><path d="M34 104 H72 L84 80 L100 130 L114 92 L124 104 H166" fill="none" stroke="#C6F432" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</div>
 <div class="wrap">
   <header data-reload role="button" tabindex="0" title="Actualizar la página" aria-label="Wellness Apps · actualizar la página">
     <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" rx="44" fill="#111315"/><circle cx="100" cy="100" r="58" fill="none" stroke="#F2F2EE" stroke-width="10"/><path d="M34 104 H72 L84 80 L100 130 L114 92 L124 104 H166" fill="none" stroke="#C6F432" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -365,7 +374,9 @@ document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.tar
 setTimeout(function(){if(document.body.classList.contains('loading'))render(auth&&auth.currentUser)},4000);
 })();
 </script>
-<script>document.getElementById('y').textContent=new Date().getFullYear();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
+<script>document.getElementById('y').textContent=new Date().getFullYear();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+(()=>{const s=document.getElementById('splash');if(!s)return;const hide=()=>{s.classList.add('out');s.addEventListener('animationend',()=>s.remove(),{once:true})};setTimeout(hide,1800)})();
+</script>
 <div class="installbar" id="install" role="dialog" aria-label="Instalar Wellness Apps" hidden></div>
 <script>
 /* Aviso de instalar app: en Chrome y Android con el instalador del navegador; en iPhone con instrucciones. "Ahora no" espera 12 horas */
