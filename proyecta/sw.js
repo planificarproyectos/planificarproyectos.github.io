@@ -1,5 +1,5 @@
 // Service worker mínimo: guarda la app para abrirla rápido y sin conexión; los proyectos viven en tu cuenta.
-const CACHE = "proyecta-v14";
+const CACHE = "proyecta-v15";
 const SHELL = ["./", "./index.html", "./firebase-config.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon.svg", "../apariencia.js", "../uso.js"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });

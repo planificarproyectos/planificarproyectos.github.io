@@ -2,7 +2,7 @@
    - Cada app pone el botón con GoogleLogin.boton() en su pantalla de inicio de sesión y, al iniciar Firebase, llama a
      GoogleLogin.usar(auth, mostrarMensaje). La sesión resultante es la misma que con correo: onAuthStateChanged de cada
      app hace el resto (acceso, registro en el panel, Proyecta pendiente de aprobación).
-   - En computador se abre una ventana de Google (popup). En iPhone y en las apps instaladas se usa redirección, porque
+   - En computador y Android (también instalada) se abre una ventana de Google (popup). En iPhone se usa redirección, porque
      ahí las ventanas emergentes no regresan; para que la redirección funcione en Safari, el ayudante de Firebase está
      alojado en este mismo dominio (/__/auth/) y authDomain apunta a www.planificarproyectos.com.
    - Si el correo de Google ya tiene cuenta con contraseña, Firebase lo avisa y se pide entrar con la contraseña. */
@@ -22,7 +22,9 @@
     return 'No se pudo entrar con Google'+(c?' ('+c.replace('auth/','')+')':'')+'.'; };
   G.entrar=function(){ var a=G.auth; if(!a) return Promise.reject({code:'sin-auth'});
     var p=new firebase.auth.GoogleAuthProvider(); p.setCustomParameters({prompt:'select_account'});
-    if(ios()||instalada()) return a.signInWithRedirect(p);
+    // Solo iPhone/iPad usa redirección (allí las ventanas emergentes no regresan). En Android, también instalada, la redirección
+    // se abre en otra pestaña del navegador sin el estado inicial ("missing initial state"), así que va con ventana emergente.
+    if(ios()) return a.signInWithRedirect(p);
     return a.signInWithPopup(p).catch(function(e){ var c=(e&&e.code)||'';
       if(c==='auth/popup-blocked'||c==='auth/operation-not-supported-in-this-environment'||c==='auth/web-storage-unsupported') return a.signInWithRedirect(p);
       throw e; }); };
