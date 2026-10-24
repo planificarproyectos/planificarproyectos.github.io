@@ -269,7 +269,7 @@ body.adm-sheet{overflow:hidden}
   <!-- Cuenta en una sola franja: saludo y correo a la izquierda, cerrar sesión a la derecha -->
   <section class="card ucard" id="userCard" hidden>
     <div class="hello"><div class="dot" id="uDot">·</div>
-      <div class="hi"><h3>Hola, <span id="uName"></span></h3><span class="link dim" id="uMail" style="cursor:default"></span></div>
+      <div class="hi"><h3>Hola, <span id="uName"></span></h3><span class="link dim" id="uMail" style="cursor:default;display:block"></span><span data-cuenta-tipo hidden></span></div>
       <button class="link dim" id="uOut" type="button">Cerrar sesión</button></div>
   </section>
   <nav class="apps">
@@ -353,10 +353,10 @@ function accesoApps(u){if(accUnsub){accUnsub();accUnsub=null}accUid=u&&u.uid;
  try{var db=firebase.firestore(),em=u.email.toLowerCase(),ref=db.collection('invitaciones').doc(em),uid=u.uid,
    adm=window.Uso&&Uso.esAdmin?Uso.esAdmin(db,u):Promise.resolve(false);
   adm.then(function(esAdm){if(accUid!==uid)return;
-   if(esAdm){setMarca('pp');pintarApps({mindfocus:1,powerfit:1,lumen:1,proyecta:1});return}
+   if(esAdm){if(window.Uso&&Uso.setCuenta)Uso.setCuenta({},true);setMarca('pp');pintarApps({mindfocus:1,powerfit:1,lumen:1,proyecta:1});return}
    accUnsub=ref.onSnapshot(function(sn){if(accUid!==uid)return;var now=Date.now();
-    if(!sn.exists){ref.set({email:em,estado:'activo',uid:uid,activado:now,ultimoUso:now,autoregistro:true}).catch(function(){});setMarca('w');pintarApps({mindfocus:1,powerfit:1,lumen:1});return}
-    var d=sn.data()||{},ap=d.apps||{};
+    if(!sn.exists){ref.set({email:em,estado:'activo',uid:uid,activado:now,ultimoUso:now,autoregistro:true}).catch(function(){});if(window.Uso&&Uso.setCuenta)Uso.setCuenta({},false);setMarca('w');pintarApps({mindfocus:1,powerfit:1,lumen:1});return}
+    var d=sn.data()||{},ap=d.apps||{};if(window.Uso&&Uso.setCuenta)Uso.setCuenta(d,false);
     if(d.estado==='revocado'){pintarApps({});return}
     // Tipo de cuenta (familiar, empresarial o mixto): define la marca y qué apps se muestran; los interruptores por app afinan
     var U=window.Uso||{},t=U.tipoDe?U.tipoDe(d):(d.proyecta==='aprobado'?'mixto':'familiar'),del=U.appsDeTipo?U.appsDeTipo(t):['mindfocus','powerfit','lumen','proyecta'],v={};

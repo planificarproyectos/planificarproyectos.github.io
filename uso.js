@@ -36,14 +36,31 @@
   function sesion(){ var d=hoy(); if(U.dia===d) return; U.dia=d; var dias={}; dias[d]=inc(1); put(cuando({sesiones:inc(1),ultimoUso:Date.now(),dias:dias})); }
   function flush(){ if(!U.pend||!U.uid) return; var n=U.pend, md={}; U.pend=0; md[hoy()]=inc(n); put({min:inc(n),minDia:md}); }
   U.start=function(db,user,app){ if(!db||!user||!window.firebase||!firebase.firestore) return;
-    U.db=db; U.uid=user.uid; U.email=String(user.email||'').toLowerCase(); U.app=app; U.dia=null; U.pend=0; sesion(); vigilar(); };
+    U.db=db; U.uid=user.uid; U.email=String(user.email||'').toLowerCase(); U.app=app; U.dia=null; U.pend=0; sesion(); vigilar();
+    U.esAdmin(db,user).then(function(a){ U.adm=a; pintarCuenta(); }); };
+  /* Etiqueta del tipo de cuenta (familiar, empresarial, mixto o administrador) en la sección Cuenta de cada app:
+     cualquier elemento con el atributo data-cuenta-tipo la recibe, también si la app lo vuelve a dibujar. Se actualiza en vivo. */
+  U.cuenta=null; U.adm=false;
+  U.setCuenta=function(d,adm){ U.cuenta=d||{}; if(adm!=null) U.adm=adm; pintarCuenta(); };
+  function etiqueta(){ if(U.adm) return ['Administrador','adm'];
+    var d=U.cuenta; if(!d) return null; var t=U.tipoDe(d), e=String(d.empresa||'').trim();
+    return [(t==='familiar'?'Cuenta familiar':t==='empresarial'?'Cuenta empresarial':'Cuenta empresarial y familiar')+(e&&t!=='familiar'?' · '+e:''),t]; }
+  function pintarCuenta(){ var et=etiqueta(); Array.prototype.forEach.call(document.querySelectorAll('[data-cuenta-tipo]'),function(el){
+      if(!et){ el.hidden=true; return; } el.hidden=false; el.className='cta-pill cta-'+et[1]; if(el.textContent!==et[0]) el.textContent=et[0]; }); }
+  (function(){ var st=document.createElement('style');
+    st.textContent='.cta-pill{display:inline-block;width:fit-content;max-width:100%;font-size:.74rem;font-weight:700;padding:.2rem .6rem;border-radius:99px;line-height:1.35;margin-top:4px;white-space:normal}'
+      +'.cta-familiar{background:rgba(59,158,224,.16);color:#3B9EE0}.cta-empresarial{background:rgba(120,170,20,.18);color:#7DB51A}'
+      +'.cta-mixto{background:rgba(155,107,232,.18);color:#A47BEA}.cta-adm{background:rgba(255,190,40,.18);color:#E0A21A}';
+    (document.head||document.documentElement).appendChild(st);
+    var pend=false; new MutationObserver(function(){ if(pend) return; pend=true; setTimeout(function(){ pend=false;
+      if(document.querySelector('[data-cuenta-tipo]:empty')) pintarCuenta(); },0); }).observe(document.documentElement,{childList:true,subtree:true}); })();
   U.stop=function(){ flush(); if(U.unsubA){ U.unsubA(); U.unsubA=null; } U.db=null; U.uid=null; U.dia=null; };
   /* Acceso en vivo: si desde el panel de Planificar Proyectos Apps el administrador revoca la cuenta o le quita esta app
      (invitaciones/{correo}.apps.{app} = false), la app se recarga y muestra que no tiene acceso. Proyecta vigila su
      propia aprobación, así que aquí no se incluye. */
-  function vigilar(){ if(U.unsubA){ U.unsubA(); U.unsubA=null; } if(!U.email||U.app==='proyecta') return; var app=U.app;
-    U.unsubA=U.db.collection('invitaciones').doc(U.email).onSnapshot(function(sn){ var d=sn.exists?sn.data():null;
-      if(d&&!d.admin&&(d.estado==='revocado'||(d.apps&&d.apps[app]===false))) location.reload(); },function(){}); }
+  function vigilar(){ if(U.unsubA){ U.unsubA(); U.unsubA=null; } if(!U.email) return; var app=U.app;
+    U.unsubA=U.db.collection('invitaciones').doc(U.email).onSnapshot(function(sn){ var d=sn.exists?sn.data():null; U.setCuenta(d||{});
+      if(app!=='proyecta'&&d&&!d.admin&&(d.estado==='revocado'||(d.apps&&d.apps[app]===false))) location.reload(); },function(){}); }
   U.ev=function(nombre,n){ if(!U.uid||!U.app||!(EVENTOS[U.app]||{})[nombre]) return; var ev={}, ed={}; ev[nombre]=inc(n); ed[hoy()]={}; ed[hoy()][nombre]=inc(n);
     put(cuando({ultimoUso:Date.now(),ev:ev,evDia:ed})); };
   // Minutos de uso: uno por cada minuto con la app visible; se guardan cada 5 o al ocultarla

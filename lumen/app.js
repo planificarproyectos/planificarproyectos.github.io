@@ -857,7 +857,7 @@ function vMe(){
  var card=function(a,icn,t,sub,cls){ return '<button class="card'+(cls?' '+cls:'')+'" data-a="'+a+'">'+ic(icn,22)+'<span class="grow"><b>'+t+'</b><span>'+sub+'</span></span>'+ic('chevR',20)+'</button>'; };
  return '<header><h1>CUENTA</h1></header>'
   +'<div class="panel"><div class="prof"><span class="av">'+ic('user',26,2.2)+'</span><div class="stack" style="gap:2px;min-width:0"><b style="overflow-wrap:anywhere">'+esc(S.name||(u&&u.email)||'Sin sesión')+'</b>'
-   +(S.name&&u?'<span class="small muted" style="overflow-wrap:anywhere">'+esc(u.email)+'</span>':'')
+   +(S.name&&u?'<span class="small muted" style="overflow-wrap:anywhere">'+esc(u.email)+'</span>':'')+(u?'<span data-cuenta-tipo hidden></span>':'')
    +(cr?'<span class="small muted">Cuenta creada el '+cr.getDate()+' '+MONTHS[cr.getMonth()].slice(0,3)+' '+cr.getFullYear()+'</span>':'')+'</div></div></div>'
   +'<div class="panel" id="me-nombre"><label class="label" for="nm">Tu nombre</label><div class="namerow"><input class="inp" id="nm" maxlength="30" value="'+esc(S.name)+'" placeholder="¿Cómo te llamas?" autocomplete="given-name"><button class="btn" data-a="saveName">Guardar</button></div><span class="small muted">Se usa en Mind Focus, PowerFit y Lumen.</span></div>'
   +'<section class="stack"><h2>Ayuda</h2>'+card('manual','plan','Manual paso a paso','Cómo usar Lumen, sección por sección')+'</section>'
