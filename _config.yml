@@ -1,5 +1,5 @@
 # GitHub Pages (Jekyll) ignora las carpetas que empiezan con "_" (por ejemplo _herramientas, que no se publica).
 # "__" sí se publica: allí está el ayudante de inicio de sesión de Firebase (__/auth/handler e iframe), alojado en este
 # mismo dominio para que "Entrar con Google" funcione en iPhone y en las apps instaladas (copia de
-# bitacora-jornada.firebaseapp.com/__/auth/; si Firebase lo actualiza, se vuelve a descargar).
+# planificar-proyectos-apps.firebaseapp.com/__/auth/; si Firebase lo actualiza, se vuelve a descargar).
 include: ["__"]

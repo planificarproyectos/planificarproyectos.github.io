@@ -1,5 +1,5 @@
 rules_version = '2';
-// Reglas de Firestore del proyecto bitacora-jornada (Wellness Apps). Se publican en la consola de Firebase:
+// Reglas de Firestore del proyecto planificar-proyectos-apps (Wellness Apps). Se publican en la consola de Firebase:
 // Firestore › Reglas. Este archivo es la copia de referencia; mantenlo igual a lo publicado.
 service cloud.firestore {
   match /databases/{database}/documents {

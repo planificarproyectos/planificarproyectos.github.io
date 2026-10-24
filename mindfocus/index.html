@@ -1433,8 +1433,8 @@ function saveFile(name,data,type){
 }
 // ---------- respaldo ----------
 $("bkExport").onclick=()=>{
-  const data={app:"bitacora-jornada",version:1,exportado:ymd(new Date()),entradas:entries,categorias:cats};
-  saveFile("respaldo_bitacora_"+ymd(new Date())+".json",JSON.stringify(data,null,1),"application/json");$("aiStatus").textContent="Respaldo descargado.";
+  const data={app:"mindfocus",version:1,exportado:ymd(new Date()),entradas:entries,categorias:cats};
+  saveFile("respaldo_mindfocus_"+ymd(new Date())+".json",JSON.stringify(data,null,1),"application/json");$("aiStatus").textContent="Respaldo descargado.";
 };
 $("bkImportBtn").onclick=()=>$("bkFile").click();
 $("bkFile").onchange=async ev=>{
