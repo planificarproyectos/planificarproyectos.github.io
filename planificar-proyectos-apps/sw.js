@@ -1,4 +1,4 @@
-const C='ppapps-v24';const A=['./','./index.html','./admin.js','./icon.svg','./manifest.webmanifest','./manifest-wellness.webmanifest','./w-icon.svg','./firebase-config.js','../uso.js'];
+const C='ppapps-v25';const A=['./','./index.html','./admin.js','./icon.svg','./manifest.webmanifest','./manifest-wellness.webmanifest','./w-icon.svg','./firebase-config.js','../uso.js'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.addAll(A)))});
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).then(r=>{const cp=r.clone();caches.open(C).then(c=>c.put(e.request,cp));return r}).catch(()=>caches.match(e.request)))});

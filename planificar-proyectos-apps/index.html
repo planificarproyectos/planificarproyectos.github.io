@@ -166,7 +166,7 @@ body.admin .wrap{max-width:1040px}
 .sw:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .sw[disabled]{opacity:.6;cursor:wait}
 .pill{font-size:.74rem;font-weight:700;padding:.2rem .6rem;border-radius:99px;background:var(--surface2);color:var(--muted);white-space:nowrap}
-.pill.ok{background:rgba(198,244,50,.16);color:var(--accent)}
+.pill.ok{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}
 .pill.no{background:rgba(255,107,87,.16);color:#FF9B8A}
 .pill.wait{background:rgba(255,214,10,.14);color:#FFD60A}
 .pill.t-familiar{background:rgba(120,200,255,.14);color:#8FD3FF}.pill.t-empresarial{background:rgba(205,252,84,.16);color:var(--accent)}.pill.t-mixto{background:rgba(190,150,255,.16);color:#C9A8FF}
@@ -229,6 +229,8 @@ body.adm-sheet{overflow:hidden}
 @media (min-width:700px){.duo,.mult,.fns{grid-template-columns:repeat(2,minmax(0,1fr))}.trio{grid-template-columns:repeat(3,minmax(0,1fr))}.adm>.sheet{left:50%;right:auto;top:50%;bottom:auto;width:min(620px,92vw);transform:translate(-50%,-50%);border-radius:22px}}
 @media (min-width:860px){.adm{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.adm>.wide{grid-column:1/-1}}
 [data-marca="w"] .m-pp,[data-marca="pp"] .m-w{display:none!important}
+/* Logos con el color de énfasis de la persona (arcoíris si es administrador) */
+svg.m-pp path{fill:var(--accent)}svg.m-w path{stroke:var(--accent)}
 /* Splash */
 #splash{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;align-items:center;justify-content:center;pointer-events:none}
 #splash svg{width:96px;height:96px;border-radius:22px;animation:sp-in .6s var(--ease) both}
@@ -236,6 +238,7 @@ body.adm-sheet{overflow:hidden}
 #splash.out{animation:sp-out .45s var(--ease) forwards}
 @keyframes sp-out{to{opacity:0}}
 </style>
+<script>try{var _ap=JSON.parse(localStorage.getItem('wellness:apariencia')||'null');if(_ap&&/^#[0-9a-f]{6}$/i.test(_ap.accent))document.documentElement.style.setProperty('--accent',_ap.accent)}catch(e){}</script>
 </head>
 <body class="loading">
 <div id="splash" aria-hidden="true">
@@ -308,6 +311,7 @@ body.adm-sheet{overflow:hidden}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script src="/google-login.js"></script>
+<script src="../apariencia.js"></script>
 <script src="../uso.js"></script>
 <script src="admin.js"></script>
 <script>
@@ -332,7 +336,10 @@ function setMode(m){mode=m;msg('');
  $('aBtn').textContent=reg?'Crear cuenta':reset?'Enviar correo':'Iniciar sesión';
  $('aSwitch').textContent=reg?'¿Ya tienes cuenta? Inicia sesión':reset?'Volver a iniciar sesión':'¿No tienes cuenta? Créala aquí';
  $('aForgot').hidden=m!=='login';}
-function render(u){document.body.classList.remove('loading');document.body.classList.toggle('guest',!u);
+// Color de énfasis compartido con las apps (apariencia.js): el que eligió la persona; arcoíris si es administrador
+if(window.Apariencia){var _apl=function(st){var r=document.documentElement.style;r.setProperty('--accent',st.accent);r.setProperty('--accent-ink',Apariencia.ink(st.accent));
+  var tc=document.querySelector('meta[name=theme-color]');if(tc)tc.content='#111315'};var _l=Apariencia.local();if(_l)_apl(_l);Apariencia.on(function(st){_apl(st)})}
+function render(u){document.body.classList.remove('loading');try{if(window.Apariencia){if(u)Apariencia.connect(firebase.firestore(),u.uid,function(){return Apariencia.local()});else{Apariencia.disconnect();Apariencia.arcoiris(false)}}}catch(e){}document.body.classList.toggle('guest',!u);
  $('authCard').hidden=!!u;$('userCard').hidden=!u;
  var LD=MARCA.id==='pp'?'Tus apps de proyectos y bienestar en un solo lugar.':'Tus apps de bienestar en un solo lugar.';$('lead').textContent=u?LD:LD+' Crea tu cuenta para empezar.';
  if(u){var n=(u.displayName||u.email.split('@')[0]).split(' ')[0];$('uName').textContent=n;$('uDot').textContent=n.charAt(0).toUpperCase();$('uMail').textContent=u.email}

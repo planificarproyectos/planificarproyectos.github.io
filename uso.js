@@ -37,11 +37,12 @@
   function flush(){ if(!U.pend||!U.uid) return; var n=U.pend, md={}; U.pend=0; md[hoy()]=inc(n); put({min:inc(n),minDia:md}); }
   U.start=function(db,user,app){ if(!db||!user||!window.firebase||!firebase.firestore) return;
     U.db=db; U.uid=user.uid; U.email=String(user.email||'').toLowerCase(); U.app=app; U.dia=null; U.pend=0; sesion(); vigilar();
-    U.esAdmin(db,user).then(function(a){ U.adm=a; pintarCuenta(); }); };
+    U.esAdmin(db,user).then(function(a){ U.adm=a; pintarCuenta(); arco(); }); };
   /* Etiqueta del tipo de cuenta (familiar, empresarial, mixto o administrador) en la sección Cuenta de cada app:
      cualquier elemento con el atributo data-cuenta-tipo la recibe, también si la app lo vuelve a dibujar. Se actualiza en vivo. */
   U.cuenta=null; U.adm=false;
-  U.setCuenta=function(d,adm){ U.cuenta=d||{}; if(adm!=null) U.adm=adm; pintarCuenta(); };
+  U.setCuenta=function(d,adm){ U.cuenta=d||{}; if(adm!=null) U.adm=adm; pintarCuenta(); arco(); };
+  function arco(){ if(window.Apariencia&&Apariencia.arcoiris) Apariencia.arcoiris(!!U.adm); }
   function etiqueta(){ if(U.adm) return ['Administrador','adm'];
     var d=U.cuenta; if(!d) return null; var t=U.tipoDe(d), e=String(d.empresa||'').trim();
     return [(t==='familiar'?'Cuenta familiar':t==='empresarial'?'Cuenta empresarial':'Cuenta empresarial y familiar')+(e&&t!=='familiar'?' · '+e:''),t]; }

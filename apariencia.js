@@ -25,26 +25,40 @@
 
   var A={accents:ACC, state:null, noLocal:false, ref:null, unsub:null, fns:[], hex:hex, ink:ink, forLight:forLight, norm:norm};
   A.local=function(){ try{ var t=JSON.parse(localStorage.getItem(KEY)||'null'); return t?norm(t):null; }catch(e){ return null; } };
-  function keep(){ if(A.noLocal) return; try{ localStorage.setItem(KEY,JSON.stringify(A.state)); }catch(e){} }
+  function keep(){ if(A.noLocal) return; try{ localStorage.setItem(KEY,JSON.stringify(A.real||A.state)); }catch(e){} }
   // preview: el selector de color manual sigue abierto; las apps aplican el color pero no redibujan (destruirían el selector)
   function emit(preview){ var s=A.state; A.fns.forEach(function(f){ try{ f(s,!!preview); }catch(e){ console.warn(e); } }); }
   A.on=function(f){ A.fns.push(f); };
   // Cambia la apariencia: se aplica de inmediato y se guarda en la cuenta (si hay sesión). preview = solo mostrar, sin guardar
-  A.set=function(p,preview){ A.state=norm(Object.assign({},A.state||A.local()||DEF,p)); emit(preview);
+  // A.real es la apariencia elegida por la persona; A.state es la que se ve (en modo arcoíris, el color va cambiando)
+  A.set=function(p,preview){ var s=norm(Object.assign({},A.real||A.state||A.local()||DEF,p)); A.real=s; A.state=A.rb?{accent:A.state.accent,mode:s.mode}:s; emit(preview);
     if(preview) return; keep();
-    if(A.ref) A.ref.set({accent:A.state.accent,mode:A.state.mode,upd:Date.now()},{merge:true}).catch(function(){}); };
+    if(A.ref) A.ref.set({accent:s.accent,mode:s.mode,upd:Date.now()},{merge:true}).catch(function(){}); };
   // Escucha la apariencia de la cuenta. seed() da el color y modo actuales de la app, para crearla si aún no existe
   A.connect=function(db,uid,seed){ A.disconnect(); if(!db||!uid) return;
     A.ref=db.collection('users').doc(uid).collection('perfil').doc('apariencia');
     A.unsub=A.ref.onSnapshot(function(sn){
       if(sn.metadata&&sn.metadata.hasPendingWrites) return;
-      if(!sn.exists){ var s=norm(seed&&seed()); A.state=s; keep(); A.ref.set({accent:s.accent,mode:s.mode,upd:Date.now()},{merge:true}).catch(function(){}); return; }
-      var d=norm(sn.data()); if(A.state&&d.accent===A.state.accent&&d.mode===A.state.mode) return;
-      A.state=d; keep(); emit();
+      if(!sn.exists){ var s=norm(seed&&seed()); A.real=s; if(!A.rb) A.state=s; keep(); A.ref.set({accent:s.accent,mode:s.mode,upd:Date.now()},{merge:true}).catch(function(){}); return; }
+      var d=norm(sn.data()); if(A.real&&d.accent===A.real.accent&&d.mode===A.real.mode) return;
+      A.real=d; A.state=A.rb?{accent:A.state.accent,mode:d.mode}:d; keep(); emit();
     },function(e){ console.warn('apariencia',e); }); };
   A.disconnect=function(){ if(A.unsub){ try{ A.unsub(); }catch(e){} } A.unsub=null; A.ref=null; };
 
-  A.picker=function(acc){ acc=hex(acc)||DEF.accent; var own=!ACC.some(function(x){ return x[1]===acc; });
+  /* Modo arcoíris (cuentas de administrador): el color de énfasis recorre el círculo cromático, una vuelta cada 20 s, en
+     todas las apps. Solo se muestra: no se guarda (el color elegido queda intacto). Con «reducir movimiento» queda fijo. */
+  function hsl(h,s,l){ s/=100; l/=100; var k=function(n){ return (n+h/30)%12; }, a=s*Math.min(l,1-l), f=function(n){ return l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1))); };
+    return toHex([f(0)*255,f(8)*255,f(4)*255]); }
+  A.rb=false; var rbT=null;
+  A.arcoiris=function(on){ on=!!on; if(on===A.rb) return; A.rb=on; clearInterval(rbT); rbT=null;
+    if(!A.real) A.real=A.state||A.local()||norm(DEF);
+    if(!on){ A.state=A.real; emit(); return; }
+    var quieto=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var paso=function(){ if(document.hidden&&A.state&&A.state.accent) return; var h=quieto?280:(Date.now()/20000*360)%360;
+      A.state={accent:hsl(h,90,62),mode:(A.real||DEF).mode}; emit(true); };
+    paso(); emit(); if(!quieto) rbT=setInterval(paso,150); };
+  A.picker=function(acc){ if(A.rb) return '<p class="ap-rb">Administrador: color arcoíris en todas las apps. Tu color elegido se conserva.</p>';
+    acc=hex(acc)||DEF.accent; var own=!ACC.some(function(x){ return x[1]===acc; });
     return '<div class="ap-row" role="radiogroup" aria-label="Color de énfasis">'
       +ACC.map(function(x){ return '<button type="button" class="ap-sw" role="radio" data-ap-acc="'+x[1]+'" aria-checked="'+(x[1]===acc)+'" aria-label="'+x[0]+'" title="'+x[0]+'" style="--c:'+x[1]+'"></button>'; }).join('')
       +'<label class="ap-sw ap-own" role="radio" aria-checked="'+own+'" title="Elegir otro color" style="--c:'+(own?acc:'transparent')+'"><input type="color" data-ap-own value="'+acc.toLowerCase()+'" aria-label="Elegir otro color"></label></div>'; };
@@ -63,7 +77,8 @@
     +'.ap-own[aria-checked=false]::after{background:rgba(17,19,21,.55);box-shadow:none;-webkit-mask:none}'
     +'.ap-own[aria-checked=true]{box-shadow:0 0 0 2px var(--ap-bg,#111315),0 0 0 4px var(--c)}'
     +'.ap-own input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0}'
-    +'.ap-sw:focus-visible,.ap-own:focus-within{outline:2px solid var(--c);outline-offset:4px}';
+    +'.ap-sw:focus-visible,.ap-own:focus-within{outline:2px solid var(--c);outline-offset:4px}'
+    +'.ap-rb{margin:0;font-size:.85rem;font-weight:600;background:linear-gradient(90deg,#ff4f4f,#ffd60a,#c6f432,#22e0e0,#3d8bff,#a97bff,#ff4fa3);-webkit-background-clip:text;background-clip:text;color:transparent}';
   document.head.appendChild(css);
   window.Apariencia=A;
 })();
