@@ -23,9 +23,9 @@ service cloud.firestore {
     match /invitaciones/{email} {
       allow read: if isAdmin() || (signedIn() && myEmail() == email);
       allow delete: if isAdmin();
-      // Al registrarse, la persona crea su propio registro como "activo", sin poder darse permisos (apps, admin, tipo, empresa) ni aprobarse Proyecta
+      // Al registrarse, la persona crea su propio registro como "activo", sin poder darse permisos (apps, admin, tipo, empresa, empresaId) ni aprobarse Proyecta
       allow create: if isAdmin() || (signedIn() && myEmail() == email && request.resource.data.estado == 'activo' && request.resource.data.uid == request.auth.uid
-        && !request.resource.data.keys().hasAny(['apps', 'admin', 'tipo', 'empresa']) && request.resource.data.get('proyecta', 'pendiente') == 'pendiente');
+        && !request.resource.data.keys().hasAny(['apps', 'admin', 'tipo', 'empresa', 'empresaId']) && request.resource.data.get('proyecta', 'pendiente') == 'pendiente');
       allow update: if isAdmin() || (signedIn() && myEmail() == email && resource.data.estado != 'revocado'
         && request.resource.data.estado == 'activo' && request.resource.data.uid == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'uid', 'activado', 'ultimoUso', 'email', 'proyecta', 'proyectaSol'])
@@ -58,6 +58,11 @@ service cloud.firestore {
       allow read: if isAdmin() || (signedIn() && myEmail() == email);
       allow create, update: if invited();
       allow delete: if isAdmin() || (signedIn() && myEmail() == email);
+    }
+
+    // Empresas: solo el administrador las ve, crea, renombra y elimina (cada cuenta guarda el nombre de la suya)
+    match /empresas/{id} {
+      allow read, write: if isAdmin();
     }
 
     // Lista de administradores: cada quien puede ver si es administrador; solo un administrador da o quita el rol

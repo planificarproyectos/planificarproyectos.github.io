@@ -6,7 +6,8 @@
      analisis, csv): se suman a sus métricas.
    - Gráficas: personas activas, sesiones y minutos por día, horario de uso (hora y día de la semana), funciones en
      detalle con su tendencia, comparación entre apps, crecimiento de cuentas y el detalle de cada persona.
-   - Tipos de cuenta: familiar (Wellness Apps), empresarial o mixto (Planificar Proyectos Apps), con empresa opcional; filtros por tipo.
+   - Tipos de cuenta: familiar (Wellness Apps), empresarial o mixto (Planificar Proyectos Apps); filtros por tipo.
+   - Empresas: el administrador las crea, renombra y elimina; toda cuenta empresarial o mixta debe tener una.
    - Acciones: invitar, revocar o reactivar el acceso, aprobar o denegar Proyecta (también con el interruptor de cada cuenta) y eliminar los datos de una cuenta.
      La cuenta de inicio de sesión solo se puede borrar en la consola de Firebase (desde la web no hay permisos). */
 (function(){
@@ -20,9 +21,24 @@
   var UU=window.Uso||{},TIPOS=UU.TIPOS||{familiar:'Familiar',empresarial:'Empresarial',mixto:'Empresarial y familiar'},
     tipoDe=UU.tipoDe||function(i){return i&&TIPOS[i.tipo]?i.tipo:(i&&i.proyecta==='aprobado'?'mixto':'familiar')},
     accesoTipo=UU.accesoTipo||function(t){var f=t!=='empresarial',e=t!=='familiar';return {tipo:t,apps:{mindfocus:f,powerfit:f,lumen:f},proyecta:e?'aprobado':'denegado',proyectaRes:Date.now()}};
-  function tipoPill(u){return u.admin?'':'<span class="pill tipo t-'+u.tipo+'">'+esc(TIPOS[u.tipo])+'</span>'}
+  function empById(id){for(var i=0;i<S.emp.length;i++)if(S.emp[i].id===id)return S.emp[i];return null}
+  function empOpts(sel,ph){return '<option value="">'+esc(ph||'Elige la empresa')+'</option>'+S.emp.map(function(e){return '<option value="'+esc(e.id)+'"'+(e.id===sel?' selected':'')+'>'+esc(e.nombre)+'</option>'}).join('')}
+  var DEL=function(){return firebase.firestore.FieldValue.delete()};
+  /* Empresas: solo el administrador las crea, renombra y elimina (empresas/{id}.nombre). Cada cuenta empresarial o mixta
+     queda asignada a una (invitaciones/{correo}.empresaId y .empresa con el nombre, para la etiqueta en las apps). */
+  function empresas(){var n=function(id){return S.users.filter(function(u){return u.empresaId===id}).length},sin=S.users.filter(function(u){return u.sinEmp}).length;
+    return '<section class="card wide"><h3>Empresas</h3><p class="sub">Toda cuenta empresarial debe pertenecer a una empresa. Toca una empresa para ver sus usuarios.</p>'
+      +(sin?'<p class="msg" role="alert">⚠ '+sin+' cuenta'+(sin===1?'':'s')+' empresarial'+(sin===1?'':'es')+' sin empresa. Asígnales una en Cuentas de usuario.</p>':'')
+      +'<div class="ulist">'+(S.emp.length?S.emp.map(function(e){var k=n(e.id);
+        if(S.empRen===e.id)return '<form class="searchrow emp-ren" data-id="'+esc(e.id)+'" novalidate><label class="field"><input id="admEmpRen" type="text" maxlength="60" value="'+esc(e.nombre)+'" aria-label="Nuevo nombre de '+esc(e.nombre)+'"></label><button class="sbtn pri" type="submit">Guardar</button><button class="sbtn" type="button" data-adm="empren" data-id="">Cancelar</button></form>';
+        return '<div class="urow"><div class="utop" style="cursor:default"><button type="button" class="link" data-adm="empfil" data-id="'+esc(e.id)+'" style="background:none;border:0;color:inherit;font:inherit;font-weight:700;cursor:pointer;padding:0;text-align:left">'+esc(e.nombre)+'</button>'
+          +'<span class="usum">'+k+' usuario'+(k===1?'':'s')+'</span><span class="row2" style="margin:0"><button type="button" class="sbtn sm" data-adm="empren" data-id="'+esc(e.id)+'">Renombrar</button>'
+          +(k?'':'<button type="button" class="sbtn sm warn'+(S.sure==='emp:'+e.id?' sure':'')+'" data-adm="empdel" data-id="'+esc(e.id)+'">'+(S.sure==='emp:'+e.id?'¿Seguro?':'Eliminar')+'</button>')+'</span></div></div>'}).join(''):'<div class="empty">Aún no hay empresas.</div>')+'</div>'
+      +'<div class="lbl">Nueva empresa</div><form id="admEmpNew" class="searchrow" novalidate><label class="field"><input id="admEmpNom" type="text" maxlength="60" placeholder="Nombre de la empresa" autocomplete="off"></label><button class="sbtn pri" type="submit">Crear</button></form>'
+      +'<div class="msg'+(/^(Empresa )/.test(S.empMsg||'')?' ok':'')+'" role="status">'+esc(S.empMsg||'')+'</div></section>'}
+  function tipoPill(u){return u.admin?'':'<span class="pill tipo t-'+u.tipo+'">'+esc(TIPOS[u.tipo])+'</span>'+(u.sinEmp?'<span class="pill no">⚠ Sin empresa</span>':'')}
   var DIA=864e5, SUBS=['entradas','config','powerfit','lumen','proyecta','perfil'];
-  var S={db:null,me:null,inv:[],stats:{},admins:{},uopen:null,users:[],upd:0,app:'mindfocus',q:'',sure:'',del:null,delOut:null,invMsg:null,busy:false,err:'',ver:null,verFoco:false,filt:'todos',invTipo:'familiar'};
+  var S={db:null,me:null,inv:[],stats:{},admins:{},uopen:null,users:[],upd:0,app:'mindfocus',q:'',sure:'',del:null,delOut:null,invMsg:null,busy:false,err:'',ver:null,verFoco:false,filt:'todos',invTipo:'familiar',emp:[],empFil:'',empRen:null,empMsg:'',needEmp:null,invEmpId:''};
   var $=function(id){return document.getElementById(id)};
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function nf(n){return (+n||0).toLocaleString('es-CO')}
@@ -71,11 +87,12 @@
     out.forEach(function(u){u.apps={};var last=Math.max(+(u.inv&&u.inv.ultimoUso)||0,+(u.st&&u.st.ultimoUso)||0);
       Object.keys(APPS).forEach(function(a){var d=appData(u.st,a);u.apps[a]=d;if(d.ultimoUso>last)last=d.ultimoUso});
       u.last=last;u.admin=u.uid===ADMIN_UID||!!(u.uid&&S.admins[u.uid]);u.estado=(u.inv&&u.inv.estado)||'sin registro';
-      u.tipo=u.admin?'mixto':tipoDe(u.inv);u.empresa=String((u.inv&&u.inv.empresa)||'')});
+      u.tipo=u.admin?'mixto':tipoDe(u.inv);u.empresaId=String((u.inv&&u.inv.empresaId)||'');var ee=empById(u.empresaId);u.empresa=ee?ee.nombre:'';u.sinEmp=!u.admin&&u.tipo!=='familiar'&&!ee});
     out.sort(function(a,b){return b.last-a.last});S.users=out}
 
   function cargar(){if(!S.db||S.busy)return;S.busy=true;S.err='';pintar();
-    Promise.all([S.db.collection('invitaciones').get(),S.db.collection('stats').get(),S.db.collection('admins').get().catch(function(){return {docs:[]}})]).then(function(r){
+    Promise.all([S.db.collection('invitaciones').get(),S.db.collection('stats').get(),S.db.collection('admins').get().catch(function(){return {docs:[]}}),S.db.collection('empresas').get().catch(function(){return {docs:[]}})]).then(function(r){
+      S.emp=r[3].docs.map(function(d){var x=d.data()||{};return {id:d.id,nombre:String(x.nombre||''),creada:x.creada||0}}).sort(function(a,b){return a.nombre.localeCompare(b.nombre,'es')});
       S.admins={};r[2].docs.forEach(function(d){S.admins[d.id]=d.data()||{}});
       S.inv=r[0].docs.map(function(d){var x=d.data();x.id=d.id;return x});S.stats={};r[1].docs.forEach(function(d){S.stats[d.id]=d.data()});
       armar();S.upd=Date.now()}).catch(function(e){S.err='No se pudieron cargar los datos ('+(e.code||e.message)+').'}).then(function(){S.busy=false;pintar()})}
@@ -186,10 +203,11 @@
 
   function pill(u){if(u.admin)return '<span class="pill ok">Administrador</span>';var e=u.estado;
     return e==='activo'?'<span class="pill ok">Activo</span>':e==='revocado'?'<span class="pill no">Revocado</span>':e==='pendiente'?'<span class="pill wait">Pendiente</span>':'<span class="pill">Sin registro de acceso</span>'}
-  function cuentas(){var q=S.q.trim().toLowerCase(),L=S.users.filter(function(u){return (S.filt==='todos'||(!u.admin&&u.tipo===S.filt))&&(!q||u.email.indexOf(q)>=0||u.empresa.toLowerCase().indexOf(q)>=0)});
+  function cuentas(){var q=S.q.trim().toLowerCase(),L=S.users.filter(function(u){return (S.filt==='todos'||(!u.admin&&u.tipo===S.filt))&&(!S.empFil||u.empresaId===S.empFil)&&(!q||u.email.indexOf(q)>=0||u.empresa.toLowerCase().indexOf(q)>=0)});
     var cnt=function(t){return S.users.filter(function(u){return !u.admin&&u.tipo===t}).length};
     var h='<section class="card wide"><h3>Cuentas de <span>usuario</span></h3><p class="sub">Revocar quita el acceso a todas las apps (Mind Focus, PowerFit, Lumen y Proyecta); sus datos no se borran. Eliminar borra sus datos para siempre.</p>'
       +'<div class="searchrow"><label class="field"><input id="admQ" type="search" placeholder="Buscar por correo o empresa" value="'+esc(S.q)+'" autocomplete="off" aria-label="Buscar cuenta por correo"></label><span class="adm-upd">'+L.length+' de '+S.users.length+'</span></div>'
+      +(S.empFil&&empById(S.empFil)?'<div class="tfilt"><span class="pill t-empresarial">Empresa: '+esc(empById(S.empFil).nombre)+'</span><button type="button" class="sbtn sm" data-adm="empfil" data-id="">Quitar filtro</button></div>':'')
       +'<div class="tfilt" role="group" aria-label="Filtrar por tipo de cuenta">'+[['todos','Todos',S.users.length]].concat(Object.keys(TIPOS).map(function(t){return [t,TIPOS[t],cnt(t)]})).map(function(f){return '<button type="button" class="sbtn sm'+(S.filt===f[0]?' pri':'')+'" data-adm="filt" data-k="'+f[0]+'" aria-pressed="'+(S.filt===f[0])+'">'+esc(f[1])+' · '+f[2]+'</button>'}).join('')+'</div>';
     if(S.delOut)h+=resultadoEliminar();
     h+='<div class="ulist">'+(L.length?L.map(cuentaRow).join(''):'<div class="empty">Ninguna cuenta coincide.</div>')+'</div>';
@@ -211,7 +229,8 @@
     // Tipo de cuenta y empresa: el tipo abre las apps que le corresponden y cierra las demás; los interruptores afinan
     var tip=u.admin||!u.inv?'':'<div class="app-acc"><div class="app-acc-h"><b>Tipo de cuenta</b></div><div class="tfilt" role="radiogroup" aria-label="Tipo de cuenta de '+esc(u.email)+'">'
       +Object.keys(TIPOS).map(function(t){return '<button type="button" class="sbtn sm'+(u.tipo===t?' pri':'')+'" role="radio" aria-checked="'+(u.tipo===t)+'" data-adm="tipo" data-k="'+t+'" data-id="'+esc(u.id)+'">'+esc(TIPOS[t])+'</button>'}).join('')+'</div>'
-      +'<label class="field"><input type="text" maxlength="60" placeholder="Empresa (opcional)" value="'+esc(u.empresa)+'" data-emp="'+esc(u.id)+'" aria-label="Empresa de '+esc(u.email)+'"></label></div>';
+      +(u.tipo==='familiar'&&S.needEmp!==u.id?'':'<label class="field"><select data-empsel="'+esc(u.id)+'" aria-label="Empresa de '+esc(u.email)+'">'+empOpts(u.empresaId,S.emp.length?'Elige la empresa':'Primero crea una empresa')+'</select></label>')
+      +(S.needEmp===u.id?'<p class="msg" role="alert">Elige primero la empresa; luego se guarda el tipo de cuenta.</p>':u.sinEmp?'<p class="msg" role="alert">Las cuentas empresariales deben tener empresa.</p>':'')+'</div>';
     var on=appOn(i),nOn=APP_ORD.filter(function(a){return on[a]}).length,
       pry=u.admin?adm:adm+'<div class="app-acc"><div class="app-acc-h"><b>Acceso a apps</b><span>'+(nOn===APP_ORD.length?'Todas':nOn?nOn+' de '+APP_ORD.length:'Ninguna')+'</span>'
       +'<button type="button" class="sbtn sm" data-adm="appall" data-v="1" data-id="'+esc(u.id)+'"'+(nOn===APP_ORD.length?' disabled':'')+'>Todas</button>'
@@ -237,7 +256,7 @@
       +'<div class="row2"><a class="sbtn pri" href="https://console.firebase.google.com/project/planificar-proyectos-apps/authentication/users" target="_blank" rel="noopener">Abrir consola de Firebase</a><button class="sbtn" data-adm="copy" data-v="'+esc(o.email)+'">Copiar correo</button><button class="sbtn" data-adm="delok">Cerrar</button></div></div>'}
   function invitar(){var m=S.invMsg;
     return '<div class="lbl">Invitar a una persona</div><div class="tfilt" role="radiogroup" aria-label="Tipo de cuenta de la invitación">'+Object.keys(TIPOS).map(function(t){return '<button type="button" class="sbtn sm'+(S.invTipo===t?' pri':'')+'" role="radio" aria-checked="'+(S.invTipo===t)+'" data-adm="invtipo" data-k="'+t+'">'+esc(TIPOS[t])+'</button>'}).join('')+'</div>'
-      +'<label class="field" style="margin-bottom:10px"><input id="admInvEmp" type="text" maxlength="60" placeholder="Empresa (opcional)" autocomplete="off"></label><form id="admInv" class="searchrow" novalidate><label class="field"><input id="admInvEm" type="email" inputmode="email" placeholder="Correo de la persona" autocomplete="off"></label><button class="sbtn pri" type="submit">Invitar</button></form><div class="msg'+(m&&m.ok?' ok':'')+'" id="admInvSt">'+esc(m?m.st:'')+'</div>'
+      +(S.invTipo==='familiar'?'':'<label class="field" style="margin-bottom:10px"><select id="admInvEmp" aria-label="Empresa de la invitación">'+empOpts(S.invEmpId,S.emp.length?'Elige la empresa (obligatoria)':'Primero crea una empresa')+'</select></label>')+'<form id="admInv" class="searchrow" novalidate><label class="field"><input id="admInvEm" type="email" inputmode="email" placeholder="Correo de la persona" autocomplete="off"></label><button class="sbtn pri" type="submit">Invitar</button></form><div class="msg'+(m&&m.ok?' ok':'')+'" id="admInvSt">'+esc(m?m.st:'')+'</div>'
       +(m&&m.text?'<div class="invout"><textarea id="admInvTxt" readonly aria-label="Mensaje de invitación">'+esc(m.text)+'</textarea><div class="row2"><button class="sbtn" data-adm="copy" data-src="admInvTxt">Copiar mensaje</button><a class="sbtn pri" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent(m.text)+'">Enviar por WhatsApp</a></div></div>':'')}
   // La invitación usa la marca del tipo de cuenta: Wellness Apps (familiar) o Planificar Proyectos Apps (empresarial o mixto)
   function invTexto(em){var x=porId(em),t=x?x.tipo:S.invTipo,pp=t!=='familiar',
@@ -274,7 +293,7 @@
     el.hidden=false;
     el.innerHTML='<div class="adm-head wide"><div><div class="kicker">Solo administración</div><h2>Panel de <span>control</span></h2></div><div class="adm-upd"><span>'+(S.busy?'Cargando…':S.upd?'Actualizado '+new Date(S.upd).toLocaleTimeString('es-CO',{hour:'numeric',minute:'2-digit'}):'')+'</span><button class="sbtn" data-adm="load" type="button"'+(S.busy?' disabled':'')+'>Actualizar</button></div></div>'
       +(S.err?'<div class="empty wide" role="alert">'+esc(S.err)+'</div>':'')
-      +(S.upd?resumen()+cuentas()+solicitudes()+detalle()+comparar()+porApp()+ranking()+crecimiento():'');   // primero lo que se administra (cuentas y accesos), luego las métricas
+      +(S.upd?resumen()+empresas()+cuentas()+solicitudes()+detalle()+comparar()+porApp()+ranking()+crecimiento():'');   // primero lo que se administra (cuentas y accesos), luego las métricas
     sinTip();document.body.classList.toggle('adm-sheet',!!(S.ver&&porId(S.ver)));
     if(S.verFoco){S.verFoco=false;var cx=document.querySelector('#adm .sheet .x');if(cx)cx.focus()}
     else if(f==='admQ'){var q=$('admQ');if(q){q.focus();if(pos!=null)q.setSelectionRange(pos,pos)}}}
@@ -297,9 +316,14 @@
     if(a==='load')return cargar();
     if(a==='app'){S.app=b.getAttribute('data-k');return pintar()}
     if(a==='filt'){S.filt=b.getAttribute('data-k');return pintar()}
-    if(a==='invtipo'){S.invTipo=b.getAttribute('data-k');var ie=($('admInvEm')||{}).value,ip=($('admInvEmp')||{}).value;pintar();if($('admInvEm'))$('admInvEm').value=ie||'';if($('admInvEmp'))$('admInvEmp').value=ip||'';return}
-    if(a==='tipo'){var tu=porId(id),tk=b.getAttribute('data-k');if(!tu||tu.tipo===tk)return;b.disabled=true;
-      return S.db.collection('invitaciones').doc(id).set(Object.assign(accesoTipo(tk),{email:tu.email}),{merge:true}).then(cargarSilencio,function(e){b.disabled=false;alert('No se pudo guardar: '+(e.code||e.message))})}
+    if(a==='invtipo'){S.invTipo=b.getAttribute('data-k');var ie=($('admInvEm')||{}).value;pintar();if($('admInvEm'))$('admInvEm').value=ie||'';return}
+    if(a==='empfil'){S.empFil=id||'';S.filt='todos';pintar();if(id){var cs=document.getElementById('admQ');if(cs)cs.scrollIntoView({block:'center'})}return}
+    if(a==='empren'){S.empRen=id||null;pintar();var ri=$('admEmpRen');if(ri){ri.focus();ri.select()}return}
+    if(a==='empdel'){if(!seguro('emp:'+id))return pintar();if(S.users.some(function(u){return u.empresaId===id}))return;return S.db.collection('empresas').doc(id).delete().then(function(){S.empMsg='Empresa eliminada.';cargarSilencio()},function(e){alert('No se pudo eliminar: '+(e.code||e.message))})}
+    if(a==='tipo'){var tu=porId(id),tk=b.getAttribute('data-k');if(!tu||(tu.tipo===tk&&!tu.sinEmp))return;
+      if(tk!=='familiar'&&!empById(tu.empresaId)){S.needEmp=id;S.needTipo=tk;return pintar()}S.needEmp=null;b.disabled=true;
+      var td=Object.assign(accesoTipo(tk),{email:tu.email});if(tk==='familiar'){td.empresaId=DEL();td.empresa=DEL()}
+      return S.db.collection('invitaciones').doc(id).set(td,{merge:true}).then(cargarSilencio,function(e){b.disabled=false;alert('No se pudo guardar: '+(e.code||e.message))})}
     if(a==='uopen'){S.uopen=S.uopen===id?null:id;S.del=null;return pintar()}
     if(a==='ver'){S.ver=id;S.verFoco=true;return pintar()}
     if(a==='verx'){var vid=S.ver;S.ver=null;pintar();var vb=document.querySelector('[data-adm="ver"][data-id="'+(window.CSS&&CSS.escape?CSS.escape(vid):vid)+'"]');if(vb)vb.focus();return}
@@ -326,12 +350,30 @@
     if(a==='copy'){var t=b.getAttribute('data-v')||(($(b.getAttribute('data-src'))||{}).value||'');
       (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){b.textContent='Copiado'},function(){var x=$(b.getAttribute('data-src'));if(x)x.select();b.textContent='Selecciona y copia'})}});
   document.addEventListener('input',function(e){if(e.target.id==='admQ'){S.q=e.target.value;pintar()}});
-  document.addEventListener('change',function(e){var id=e.target.getAttribute&&e.target.getAttribute('data-emp');if(!id||!S.db)return;var u=porId(id),v=e.target.value.trim();if(!u||v===u.empresa)return;
-    S.db.collection('invitaciones').doc(id).set({email:u.email,empresa:v},{merge:true}).then(cargarSilencio,function(x){alert('No se pudo guardar: '+(x.code||x.message))})});
+  // Empresa de una cuenta (lista desplegable). Si se pidió un tipo empresarial sin empresa, se guarda junto con la empresa
+  document.addEventListener('change',function(e){
+    if(e.target.id==='admInvEmp'){S.invEmpId=e.target.value;return}
+    var id=e.target.getAttribute&&e.target.getAttribute('data-empsel');if(!id||!S.db)return;var u=porId(id),em=empById(e.target.value);if(!u)return;
+    if(!em){if(u.tipo!=='familiar'||S.needEmp===id){e.target.value=u.empresaId;alert('Las cuentas empresariales deben tener empresa.')}return}
+    var d={email:u.email,empresaId:em.id,empresa:em.nombre};if(S.needEmp===id){Object.assign(d,accesoTipo(S.needTipo));d.empresaId=em.id;d.empresa=em.nombre;S.needEmp=null}
+    S.db.collection('invitaciones').doc(id).set(d,{merge:true}).then(cargarSilencio,function(x){alert('No se pudo guardar: '+(x.code||x.message))})});
+  // Crear y renombrar empresas (al renombrar, se actualiza el nombre en todas sus cuentas)
+  document.addEventListener('submit',function(e){var f=e.target;
+    if(f.id==='admEmpNew'){e.preventDefault();var nm=($('admEmpNom').value||'').trim().replace(/\s+/g,' ');
+      if(!nm){S.empMsg='Escribe el nombre de la empresa.';return pintar()}
+      if(S.emp.some(function(x){return x.nombre.toLowerCase()===nm.toLowerCase()})){S.empMsg='Ya existe una empresa con ese nombre.';return pintar()}
+      S.db.collection('empresas').add({nombre:nm,creada:Date.now(),por:S.me}).then(function(){S.empMsg='Empresa creada: '+nm+'.';cargarSilencio()},function(x){S.empMsg='No se pudo crear: '+(x.code||x.message);pintar()});return}
+    if(f.classList&&f.classList.contains('emp-ren')){e.preventDefault();var id=f.getAttribute('data-id'),nn=($('admEmpRen').value||'').trim().replace(/\s+/g,' ');
+      if(!nn)return;if(S.emp.some(function(x){return x.id!==id&&x.nombre.toLowerCase()===nn.toLowerCase()})){S.empMsg='Ya existe una empresa con ese nombre.';return pintar()}
+      var bt=S.db.batch();bt.update(S.db.collection('empresas').doc(id),{nombre:nn});
+      S.users.forEach(function(u){if(u.empresaId===id&&u.inv)bt.update(S.db.collection('invitaciones').doc(u.id),{empresa:nn})});
+      bt.commit().then(function(){S.empRen=null;S.empMsg='Empresa renombrada.';cargarSilencio()},function(x){alert('No se pudo renombrar: '+(x.code||x.message))})}});
   document.addEventListener('submit',function(e){if(e.target.id!=='admInv')return;e.preventDefault();var em=$('admInvEm').value.trim().toLowerCase();
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){S.invMsg={st:'Escribe un correo válido.'};return pintar()}
     var ex=porId(em);if(ex&&ex.inv&&ex.estado!=='revocado'){S.invMsg={st:'Esa persona ya tiene acceso o una invitación pendiente.',text:invTexto(em)};return pintar()}
-    var dat=Object.assign(accesoTipo(S.invTipo),{email:em,estado:'pendiente',invitado:Date.now()}),emp=(($('admInvEmp')||{}).value||'').trim();if(emp)dat.empresa=emp;
+    var dat=Object.assign(accesoTipo(S.invTipo),{email:em,estado:'pendiente',invitado:Date.now()}),ie=S.invTipo==='familiar'?null:empById(S.invEmpId);
+    if(S.invTipo!=='familiar'&&!ie){S.invMsg={st:'Elige la empresa: las cuentas empresariales deben pertenecer a una.'};return pintar()}
+    if(ie){dat.empresaId=ie.id;dat.empresa=ie.nombre}else{dat.empresaId=DEL();dat.empresa=DEL()}
     S.db.collection('invitaciones').doc(em).set(dat,{merge:true})
       .then(function(){S.invMsg={ok:true,st:'Invitación creada para '+em+'. Envíale el mensaje.',text:invTexto(em)};S.busy=false;cargar()},function(x){S.invMsg={st:'No se pudo invitar: '+(x.code||x.message)};pintar()})});
 
