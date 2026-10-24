@@ -298,6 +298,11 @@ svg.m-pp path{fill:var(--accent)}svg.m-w path{stroke:var(--accent)}
       <div><h2>Proyecta</h2><p>Modelo financiero inmobiliario: flujo de caja, utilidad y TIR.</p></div>
       <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
     </a>
+    <a class="app" data-app="cotizador" href="/cotizador/" hidden><span class="lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+      <svg width="72" height="72" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="15" fill="#111315"/><path d="M19 12h19l9 9v31H19z" fill="none" stroke="#F2F2EE" stroke-width="4" stroke-linejoin="round"/><path d="M38 12v9h9" fill="none" stroke="#F2F2EE" stroke-width="4" stroke-linejoin="round"/><path d="M36.5 30.5c-1-1.6-2.7-2.3-4.5-2.3-2.4 0-4.2 1.2-4.2 3.2 0 4.6 9 2.6 9 7.4 0 2.1-2 3.4-4.6 3.4-2 0-3.8-.8-4.8-2.5M32 25.5v2.7M32 41.7v2.8" fill="none" style="stroke:var(--accent)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><h2>Cotizador</h2><p>Cotizaciones, historial y cuentas de cobro de Planificar Proyectos SAS.</p></div>
+      <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </a>
     <p class="noapps" id="noApps" hidden>Tu cuenta aún no tiene apps activas. Escríbele al administrador para que te dé acceso.</p>
   </nav>
   <div class="adm" id="adm" hidden></div>
@@ -360,14 +365,14 @@ function accesoApps(u){if(accUnsub){accUnsub();accUnsub=null}accUid=u&&u.uid;
  try{var db=firebase.firestore(),em=u.email.toLowerCase(),ref=db.collection('invitaciones').doc(em),uid=u.uid,
    adm=window.Uso&&Uso.esAdmin?Uso.esAdmin(db,u):Promise.resolve(false);
   adm.then(function(esAdm){if(accUid!==uid)return;
-   if(esAdm){if(window.Uso&&Uso.setCuenta)Uso.setCuenta({},true);setMarca('pp');pintarApps({mindfocus:1,powerfit:1,lumen:1,proyecta:1});return}
+   if(esAdm){if(window.Uso&&Uso.setCuenta)Uso.setCuenta({},true);setMarca('pp');pintarApps({mindfocus:1,powerfit:1,lumen:1,proyecta:1,cotizador:1});return}
    accUnsub=ref.onSnapshot(function(sn){if(accUid!==uid)return;var now=Date.now();
     if(!sn.exists){ref.set({email:em,estado:'activo',uid:uid,activado:now,ultimoUso:now,autoregistro:true}).catch(function(){});if(window.Uso&&Uso.setCuenta)Uso.setCuenta({},false);setMarca('w');pintarApps({mindfocus:1,powerfit:1,lumen:1});return}
     var d=sn.data()||{},ap=d.apps||{};if(window.Uso&&Uso.setCuenta)Uso.setCuenta(d,false);
     if(d.estado==='revocado'){pintarApps({});return}
     // Tipo de cuenta (familiar, empresarial o mixto): define la marca y qué apps se muestran; los interruptores por app afinan
     var U=window.Uso||{},t=U.tipoDe?U.tipoDe(d):(d.proyecta==='aprobado'?'mixto':'familiar'),del=U.appsDeTipo?U.appsDeTipo(t):['mindfocus','powerfit','lumen','proyecta'],v={};
-    del.forEach(function(a){v[a]=a==='proyecta'?d.proyecta==='aprobado':ap[a]!==false});
+    del.forEach(function(a){var so=(U.SOLO||{})[a];v[a]=a==='proyecta'?d.proyecta==='aprobado':ap[a]!==false&&(!so||d.empresaId===so)});
     setMarca(t==='familiar'?'w':'pp');pintarApps(v)},
     function(){pintarApps({mindfocus:1,powerfit:1,lumen:1})})})}
  catch(e){pintarApps({mindfocus:1,powerfit:1,lumen:1})}}

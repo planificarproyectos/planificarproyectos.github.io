@@ -65,6 +65,20 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Cotizador: historial compartido solo por los miembros de Planificar Proyectos SAS (y administradores)
+    function ppMember() {
+      return invited() && get(invitePath()).data.get('empresaId', '') == 'planificar-proyectos-sas'
+        && get(invitePath()).data.get('apps', {}).get('cotizador', true) != false;
+    }
+    match /cotizaciones/{id} {
+      allow read, write: if isAdmin() || ppMember();
+    }
+    // Datos sensibles de la empresa para los PDF (NIT, documentos, cuenta, firma): los lee la empresa; solo el administrador los cambia
+    match /cotizador_config/{id} {
+      allow read: if isAdmin() || ppMember();
+      allow write: if isAdmin();
+    }
+
     // Lista de administradores: cada quien puede ver si es administrador; solo un administrador da o quita el rol
     match /admins/{uid} {
       allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);

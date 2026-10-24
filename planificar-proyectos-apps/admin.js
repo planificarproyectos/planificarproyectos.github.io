@@ -15,12 +15,13 @@
   var APPS=(window.Uso&&Uso.APPS)||{mindfocus:'Mind Focus',powerfit:'PowerFit',lumen:'Lumen',proyecta:'Proyecta'};
   var EVENTOS=(window.Uso&&Uso.EVENTOS)||{};
   // Acceso por app (sin dato = con acceso; Proyecta usa su aprobación)
-  var APP_ORD=['mindfocus','powerfit','lumen','proyecta'];
+  var APP_ORD=['mindfocus','powerfit','lumen','proyecta','cotizador'];
   function appOn(i){var ap=(i&&i.apps)||{},o={};APP_ORD.forEach(function(a){o[a]=a==='proyecta'?(i&&i.proyecta)==='aprobado':ap[a]!==false});return o}
   // Tipos de cuenta (ver /uso.js): familiar, empresarial o mixto, más el nombre de la empresa (opcional)
   var UU=window.Uso||{},TIPOS=UU.TIPOS||{familiar:'Familiar',empresarial:'Empresarial',mixto:'Empresarial y familiar'},
     tipoDe=UU.tipoDe||function(i){return i&&TIPOS[i.tipo]?i.tipo:(i&&i.proyecta==='aprobado'?'mixto':'familiar')},
     accesoTipo=UU.accesoTipo||function(t){var f=t!=='empresarial',e=t!=='familiar';return {tipo:t,apps:{mindfocus:f,powerfit:f,lumen:f},proyecta:e?'aprobado':'denegado',proyectaRes:Date.now()}};
+  var PP_EMP=(window.Uso&&Uso.PP_EMP)||'planificar-proyectos-sas';
   function empById(id){for(var i=0;i<S.emp.length;i++)if(S.emp[i].id===id)return S.emp[i];return null}
   function empOpts(sel,ph){return '<option value="">'+esc(ph||'Elige la empresa')+'</option>'+S.emp.map(function(e){return '<option value="'+esc(e.id)+'"'+(e.id===sel?' selected':'')+'>'+esc(e.nombre)+'</option>'}).join('')}
   var DEL=function(){return firebase.firestore.FieldValue.delete()};
@@ -33,7 +34,7 @@
         if(S.empRen===e.id)return '<form class="searchrow emp-ren" data-id="'+esc(e.id)+'" novalidate><label class="field"><input id="admEmpRen" type="text" maxlength="60" value="'+esc(e.nombre)+'" aria-label="Nuevo nombre de '+esc(e.nombre)+'"></label><button class="sbtn pri" type="submit">Guardar</button><button class="sbtn" type="button" data-adm="empren" data-id="">Cancelar</button></form>';
         return '<div class="urow"><div class="utop" style="cursor:default"><button type="button" class="link" data-adm="empfil" data-id="'+esc(e.id)+'" style="background:none;border:0;color:inherit;font:inherit;font-weight:700;cursor:pointer;padding:0;text-align:left">'+esc(e.nombre)+'</button>'
           +'<span class="usum">'+k+' usuario'+(k===1?'':'s')+'</span><span class="row2" style="margin:0"><button type="button" class="sbtn sm" data-adm="empren" data-id="'+esc(e.id)+'">Renombrar</button>'
-          +(k?'':'<button type="button" class="sbtn sm warn'+(S.sure==='emp:'+e.id?' sure':'')+'" data-adm="empdel" data-id="'+esc(e.id)+'">'+(S.sure==='emp:'+e.id?'¿Seguro?':'Eliminar')+'</button>')+'</span></div></div>'}).join(''):'<div class="empty">Aún no hay empresas.</div>')+'</div>'
+          +(k||e.id===PP_EMP?'':'<button type="button" class="sbtn sm warn'+(S.sure==='emp:'+e.id?' sure':'')+'" data-adm="empdel" data-id="'+esc(e.id)+'">'+(S.sure==='emp:'+e.id?'¿Seguro?':'Eliminar')+'</button>')+'</span></div></div>'}).join(''):'<div class="empty">Aún no hay empresas.</div>')+'</div>'
       +'<div class="lbl">Nueva empresa</div><form id="admEmpNew" class="searchrow" novalidate><label class="field"><input id="admEmpNom" type="text" maxlength="60" placeholder="Nombre de la empresa" autocomplete="off"></label><button class="sbtn pri" type="submit">Crear</button></form>'
       +'<div class="msg'+(/^(Empresa )/.test(S.empMsg||'')?' ok':'')+'" role="status">'+esc(S.empMsg||'')+'</div></section>'}
   function tipoPill(u){return u.admin?'':'<span class="pill tipo t-'+u.tipo+'">'+esc(TIPOS[u.tipo])+'</span>'+(u.sinEmp?'<span class="pill no">⚠ Sin empresa</span>':'')}
@@ -93,6 +94,8 @@
   function cargar(){if(!S.db||S.busy)return;S.busy=true;S.err='';pintar();
     Promise.all([S.db.collection('invitaciones').get(),S.db.collection('stats').get(),S.db.collection('admins').get().catch(function(){return {docs:[]}}),S.db.collection('empresas').get().catch(function(){return {docs:[]}})]).then(function(r){
       S.emp=r[3].docs.map(function(d){var x=d.data()||{};return {id:d.id,nombre:String(x.nombre||''),creada:x.creada||0}}).sort(function(a,b){return a.nombre.localeCompare(b.nombre,'es')});
+      // Planificar Proyectos SAS: empresa fija (su id da acceso al Cotizador); se crea si falta y no se puede eliminar
+      if(!S.emp.some(function(e){return e.id===PP_EMP})){S.emp.unshift({id:PP_EMP,nombre:'Planificar Proyectos SAS',creada:Date.now()});S.db.collection('empresas').doc(PP_EMP).set({nombre:'Planificar Proyectos SAS',creada:Date.now(),por:S.me},{merge:true}).catch(function(){})}
       S.admins={};r[2].docs.forEach(function(d){S.admins[d.id]=d.data()||{}});
       S.inv=r[0].docs.map(function(d){var x=d.data();x.id=d.id;return x});S.stats={};r[1].docs.forEach(function(d){S.stats[d.id]=d.data()});
       armar();S.upd=Date.now()}).catch(function(e){S.err='No se pudieron cargar los datos ('+(e.code||e.message)+').'}).then(function(){S.busy=false;pintar()})}
@@ -319,7 +322,7 @@
     if(a==='invtipo'){S.invTipo=b.getAttribute('data-k');var ie=($('admInvEm')||{}).value;pintar();if($('admInvEm'))$('admInvEm').value=ie||'';return}
     if(a==='empfil'){S.empFil=id||'';S.filt='todos';pintar();if(id){var cs=document.getElementById('admQ');if(cs)cs.scrollIntoView({block:'center'})}return}
     if(a==='empren'){S.empRen=id||null;pintar();var ri=$('admEmpRen');if(ri){ri.focus();ri.select()}return}
-    if(a==='empdel'){if(!seguro('emp:'+id))return pintar();if(S.users.some(function(u){return u.empresaId===id}))return;return S.db.collection('empresas').doc(id).delete().then(function(){S.empMsg='Empresa eliminada.';cargarSilencio()},function(e){alert('No se pudo eliminar: '+(e.code||e.message))})}
+    if(a==='empdel'){if(id===PP_EMP)return;if(!seguro('emp:'+id))return pintar();if(S.users.some(function(u){return u.empresaId===id}))return;return S.db.collection('empresas').doc(id).delete().then(function(){S.empMsg='Empresa eliminada.';cargarSilencio()},function(e){alert('No se pudo eliminar: '+(e.code||e.message))})}
     if(a==='tipo'){var tu=porId(id),tk=b.getAttribute('data-k');if(!tu||(tu.tipo===tk&&!tu.sinEmp))return;
       if(tk!=='familiar'&&!empById(tu.empresaId)){S.needEmp=id;S.needTipo=tk;return pintar()}S.needEmp=null;b.disabled=true;
       var td=Object.assign(accesoTipo(tk),{email:tu.email});if(tk==='familiar'){td.empresaId=DEL();td.empresa=DEL()}

@@ -1,7 +1,7 @@
 // Service worker del sitio principal. No toca las apps con su propio SW.
 const C='pp-site-v4';
 const PRE=['/','/hero.webp','/favicon.svg','/app-icon-192.png'];
-const SKIP=/^\/(mindfocus|powerfit|lumen|proyecta|planificar-proyectos-apps|wellness-apps|__)\//;   // __: ayudante de inicio de sesión de Firebase, nunca desde caché
+const SKIP=/^\/(mindfocus|powerfit|lumen|proyecta|cotizador|planificar-proyectos-apps|wellness-apps|__)\//;   // __: ayudante de inicio de sesión de Firebase, nunca desde caché
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.addAll(PRE)).catch(()=>{}))});
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x.startsWith('pp-site-')&&x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{
