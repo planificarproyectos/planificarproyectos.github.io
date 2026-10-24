@@ -1,7 +1,7 @@
 // Configuración pública de Firebase (no es secreta; los datos se protegen con las reglas de Firestore).
 window.FIREBASE_CONFIG = {
   apiKey: "AIzaSyC0BGf3BaW-J2auJ2Sgegnc4yinXTogBFg",
-  authDomain: "planificar-proyectos-apps.firebaseapp.com",
+  authDomain: "www.planificarproyectos.com",   // ayudante de inicio de sesión alojado en este dominio (/__/auth/), necesario para Google en iPhone
   projectId: "planificar-proyectos-apps",
   storageBucket: "planificar-proyectos-apps.firebasestorage.app",
   messagingSenderId: "98326935895",
