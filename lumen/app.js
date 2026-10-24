@@ -63,7 +63,7 @@ var Cloud={auth:null,db:null,user:null,wait:false,ref:null,unsub:null,prof:null,
    if(window.Apariencia) Apariencia.connect(self.db,u.uid,function(){ return {accent:accHex(S.accent),mode:S.mode}; });
    render();
    var me=u.uid;
-   self.ensureAccess(u).then(function(ok){ if(!self.user||self.user.uid!==me) return; if(!ok){ self.noAccess=true; render(); return; } if(window.Uso) Uso.start(self.db,u,'lumen'); self.sub(); }); // la sesión cuenta para el dashboard de Wellness Apps
+   self.ensureAccess(u).then(function(ok){ if(!self.user||self.user.uid!==me) return; if(!ok){ self.noAccess=true; render(); return; } if(window.Uso) Uso.start(self.db,u,'lumen'); self.sub(); }); // la sesión cuenta para el dashboard de Planificar Proyectos Apps
   });
  },
  ensureAccess:function(u){
@@ -78,7 +78,7 @@ var Cloud={auth:null,db:null,user:null,wait:false,ref:null,unsub:null,prof:null,
  },
  sub:function(){
   var self=this, first=true;
-  // Perfil compartido Wellness Apps: users/{uid}/perfil/datos (nombre). Tema y color siguen siendo propios de Lumen.
+  // Perfil compartido Planificar Proyectos Apps: users/{uid}/perfil/datos (nombre). Tema y color siguen siendo propios de Lumen.
   self.prof=self.db.collection('users').doc(self.user.uid).collection('perfil').doc('datos');
   self.unsubP=self.prof.onSnapshot(function(sn){ var d=sn.exists?sn.data():null;
    if(d&&typeof d.nombre==='string'){ self.perfilOk=true; if(d.nombre!==S.name){ S.name=d.nombre; saveLocal(); var a=document.activeElement; if(!(a&&(a.id==='bq'||a.id==='nm'))) render(); } return; }
@@ -877,9 +877,10 @@ function vMe(){
   +'<section class="stack" id="me-voz"><h2>Lectura en voz alta</h2><div class="panel">'
   +(TTS?'<label class="small muted" for="vsel">Voz</label><select class="inp" id="vsel" data-a="voice"><option value="">Automática (recomendada)</option>'+vs.map(function(v,k){ return '<option value="'+esc(v.name)+'"'+(v.name===S.voice?' selected':'')+'>'+esc(v.name)+' ('+v.lang+')'+(k===0?' · mejor disponible':'')+'</option>'; }).join('')+'</select>'
    +'<div class="between"><label class="small muted" for="rate">Velocidad</label><span class="small num" id="rateV">'+(+S.rate||1).toFixed(1)+'×</span></div><input type="range" id="rate" data-a="rate" min="0.6" max="1.4" step="0.1" value="'+(S.rate||1)+'">'
+   +'<div class="between"><div class="stack" style="gap:2px"><b>Música de fondo</b><span class="small muted"><span class="mus-st">'+((window.LumenMusica&&LumenMusica.on())?'Activada':'Desactivada')+'</span> · canto gregoriano suave mientras lee la voz</span></div><button class="switch" role="switch" aria-checked="'+!!(window.LumenMusica&&LumenMusica.on())+'" aria-label="Música de fondo" data-a="musica"></button></div>'
    +'<div>'+sayBtn('test','Probar voz')+'</div>'+voiceGuide()
    :'<p class="small muted">Este navegador no permite lectura en voz alta. Usa Chrome (Android) o Safari (iPhone).</p>')+'</div></section>'
-  +'<a class="card" target="_blank" rel="noopener" style="border:1px solid var(--accent-fg)" href="'+esc((window.WELLNESS_APPS_URL||"https://www.planificarproyectos.com/wellness-apps/"))+'">'+ic('apps',22)+'<span class="grow"><b>Conoce más Wellness Apps</b><span>Mind Focus, PowerFit y Lumen en un solo lugar</span></span>'+ic('chevR',20)+'</a>'
+  +'<a class="card" target="_blank" rel="noopener" style="border:1px solid var(--accent-fg)" href="'+esc((window.WELLNESS_APPS_URL||"https://www.planificarproyectos.com/planificar-proyectos-apps/"))+'">'+ic('apps',22)+'<span class="grow"><b>Conoce más Planificar Proyectos Apps</b><span>Mind Focus, PowerFit y Lumen en un solo lugar</span></span>'+ic('chevR',20)+'</a>'
   +'<p class="small muted" style="text-align:center">'+(u?'Una cuenta para Mind Focus, PowerFit y Lumen':'Tus datos se guardan en este dispositivo')+'</p>';
 }
 

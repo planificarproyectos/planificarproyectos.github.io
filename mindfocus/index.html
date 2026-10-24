@@ -563,7 +563,7 @@ textarea.grow:focus{border-color:var(--accent-fg,var(--accent));outline:none}
 textarea.grow::placeholder{color:var(--faint)}
 .entry .body p{white-space:pre-line}
 /* ================= DISEÑO COMPACTO =================
-   Menos relleno, márgenes y separaciones para que quepa más en pantalla (mismo criterio que Wellness Apps). */
+   Menos relleno, márgenes y separaciones para que quepa más en pantalla (mismo criterio que Planificar Proyectos Apps). */
 .wrap{padding-block:10px 18px}
 header.top{margin-bottom:8px;gap:8px 12px}
 .grid{gap:10px}
@@ -667,7 +667,7 @@ h1{font-size:1.6rem}
       </section>
 
       <section class="panel" aria-labelledby="pomoTitle" id="pomoPanel">
-        <h2 id="pomoTitle">Pomodoro</h2>
+        <div class="phead"><h2 id="pomoTitle">Pomodoro</h2><button type="button" class="ghost small" id="sndBtn" aria-pressed="true">🔊 Sonido</button></div>
         <div id="pomoSlot"></div>
         <button type="button" id="pomoGo" class="pomogo">◷ Iniciar pomodoro</button>
       </section>
@@ -1059,7 +1059,7 @@ $("fAct").addEventListener("input",gateBtns);
 $("timerBtn").onclick=()=>{
   const d=()=>new Date(timerStart);
   if(!timerStart&&needAct())return;
-  if(!timerStart){timerStart=Date.now();lsSet("bitacora_timer",timerStart);
+  if(!timerStart){timerStart=Date.now();lsSet("bitacora_timer",timerStart);chime();
     $("fInicio").value=pad(d().getHours())+":"+pad(d().getMinutes());$("fFin").value="";$("formStatus").textContent="Cronómetro en marcha. Puedes ir escribiendo qué haces.";}
   else{$("fInicio").value=pad(d().getHours())+":"+pad(d().getMinutes());$("fFin").value=nowHM();
     viaTimer=true;if(day!==ymd(new Date()))setDay(ymd(new Date()));
@@ -1076,7 +1076,16 @@ $("pomoWork").onchange=pomoCfgSave;$("pomoBreak").onchange=pomoCfgSave;
 const hmOf=t=>{const d=new Date(t);return pad(d.getHours())+":"+pad(d.getMinutes())};
 const pDur=()=>(pomo.phase==="work"?pomo.w:pomo.b)*60000;
 const pEnd=()=>pomo.start+pDur()+pomo.pausedTotal;
-function beep(){try{const A=window.AudioContext||window.webkitAudioContext;const a=new A();[0,.25,.5].forEach((t,i)=>{const o=a.createOscillator(),g=a.createGain();o.frequency.value=i===2?988:784;o.connect(g);g.connect(a.destination);g.gain.setValueAtTime(.0001,a.currentTime+t);g.gain.exponentialRampToValueAtTime(.25,a.currentTime+t+.02);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+t+.22);o.start(a.currentTime+t);o.stop(a.currentTime+t+.24)})}catch(e){}}
+// Sonidos (Web Audio, sin archivos): tic-tac del pomodoro, campana al cambiar de fase y tono al iniciar un registro. Botón 🔊 en el panel Pomodoro.
+let sndOn=lsGet("mf_sound",true),actx=null,lastTickS=null;
+function ac(){try{if(!actx){const A=window.AudioContext||window.webkitAudioContext;actx=new A()}if(actx.state==="suspended")actx.resume();return actx}catch(e){return null}}
+document.addEventListener("pointerdown",()=>{if(sndOn&&(pomo||timerStart))ac()},{passive:true});
+function tone(f,t,d,v,type){const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain(),T=a.currentTime+t;o.type=type||"sine";o.frequency.value=f;o.connect(g);g.connect(a.destination);g.gain.setValueAtTime(.0001,T);g.gain.exponentialRampToValueAtTime(v,T+.005);g.gain.exponentialRampToValueAtTime(.0001,T+d);o.start(T);o.stop(T+d+.02)}
+function tick(tock){if(!sndOn||document.hidden)return;tone(tock?1300:1800,0,.035,.05,"triangle")}
+function chime(){if(!sndOn)return;tone(660,0,.5,.18);tone(990,.12,.6,.12)}
+function beep(){if(!sndOn)return;[0,.25,.5].forEach((t,i)=>tone(i===2?988:784,t,.22,.25))}
+function sndBtn(){const b=$("sndBtn");if(b){b.textContent=sndOn?"🔊 Sonido":"🔇 Sonido";b.setAttribute("aria-pressed",sndOn)}}
+$("sndBtn").onclick=()=>{sndOn=!sndOn;lsSet("mf_sound",sndOn);sndBtn();if(sndOn)chime()};sndBtn();
 function notify(msg){try{if(window.Notification&&Notification.permission==="granted")new Notification("Mind Focus",{body:msg})}catch(e){}}
 async function pomoLog(kind,t0,t1){
   if(t1-t0<60000)return;
@@ -1115,7 +1124,8 @@ async function tickPomo(){
     }
   }
   const left=Math.max(0,pEnd()-now),dur=pDur();
-  const s=Math.ceil(left/1000);$("pomoTime").textContent=pad(Math.floor(s/60))+":"+pad(s%60);
+  const s=Math.ceil(left/1000);if(!pomo.pausedAt&&s!==lastTickS){if(lastTickS!==null)tick(s%2);lastTickS=s}
+  $("pomoTime").textContent=pad(Math.floor(s/60))+":"+pad(s%60);
   $("pomoPhase").textContent=(pomo.phase==="work"?"Enfoque · sesión "+pomo.n:"Pausa · "+pomo.b+" min")+(pomo.pausedAt?" · en pausa":"");
   $("pomoPrg").style.strokeDashoffset=(PCIRC*(1-left/dur)).toFixed(2);
   $("pomoAct").textContent=pomo.phase==="work"?pomo.act:"Descansa: levántate, estira, toma agua.";
@@ -1124,7 +1134,7 @@ async function tickPomo(){
 $("pomoBtn").onclick=()=>{
   if(pomo||timerStart)return;if(needAct())return;
   pomo={act:$("fAct").value.trim(),desc:$("fDesc").value.trim(),cat:$("fCat").value,w:+$("pomoWork").value,b:+$("pomoBreak").value,phase:"work",n:1,done:0,start:Date.now(),pausedAt:null,pausedTotal:0};
-  pomoSave();pomoCfgSave();
+  pomoSave();pomoCfgSave();chime();
   try{if(window.Notification&&Notification.permission==="default")Notification.requestPermission()}catch(e){}
   if(day!==ymd(new Date()))setDay(ymd(new Date()));
   $("formStatus").textContent="Pomodoro en marcha: "+pomo.w+" min de enfoque. Cada sesión se registra sola.";
@@ -1474,7 +1484,7 @@ $("pwdBtn").onclick=async()=>{const u=auth.currentUser;if(!u)return;
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 
 // ---------- métricas de uso ----------
-// Se cuentan con /uso.js (stats/{uid}.apps.mindfocus) para el dashboard de Wellness Apps; la administración vive allí.
+// Se cuentan con /uso.js (stats/{uid}.apps.mindfocus) para el dashboard de Planificar Proyectos Apps; la administración vive allí.
 // Google Analytics solo recibe eventos si la persona aceptó la analítica.
 const ADMIN_UID="AQaEMcKNYfWEhcHVdc8N0ghxeZk1";
 let me=null,ga=null,meAdmin=false;   // meAdmin: cuenta principal o marcada como administradora en el panel
@@ -1579,7 +1589,7 @@ async function startAct(ch){
   if(cur&&cur.act===ch.act&&cur.cat===ch.cat){toast("Ya está en curso: "+ch.act);return}
   await stopPomoIfAny();
   const now=Date.now();if(cur)await finishCur(now);
-  cur={start:now,act:ch.act,cat:ch.cat,desc:""};await saveCur();
+  cur={start:now,act:ch.act,cat:ch.cat,desc:""};chime();await saveCur();
   if(day!==ymd(new Date()))setDay(ymd(new Date()));
   renderHome();scrollTo({top:0,behavior:"smooth"});toast("En curso: "+ch.act);try{track("rapido")}catch(e){}
 }
@@ -1587,7 +1597,7 @@ function startPomoWith(ch){
   pomo={act:ch.act,desc:"",cat:ch.cat,w:+$("pomoWork").value,b:+$("pomoBreak").value,phase:"work",n:1,done:0,start:Date.now(),pausedAt:null,pausedTotal:0};
   pomoSave();pomoCfgSave();
   try{if(window.Notification&&Notification.permission==="default")Notification.requestPermission()}catch(e){}
-  tickPomo();renderHome();scrollTo({top:0,behavior:"smooth"});toast("Pomodoro en marcha: "+ch.act);
+  tickPomo();renderHome();scrollTo({top:0,behavior:"smooth"});chime();toast("Pomodoro en marcha: "+ch.act);
 }
 async function choose(ch){
   if(tileQ){tileQ="";$("tileQ").value=""}
@@ -1794,7 +1804,7 @@ if(window.Apariencia)Apariencia.on((s,preview)=>{mfApplyTheme(s);if(!preview)ren
   '<div class="panel"><div class="between"><div class="stack" style="gap:2px"><b>Modo oscuro</b><span class="status" id="modeSub"></span></div><button class="switch" role="switch" id="modeSw" aria-label="Modo oscuro"></button></div></div></section>'+
   '<h2 style="margin-top:6px">Categorías</h2>';
  acc.prepend(top);
- {const w=document.createElement("a");w.className="card";w.target="_blank";w.rel="noopener";w.href=(window.WELLNESS_APPS_URL||"https://www.planificarproyectos.com/wellness-apps/");w.style.cssText="border:1px solid var(--accent-fg);margin-top:8px";w.innerHTML=icn("apps")+'<span class="grow"><b>Conoce más Wellness Apps</b><span>Mind Focus, PowerFit y Lumen en un solo lugar</span></span><span class="chev2">'+icn("chev",20)+'</span>';acc.appendChild(w)}
+ {const w=document.createElement("a");w.className="card";w.target="_blank";w.rel="noopener";w.href=(window.WELLNESS_APPS_URL||"https://www.planificarproyectos.com/planificar-proyectos-apps/");w.style.cssText="border:1px solid var(--accent-fg);margin-top:8px";w.innerHTML=icn("apps")+'<span class="grow"><b>Conoce más Planificar Proyectos Apps</b><span>Mind Focus, PowerFit y Lumen en un solo lugar</span></span><span class="chev2">'+icn("chev",20)+'</span>';acc.appendChild(w)}
  acc.appendChild(Object.assign(document.createElement("p"),{className:"foot",textContent:"Una cuenta para Mind Focus, PowerFit y Lumen"}));
  $("aiStatusSlot").replaceWith($("aiStatus"));
  top.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>$(b.dataset.c).click());
@@ -1880,7 +1890,7 @@ function renderHello(){
     h.append(t,g,x);return}
   h.hidden=true;
 }
-// Perfil compartido Wellness Apps: users/{uid}/perfil/datos (nombre). Tema y color siguen siendo propios de Mind Focus.
+// Perfil compartido Planificar Proyectos Apps: users/{uid}/perfil/datos (nombre). Tema y color siguen siendo propios de Mind Focus.
 let perfilOk=false;
 function setName(v){userName=v;lsSet("mf_name",v);renderHello();if($("nameIn")&&document.activeElement!==$("nameIn"))$("nameIn").value=v;if(view==="acc")renderAccTop()}
 function onPerfil(d){if(d&&typeof d.nombre==="string"){perfilOk=true;setName(d.nombre);return}

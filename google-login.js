@@ -1,4 +1,4 @@
-/* "Continuar con Google", compartido por Wellness Apps, Mind Focus, PowerFit, Lumen y Proyecta.
+/* "Continuar con Google", compartido por Planificar Proyectos Apps, Mind Focus, PowerFit, Lumen y Proyecta.
    - Cada app pone el botón con GoogleLogin.boton() en su pantalla de inicio de sesión y, al iniciar Firebase, llama a
      GoogleLogin.usar(auth, mostrarMensaje). La sesión resultante es la misma que con correo: onAuthStateChanged de cada
      app hace el resto (acceso, registro en el panel, Proyecta pendiente de aprobación).

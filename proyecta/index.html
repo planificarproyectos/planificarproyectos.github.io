@@ -717,7 +717,7 @@ body.desk .dtabs{display:block}
 .dkpi .v{font-size:17px;font-weight:800;white-space:nowrap}
 .dkpi .v.neg{color:var(--neg)}
 /* ================= DISEÑO COMPACTO =================
-   Menos relleno, márgenes y separaciones para que quepa más en pantalla (mismo criterio que Wellness Apps). */
+   Menos relleno, márgenes y separaciones para que quepa más en pantalla (mismo criterio que Planificar Proyectos Apps). */
 .appbar .wrap{padding-block:8px 6px}
 .screen{gap:10px;padding-block:4px 12px}
 .screen-head{padding-block:2px 0}
@@ -1396,7 +1396,7 @@ function openShare(){if(ST.mode!=='fb'){toast('Inicia sesión para compartir pro
   const people={};own.forEach(id=>(ST.projects[id].compartidoCon||[]).forEach(m=>(people[m]=people[m]||[]).push(id)));
   const mails=Object.keys(people).sort();
   openSheet(`<button class="lnk back" data-act="proj-open">‹ Proyectos</button><h2>Compartir proyectos</h2>
-  <p class="muted" style="margin:0">La otra persona los verá en su lista de proyectos, siempre al día. Necesita una cuenta de Wellness Apps con acceso a Proyecta.</p>
+  <p class="muted" style="margin:0">La otra persona los verá en su lista de proyectos, siempre al día. Necesita una cuenta de Planificar Proyectos Apps con acceso a Proyecta.</p>
   <div class="f"><label for="shEm">Correo de la persona</label><div class="box"><input id="shEm" type="email" inputmode="email" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="nombre@correo.com" value="${esc(S.em)}" style="text-align:left"></div></div>
   ${mails.length?`<div class="chips shem" role="group" aria-label="Correos con los que ya compartes">${mails.map(m=>`<button class="chip" data-act="sh-pick" data-em="${esc(m)}" aria-pressed="${m===S.em}">${esc(m)}</button>`).join('')}</div>`:''}
   <div class="seg" role="group" aria-label="Permiso"><button data-act="sh-rol" data-k="ver" aria-pressed="${S.rol==='ver'}">Solo ver</button><button data-act="sh-rol" data-k="editar" aria-pressed="${S.rol==='editar'}">Puede editar</button></div>
@@ -2867,7 +2867,7 @@ function renderCuenta(){
   <div class="card set"><div class="set-row"><div><div class="t">Almacenamiento</div><div class="d">${ST.mode==='fb'?'En tu cuenta, sincronizado entre tus dispositivos. Solo tú puedes verlo.':ST.mode==='db'?'Base central compartida con tu equipo.':'Solo en este dispositivo.'}</div></div><span class="tag acc">${ST.mode==='fb'?'Cuenta':ST.mode==='db'?'Central':'Local'}</span></div>
   <div class="set-row"><div><div class="t">Proyectos</div><div class="d">${nProj} proyecto(s)</div></div><button class="btn sm" data-act="proj-open">Administrar</button></div>
   <div class="set-row"><div><div class="t">Proyectos de ejemplo</div><div class="d">Crea una copia de un ejemplo No VIS, VIS o VIP para practicar.</div></div><div class="row">${exBtns(' sm','',ST.readOnly)}</div></div></div>
-  <a class="acard hl" target="_blank" rel="noopener" href="${esc(window.WELLNESS_APPS_URL||'https://www.planificarproyectos.com/wellness-apps/')}">${wic('apps')}<span class="grow"><b>Conoce más Wellness Apps</b><span>Mind Focus, PowerFit y Lumen en un solo lugar</span></span>${wic('chev',20)}</a>
+  <a class="acard hl" target="_blank" rel="noopener" href="${esc(window.WELLNESS_APPS_URL||'https://www.planificarproyectos.com/planificar-proyectos-apps/')}">${wic('apps')}<span class="grow"><b>Conoce más Planificar Proyectos Apps</b><span>Mind Focus, PowerFit y Lumen en un solo lugar</span></span>${wic('chev',20)}</a>
   <p class="about">${ST.mode==='fb'?'Una cuenta para Mind Focus, PowerFit, Lumen y Proyecta':'Tus datos se guardan en este dispositivo'}<br>Proyecta · prototipo 0.5</p>`;
 }
 async function wipeData(){
@@ -3194,7 +3194,7 @@ function startFirebase(){
     hideAuth();
     const ok=await ensureAccess(u);
     if(!ok){showNoAccess(u);return}
-    // Administradores (la cuenta principal y los marcados en el panel de Wellness Apps) entran sin pedir aprobación
+    // Administradores (la cuenta principal y los marcados en el panel de Planificar Proyectos Apps) entran sin pedir aprobación
     if(u.uid===ADMIN_UID||(window.Uso&&await Uso.esAdmin(FB.db,u))){startFb(u);return}
     watchApproval(u);
   });
@@ -3232,7 +3232,7 @@ function ensureAccess(u){
   }).catch(e=>{console.warn('acceso',e);return true});
 }
 function startFb(u){
-  if(window.Uso)Uso.start(FB.db,u,'proyecta');   // medición de uso para el dashboard de Wellness Apps (/uso.js)
+  if(window.Uso)Uso.start(FB.db,u,'proyecta');   // medición de uso para el dashboard de Planificar Proyectos Apps (/uso.js)
   ST.mode='fb';ST.isAdmin=u.uid===ADMIN_UID;ST.fbEmail=u.email||'';ST.created=u.metadata&&Date.parse(u.metadata.creationTime)||null;ST.me={id:u.uid,name:'',email:u.email};ST.readOnly=false;
   ST.fbCol=FB.db.collection('users').doc(u.uid).collection('proyecta');
   FB.profRef=FB.db.collection('users').doc(u.uid).collection('perfil').doc('datos');

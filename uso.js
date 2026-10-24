@@ -1,4 +1,4 @@
-/* Medición de uso compartida por Proyecta, Lumen, Mind Focus y PowerFit, para el dashboard de Wellness Apps.
+/* Medición de uso compartida por Proyecta, Lumen, Mind Focus y PowerFit, para el dashboard de Planificar Proyectos Apps.
    - Solo cuenta cuántas veces y cuándo se usa cada cosa; nunca guarda el contenido de lo que la persona hace.
    - Se guarda en stats/{uid} (el mismo documento que ya usaba Mind Focus), dentro de apps.{app}:
        sesiones, ultimoUso,
@@ -38,7 +38,7 @@
   U.start=function(db,user,app){ if(!db||!user||!window.firebase||!firebase.firestore) return;
     U.db=db; U.uid=user.uid; U.email=String(user.email||'').toLowerCase(); U.app=app; U.dia=null; U.pend=0; sesion(); vigilar(); };
   U.stop=function(){ flush(); if(U.unsubA){ U.unsubA(); U.unsubA=null; } U.db=null; U.uid=null; U.dia=null; };
-  /* Acceso en vivo: si desde el panel de Wellness Apps el administrador revoca la cuenta o le quita esta app
+  /* Acceso en vivo: si desde el panel de Planificar Proyectos Apps el administrador revoca la cuenta o le quita esta app
      (invitaciones/{correo}.apps.{app} = false), la app se recarga y muestra que no tiene acceso. Proyecta vigila su
      propia aprobación, así que aquí no se incluye. */
   function vigilar(){ if(U.unsubA){ U.unsubA(); U.unsubA=null; } if(!U.email||U.app==='proyecta') return; var app=U.app;

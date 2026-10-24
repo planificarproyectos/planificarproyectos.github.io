@@ -1,4 +1,4 @@
-/* Dashboard de administración de Wellness Apps. Solo aparece con una cuenta administradora: la principal (ADMIN_UID) o las que
+/* Dashboard de administración de Planificar Proyectos Apps. Solo aparece con una cuenta administradora: la principal (ADMIN_UID) o las que
    se marquen como administradoras en el panel (admins/{uid}); para cualquier otra persona el hub queda igual.
    - Lee invitaciones (acceso de cada cuenta), admins (administradores) y stats (conteos de uso que guarda /uso.js en cada
      app). Nunca lee el contenido de las personas (registros, entrenos, proyectos…).
@@ -77,7 +77,7 @@
   function kpi(v,l){return '<div class="kpi"><b>'+v+'</b><span>'+l+'</span></div>'}
   function resumen(){var now=Date.now(),U=S.users.filter(function(u){return u.inv}),ses=0;
     S.users.forEach(function(u){for(var a in u.apps)ses+=u.apps[a].sesiones});
-    return '<section class="card wide"><h3>Resumen <span>general</span></h3><p class="sub">Todas las cuentas de Wellness Apps.</p><div class="kpis">'
+    return '<section class="card wide"><h3>Resumen <span>general</span></h3><p class="sub">Todas las cuentas de Planificar Proyectos Apps.</p><div class="kpis">'
       +kpi(nf(U.length),'Cuentas registradas')+kpi(nf(U.filter(function(u){return u.estado==='activo'}).length),'Activas')
       +kpi(nf(U.filter(function(u){return u.estado==='revocado'}).length),'Revocadas')+kpi(nf(U.filter(function(u){return u.inv.proyecta==='pendiente'}).length),'Pendientes de Proyecta')
       +kpi(nf(S.users.filter(function(u){return u.last>now-7*DIA}).length),'Usaron alguna app (7 días)')+kpi(nf(S.users.filter(function(u){return u.last>now-30*DIA}).length),'Usaron alguna app (30 días)')
@@ -225,7 +225,7 @@
   function invitar(){var m=S.invMsg;
     return '<div class="lbl">Invitar a una persona</div><form id="admInv" class="searchrow" novalidate><label class="field"><input id="admInvEm" type="email" inputmode="email" placeholder="Correo de la persona" autocomplete="off"></label><button class="sbtn pri" type="submit">Invitar</button></form><div class="msg'+(m&&m.ok?' ok':'')+'" id="admInvSt">'+esc(m?m.st:'')+'</div>'
       +(m&&m.text?'<div class="invout"><textarea id="admInvTxt" readonly aria-label="Mensaje de invitación">'+esc(m.text)+'</textarea><div class="row2"><button class="sbtn" data-adm="copy" data-src="admInvTxt">Copiar mensaje</button><a class="sbtn pri" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent(m.text)+'">Enviar por WhatsApp</a></div></div>':'')}
-  function invTexto(em){return 'Hola, te invito a Wellness Apps: Mind Focus (registro de actividades y productividad), PowerFit (entrenamiento en casa) y Lumen (oración diaria). Crea tu cuenta con este correo ('+em+') aquí: https://www.planificarproyectos.com/wellness-apps/'}
+  function invTexto(em){return 'Hola, te invito a Planificar Proyectos Apps: Mind Focus (registro de actividades y productividad), PowerFit (entrenamiento en casa) y Lumen (oración diaria). Crea tu cuenta con este correo ('+em+') aquí: https://www.planificarproyectos.com/planificar-proyectos-apps/'}
 
   /* Detalle de una persona: sus sesiones, minutos y funciones en cada app, y a qué horas usa las apps */
   function detalle(){var u=S.ver&&porId(S.ver);if(!u)return '';

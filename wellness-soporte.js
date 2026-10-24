@@ -1,9 +1,9 @@
-// Soporte Wellness Apps (Mind Focus, PowerFit, Lumen).
+// Soporte Planificar Proyectos Apps (Mind Focus, PowerFit, Lumen).
 // Para cambiar el número de WhatsApp, edita SOLO esta línea (indicativo de país + número, sin espacios ni "+").
 window.WELLNESS_WHATSAPP = "573204451740";
 
 // Página que reúne todas las apps (botón al final de Cuenta).
-window.WELLNESS_APPS_URL = "https://www.planificarproyectos.com/wellness-apps/";
+window.WELLNESS_APPS_URL = "https://www.planificarproyectos.com/planificar-proyectos-apps/";
 
 // Arma el enlace de WhatsApp con un mensaje inicial.
 // tipo: "soporte" | "recomendacion"

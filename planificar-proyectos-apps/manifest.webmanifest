@@ -1,11 +1,11 @@
 {
-  "name": "Wellness Apps",
-  "short_name": "Wellness",
-  "id": "/wellness-apps/",
-  "start_url": "/wellness-apps/",
+  "name": "Planificar Proyectos Apps",
+  "short_name": "PP Apps",
+  "id": "/planificar-proyectos-apps/",
+  "start_url": "/planificar-proyectos-apps/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#111315",
+  "background_color": "#04141b",
   "theme_color": "#111315",
   "lang": "es",
   "icons": [

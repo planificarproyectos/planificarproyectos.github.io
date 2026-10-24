@@ -4,7 +4,7 @@
 # La carpeta _herramientas no se publica (GitHub Pages ignora las carpetas que empiezan con "_").
 # Uso: bash _herramientas/versionar.sh
 cd "$(git rev-parse --show-toplevel)" || exit 1
-APPS="lumen powerfit mindfocus proyecta wellness-apps"
+APPS="lumen powerfit mindfocus proyecta planificar-proyectos-apps"
 cambios=$( (git diff --name-only HEAD; git ls-files --others --exclude-standard) | sort -u)
 sube=""
 # se salta una app solo si su número de versión ya cambió (no basta con que sw.js tenga otros cambios)
