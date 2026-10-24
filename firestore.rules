@@ -23,9 +23,9 @@ service cloud.firestore {
     match /invitaciones/{email} {
       allow read: if isAdmin() || (signedIn() && myEmail() == email);
       allow delete: if isAdmin();
-      // Al registrarse, la persona crea su propio registro como "activo", sin poder darse permisos (apps, admin) ni aprobarse Proyecta
+      // Al registrarse, la persona crea su propio registro como "activo", sin poder darse permisos (apps, admin, tipo, empresa) ni aprobarse Proyecta
       allow create: if isAdmin() || (signedIn() && myEmail() == email && request.resource.data.estado == 'activo' && request.resource.data.uid == request.auth.uid
-        && !request.resource.data.keys().hasAny(['apps', 'admin']) && request.resource.data.get('proyecta', 'pendiente') == 'pendiente');
+        && !request.resource.data.keys().hasAny(['apps', 'admin', 'tipo', 'empresa']) && request.resource.data.get('proyecta', 'pendiente') == 'pendiente');
       allow update: if isAdmin() || (signedIn() && myEmail() == email && resource.data.estado != 'revocado'
         && request.resource.data.estado == 'activo' && request.resource.data.uid == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'uid', 'activado', 'ultimoUso', 'email', 'proyecta', 'proyectaSol'])

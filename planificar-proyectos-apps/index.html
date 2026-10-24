@@ -169,6 +169,8 @@ body.admin .wrap{max-width:1040px}
 .pill.ok{background:rgba(198,244,50,.16);color:var(--accent)}
 .pill.no{background:rgba(255,107,87,.16);color:#FF9B8A}
 .pill.wait{background:rgba(255,214,10,.14);color:#FFD60A}
+.pill.t-familiar{background:rgba(120,200,255,.14);color:#8FD3FF}.pill.t-empresarial{background:rgba(205,252,84,.16);color:var(--accent)}.pill.t-mixto{background:rgba(190,150,255,.16);color:#C9A8FF}
+.tfilt{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}.urow .emp{color:var(--muted);font-weight:500}
 .tag{font-size:.74rem;padding:.15rem .5rem;border-radius:8px;border:1px solid var(--line);color:var(--muted)}
 .confirm{background:rgba(255,107,87,.08);border:1px solid #5a3a35;border-radius:14px;padding:12px;font-size:.88rem;line-height:1.5;display:grid;gap:10px}
 .confirm ul{padding-left:18px}
@@ -356,7 +358,10 @@ function accesoApps(u){if(accUnsub){accUnsub();accUnsub=null}accUid=u&&u.uid;
     if(!sn.exists){ref.set({email:em,estado:'activo',uid:uid,activado:now,ultimoUso:now,autoregistro:true}).catch(function(){});setMarca('w');pintarApps({mindfocus:1,powerfit:1,lumen:1});return}
     var d=sn.data()||{},ap=d.apps||{};
     if(d.estado==='revocado'){pintarApps({});return}
-    setMarca(d.proyecta==='aprobado'?'pp':'w');pintarApps({mindfocus:ap.mindfocus!==false,powerfit:ap.powerfit!==false,lumen:ap.lumen!==false,proyecta:d.proyecta==='aprobado'})},
+    // Tipo de cuenta (familiar, empresarial o mixto): define la marca y qué apps se muestran; los interruptores por app afinan
+    var U=window.Uso||{},t=U.tipoDe?U.tipoDe(d):(d.proyecta==='aprobado'?'mixto':'familiar'),del=U.appsDeTipo?U.appsDeTipo(t):['mindfocus','powerfit','lumen','proyecta'],v={};
+    del.forEach(function(a){v[a]=a==='proyecta'?d.proyecta==='aprobado':ap[a]!==false});
+    setMarca(t==='familiar'?'w':'pp');pintarApps(v)},
     function(){pintarApps({mindfocus:1,powerfit:1,lumen:1})})})}
  catch(e){pintarApps({mindfocus:1,powerfit:1,lumen:1})}}
 $('aSwitch').onclick=function(){setMode(mode==='login'?'register':'login')};

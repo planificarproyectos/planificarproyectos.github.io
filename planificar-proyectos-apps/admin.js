@@ -6,6 +6,7 @@
      analisis, csv): se suman a sus métricas.
    - Gráficas: personas activas, sesiones y minutos por día, horario de uso (hora y día de la semana), funciones en
      detalle con su tendencia, comparación entre apps, crecimiento de cuentas y el detalle de cada persona.
+   - Tipos de cuenta: familiar (Wellness Apps), empresarial o mixto (Planificar Proyectos Apps), con empresa opcional; filtros por tipo.
    - Acciones: invitar, revocar o reactivar el acceso, aprobar o denegar Proyecta (también con el interruptor de cada cuenta) y eliminar los datos de una cuenta.
      La cuenta de inicio de sesión solo se puede borrar en la consola de Firebase (desde la web no hay permisos). */
 (function(){
@@ -15,8 +16,13 @@
   // Acceso por app (sin dato = con acceso; Proyecta usa su aprobación)
   var APP_ORD=['mindfocus','powerfit','lumen','proyecta'];
   function appOn(i){var ap=(i&&i.apps)||{},o={};APP_ORD.forEach(function(a){o[a]=a==='proyecta'?(i&&i.proyecta)==='aprobado':ap[a]!==false});return o}
+  // Tipos de cuenta (ver /uso.js): familiar, empresarial o mixto, más el nombre de la empresa (opcional)
+  var UU=window.Uso||{},TIPOS=UU.TIPOS||{familiar:'Familiar',empresarial:'Empresarial',mixto:'Empresarial y familiar'},
+    tipoDe=UU.tipoDe||function(i){return i&&TIPOS[i.tipo]?i.tipo:(i&&i.proyecta==='aprobado'?'mixto':'familiar')},
+    accesoTipo=UU.accesoTipo||function(t){var f=t!=='empresarial',e=t!=='familiar';return {tipo:t,apps:{mindfocus:f,powerfit:f,lumen:f},proyecta:e?'aprobado':'denegado',proyectaRes:Date.now()}};
+  function tipoPill(u){return u.admin?'':'<span class="pill tipo t-'+u.tipo+'">'+esc(TIPOS[u.tipo])+'</span>'}
   var DIA=864e5, SUBS=['entradas','config','powerfit','lumen','proyecta','perfil'];
-  var S={db:null,me:null,inv:[],stats:{},admins:{},uopen:null,users:[],upd:0,app:'mindfocus',q:'',sure:'',del:null,delOut:null,invMsg:null,busy:false,err:'',ver:null,verFoco:false};
+  var S={db:null,me:null,inv:[],stats:{},admins:{},uopen:null,users:[],upd:0,app:'mindfocus',q:'',sure:'',del:null,delOut:null,invMsg:null,busy:false,err:'',ver:null,verFoco:false,filt:'todos',invTipo:'familiar'};
   var $=function(id){return document.getElementById(id)};
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function nf(n){return (+n||0).toLocaleString('es-CO')}
@@ -64,7 +70,8 @@
       if(!u){u={id:em||uid,email:em||uid,inv:null,uid:uid,st:null};out.push(u)}u.st=st;if(!u.uid)u.uid=uid});
     out.forEach(function(u){u.apps={};var last=Math.max(+(u.inv&&u.inv.ultimoUso)||0,+(u.st&&u.st.ultimoUso)||0);
       Object.keys(APPS).forEach(function(a){var d=appData(u.st,a);u.apps[a]=d;if(d.ultimoUso>last)last=d.ultimoUso});
-      u.last=last;u.admin=u.uid===ADMIN_UID||!!(u.uid&&S.admins[u.uid]);u.estado=(u.inv&&u.inv.estado)||'sin registro'});
+      u.last=last;u.admin=u.uid===ADMIN_UID||!!(u.uid&&S.admins[u.uid]);u.estado=(u.inv&&u.inv.estado)||'sin registro';
+      u.tipo=u.admin?'mixto':tipoDe(u.inv);u.empresa=String((u.inv&&u.inv.empresa)||'')});
     out.sort(function(a,b){return b.last-a.last});S.users=out}
 
   function cargar(){if(!S.db||S.busy)return;S.busy=true;S.err='';pintar();
@@ -179,9 +186,11 @@
 
   function pill(u){if(u.admin)return '<span class="pill ok">Administrador</span>';var e=u.estado;
     return e==='activo'?'<span class="pill ok">Activo</span>':e==='revocado'?'<span class="pill no">Revocado</span>':e==='pendiente'?'<span class="pill wait">Pendiente</span>':'<span class="pill">Sin registro de acceso</span>'}
-  function cuentas(){var q=S.q.trim().toLowerCase(),L=S.users.filter(function(u){return !q||u.email.indexOf(q)>=0});
+  function cuentas(){var q=S.q.trim().toLowerCase(),L=S.users.filter(function(u){return (S.filt==='todos'||(!u.admin&&u.tipo===S.filt))&&(!q||u.email.indexOf(q)>=0||u.empresa.toLowerCase().indexOf(q)>=0)});
+    var cnt=function(t){return S.users.filter(function(u){return !u.admin&&u.tipo===t}).length};
     var h='<section class="card wide"><h3>Cuentas de <span>usuario</span></h3><p class="sub">Revocar quita el acceso a todas las apps (Mind Focus, PowerFit, Lumen y Proyecta); sus datos no se borran. Eliminar borra sus datos para siempre.</p>'
-      +'<div class="searchrow"><label class="field"><input id="admQ" type="search" placeholder="Buscar usuario por correo" value="'+esc(S.q)+'" autocomplete="off" aria-label="Buscar cuenta por correo"></label><span class="adm-upd">'+L.length+' de '+S.users.length+'</span></div>';
+      +'<div class="searchrow"><label class="field"><input id="admQ" type="search" placeholder="Buscar por correo o empresa" value="'+esc(S.q)+'" autocomplete="off" aria-label="Buscar cuenta por correo"></label><span class="adm-upd">'+L.length+' de '+S.users.length+'</span></div>'
+      +'<div class="tfilt" role="group" aria-label="Filtrar por tipo de cuenta">'+[['todos','Todos',S.users.length]].concat(Object.keys(TIPOS).map(function(t){return [t,TIPOS[t],cnt(t)]})).map(function(f){return '<button type="button" class="sbtn sm'+(S.filt===f[0]?' pri':'')+'" data-adm="filt" data-k="'+f[0]+'" aria-pressed="'+(S.filt===f[0])+'">'+esc(f[1])+' · '+f[2]+'</button>'}).join('')+'</div>';
     if(S.delOut)h+=resultadoEliminar();
     h+='<div class="ulist">'+(L.length?L.map(cuentaRow).join(''):'<div class="empty">Ninguna cuenta coincide.</div>')+'</div>';
     return h+invitar()+'</section>'}
@@ -199,6 +208,10 @@
     var root=u.uid===ADMIN_UID,yo=u.uid===S.me,
       adm=root?'':!u.uid?'<div class="pry-sw adm-sw"><span>Administrador <small>· podrás activarlo cuando inicie sesión por primera vez</small></span></div>'
         :'<div class="pry-sw adm-sw"><span>Administrador'+(yo?' <small>· no puedes quitártelo a ti mismo</small>':'')+'</span><button type="button" class="sw" role="switch" aria-checked="'+u.admin+'" data-adm="admsw" data-id="'+esc(u.id)+'"'+(yo?' disabled':'')+' aria-label="Administrador: '+esc(u.email)+'"><i></i></button></div>';
+    // Tipo de cuenta y empresa: el tipo abre las apps que le corresponden y cierra las demás; los interruptores afinan
+    var tip=u.admin||!u.inv?'':'<div class="app-acc"><div class="app-acc-h"><b>Tipo de cuenta</b></div><div class="tfilt" role="radiogroup" aria-label="Tipo de cuenta de '+esc(u.email)+'">'
+      +Object.keys(TIPOS).map(function(t){return '<button type="button" class="sbtn sm'+(u.tipo===t?' pri':'')+'" role="radio" aria-checked="'+(u.tipo===t)+'" data-adm="tipo" data-k="'+t+'" data-id="'+esc(u.id)+'">'+esc(TIPOS[t])+'</button>'}).join('')+'</div>'
+      +'<label class="field"><input type="text" maxlength="60" placeholder="Empresa (opcional)" value="'+esc(u.empresa)+'" data-emp="'+esc(u.id)+'" aria-label="Empresa de '+esc(u.email)+'"></label></div>';
     var on=appOn(i),nOn=APP_ORD.filter(function(a){return on[a]}).length,
       pry=u.admin?adm:adm+'<div class="app-acc"><div class="app-acc-h"><b>Acceso a apps</b><span>'+(nOn===APP_ORD.length?'Todas':nOn?nOn+' de '+APP_ORD.length:'Ninguna')+'</span>'
       +'<button type="button" class="sbtn sm" data-adm="appall" data-v="1" data-id="'+esc(u.id)+'"'+(nOn===APP_ORD.length?' disabled':'')+'>Todas</button>'
@@ -210,12 +223,12 @@
     var abierta=S.uopen===u.id||S.del===u.id,
       resumen=u.admin?'Todas las apps':u.estado==='revocado'?'Sin acceso':nOn+' de '+APP_ORD.length+' apps';
     var h='<div class="urow'+(abierta?' open':'')+'"><button type="button" class="utop" data-adm="uopen" data-id="'+esc(u.id)+'" aria-expanded="'+abierta+'">'
-      +'<span class="em">'+esc(u.email)+'</span>'+(i.proyecta==='pendiente'&&!u.admin?'<span class="pill wait">Pidió Proyecta</span>':'')+pill(u)
+      +'<span class="em">'+esc(u.email)+(u.empresa?' <small class="emp">· '+esc(u.empresa)+'</small>':'')+'</span>'+tipoPill(u)+(i.proyecta==='pendiente'&&!u.admin?'<span class="pill wait">Pidió Proyecta</span>':'')+pill(u)
       +'<span class="usum">'+resumen+' · '+hace(u.last)+'</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>';
     if(abierta)h+='<div class="meta"><span>'+(i.autoregistro?'Se registró solo':i.invitado?'Invitado':'Cuenta')+(desde?' · '+fecha(+desde):'')+'</span><span>Último uso: '+hace(u.last)+'</span><span>Sesiones: '+nf(ses)+'</span>'
       +'</div>'
       +(apps.length?'<div class="row2">'+apps.map(function(a){return '<span class="tag">'+esc(APPS[a])+'</span>'}).join('')+'</div>':'')
-      +pry+(acts?'<div class="acts">'+acts+'</div>':'');
+      +tip+pry+(acts?'<div class="acts">'+acts+'</div>':'');
     if(S.del===u.id)h+='<div class="confirm" role="alert"><b>¿Eliminar los datos de '+esc(u.email)+'?</b><span>Se borran para siempre, sin forma de recuperarlos:</span><ul><li>Sus registros, configuración, entrenos, oraciones y proyectos en todas las apps.</li><li>Su perfil, sus estadísticas de uso y su registro de acceso.</li></ul><span>La cuenta para iniciar sesión se borra aparte, en la consola de Firebase.</span><div class="row2"><button class="sbtn" data-adm="delno">Cancelar</button><button class="sbtn warn sure" data-adm="delsi" data-id="'+esc(u.id)+'">Sí, eliminar todo</button></div></div>';
     return h+'</div>'}
   function resultadoEliminar(){var o=S.delOut;
@@ -223,10 +236,13 @@
       +'<span>Falta borrar su cuenta de inicio de sesión: ábrela en la consola de Firebase, busca el correo y elimínala.</span>'
       +'<div class="row2"><a class="sbtn pri" href="https://console.firebase.google.com/project/planificar-proyectos-apps/authentication/users" target="_blank" rel="noopener">Abrir consola de Firebase</a><button class="sbtn" data-adm="copy" data-v="'+esc(o.email)+'">Copiar correo</button><button class="sbtn" data-adm="delok">Cerrar</button></div></div>'}
   function invitar(){var m=S.invMsg;
-    return '<div class="lbl">Invitar a una persona</div><form id="admInv" class="searchrow" novalidate><label class="field"><input id="admInvEm" type="email" inputmode="email" placeholder="Correo de la persona" autocomplete="off"></label><button class="sbtn pri" type="submit">Invitar</button></form><div class="msg'+(m&&m.ok?' ok':'')+'" id="admInvSt">'+esc(m?m.st:'')+'</div>'
+    return '<div class="lbl">Invitar a una persona</div><div class="tfilt" role="radiogroup" aria-label="Tipo de cuenta de la invitación">'+Object.keys(TIPOS).map(function(t){return '<button type="button" class="sbtn sm'+(S.invTipo===t?' pri':'')+'" role="radio" aria-checked="'+(S.invTipo===t)+'" data-adm="invtipo" data-k="'+t+'">'+esc(TIPOS[t])+'</button>'}).join('')+'</div>'
+      +'<label class="field" style="margin-bottom:10px"><input id="admInvEmp" type="text" maxlength="60" placeholder="Empresa (opcional)" autocomplete="off"></label><form id="admInv" class="searchrow" novalidate><label class="field"><input id="admInvEm" type="email" inputmode="email" placeholder="Correo de la persona" autocomplete="off"></label><button class="sbtn pri" type="submit">Invitar</button></form><div class="msg'+(m&&m.ok?' ok':'')+'" id="admInvSt">'+esc(m?m.st:'')+'</div>'
       +(m&&m.text?'<div class="invout"><textarea id="admInvTxt" readonly aria-label="Mensaje de invitación">'+esc(m.text)+'</textarea><div class="row2"><button class="sbtn" data-adm="copy" data-src="admInvTxt">Copiar mensaje</button><a class="sbtn pri" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent(m.text)+'">Enviar por WhatsApp</a></div></div>':'')}
-  // La invitación usa la marca de la persona: Planificar Proyectos Apps si tiene Proyecta aprobado; si no, Wellness Apps
-  function invTexto(em){var x=porId(em),pp=!!(x&&x.inv&&x.inv.proyecta==='aprobado');return 'Hola, te invito a '+(pp?'Planificar Proyectos Apps: Proyecta (gestión de proyectos), ':'Wellness Apps: ')+'Mind Focus (registro de actividades y productividad), PowerFit (entrenamiento en casa) y Lumen (oración diaria). Crea tu cuenta con este correo ('+em+') aquí: https://www.planificarproyectos.com/'+(pp?'planificar-proyectos-apps':'wellness-apps')+'/'}
+  // La invitación usa la marca del tipo de cuenta: Wellness Apps (familiar) o Planificar Proyectos Apps (empresarial o mixto)
+  function invTexto(em){var x=porId(em),t=x?x.tipo:S.invTipo,pp=t!=='familiar',
+      apps=t==='empresarial'?'Proyecta (gestión de proyectos)':(t==='mixto'?'Proyecta (gestión de proyectos), ':'')+'Mind Focus (registro de actividades y productividad), PowerFit (entrenamiento en casa) y Lumen (oración diaria)';
+    return 'Hola, te invito a '+(pp?'Planificar Proyectos Apps':'Wellness Apps')+': '+apps+'. Crea tu cuenta con este correo ('+em+') aquí: https://www.planificarproyectos.com/'+(pp?'planificar-proyectos-apps':'wellness-apps')+'/'}
 
   /* Detalle de una persona: sus sesiones, minutos y funciones en cada app, y a qué horas usa las apps */
   function detalle(){var u=S.ver&&porId(S.ver);if(!u)return '';
@@ -280,10 +296,14 @@
   document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-adm]');if(!b||!S.me)return;var a=b.getAttribute('data-adm'),id=b.getAttribute('data-id');
     if(a==='load')return cargar();
     if(a==='app'){S.app=b.getAttribute('data-k');return pintar()}
+    if(a==='filt'){S.filt=b.getAttribute('data-k');return pintar()}
+    if(a==='invtipo'){S.invTipo=b.getAttribute('data-k');var ie=($('admInvEm')||{}).value,ip=($('admInvEmp')||{}).value;pintar();if($('admInvEm'))$('admInvEm').value=ie||'';if($('admInvEmp'))$('admInvEmp').value=ip||'';return}
+    if(a==='tipo'){var tu=porId(id),tk=b.getAttribute('data-k');if(!tu||tu.tipo===tk)return;b.disabled=true;
+      return S.db.collection('invitaciones').doc(id).set(Object.assign(accesoTipo(tk),{email:tu.email}),{merge:true}).then(cargarSilencio,function(e){b.disabled=false;alert('No se pudo guardar: '+(e.code||e.message))})}
     if(a==='uopen'){S.uopen=S.uopen===id?null:id;S.del=null;return pintar()}
     if(a==='ver'){S.ver=id;S.verFoco=true;return pintar()}
     if(a==='verx'){var vid=S.ver;S.ver=null;pintar();var vb=document.querySelector('[data-adm="ver"][data-id="'+(window.CSS&&CSS.escape?CSS.escape(vid):vid)+'"]');if(vb)vb.focus();return}
-    if(a==='pry')return upd(id,{proyecta:b.getAttribute('data-v'),proyectaRes:Date.now()});
+    if(a==='pry'){var pv=b.getAttribute('data-v'),pu=porId(id),pd={proyecta:pv,proyectaRes:Date.now()};if(pu){if(pv==='aprobado'&&pu.tipo==='familiar')pd.tipo='mixto';if(pv!=='aprobado'&&pu.tipo==='mixto')pd.tipo='familiar'}return upd(id,pd)}
     if(a==='admsw'){var x=porId(id);if(!x||!x.uid||x.uid===ADMIN_UID||x.uid===S.me)return;var hacer=b.getAttribute('aria-checked')!=='true';b.setAttribute('aria-checked',hacer);b.disabled=true;
       var ref=S.db.collection('admins').doc(x.uid);
       // Al volverlo administrador también se le abren todas las apps, para que no quede bloqueado por un acceso anterior
@@ -292,11 +312,11 @@
         .then(cargarSilencio,function(e){b.setAttribute('aria-checked',!hacer);b.disabled=false;alert('No se pudo guardar: '+(e.code||e.message))})}
     if(a==='appsw'||a==='appall'){var w=porId(id);if(!w)return;var data={email:w.email},
         list=a==='appsw'?[b.getAttribute('data-app')]:APP_ORD,on=a==='appsw'?b.getAttribute('aria-checked')!=='true':b.getAttribute('data-v')==='1';
-      list.forEach(function(k){if(k==='proyecta'){data.proyecta=on?'aprobado':'denegado';data.proyectaRes=Date.now()}else{data.apps=data.apps||{};data.apps[k]=on}});
+      list.forEach(function(k){if(k==='proyecta'){data.proyecta=on?'aprobado':'denegado';data.proyectaRes=Date.now();if(a==='appsw'){if(on&&w.tipo==='familiar')data.tipo='mixto';if(!on&&w.tipo==='mixto')data.tipo='familiar'}}else{data.apps=data.apps||{};data.apps[k]=on}});
       if(a==='appsw')b.setAttribute('aria-checked',on);b.disabled=true;
       return S.db.collection('invitaciones').doc(id).set(data,{merge:true})
         .then(cargarSilencio,function(e){if(a==='appsw')b.setAttribute('aria-checked',!on);b.disabled=false;alert('No se pudo guardar: '+(e.code||e.message))})}
-    if(a==='pryq'){if(seguro('pq:'+id))upd(id,{proyecta:'denegado',proyectaRes:Date.now()});return}
+    if(a==='pryq'){if(seguro('pq:'+id)){var qu=porId(id),qd={proyecta:'denegado',proyectaRes:Date.now()};if(qu&&qu.tipo==='mixto')qd.tipo='familiar';upd(id,qd)}return}
     if(a==='rev'){if(seguro('rev:'+id))upd(id,{estado:'revocado',revocado:Date.now()});return}
     if(a==='react'){var u=porId(id);return upd(id,{estado:u&&u.uid?'activo':'pendiente'})}
     if(a==='del'){S.del=S.del===id?null:id;return pintar()}
@@ -306,10 +326,13 @@
     if(a==='copy'){var t=b.getAttribute('data-v')||(($(b.getAttribute('data-src'))||{}).value||'');
       (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){b.textContent='Copiado'},function(){var x=$(b.getAttribute('data-src'));if(x)x.select();b.textContent='Selecciona y copia'})}});
   document.addEventListener('input',function(e){if(e.target.id==='admQ'){S.q=e.target.value;pintar()}});
+  document.addEventListener('change',function(e){var id=e.target.getAttribute&&e.target.getAttribute('data-emp');if(!id||!S.db)return;var u=porId(id),v=e.target.value.trim();if(!u||v===u.empresa)return;
+    S.db.collection('invitaciones').doc(id).set({email:u.email,empresa:v},{merge:true}).then(cargarSilencio,function(x){alert('No se pudo guardar: '+(x.code||x.message))})});
   document.addEventListener('submit',function(e){if(e.target.id!=='admInv')return;e.preventDefault();var em=$('admInvEm').value.trim().toLowerCase();
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){S.invMsg={st:'Escribe un correo válido.'};return pintar()}
     var ex=porId(em);if(ex&&ex.inv&&ex.estado!=='revocado'){S.invMsg={st:'Esa persona ya tiene acceso o una invitación pendiente.',text:invTexto(em)};return pintar()}
-    S.db.collection('invitaciones').doc(em).set(ex&&ex.inv?{estado:'pendiente',invitado:Date.now()}:{email:em,estado:'pendiente',invitado:Date.now()},{merge:true})
+    var dat=Object.assign(accesoTipo(S.invTipo),{email:em,estado:'pendiente',invitado:Date.now()}),emp=(($('admInvEmp')||{}).value||'').trim();if(emp)dat.empresa=emp;
+    S.db.collection('invitaciones').doc(em).set(dat,{merge:true})
       .then(function(){S.invMsg={ok:true,st:'Invitación creada para '+em+'. Envíale el mensaje.',text:invTexto(em)};S.busy=false;cargar()},function(x){S.invMsg={st:'No se pudo invitar: '+(x.code||x.message)};pintar()})});
 
   // Cuenta principal o marcada como administradora (admins/{uid}): ve el panel y las apps solo para administradores

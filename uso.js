@@ -53,6 +53,18 @@
   window.addEventListener('pagehide',flush);
   /* Administradores: la cuenta principal (ROOT) y las que ella u otro administrador marquen en el panel, guardadas en
      admins/{uid}. Las reglas de Firestore usan la misma lista. U.esAdmin(db,user) responde con una promesa true/false. */
+  /* Tipos de cuenta (los asigna el administrador en el panel; invitaciones/{correo}.tipo y .empresa):
+     familiar = Mind Focus, PowerFit, Lumen (marca Wellness Apps); empresarial = apps para empresas (Proyecta y las que
+     se agreguen a U.EMP); mixto = todas (marca Planificar Proyectos Apps). Sin tipo guardado: mixto si tiene Proyecta aprobado. */
+  U.FAM=['mindfocus','powerfit','lumen']; U.EMP=['proyecta'];
+  U.TIPOS={familiar:'Familiar',empresarial:'Empresarial',mixto:'Empresarial y familiar'};
+  U.tipoDe=function(i){ return i&&U.TIPOS[i.tipo]?i.tipo:(i&&i.proyecta==='aprobado'?'mixto':'familiar'); };
+  U.appsDeTipo=function(t){ return t==='familiar'?U.FAM:t==='empresarial'?U.EMP:U.FAM.concat(U.EMP); };
+  U.marcaDe=function(t){ return t==='familiar'?'w':'pp'; };
+  // Datos que se guardan al asignar un tipo: abre las apps del tipo y cierra las demás (Proyecta usa su aprobación)
+  U.accesoTipo=function(t){ var on=U.appsDeTipo(t),d={tipo:t,apps:{}};
+    U.FAM.concat(U.EMP).forEach(function(a){ if(a==='proyecta'){ d.proyecta=on.indexOf(a)>=0?'aprobado':'denegado'; d.proyectaRes=Date.now(); } else d.apps[a]=on.indexOf(a)>=0; });
+    return d; };
   U.ROOT='AQaEMcKNYfWEhcHVdc8N0ghxeZk1';
   U.esAdmin=function(db,user){ if(!user) return Promise.resolve(false); if(user.uid===U.ROOT) return Promise.resolve(true);
     try{ return db.collection('admins').doc(user.uid).get().then(function(sn){ return sn.exists; },function(){ return false; }); }catch(e){ return Promise.resolve(false); } };
