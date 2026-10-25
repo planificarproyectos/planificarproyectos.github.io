@@ -1196,7 +1196,8 @@ function showTab(v,anchor){
   document.getElementById("clear").hidden=v!=="radar";
   if(anchor){const el=document.getElementById(anchor);if(el)el.scrollIntoView({block:"start"})}else window.scrollTo(0,0);
 }
-document.querySelectorAll(".tab,.bn-btn").forEach(b=>b.onclick=()=>{history.replaceState(null,"","#"+b.dataset.v);showTab(b.dataset.v)});
+/* Delegación: funciona aunque la barra inferior se declare en el HTML después de este script */
+document.addEventListener("click",e=>{const b=e.target.closest(".tab,.bn-btn");if(!b)return;history.replaceState(null,"","#"+b.dataset.v);showTab(b.dataset.v)});
 function fromHash(){const h=location.hash.slice(1);if(["ruta","radar","sim"].includes(h))return showTab(h);
   const el=h&&document.getElementById(h);if(el&&el.closest("#v-ruta"))showTab("ruta",h);else showTab("radar")}
 addEventListener("hashchange",fromHash);fromHash();
