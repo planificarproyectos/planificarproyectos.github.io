@@ -15,7 +15,7 @@
   var APPS=(window.Uso&&Uso.APPS)||{mindfocus:'Mind Focus',powerfit:'PowerFit',lumen:'Lumen',proyecta:'Proyecta'};
   var EVENTOS=(window.Uso&&Uso.EVENTOS)||{};
   // Acceso por app (sin dato = con acceso; Proyecta usa su aprobación)
-  var APP_ORD=['mindfocus','powerfit','lumen','proyecta','cotizador'];
+  var APP_ORD=['mindfocus','powerfit','lumen','proyecta','cotizador','radar'];
   function appOn(i){var ap=(i&&i.apps)||{},o={};APP_ORD.forEach(function(a){o[a]=a==='proyecta'?(i&&i.proyecta)==='aprobado':ap[a]!==false});return o}
   // Tipos de cuenta (ver /uso.js): familiar, empresarial o mixto, más el nombre de la empresa (opcional)
   var UU=window.Uso||{},TIPOS=UU.TIPOS||{familiar:'Familiar',empresarial:'Empresarial',mixto:'Empresarial y familiar'},

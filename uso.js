@@ -26,7 +26,7 @@
     proyecta:{proyecto_creado:'Proyectos creados',asistente:'Proyectos con el asistente',version:'Versiones guardadas',
       comparar:'Comparador abierto',informe:'Informes generados',excel:'Exportaciones a Excel',compartir:'Proyectos compartidos'},
     cotizador:{guardar:'Cotizaciones guardadas',pdf:'PDF de cotización',carpeta:'Carpetas completas',cobro:'Cuentas de cobro'}};
-  var APPS={mindfocus:'Mind Focus',powerfit:'PowerFit',lumen:'Lumen',proyecta:'Proyecta',cotizador:'Cotizador'};
+  var APPS={mindfocus:'Mind Focus',powerfit:'PowerFit',lumen:'Lumen',proyecta:'Proyecta',cotizador:'Cotizador',radar:'Radar SECOP'};
   function hoy(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
   var U={EVENTOS:EVENTOS, APPS:APPS, db:null, uid:null, email:'', app:null, dia:null, pend:0};
   function inc(n){ return firebase.firestore.FieldValue.increment(n||1); }
