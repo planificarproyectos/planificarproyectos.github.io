@@ -1569,7 +1569,7 @@ function simContract(i){const d=window._simRows&&window._simRows[i];if(!d)return
       // Poblar sección Cuenta
       $g('cta-email').textContent=em;
       try{fs.collection('users').doc(u.uid).collection('perfil').doc('datos').onSnapshot(function(d){var n=d.exists&&d.data().nombre||'';$g('cta-nombre').textContent=n||em.split('@')[0]})}catch(e){$g('cta-nombre').textContent=em.split('@')[0]}
-      if(window.Apariencia){try{var slot=$g('cta-apariencia-slot');slot.innerHTML='';slot.appendChild(Apariencia.picker())}catch(e){}}
+      if(window.Apariencia){try{$g('cta-apariencia-slot').innerHTML=Apariencia.picker()}catch(e){}}
       try{Uso.start(fs,u,'radar')}catch(e){}
       try{if(window.Apariencia) Apariencia.connect(fs,u.uid,function(){return Apariencia.local()})}catch(e){}
     });
