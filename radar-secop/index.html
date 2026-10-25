@@ -1971,6 +1971,9 @@ html.lock,html.lock body{overflow:hidden}
 @keyframes ib-in{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
 @media (prefers-reduced-motion:reduce){.installbar,.side{animation:none;transition:none}}
 
+/* Tabla solo en pantallas anchas; tarjetas (en 2 columnas en tableta) en las demás */
+@media (max-width:1199px){.tbl{display:none!important}.cards{display:grid!important}}
+@media (min-width:700px) and (max-width:1199px){.cards{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}.card{align-content:start}.card .ft{margin-top:auto}}
 /* ── Tableta y escritorio ── */
 @media (min-width:700px){
   #v-sim .simf{grid-template-columns:repeat(4,minmax(0,1fr))}
