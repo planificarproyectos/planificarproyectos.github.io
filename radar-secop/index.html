@@ -16,8 +16,8 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
-<meta name="theme-color" content="#f4f6f7" media="(prefers-color-scheme:light)">
-<meta name="theme-color" content="#0e1418" media="(prefers-color-scheme:dark)">
+<meta name="theme-color" content="#F3F4F1" media="(prefers-color-scheme:light)">
+<meta name="theme-color" content="#111315" media="(prefers-color-scheme:dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Radar SECOP">
 <script>if('serviceWorker'in navigator&&location.protocol==='https:')addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
@@ -552,7 +552,7 @@ body .pp-card p{color:var(--muted)}
 body .pp-card input{background:var(--bg);color:var(--fg);border-color:var(--line);border-radius:999px;padding:12px 18px}
 body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);border-radius:999px;min-height:48px}
 </style>
-<div class="wrap bar">
+<div class="wrap">
   <div class="top">
     <div>
       <div class="hrow"><div class="brand" data-reload role="button" tabindex="0" title="Actualizar la página" aria-label="Radar SECOP · actualizar la página"><svg viewBox="14 9 36 46" aria-hidden="true"><path d="M19 12h19l9 9v31H19z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M38 12v9h9" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M36.5 30.5c-1-1.6-2.7-2.3-4.5-2.3-2.4 0-4.2 1.2-4.2 3.2 0 4.6 9 2.6 9 7.4 0 2.1-2 3.4-4.6 3.4-2 0-3.8-.8-4.8-2.5M32 25.5v2.7M32 41.7v2.8" fill="none" stroke="var(--accent-fg)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg><b>RADAR<span>SECOP</span></b></div><div class="fecha" id="fecha"></div></div>
@@ -569,18 +569,51 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
     var b=document.querySelector('.brand[data-reload]');if(b){b.onclick=function(){location.reload()};b.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();location.reload()}}}})();</script>
 
   <nav class="tabs" role="tablist" aria-label="Secciones">
-    <button class="tab" role="tab" id="t-radar" aria-controls="v-radar" data-v="radar">Radar de procesos <small>dónde hay contratos</small></button>
-    <button class="tab" role="tab" id="t-ruta" aria-controls="v-ruta" data-v="ruta">Ruta del contrato <small>cómo se gana y se cobra</small></button>
-    <button class="tab" role="tab" id="t-sim" aria-controls="v-sim" data-v="sim">Simulación <small>caja y ganancia de un contrato</small></button>
-    <button class="tab" role="tab" id="t-cuenta" aria-controls="v-cuenta" data-v="cuenta">Cuenta <small>apariencia y sesión</small></button>
+    <button class="tab" role="tab" id="t-radar" aria-controls="v-radar" data-v="radar">Radar</button>
+    <button class="tab" role="tab" id="t-ruta" aria-controls="v-ruta" data-v="ruta">Ruta</button>
+    <button class="tab" role="tab" id="t-sim" aria-controls="v-sim" data-v="sim">Simulación</button>
+    <button class="tab" role="tab" id="t-cuenta" aria-controls="v-cuenta" data-v="cuenta">Cuenta</button>
   </nav>
 
   <section class="view" id="v-radar" role="tabpanel" aria-labelledby="t-radar">
-  <div class="presets" id="presets"></div>
-
-  <div class="kpis" id="kpis"></div>
-
-  <details class="fold" data-fold="panorama"><summary>Panorama</summary><div class="fold-in">
+  <div class="rlayout">
+  <aside class="side" id="side" aria-label="Filtros">
+    <div class="side-head"><b>Filtros</b><button class="side-x" id="side-x" type="button" aria-label="Cerrar filtros">✕</button></div>
+    <div class="side-body">
+      <details class="fg" open><summary>Conveniencia</summary><div class="stack" id="chPri"></div></details>
+      <details class="fg" open><summary>Sector</summary><div class="bars" id="ch-sec"></div></details>
+      <details class="fg" open><summary>Valor del proceso</summary><div class="bars" id="ch-rng"></div></details>
+      <details class="fg" open><summary>¿Exige RUP?</summary><div class="bars" id="ch-rup"></div></details>
+      <details class="fg" open><summary>Región</summary><div class="bars" id="ch-zona"></div></details>
+      <details class="fg" open><summary>Etapa</summary><div class="bars" id="ch-etapa"></div></details>
+      <details class="fg" open><summary>Publicado hace</summary><div class="bars" id="ch-edad"></div></details>
+    </div>
+    <div class="side-foot"><button class="btn" id="clear" type="button">Limpiar</button><button class="btn primary" id="side-ok" type="button">Ver procesos</button></div>
+  </aside>
+  <div class="rmain">
+    <div class="toolbar" role="search">
+      <input id="q" type="search" placeholder="Buscar proceso, entidad, municipio…" aria-label="Buscar">
+      <button class="btn fbtn" id="fbtn" type="button" aria-controls="side"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"/></svg>Filtros<b></b></button>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="chips" id="active"></div>
+    <div class="presets" id="presets"></div>
+    <div class="kpis" id="kpis"></div>
+  <div class="tbl"><table>
+    <thead><tr>
+      <th><button data-s="score">Conveniencia</button></th>
+      <th><button data-s="ent">Proceso</button></th>
+      <th><button data-s="dep">Lugar y modalidad</button></th>
+      <th>RUP</th>
+      <th style="text-align:right"><button data-s="val">Valor</button></th>
+      <th><button data-s="pub">Publicado</button></th>
+      <th></th>
+    </tr></thead>
+    <tbody id="tb"></tbody>
+  </table></div>
+    <div class="cards" id="cards"></div>
+    <button class="btn" id="mas" type="button" hidden>Ver más</button>
+    <details class="fold" data-fold="panorama"><summary>Panorama</summary><div class="fold-in">
   <div class="tiles" id="tiles"></div>
 
   <div class="duo">
@@ -607,49 +640,15 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
       <div class="legend" id="leg2" hidden></div>
     </div>
   </div>
-  </div></details>
-
-  <details class="fold" data-fold="filtros"><summary>Filtros</summary><div class="fold-in">
-  <div class="grid4">
-    <div class="panel"><h2>Conveniencia</h2><div class="stack" id="chPri"></div></div>
-    <div class="panel"><h2>Sector</h2><div class="bars" id="ch-sec"></div></div>
-    <div class="panel"><h2>¿Exige RUP?</h2><div class="bars" id="ch-rup"></div></div>
-    <div class="panel"><h2>Valor del proceso</h2><div class="bars" id="ch-rng"></div></div>
-    <div class="panel"><h2>Región</h2><div class="bars" id="ch-zona"></div></div>
-    <div class="panel"><h2>Etapa</h2><div class="bars" id="ch-etapa"></div></div>
-    <div class="panel"><h2>Publicado hace</h2><div class="bars" id="ch-edad"></div></div>
-  </div>
-  </div></details>
-
-  <div class="toolbar" role="search">
-    <input id="q" type="search" placeholder="Buscar entidad, objeto, municipio…" aria-label="Buscar">
-    <button class="btn sm" id="clear" type="button" title="Limpiar filtros">✕ Limpiar</button>
-    <div class="chips" id="active"></div>
-    <span class="count" id="count"></span>
-  </div>
-
-  <div class="tbl"><table>
-    <thead><tr>
-      <th><button data-s="score">Conveniencia</button></th>
-      <th><button data-s="ent">Tipología, entidad y objeto</button></th>
-      <th><button data-s="dep">Lugar</button></th>
-      <th><button data-s="modG">Modalidad</button></th>
-      <th>RUP</th>
-      <th style="text-align:right"><button data-s="val">Valor</button></th>
-      <th style="text-align:right"><button data-s="vmes">Valor/mes</button></th>
-      <th><button data-s="pub">Publicado</button></th>
-      <th></th>
-    </tr></thead>
-    <tbody id="tb"></tbody>
-  </table></div>
-  <div class="cards" id="cards"></div>
-  <button class="btn" id="mas" type="button" hidden style="justify-self:center">Ver más</button>
-
+    </div></details>
   <details class="fold mini" data-fold="notas"><summary>Antes de ofertar · cómo se calcula</summary><div class="note">
     <div><b>Antes de ofertar:</b> confirma en SECOP la fecha de cierre (los datos abiertos no la traen), si el proceso está limitado a Mipymes de la región y los requisitos habilitantes. Para presentar oferta, el registro de proveedor en SECOP II debe estar finalizado.</div>
     <div><b>Conveniencia:</b> sin RUP +30 (por verificar +15) · valor $50–300 M +25 (punto ideal), $15–50 M +18, $300–1.000 M +12, menos de $15 M +5 · zona foco +20, resto del Caribe o del centro +10 · diseños técnicos o BIM +20, arquitectura o estudios +18, interventoría +16, redes +14, adecuaciones o metálica +12, obra civil o vivienda +10 · publicado hace ≤ 7 días +10, ≤ 15 días +5. Alta ≥ 70, media 45–69, baja &lt; 45.</div>
     <div id="src"></div>
   </div></details>
+  </div>
+  </div>
+  <div class="side-bg" id="side-bg" hidden></div>
   </section>
 
   <section class="view" id="v-ruta" role="tabpanel" aria-labelledby="t-ruta" hidden>
@@ -886,6 +885,7 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
       </label>
     </div>
     <form class="simf" id="cf" onsubmit="return false">
+      <div class="dedh"><b>Contrato</b></div>
       <label>Valor del contrato (millones)<input id="c-val" type="number" min="1" max="5000" step="1"></label>
       <label>Plazo de ejecución (meses)<input id="c-mes" type="number" min="0.5" max="24" step="0.5"></label>
       <label>Forma de pago<select id="c-forma">
@@ -935,7 +935,7 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
       <h2>Cronograma de caja por mes</h2>
       <div class="c-tbl"><table id="ctab" class="ctable"></table></div>
     </div>
-    <p class="note" id="c-note"></p>
+    <details class="fold mini"><summary>Cómo se calcula</summary><p class="note" id="c-note"></p></details>
   </section>
 
   <style>
@@ -977,6 +977,7 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
           <div class="cta-pick" id="cta-apariencia-slot"></div>
         </div>
       </div>
+      <div class="cta-card" id="cta-instalar" hidden></div>
       <div class="cta-card">
         <div class="cta-body">
           <a class="cta-link" href="/planificar-proyectos-apps/">
@@ -990,6 +991,7 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
   </section>
 </div>
 <div id="tip" role="tooltip"></div>
+<div class="installbar" id="install" role="dialog" aria-label="Instalar Radar SECOP" hidden></div>
 <script>document.querySelectorAll("details.fold[data-fold]").forEach(function(d){var k="radar:fold:"+d.dataset.fold;
   try{if(localStorage.getItem(k)==="1")d.open=true}catch(e){}
   d.addEventListener("toggle",function(){try{localStorage.setItem(k,d.open?"1":"0")}catch(e){}})});</script>
@@ -1023,7 +1025,7 @@ function clasificarTipo(unspsc, obj){
 
 /* ── Sector: tipología de ingeniería → código UNSPSC (si existe) → palabras del objeto ──
    En datos.gov.co ~95 % de los procesos vigentes viene sin código UNSPSC, por eso se clasifica por texto. */
-const SECTORES=["Construcción y obra","Ingeniería y consultoría","Mantenimiento de equipos y vehículos","Tecnología y comunicaciones","Salud","Alimentos","Aseo, cafetería y vigilancia","Transporte y combustibles","Suministros y dotación","Eventos, capacitación y publicidad","Seguros","Ambiental","Servicios profesionales","Otros"];
+const SECTORES=["Construcción y obra","Ingeniería y consultoría","Mantenimiento de equipos","Tecnología","Salud","Alimentos","Aseo y vigilancia","Transporte y combustible","Suministros y dotación","Eventos y capacitación","Seguros","Ambiental","Servicios profesionales","Otros"];
 const SEC_TIPO={"Diseños técnicos":1,"BIM y levantamientos":1,"Diseño arquitectónico":1,"Estudios técnicos":1,"Interventoría y supervisión":1};
 const SEC_SEG={"72":0,"30":0,"81":1,"85":4,"42":4,"51":4,"43":3,"50":5,"76":6,"92":6,"78":7,"15":7,"25":7,"84":10,"86":9,"82":9,"77":11,"80":12};
 const SEC_RE=[
@@ -1327,6 +1329,8 @@ function render(){
   ae.innerHTML=act.map(([k,v,l],i)=>`<span class="chip act">${esc(l)}<button data-i="${i}" aria-label="Quitar filtro ${esc(l)}">×</button></span>`).join("");
   ae.querySelectorAll("button").forEach(b=>b.onclick=()=>{const [k,v]=act[+b.dataset.i];if(k==="p")F.p=null;else if(k==="q"){F.q="";document.getElementById("q").value=""}else F[k].delete(v);preset=null;render()});
   document.getElementById("clear").disabled=!act.length;
+  {const nf=act.filter(x=>x[0]!=="q").length,fb=document.getElementById("fbtn");if(fb){fb.querySelector("b").textContent=nf||"";fb.classList.toggle("on",nf>0)}
+   const ok=document.getElementById("side-ok");if(ok)ok.textContent=`Ver ${R.length.toLocaleString("es-CO")} procesos`;}
   document.getElementById("count").textContent=R.length+" de "+D.length;
 
   // Tabla
@@ -1341,9 +1345,9 @@ function render(){
   window._simRows=Sx;document.getElementById("tb").innerHTML=V.length?V.map((d,i)=>`<tr>
     <td class="${d.fz?"fz":""}"><span class="chip p-${d.p}">${d.p}</span><div style="margin-top:5px">${meter(d)}</div>${d.fz?`<div style="margin-top:4px"><span class="chip fz">★ Foco</span></div>`:""}</td>
     <td class="obj">${tipoTag(d)}<b>${esc(d.ent)}</b>${esc(cap(d.obj))}<div style="margin-top:3px;font-size:11.5px;color:var(--muted);font-family:var(--mono)">${esc(d.ref)} · ${esc(d.etapa)}</div></td>
-    <td>${lugar(d)}</td><td>${esc(d.modG)}</td><td>${rupChip(d)}</td>
-    <td class="num">${cop(d.val)}<div class="qmini">inv. ${cop(quick(d).inv)}<br>gana ${(quick(d).gan<0?"−":"")+cop(Math.abs(quick(d).gan))}</div></td><td class="num">${d.vmes?cop(d.vmes):"—"}</td><td style="white-space:nowrap">${fecha(d.pub)}<div style="font-size:11.5px;color:var(--muted)">hace ${d.dias} d</div></td>
-    <td><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a><button class="simb" type="button" onclick="simContract(${i})">Simular caja</button></td></tr>`).join(""):`<tr><td colspan="9" class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</td></tr>`;
+    <td>${lugar(d)}<div class="sub2">${esc(d.modG)}</div></td><td>${rupChip(d)}</td>
+    <td class="num">${cop(d.val)}<div class="qmini">${d.vmes?cop(d.vmes)+"/mes<br>":""}inv. ${cop(quick(d).inv)}<br>gana ${(quick(d).gan<0?"−":"")+cop(Math.abs(quick(d).gan))}</div></td><td style="white-space:nowrap">${fecha(d.pub)}<div style="font-size:11.5px;color:var(--muted)">hace ${d.dias} d</div></td>
+    <td><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a><button class="simb" type="button" onclick="simContract(${i})">Simular</button></td></tr>`).join(""):`<tr><td colspan="7" class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</td></tr>`;
   document.getElementById("cards").innerHTML=V.length?V.map((d,i)=>`<article class="card${d.fz?" fz":""}">
     <div class="row"><span class="chip p-${d.p}">${d.p} ${d.score}</span>${rupChip(d)}${tipoTag(d)}</div>
     <h3>${esc(cap(d.obj))}</h3><div class="meta">${esc(d.ent)} · ${lugar(d)} · ${esc(d.modG)} · ${fecha(d.pub)}</div>
@@ -1353,6 +1357,15 @@ function render(){
 document.querySelectorAll("th button").forEach(b=>b.onclick=()=>{const k=b.dataset.s;sort=sort.k===k?{k,dir:-sort.dir}:{k,dir:["val","vmes","pub","score"].includes(k)?-1:1};render()});
 document.getElementById("q").addEventListener("input",e=>{F.q=e.target.value;preset=null;render()});
 document.getElementById("clear").onclick=()=>{clearAll();sort={k:"score",dir:-1};render()};
+/* Hoja de filtros (celular) */
+{const side=document.getElementById("side"),bg=document.getElementById("side-bg");
+ const abrir=on=>{side.classList.toggle("open",on);bg.hidden=!on;document.documentElement.classList.toggle("lock",on);if(window.Inst)Inst.show()};
+ window.filtrosAbiertos=()=>side.classList.contains("open");
+ document.getElementById("fbtn").onclick=()=>abrir(true);
+ document.getElementById("side-x").onclick=()=>abrir(false);
+ document.getElementById("side-ok").onclick=()=>{abrir(false);document.getElementById("count").scrollIntoView({block:"nearest"})};
+ bg.onclick=()=>abrir(false);
+ addEventListener("keydown",e=>{if(e.key==="Escape"&&side.classList.contains("open"))abrir(false)});}
 document.getElementById("mas").onclick=()=>{render._lim=(render._lim||60)+60;render()};
 queueMicrotask(render);
 
@@ -1438,7 +1451,6 @@ document.getElementById('lanes').innerHTML = PH.map(p=>{
 function showTab(v,anchor){
   document.querySelectorAll(".view").forEach(s=>s.hidden=s.id!=="v-"+v);
   document.querySelectorAll(".tab,.bn-btn").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v));
-  document.getElementById("clear").hidden=v!=="radar";
   if(anchor){const el=document.getElementById(anchor);if(el)el.scrollIntoView({block:"start"})}else window.scrollTo(0,0);
 }
 /* Delegación: funciona aunque la barra inferior se declare en el HTML después de este script */
@@ -1848,6 +1860,142 @@ body #v-cuenta .cta-salir{min-height:42px;margin-top:0}
 #v-sim .simf{grid-template-columns:repeat(auto-fill,minmax(min(150px,45%),1fr))}
 #v-sim .simk{grid-template-columns:repeat(auto-fill,minmax(min(140px,45%),1fr))}
 #v-sim .simk span{font-size:11.5px}
+</style>
+<script>
+/* ---------- Instalar como app (mismo aviso que PowerFit, Mind Focus y Lumen) ---------- */
+var Inst={prompt:null,KEY:'radar:installDismiss',
+  standalone:function(){ try{ return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true; }catch(e){ return false; } },
+  ios:function(){ var u=navigator.userAgent||''; return /iphone|ipad|ipod/i.test(u)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1); },
+  can:function(){ return !this.standalone()&&(!!this.prompt||this.ios()); },
+  dismissed:function(){ try{ return Date.now()-(+localStorage.getItem(this.KEY)||0)<12*36e5; }catch(e){ return false; } },
+  body:function(inBar){
+    var head=function(t,sub){ return '<div class="ib-row"><img src="icon-192.png" alt="" width="40" height="40"><div class="ib-txt"><b>'+t+'</b><span>'+sub+'</span></div></div>'; };
+    if(this.prompt) return head('Instala Radar SECOP','Ábrela desde tu pantalla de inicio, a pantalla completa y más rápido.')+
+      '<div class="ib-btns">'+(inBar?'<button class="btn" type="button" data-inst="no">Ahora no</button>':'')+'<button class="btn primary" type="button" data-inst="go">Instalar</button></div>';
+    return head('Instala Radar SECOP en tu iPhone','En Safari:')+
+      '<ol><li>Toca <b>Compartir</b> (el cuadro con la flecha hacia arriba).</li><li>Elige <b>Agregar a pantalla de inicio</b> y luego <b>Agregar</b>.</li></ol>'+
+      (inBar?'<div class="ib-btns"><button class="btn" type="button" data-inst="no">Entendido</button></div>':'');
+  },
+  show:function(){ var el=document.getElementById('install'),g=document.getElementById('gate'); if(!el) return;
+    var on=this.can()&&!this.dismissed()&&g&&g.hidden&&!(window.filtrosAbiertos&&filtrosAbiertos());
+    if(on){ el.innerHTML=this.body(true); el.hidden=false; } else el.hidden=true;
+    var c=document.getElementById('cta-instalar'); if(c){
+      if(this.standalone()){ c.innerHTML='<div class="cta-body"><div class="ib-row"><img src="icon-192.png" alt="" width="40" height="40"><div class="ib-txt"><b>App instalada</b><span>Estás usando Radar SECOP como app</span></div></div></div>'; c.hidden=false; }
+      else if(this.can()){ c.innerHTML='<div class="cta-body">'+this.body(false)+'</div>'; c.hidden=false; }
+      else c.hidden=true; } },
+  go:function(){ var pr=this.prompt,self=this; if(!pr) return; pr.prompt(); (pr.userChoice||Promise.resolve({})).then(function(ch){
+    if(ch&&ch.outcome==='accepted') self.prompt=null; else { try{ localStorage.setItem(self.KEY,Date.now()); }catch(e){} } self.show(); }); },
+  no:function(){ try{ localStorage.setItem(this.KEY,Date.now()); }catch(e){} this.show(); }
+};
+document.addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('[data-inst]'); if(!b) return; b.dataset.inst==='go'?Inst.go():Inst.no(); });
+window.addEventListener('beforeinstallprompt',function(e){ e.preventDefault(); Inst.prompt=e; Inst.show(); });
+window.addEventListener('appinstalled',function(){ Inst.prompt=null; Inst.show(); });
+/* Aparece cuando ya se inició sesión (la pantalla de acceso se oculta) */
+(function(){ var g=document.getElementById('gate'); if(g&&window.MutationObserver) new MutationObserver(function(){ setTimeout(function(){ Inst.show(); },1500); }).observe(g,{attributes:true,attributeFilter:['hidden']}); })();
+setTimeout(function(){ Inst.show(); },2700);
+</script>
+<style id="orden">
+/* ── Orden y alineación: escritorio = pestañas arriba + filtros a un lado; celular = menú abajo + hoja de filtros ── */
+:root{--tabs-h:0px}
+.wrap>.top>div{flex:1;min-width:0}
+.hrow{width:100%}
+html.lock,html.lock body{overflow:hidden}
+/* Pestañas (escritorio) */
+.tabs{display:none}
+/* Radar */
+.rlayout{display:block}
+.rmain{display:grid;gap:10px;min-width:0;align-content:start}
+.toolbar{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;position:sticky;top:calc(var(--tabs-h) + env(safe-area-inset-top,0px));z-index:6;background:var(--bg);margin:0;padding-block:8px}
+.toolbar input{flex:1 1 auto;min-width:0}
+.fbtn{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 14px;font-size:13px;flex:none}
+.fbtn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.fbtn b{min-width:18px;height:18px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:11px;display:none;align-items:center;justify-content:center;padding:0 5px}
+.fbtn.on b{display:inline-flex}
+.count{flex:none;margin-left:0;font-variant-numeric:tabular-nums;font-size:12px;color:var(--muted)}
+#active:empty{display:none}
+.kpis{align-items:baseline}
+#mas{justify-self:center;min-width:200px}
+/* Filtros: hoja a pantalla completa en el celular */
+.side{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;transform:translateY(100%);visibility:hidden;transition:transform .25s ease,visibility 0s .25s}
+.side.open{transform:none;visibility:visible;transition:transform .25s ease}
+.side-head{display:flex;align-items:center;justify-content:space-between;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 8px}
+.side-head b{font-family:var(--display);font-size:24px;text-transform:uppercase;letter-spacing:.5px}
+.side-x{border:0;background:var(--surface);width:40px;height:40px;border-radius:50%;font-size:16px;color:var(--fg)}
+.side-body{flex:1;min-height:0;overflow:auto;padding:0 16px 12px;display:grid;gap:8px;align-content:start;overscroll-behavior:contain}
+.side-foot{display:grid;grid-template-columns:1fr 2fr;gap:8px;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--bg)}
+.side-foot .btn{min-height:46px;justify-content:center}
+.side-bg{display:none}
+.fg{background:var(--surface);border-radius:14px;padding:4px 12px 8px}
+.fg>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:8px 0 6px;font-family:var(--display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.5px}
+.fg>summary::-webkit-details-marker{display:none}
+.fg>summary::after{content:"";width:7px;height:7px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:-3px 2px 0 0}
+.fg[open]>summary::after{transform:rotate(-135deg);margin-top:3px}
+.side .bars{gap:1px}
+.side .bar,.side #ch-sec .bar{grid-template-columns:minmax(0,1fr) 52px 34px;gap:8px;min-height:30px;padding:2px 4px}
+.side .bar .lab{white-space:normal;line-height:1.2;font-size:13px}
+.side .bar .n{text-align:right}
+.side .stack{height:34px}
+.side .stack button{flex:1 1 0!important;min-width:0;white-space:nowrap;font-size:12px}
+@media (max-width:979px){.count{display:none}}
+/* Tabla */
+.tbl table{min-width:760px;width:100%;table-layout:fixed}
+.tbl td{overflow-wrap:anywhere}
+.tbl th:nth-child(1){width:92px}.tbl th:nth-child(3){width:132px}.tbl th:nth-child(4){width:84px}.tbl th:nth-child(5){width:112px}.tbl th:nth-child(6){width:88px}
+.sub2{font-size:12px;color:var(--muted);margin-top:2px}
+.tbl td,.tbl th{vertical-align:top}
+.tbl td.obj{max-width:none;min-width:260px}
+.tbl td:last-child{white-space:nowrap}
+.tbl td:last-child .go,.tbl td:last-child .simb{display:flex;align-items:center;justify-content:center;width:100%;min-height:32px;margin:0;padding:0 10px;font-size:12.5px}
+.tbl td:last-child .simb{margin-top:6px}
+.tbl th:last-child{width:104px}
+/* Tarjetas */
+.card .ft .go,.card .ft .simb{min-height:34px;display:inline-flex;align-items:center}
+/* Simulación */
+.c-top{grid-template-columns:1fr}
+.c-pick{order:-1}
+#v-sim .simf{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
+#v-sim .simf label{justify-content:space-between}
+#v-sim .simf label[hidden]{display:none}
+.dedh{padding-bottom:2px}
+#v-sim .simk{grid-template-columns:repeat(2,minmax(0,1fr))}
+/* Instalar como app */
+.installbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(56px + 12px + env(safe-area-inset-bottom,0px));z-index:45;width:calc(100% - 32px);max-width:448px;background:var(--surface);border:1px solid var(--accent-fg);border-radius:20px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:10px;animation:ib-in .35s ease-out}
+.installbar[hidden]{display:none}
+.installbar ol,#cta-instalar ol{margin:0;padding-left:20px;font-size:13.5px;display:flex;flex-direction:column;gap:4px}
+.ib-row{display:flex;align-items:center;gap:12px}
+.ib-row img{width:40px;height:40px;border-radius:10px;flex:none}
+.ib-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ib-txt span{font-size:12.5px;color:var(--muted)}
+.ib-btns{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px}
+.ib-btns .btn{justify-content:center;min-height:42px}
+@keyframes ib-in{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
+@media (prefers-reduced-motion:reduce){.installbar,.side{animation:none;transition:none}}
+
+/* ── Tableta y escritorio ── */
+@media (min-width:700px){
+  #v-sim .simf{grid-template-columns:repeat(4,minmax(0,1fr))}
+  #v-sim .simk{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media (min-width:980px){
+  :root{--tabs-h:52px}
+  .wrap{padding-bottom:24px}
+  .bottom-nav{display:none}
+  .tabs{display:flex;gap:4px;position:sticky;top:0;z-index:20;background:var(--bg);height:var(--tabs-h);align-items:center;border-bottom:1px solid var(--line);margin-top:-4px}
+  .tab{border:0;border-radius:999px;padding:8px 18px;font-family:var(--display);font-size:16px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);background:transparent;border-bottom:0!important}
+  .tab:hover{color:var(--fg);background:var(--surface)}
+  .tab[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+  .rlayout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:16px;align-items:start}
+  .side{position:sticky;top:calc(var(--tabs-h) + 10px);inset:auto;z-index:4;transform:none;visibility:visible;transition:none;max-height:calc(100vh - var(--tabs-h) - 20px);background:transparent}
+  .side-head{padding:0 0 8px}
+  .side-head b{font-size:20px}
+  .side-x,.fbtn{display:none}
+  .side-body{padding:0 4px 0 0}
+  .side-foot{grid-template-columns:1fr;padding:8px 0 0;border:0;background:transparent}
+  #side-ok{display:none}
+  .installbar{left:auto;right:24px;transform:none;bottom:24px;animation:none}
+  .c-top{grid-template-columns:minmax(0,1fr)}
+  #v-cuenta .cta-wrap{padding-top:8px}
+}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
