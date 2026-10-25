@@ -186,17 +186,46 @@ textarea{resize:vertical;line-height:1.45}
 .hcode{font-family:var(--doc);font-weight:700;color:var(--accent);white-space:nowrap}
 .muted{color:var(--muted)}
 .empty{color:var(--muted);font-size:13px;padding:12px 0}
-.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:999px;font-size:13px;z-index:10}
+.toast{position:fixed;left:50%;bottom:calc(68px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:999px;font-size:13px;z-index:10}
 @media (prefers-reduced-motion:no-preference){.toast{animation:up .2s ease-out}@keyframes up{from{opacity:0;transform:translate(-50%,6px)}}}
+/* ── Navegación inferior ─────────────────────────────────────── */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:30;background:var(--panel);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom,0px)}
+.bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:transparent;color:var(--muted);padding:10px 4px;font:inherit;font-size:11px;font-weight:600;cursor:pointer;transition:color .15s;min-height:56px}
+.bottom-nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.bottom-nav button[aria-selected="true"]{color:var(--accent)}
+.app{padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+/* ── Vista Cuenta ────────────────────────────────────────────── */
+.cuenta-view{display:flex;flex-direction:column;gap:12px;max-width:540px;margin-inline:auto;padding-block:4px}
+.cuenta-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.cuenta-card-head{padding:12px 16px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
+.cuenta-card-body{padding:4px 0}
+.cuenta-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;gap:12px;font-size:14px}
+.cuenta-row + .cuenta-row{border-top:1px solid var(--line)}
+.cuenta-row-label{font-weight:500;display:flex;align-items:center;gap:10px}
+.cuenta-row-label svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;color:var(--muted)}
+.cuenta-row-value{color:var(--muted);font-size:13px}
+.cuenta-row a,.cuenta-row button.link-btn{background:none;border:0;padding:0;font:inherit;font-size:14px;color:var(--accent);cursor:pointer;text-decoration:none;font-weight:600}
+.cuenta-name-display{font-size:17px;font-weight:600;padding:16px}
+.cuenta-badge{display:inline-block;font-size:11px;font-weight:700;border:1px solid var(--line);border-radius:999px;padding:2px 10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.btn-salir{width:100%;background:none;border:1px solid var(--bad);color:var(--bad);border-radius:var(--r);padding:12px;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.btn-salir:hover{background:var(--bad);color:#fff}
+/* ── Historial: tarjetas en móvil ───────────────────────────── */
+@media (max-width:700px){
+  .tbox{overflow-x:visible}
+  .htable thead{display:none}
+  .htable,.htable tbody,.htable tr,.htable td{display:block;width:100%}
+  .htable tr{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);margin-bottom:8px;padding:12px;display:flex;flex-direction:column;gap:6px}
+  .htable td{padding:0;border:0;text-align:left!important}
+  .htable td.n{text-align:left!important;white-space:normal}
+  .htable td::before{content:attr(data-label);display:block;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+  .htable td:empty,.htable td[data-label=""]{display:none}
+  .htable .acts{margin-top:4px}
+}
 </style>
 
 <div class="app">
   <header class="bar">
     <div class="brand"><div class="brand-mark" aria-hidden="true">PLANIFICAR<br>PROYECTOS</div><h1>Cotizador</h1></div>
-    <div class="tabs" role="tablist">
-      <button class="tab" role="tab" id="tab-cotizar" aria-selected="true">Cotizar</button>
-      <button class="tab" role="tab" id="tab-historial" aria-selected="false">Historial <span id="hist-count" class="muted"></span></button>
-    </div>
     <div class="actions">
       <span class="doc-info" id="doc-info">
         <span class="hcode" id="doc-code"></span>
@@ -326,7 +355,7 @@ textarea{resize:vertical;line-height:1.45}
     <div class="h-resumen" id="h-resumen"></div>
     <div class="tbox">
       <table class="htable">
-        <thead><tr><th data-k="num">N.º</th><th data-k="fecha">Fecha</th><th data-k="codigo">Código</th><th data-k="cliente">Cliente</th><th data-k="proyecto">Proyecto</th><th data-k="tipo">Servicio</th><th data-k="total" style="text-align:right">Total</th><th data-k="estado">Estado</th><th></th></tr></thead>
+        <thead><tr><th data-k="num">N.º</th><th data-k="fecha">Fecha</th><th data-k="codigo">Código</th><th data-k="cliente">Cliente</th><th data-k="proyecto">Proyecto</th><th data-k="tipo">Servicio</th><th data-k="total" style="text-align:right">Total</th><th data-k="estado">Estado</th><th data-label=""></th></tr></thead>
         <tbody id="h-body"></tbody>
       </table>
     </div>
@@ -334,6 +363,77 @@ textarea{resize:vertical;line-height:1.45}
   </section>
 </div>
 <div class="toast" id="toast" hidden></div>
+
+  <!-- Vista Cuenta -->
+  <section id="view-cuenta" hidden>
+    <div class="cuenta-view">
+      <!-- Perfil -->
+      <div class="cuenta-card">
+        <div class="cuenta-card-body">
+          <div class="cuenta-name-display" id="cuenta-nombre">—</div>
+          <div class="cuenta-row" style="padding-top:0">
+            <span class="cuenta-row-value" id="cuenta-email" style="font-size:13px"></span>
+            <span class="cuenta-badge" id="cuenta-tipo-badge"></span>
+          </div>
+        </div>
+      </div>
+      <!-- Apariencia -->
+      <div class="cuenta-card" id="cuenta-apariencia-card">
+        <div class="cuenta-card-head">Apariencia</div>
+        <div class="cuenta-card-body" id="cuenta-apariencia-slot" style="padding:16px"></div>
+      </div>
+      <!-- Soporte -->
+      <div class="cuenta-card">
+        <div class="cuenta-card-head">Soporte y recomendaciones</div>
+        <div class="cuenta-card-body">
+          <div class="cuenta-row">
+            <span class="cuenta-row-label">
+              <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              Soporte técnico
+            </span>
+            <a id="wa-soporte" href="#" target="_blank" rel="noopener">WhatsApp</a>
+          </div>
+          <div class="cuenta-row">
+            <span class="cuenta-row-label">
+              <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              Recomendar a un colega
+            </span>
+            <a id="wa-recomendar" href="#" target="_blank" rel="noopener">WhatsApp</a>
+          </div>
+        </div>
+      </div>
+      <!-- PP Apps -->
+      <div class="cuenta-card">
+        <div class="cuenta-card-body">
+          <div class="cuenta-row">
+            <span class="cuenta-row-label">
+              <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              PP Apps
+            </span>
+            <a href="/planificar-proyectos-apps/">Ir al panel</a>
+          </div>
+        </div>
+      </div>
+      <!-- Cerrar sesión -->
+      <button class="btn-salir" id="btn-salir-cuenta" type="button">Cerrar sesión</button>
+    </div>
+  </section>
+
+  <!-- Barra de navegación inferior -->
+  <nav class="bottom-nav" role="tablist" aria-label="Navegación principal">
+    <button role="tab" id="tab-cotizar" aria-selected="true">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Cotizar
+    </button>
+    <button role="tab" id="tab-historial" aria-selected="false">
+      <svg viewBox="0 0 24 24"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/></svg>
+      Historial<span id="hist-count" style="display:none"></span>
+    </button>
+    <button role="tab" id="tab-cuenta" aria-selected="false">
+      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Cuenta
+    </button>
+  </nav>
 
 <script>
 // Datos sensibles (NIT, documentos, cuenta bancaria, declaración) se cargan de Firestore al iniciar sesión
@@ -1509,15 +1609,15 @@ function pintarHistorial() {
   $('hist-count').textContent = lista.length ? '(' + lista.length + ')' : '';
   $('h-empty').hidden = lista.length > 0;
   $('h-body').replaceChildren(...filas.map((c) => h('tr', null,
-    h('td', { class: 'n' }, Number.isFinite(Number(c.consecutivo)) && c.consecutivo !== null ? String(c.consecutivo).padStart(2, '0') : '—'),
-    h('td', null, fechaCorta(c.fecha)),
-    h('td', null, h('span', { class: 'hcode' }, c.codigo || 'Sin código')),
-    h('td', null, c.cliente_nombre || h('span', { class: 'muted' }, 'Sin nombre'), c.cliente_empresa ? h('div', { class: 'muted' }, c.cliente_empresa) : null),
-    h('td', null, c.proyecto),
-    h('td', null, (TIPOS[c.tipo] || TIPOS.otro).label),
-    h('td', { class: 'n' }, money(c.total)),
-    h('td', null, h('span', { class: 'pill ' + c.estado }, c.estado)),
-    h('td', null, h('div', { class: 'acts' },
+    h('td', { class: 'n', 'data-label': 'N.º' }, Number.isFinite(Number(c.consecutivo)) && c.consecutivo !== null ? String(c.consecutivo).padStart(2, '0') : '—'),
+    h('td', { 'data-label': 'Fecha' }, fechaCorta(c.fecha)),
+    h('td', { 'data-label': 'Código' }, h('span', { class: 'hcode' }, c.codigo || 'Sin código')),
+    h('td', { 'data-label': 'Cliente' }, c.cliente_nombre || h('span', { class: 'muted' }, 'Sin nombre'), c.cliente_empresa ? h('div', { class: 'muted' }, c.cliente_empresa) : null),
+    h('td', { 'data-label': 'Proyecto' }, c.proyecto),
+    h('td', { 'data-label': 'Servicio' }, (TIPOS[c.tipo] || TIPOS.otro).label),
+    h('td', { class: 'n', 'data-label': 'Total' }, money(c.total)),
+    h('td', { 'data-label': 'Estado' }, h('span', { class: 'pill ' + c.estado }, c.estado)),
+    h('td', { 'data-label': '' }, h('div', { class: 'acts' },
       h('button', { type: 'button', class: 'btn small', onclick: () => pedir('La cotización abierta tiene cambios sin guardar.', () => abrir(c)) }, 'Abrir'),
       h('button', { type: 'button', class: 'btn small', onclick: () => pedir('La cotización abierta tiene cambios sin guardar.', () => abrir(c, 'version')) }, 'Nueva versión'),
       h('button', { type: 'button', class: 'btn small', onclick: () => pedir('La cotización abierta tiene cambios sin guardar.', () => abrir(c, 'duplicar')) }, 'Duplicar'))))));
@@ -1534,12 +1634,13 @@ document.querySelectorAll('.htable th[data-k]').forEach((th) => th.addEventListe
 $('h-limpiar').addEventListener('click', () => { $('h-buscar').value = ''; ['h-estado', 'h-tipo', 'h-cliente', 'h-anio'].forEach((id) => ($(id).value = '')); $('h-orden').value = 'fecha-desc'; pintarHistorial(); });
 
 function mostrar(v) {
-  $('view-cotizar').hidden = v !== 'cotizar'; $('view-historial').hidden = v !== 'historial';
-  $('tab-cotizar').setAttribute('aria-selected', String(v === 'cotizar')); $('tab-historial').setAttribute('aria-selected', String(v === 'historial'));
+  $('view-cotizar').hidden = v !== 'cotizar'; $('view-historial').hidden = v !== 'historial'; $('view-cuenta').hidden = v !== 'cuenta';
+  ['cotizar','historial','cuenta'].forEach(t => $('tab-'+t).setAttribute('aria-selected', String(v === t)));
   if (v === 'historial') pintarHistorial();
 }
 $('tab-cotizar').addEventListener('click', () => mostrar('cotizar'));
 $('tab-historial').addEventListener('click', () => mostrar('historial'));
+$('tab-cuenta').addEventListener('click', () => mostrar('cuenta'));
 
 let tt = 0;
 function aviso(t) { const el = $('toast'); el.textContent = t; el.hidden = false; clearTimeout(tt); tt = setTimeout(() => { el.hidden = true; }, 2600); }
@@ -1581,7 +1682,7 @@ window.__cotiStart = (fs) => {
 .pp-card .btn.primary{background:var(--accent,#C6F432);border-color:var(--accent,#C6F432);color:var(--accent-ink,#111315);padding:12px;border-radius:12px}
 .pp-card .lnk{background:none;border:0;color:#A3A8AD;text-decoration:underline;cursor:pointer;font:inherit;padding:0;align-self:flex-start}
 #aMsg{color:#FF9B8A;font-size:13px;min-height:1em}
-.pp-acc{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.pp-acc{display:none!important}
 .pp-acc a,.pp-acc button{font:inherit;font-size:12px;font-weight:600;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:pointer;text-decoration:none}
 .imp-wrap{display:inline-flex;align-items:center}
 </style>
@@ -1606,6 +1707,7 @@ window.__cotiStart = (fs) => {
 <script src="/google-login.js"></script>
 <script src="../apariencia.js"></script>
 <script src="../uso.js"></script>
+<script src="../wellness-soporte.js"></script>
 <script>
 (function(){
   var PP_EMP='planificar-proyectos-sas', $g=function(id){return document.getElementById(id)};
@@ -1640,6 +1742,18 @@ window.__cotiStart = (fs) => {
     }).then(function(r){
       if(!r.ok) return sinAcceso(u);
       $g('gate').hidden=true;$g('ppAcc').hidden=false;$g('ppMail').textContent=em;
+      // Poblar vista Cuenta
+      $g('cuenta-email').textContent=em;
+      var tipoEl=$g('ppAcc').querySelector('[data-cuenta-tipo]');
+      if(tipoEl){var tipo=tipoEl.textContent||'';$g('cuenta-tipo-badge').textContent=tipo||''}
+      // Nombre desde perfil
+      try{fs.collection('users').doc(u.uid).collection('perfil').doc('datos').onSnapshot(function(d){if(d.exists){var n=d.data().nombre||'';$g('cuenta-nombre').textContent=n||em.split('@')[0]}else{$g('cuenta-nombre').textContent=em.split('@')[0]}})}catch(e){}
+      // Apariencia picker
+      if(window.Apariencia){try{var slot=$g('cuenta-apariencia-slot');slot.innerHTML='';slot.appendChild(Apariencia.picker())}catch(e){}}
+      // WhatsApp
+      if(window.wellnessWA){try{$g('wa-soporte').href=wellnessWA('Cotizador','soporte',em);$g('wa-recomendar').href=wellnessWA('Cotizador','recomendacion',em)}catch(e){}}
+      // Cerrar sesión desde vista Cuenta
+      $g('btn-salir-cuenta').onclick=function(){auth.signOut().then(function(){location.reload()})};
       if(!ini){ini=true;window.__cotiStart(fs)}
       if(r.adm) importador();
       try{Uso.start(fs,u,'cotizador')}catch(e){}
