@@ -77,9 +77,9 @@
   /* Tipos de cuenta (los asigna el administrador en el panel; invitaciones/{correo}.tipo y .empresa):
      familiar = Mind Focus, PowerFit, Lumen (marca Wellness Apps); empresarial = apps para empresas (Proyecta y las que
      se agreguen a U.EMP); mixto = todas (marca Planificar Proyectos Apps). Sin tipo guardado: mixto si tiene Proyecta aprobado. */
-  U.FAM=['mindfocus','powerfit','lumen']; U.EMP=['proyecta','cotizador'];
+  U.FAM=['mindfocus','powerfit','lumen']; U.EMP=['proyecta','cotizador','radar'];
   // Apps empresariales exclusivas de una empresa (además del tipo de cuenta): el Cotizador es solo de Planificar Proyectos SAS
-  U.PP_EMP='planificar-proyectos-sas'; U.SOLO={cotizador:U.PP_EMP};
+  U.PP_EMP='planificar-proyectos-sas'; U.SOLO={cotizador:U.PP_EMP,radar:U.PP_EMP};
   U.TIPOS={familiar:'Familiar',empresarial:'Empresarial',mixto:'Empresarial y familiar'};
   U.tipoDe=function(i){ return i&&U.TIPOS[i.tipo]?i.tipo:(i&&i.proyecta==='aprobado'?'mixto':'familiar'); };
   U.appsDeTipo=function(t){ return t==='familiar'?U.FAM:t==='empresarial'?U.EMP:U.FAM.concat(U.EMP); };
