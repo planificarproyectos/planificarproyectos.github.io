@@ -1,0 +1,1362 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Radar SECOP · Planificar Proyectos</title>
+<meta property="og:type" content="website">
+<meta property="og:title" content="Radar SECOP · Planificar Proyectos">
+<meta property="og:description" content="Radar de procesos SECOP, ruta del contrato y simulación de caja para Planificar Proyectos SAS.">
+<meta property="og:url" content="https://www.planificarproyectos.com/radar-secop/">
+<meta property="og:image" content="https://www.planificarproyectos.com/og-image.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Radar SECOP · Planificar Proyectos">
+<meta name="twitter:description" content="Radar de procesos SECOP, ruta del contrato y simulación de caja para Planificar Proyectos SAS.">
+<meta name="twitter:image" content="https://www.planificarproyectos.com/og-image.jpg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout general: barra (tema + limpiar) → vistas rápidas → KPIs → paneles de gráficos-filtro (multiselección) → chips activos + búsqueda → tabla ordenada por conveniencia */
+:root{
+  --bg:#f4f6f7; --surface:#ffffff; --surface-2:#f8fafa; --fg:#16212a; --muted:#5d6a74; --line:#dde3e7;
+  --accent:#0d6b72; --accent-2:#e3f1f1; --focus:#c2560f; --focus-soft:#fbe9dc; --bar:#9fb4bd; --bar-sel:#0d6b72;
+  --hi:#1f7a3f; --hi-bg:#ddf2e3; --mid:#8a5a00; --mid-bg:#fbefcf; --lo:#5d6a74; --lo-bg:#edf0f2;
+  --display:"Archivo","Arial Narrow",Arial,sans-serif; --body:"Public Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --shadow:0 1px 2px rgba(22,33,42,.06);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1418; --surface:#162027; --surface-2:#1b262e; --fg:#e5ebee; --muted:#9aa8b1; --line:#2a3740;
+  --accent:#4fb6bc; --accent-2:#163538; --focus:#f2995a; --focus-soft:#3a2617; --bar:#40525c; --bar-sel:#4fb6bc;
+  --hi:#7fd69a; --hi-bg:#163322; --mid:#f0c35a; --mid-bg:#3a2e12; --lo:#a9b5bd; --lo-bg:#222d34; --shadow:none; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1418; --surface:#162027; --surface-2:#1b262e; --fg:#e5ebee; --muted:#9aa8b1; --line:#2a3740;
+  --accent:#4fb6bc; --accent-2:#163538; --focus:#f2995a; --focus-soft:#3a2617; --bar:#40525c; --bar-sel:#4fb6bc;
+  --hi:#7fd69a; --hi-bg:#163322; --mid:#f0c35a; --mid-bg:#3a2e12; --lo:#a9b5bd; --lo-bg:#222d34; --shadow:none; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:14px;line-height:1.45;margin:0}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:16px;padding-block:20px calc(72px + env(safe-area-inset-bottom,0px) + 16px);display:grid;gap:18px}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom,0px)}
+.bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:transparent;color:var(--muted);padding:10px 4px;font:inherit;font-size:11px;font-weight:600;cursor:pointer;transition:color .15s;min-height:56px;line-height:1.1}
+.bottom-nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.bottom-nav button[aria-selected="true"]{color:var(--accent)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.top{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;justify-content:space-between}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(26px,4.4vw,36px);line-height:1.05;margin:4px 0 4px}
+.sub{color:var(--muted);margin:0;max-width:72ch;font-size:13px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;font-weight:600;display:inline-flex;gap:8px;align-items:center;box-shadow:var(--shadow)}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn[disabled]{opacity:.45;cursor:default}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;text-align:left;display:grid;gap:2px;box-shadow:var(--shadow)}
+button.kpi:hover{border-color:var(--accent)}
+.kpi[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-2)}
+.kpi b{font-family:var(--display);font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi span{font-size:12.5px;color:var(--muted)}
+.kpi.hi b{color:var(--hi)} .kpi.fz b{color:var(--focus)}
+.panels{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:12px}
+.col{display:grid;gap:12px;align-content:start;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 14px 10px;min-width:0;box-shadow:var(--shadow)}
+.panel h2{font-family:var(--display);font-size:15px;font-weight:700;margin:0 0 2px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.panel h2 small{font-family:var(--body);font-weight:400;font-size:12px;color:var(--muted)}
+.hint{font-size:12px;color:var(--muted);margin:0 0 8px}
+.bars{display:grid;gap:3px}
+.bar{display:grid;grid-template-columns:minmax(92px,150px) 1fr 42px;gap:8px;align-items:center;border:0;background:none;padding:4px 6px;border-radius:6px;text-align:left}
+.bar:hover{background:var(--surface-2)}
+.bar .lab{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .trk{height:14px;background:var(--surface-2);border-radius:3px;overflow:hidden}
+.bar .fill{height:100%;background:var(--bar);border-radius:3px;transition:width .25s}
+.bar .n{font-family:var(--mono);font-size:12.5px;text-align:right;font-variant-numeric:tabular-nums}
+.bar.focus .lab{font-weight:700;color:var(--focus)} .bar.focus .fill{background:var(--focus)}
+.bar[aria-pressed="true"]{background:var(--accent-2)} .bar[aria-pressed="true"] .fill{background:var(--bar-sel)} .bar[aria-pressed="true"] .lab{font-weight:700;color:var(--fg)}
+.bar.dim{opacity:.4}
+.dept{max-height:420px;overflow:auto;padding-right:4px}
+.stack{display:flex;height:34px;border-radius:6px;overflow:hidden;gap:2px}
+.stack button{border:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;min-width:34px;padding:0 6px}
+.stack .s-Alta{background:var(--hi-bg);color:var(--hi)} .stack .s-Media{background:var(--mid-bg);color:var(--mid)} .stack .s-Baja{background:var(--lo-bg);color:var(--lo)}
+.stack button[aria-pressed="true"]{outline:2px solid var(--fg);outline-offset:-2px}
+.stack button.dim{opacity:.35}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;position:sticky;top:env(safe-area-inset-top,0px);z-index:3;background:var(--bg);padding-block:8px;border-bottom:1px solid var(--line)}
+.toolbar input{flex:1 1 240px;min-width:0;font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;padding:8px 12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;padding:3px 8px;border-radius:999px;background:var(--lo-bg);color:var(--lo);white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.chip.act{background:var(--accent-2);color:var(--fg);border:1px solid var(--accent);padding:3px 4px 3px 10px}
+.chip.act button{border:0;background:none;width:20px;height:20px;border-radius:50%;line-height:1;font-size:14px;color:var(--muted)}
+.chip.act button:hover{background:var(--surface);color:var(--fg)}
+.chip.p-Alta{background:var(--hi-bg);color:var(--hi);font-weight:700} .chip.p-Media{background:var(--mid-bg);color:var(--mid);font-weight:700} .chip.p-Baja{font-weight:700}
+.chip.rno{background:var(--hi-bg);color:var(--hi)}
+.chip.fz{background:var(--focus-soft);color:var(--focus);font-weight:700}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-left:auto}
+.tbl{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow-x:auto;box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;min-width:980px;font-size:13px}
+th{position:sticky;top:0;background:var(--surface-2);text-align:left;font-size:12px;font-weight:700;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th button{border:0;background:none;padding:0;font-weight:700;color:inherit;display:inline-flex;gap:4px}
+th button:hover{color:var(--fg)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:hover td{background:var(--surface-2)}
+td.obj{max-width:360px} td.obj b{display:block;font-weight:600;font-size:12.5px;color:var(--muted)}
+td.num{font-family:var(--mono);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+td.fz{box-shadow:inset 3px 0 0 var(--focus)}
+.go{display:inline-block;background:var(--accent);color:var(--surface);text-decoration:none;font-weight:700;font-size:12.5px;padding:6px 12px;border-radius:6px;white-space:nowrap}
+.go:hover{filter:brightness(1.1)}
+.cards{display:none;gap:10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.card.fz{border-left:4px solid var(--focus)}
+.card h3{font-family:var(--display);font-size:15px;margin:0;line-height:1.3}
+.card .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.card .meta{font-size:12.5px;color:var(--muted)}
+.card .v{font-family:var(--display);font-weight:800;font-size:17px}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.note{font-size:12.5px;color:var(--muted);display:grid;gap:4px}
+.note b{color:var(--fg)}
+@media (max-width:860px){.panels{grid-template-columns:1fr}}
+@media (max-width:640px){.tbl{display:none}.cards{display:grid}.bar{grid-template-columns:minmax(80px,120px) 1fr 34px}}
+@media (prefers-reduced-motion:reduce){.bar .fill{transition:none}}
+
+.presets{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.presets .lbl{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:4px}
+.preset{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;font-weight:600;font-size:13px;box-shadow:var(--shadow)}
+.preset:hover{border-color:var(--accent)}
+.preset[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.preset small{font-weight:400;opacity:.8;margin-left:4px}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.meter{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px}
+.meter i{display:block;width:46px;height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden;border:1px solid var(--line)}
+.meter i b{display:block;height:100%;background:var(--accent)}
+.meter.s-hi i b{background:var(--hi)} .meter.s-mid i b{background:var(--mid)} .meter.s-lo i b{background:var(--lo)}
+.tipo{font-size:11.5px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em}
+
+/* Panorama: fichas de tipología (paleta categórica validada, 7 posiciones fijas) → mapa esquemático + barras apiladas → matriz modalidad × tipología + publicaciones por semana */
+:root{
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--s7:#4a3aa7;--s8:#e34948;
+  --h1:repeating-linear-gradient(45deg,var(--s1) 0 3px,var(--surface) 3px 5px);--h7:repeating-linear-gradient(45deg,var(--s7) 0 3px,var(--surface) 3px 5px);
+  --seq-lo:#e6f0fc;--seq-hi:#104281;--seq-ink:#ffffff;--zero:#eef1f3;
+  --focus:#16212a;--focus-soft:#e6ebee;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;
+  --seq-lo:#1b2a3a;--seq-hi:#9ec5f4;--seq-ink:#0e1418;--zero:#1d272e;--focus:#e5ebee;--focus-soft:#26323a}}
+:root[data-theme="dark"]{
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;
+  --seq-lo:#1b2a3a;--seq-hi:#9ec5f4;--seq-ink:#0e1418;--zero:#1d272e;--focus:#e5ebee;--focus-soft:#26323a}
+.sec-t{font-family:var(--display);font-weight:800;font-size:20px;margin:6px 0 -6px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.sec-t small{font-family:var(--body);font-weight:400;font-size:13px;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(200px,45%),1fr));gap:8px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 16px;text-align:left;display:grid;gap:4px;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+.tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c)}
+.tile:hover{border-color:var(--cs)}
+.tile[aria-pressed="true"]{outline:2px solid var(--cs);outline-offset:-2px}
+.tile.dim{opacity:.45}
+.tile .nm{font-size:12.5px;font-weight:700;line-height:1.25;min-height:2.5em}
+.tile .big{font-family:var(--display);font-size:30px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.tile .sm{font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;gap:1px;font-variant-numeric:tabular-nums}
+.tile .share{height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden}
+.tile .share i{display:block;height:100%;background:var(--c);border-radius:3px}
+.duo{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.3fr);gap:12px}
+@media (max-width:900px){.duo{grid-template-columns:1fr}}
+.map{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;max-width:470px;margin:6px auto 0}
+.map .t{aspect-ratio:1;border:0;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:700;line-height:1.1;padding:2px;color:var(--fg)}
+.map .t b{font-family:var(--mono);font-size:13px}
+.map .t.on{color:var(--seq-ink)}
+.map .t.fz{box-shadow:inset 0 0 0 2px var(--focus)}
+.map .t[aria-pressed="true"]{outline:3px solid var(--accent);outline-offset:1px}
+.map .t.dim{opacity:.35}
+.scale{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted);justify-content:center;margin-top:10px}
+.scale i{width:120px;height:8px;border-radius:4px;background:linear-gradient(90deg,var(--seq-lo),var(--seq-hi))}
+.stk{display:grid;gap:4px}
+.srow{display:grid;grid-template-columns:minmax(90px,140px) 1fr 34px;gap:8px;align-items:center}
+.srow .lab{border:0;background:none;padding:2px 4px;text-align:left;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:4px}
+.srow .lab:hover{background:var(--surface-2)}
+.srow .lab.fz{font-weight:700}
+.srow .lab[aria-pressed="true"]{background:var(--accent-2);font-weight:700}
+.srow .trk{display:flex;gap:2px;height:16px}
+.srow .seg{border:0;padding:0;height:100%;background:var(--c);min-width:3px}
+.srow .seg:first-child{border-radius:4px 0 0 4px}.srow .seg:last-child{border-radius:0 4px 4px 0}.srow .seg:only-child{border-radius:4px}
+.srow .seg:hover{filter:brightness(1.12)}
+.srow .n{font-family:var(--mono);font-size:12px;text-align:right}
+.legend .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;background:var(--c)}
+.heat{display:grid;gap:2px;font-size:12px;overflow-x:auto}
+.heat .hd{font-size:10.5px;color:var(--muted);font-weight:600;display:flex;align-items:flex-end;gap:3px;padding:2px;line-height:1.15;overflow:hidden;white-space:nowrap;min-width:0}
+.heat .hd i{flex:none;width:8px;height:8px;border-radius:2px;background:var(--c);margin-bottom:2px}
+.heat .rl{font-size:12px;display:flex;align-items:center;padding-right:6px}
+.heat .c{border:0;border-radius:4px;min-height:32px;font-family:var(--mono);font-size:12.5px;font-weight:500;color:var(--fg)}
+.heat .c.on{color:var(--seq-ink)}
+.heat .c:hover{outline:2px solid var(--accent)}
+.weeks svg{width:100%;height:auto;display:block}
+.weeks text{fill:var(--muted);font-size:11px;font-family:var(--mono)}
+.weeks .grid line{stroke:var(--line)}
+.weeks rect.hit{fill:transparent;cursor:pointer}
+.weeks rect.hit:hover{fill:var(--surface-2);fill-opacity:.6}
+#tip{position:fixed;z-index:50;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;box-shadow:0 4px 14px rgba(0,0,0,.15);max-width:260px;display:none}
+#tip b{display:block;margin-bottom:4px;font-size:12.5px}
+#tip .r{display:flex;justify-content:space-between;gap:12px;font-variant-numeric:tabular-nums}
+#tip .r span:first-child{display:flex;align-items:center;gap:5px}
+#tip i{display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--c)}
+
+/* Ruta del contrato: tokens propios de carriles (empresa, entidad, SECOP, pagos) */
+:root{--emp:#0f7a6c;--emp-soft:#e1f1ed;--ent:#3d4f9c;--ent-soft:#e6e9f6;--sec:#6b6f68;--sec-soft:#ecedea;--pay:#b7791f;--pay-soft:#f8eedc;--ok:#2f855a;--warn:#b7791f;--todo:#9aa39e;--f-display:var(--display);--f-body:var(--body);--f-mono:var(--mono)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--emp:#4cc3b0;--emp-soft:#16302b;--ent:#93a3ec;--ent-soft:#1f2540;--sec:#a9ada6;--sec-soft:#252a27;--pay:#e2a94a;--pay-soft:#33291a;--ok:#5fc48c;--warn:#e2a94a;--todo:#6c7671}}
+:root[data-theme="dark"]{--emp:#4cc3b0;--emp-soft:#16302b;--ent:#93a3ec;--ent-soft:#1f2540;--sec:#a9ada6;--sec-soft:#252a27;--pay:#e2a94a;--pay-soft:#33291a;--ok:#5fc48c;--warn:#e2a94a;--todo:#6c7671}
+.tabs{display:none}
+.tab{border:0;background:none;padding:10px 16px 12px;font-family:var(--display);font-weight:700;font-size:15px;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap;display:flex;gap:8px;align-items:center}
+.tab small{font-family:var(--body);font-weight:400;font-size:12px}
+.tab:hover{color:var(--fg)}
+.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+[hidden]{display:none!important}
+.wrap{grid-template-columns:minmax(0,1fr)}
+.view{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;min-width:0}
+.view>*{min-width:0}
+#v-ruta .rwrap{margin:0!important;padding-inline:0!important;padding-block:8px 24px!important;max-width:none!important;min-width:0}
+#v-ruta{font-size:15px}
+#v-ruta table{min-width:640px}
+#v-ruta th{position:static}
+.golink{border:1px solid var(--accent);background:var(--accent-2);color:var(--fg);border-radius:6px;padding:4px 10px;font-weight:600;font-size:12.5px;margin-top:6px;display:inline-block}
+.golink:hover{background:var(--accent);color:var(--surface)}
+.ruta-l{display:block;margin-top:6px;font-size:12px;color:var(--accent);white-space:nowrap}
+#v-ruta{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.5;margin:0}
+#v-ruta .rwrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 64px;display:flex;flex-direction:column;gap:48px}
+#v-ruta h1,#v-ruta h2,#v-ruta h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.15}
+#v-ruta h1{font-size:clamp(28px,5vw,44px);font-weight:800;letter-spacing:-.01em}
+#v-ruta h2{font-size:clamp(22px,3vw,28px);font-weight:700}
+#v-ruta h3{font-size:17px;font-weight:700}
+#v-ruta p{margin:0}
+#v-ruta .lead{color:var(--muted);max-width:68ch;font-size:17px}
+#v-ruta .eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+#v-ruta section{display:flex;flex-direction:column;gap:16px}
+#v-ruta .sec-head{display:flex;flex-direction:column;gap:6px}
+#v-ruta a{color:var(--emp)}
+#v-ruta a:focus-visible,#v-ruta button:focus-visible{outline:2px solid var(--emp);outline-offset:2px}
+#v-ruta .legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:14px;color:var(--muted)}
+#v-ruta .legend span{display:inline-flex;align-items:center;gap:6px}
+#v-ruta .sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+#v-ruta .phasemap{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}
+#v-ruta .phasemap a{display:flex;flex-direction:column;gap:2px;text-decoration:none;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:10px 10px 12px;position:relative}
+#v-ruta .phasemap a:hover{border-color:var(--emp)}
+#v-ruta .phasemap .n{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+#v-ruta .phasemap .t{font-family:var(--f-display);font-weight:700;font-size:14px;line-height:1.2}
+#v-ruta .phasemap .who{font-size:12px;color:var(--muted)}
+#v-ruta .phasemap a.money{background:var(--pay-soft);border-color:var(--pay)}
+#v-ruta .phasemap a.here{border-color:var(--emp);box-shadow:inset 0 3px 0 var(--emp)}
+@media (max-width:860px){#v-ruta .phasemap{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:460px){#v-ruta .phasemap{grid-template-columns:repeat(2,minmax(0,1fr))}}
+#v-ruta .status{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px}
+@media (max-width:760px){#v-ruta .status{grid-template-columns:1fr}}
+#v-ruta .checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:15px}
+#v-ruta .checks li{display:grid;grid-template-columns:90px 1fr;gap:10px;align-items:baseline}
+#v-ruta .pill{font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.04em;padding:2px 6px;border-radius:4px;text-align:center;white-space:nowrap}
+#v-ruta .pill.ok{color:var(--ok);border:1px solid var(--ok)}
+#v-ruta .pill.wip{color:var(--warn);border:1px solid var(--warn)}
+#v-ruta .pill.todo{color:var(--muted);border:1px dashed var(--todo)}
+#v-ruta .tip{background:var(--emp-soft);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:8px;font-size:15px}
+#v-ruta .tip strong{color:var(--emp)}
+#v-ruta .lanes-head,#v-ruta .phase-row{display:grid;grid-template-columns:150px repeat(3,minmax(0,1fr));gap:8px}
+#v-ruta .lanes-head{position:sticky;top:env(safe-area-inset-top,0px);z-index:2;background:var(--bg);padding-block:8px;border-bottom:1px solid var(--line)}
+#v-ruta .lanes-head div{font-family:var(--f-display);font-weight:700;font-size:14px;display:flex;align-items:center;gap:6px}
+#v-ruta .phase-row{padding-block:14px;border-bottom:1px solid var(--line)}
+#v-ruta .phase-label{display:flex;flex-direction:column;gap:4px}
+#v-ruta .phase-label .n{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+#v-ruta .phase-label h3{font-size:16px}
+#v-ruta .phase-label .dur{font-size:13px;color:var(--muted)}
+#v-ruta .lane{display:flex;flex-direction:column;gap:6px;min-width:0}
+#v-ruta .lane-tag{display:none}
+#v-ruta .step{border-radius:6px;padding:8px 10px;font-size:14px;line-height:1.4;border:1px solid transparent}
+#v-ruta .step b{font-weight:700}
+#v-ruta .step .k{font-family:var(--f-mono);font-size:11px;opacity:.8;margin-right:4px}
+#v-ruta .step.emp{background:var(--emp-soft);border-color:color-mix(in srgb,var(--emp) 35%,transparent)}
+#v-ruta .step.ent{background:var(--ent-soft);border-color:color-mix(in srgb,var(--ent) 35%,transparent)}
+#v-ruta .step.sec{background:var(--sec-soft);border-color:color-mix(in srgb,var(--sec) 35%,transparent)}
+#v-ruta .step.pay{background:var(--pay-soft);border-color:var(--pay)}
+#v-ruta .docs{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+#v-ruta .doc{font-size:12px;background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:1px 6px;color:var(--fg)}
+#v-ruta .arrow{font-family:var(--f-mono);color:var(--muted);font-size:12px;text-align:center;line-height:1}
+@media (max-width:820px){#v-ruta .lanes-head{display:none}
+#v-ruta .phase-row{grid-template-columns:1fr}
+#v-ruta .lane-tag{display:flex;align-items:center;gap:6px;font-family:var(--f-display);font-weight:700;font-size:13px;margin-top:4px}
+#v-ruta .lane:empty{display:none}}
+#v-ruta .gantt-box{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;overflow-x:auto}
+#v-ruta .gantt-box svg{display:block;min-width:900px;width:100%;height:auto;font-family:var(--f-body)}
+#v-ruta .note{font-size:14px;color:var(--muted);max-width:80ch}
+#v-ruta .tbl-box{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+#v-ruta table{border-collapse:collapse;width:100%;font-size:14px;min-width:640px}
+#v-ruta th,#v-ruta td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+#v-ruta th{font-family:var(--f-display);font-size:13px;font-weight:700;color:var(--muted);background:var(--bg)}
+#v-ruta tr:last-child td{border-bottom:0}
+#v-ruta td.fit{font-weight:600}
+#v-ruta .mark{font-family:var(--f-mono);font-size:11px;padding:1px 6px;border-radius:3px;background:var(--emp-soft);color:var(--emp);white-space:nowrap}
+#v-ruta .payflow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;counter-reset:p}
+#v-ruta .payflow div{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px;font-size:14px;display:flex;flex-direction:column;gap:4px}
+#v-ruta .payflow .who{font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+#v-ruta .payflow .who.e{color:var(--emp)}
+#v-ruta .payflow .who.n{color:var(--ent)}
+#v-ruta .payflow .who.p{color:var(--pay)}
+#v-ruta .payflow h3{font-size:15px}
+@media (max-width:900px){#v-ruta .payflow{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:440px){#v-ruta .payflow{grid-template-columns:1fr}}
+#v-ruta .duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:760px){#v-ruta .duo{grid-template-columns:1fr}}
+#v-ruta .duo > div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+#v-ruta .duo h3{display:flex;align-items:center;gap:8px}
+#v-ruta .duo ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:15px}
+#v-ruta .risk{border-color:var(--pay)!important}
+#v-ruta .src{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+#v-ruta .src ul{margin:0;padding-left:18px}
+#v-ruta .bars{display:flex;flex-direction:column;gap:6px;font-size:14px}
+#v-ruta .bars div{display:grid;grid-template-columns:140px 1fr 48px;gap:8px;align-items:center}
+#v-ruta .bars i{display:block;height:12px;width:var(--v);background:var(--ent);border-radius:2px;opacity:.55}
+#v-ruta .bars .top i{background:var(--emp);opacity:1}
+#v-ruta .bars b{font-family:var(--f-mono);font-size:13px;text-align:right;font-variant-numeric:tabular-nums}
+@media (max-width:440px){#v-ruta .bars div{grid-template-columns:100px 1fr 44px}}
+#v-ruta footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+
+#v-ruta .simf{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(190px,100%),1fr));gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px}
+#v-ruta .simf label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);font-weight:600}
+#v-ruta .simf input,#v-ruta .simf select{font:inherit;font-size:14px;font-weight:500;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 9px;width:100%}
+#v-ruta .simf input:focus-visible,#v-ruta .simf select:focus-visible{outline:2px solid var(--emp);outline-offset:1px}
+#v-ruta .simk{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+#v-ruta .simk div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+#v-ruta .simk b{font-family:var(--f-display);font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+#v-ruta .simk span{font-size:12.5px;color:var(--muted)}
+#v-ruta .simk .neg b{color:var(--pay)} #v-ruta .simk .pos b{color:var(--ok)}
+#v-ruta .gantt-box svg{min-width:960px}
+.sim-l{display:block;margin-top:4px;font-size:12px;color:var(--accent);white-space:nowrap}
+
+#v-sim .simf{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(190px,100%),1fr));gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px}
+#v-sim .simf label,.c-pick{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);font-weight:600}
+#v-sim .simf input,#v-sim .simf select,.c-pick select{font:inherit;font-size:14px;font-weight:500;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 9px;width:100%}
+.c-pick span{font-weight:400;font-size:12px}
+#v-sim .simk{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+#v-sim .simk div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;box-shadow:var(--shadow)}
+#v-sim .simk b{font-family:var(--display);font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+#v-sim .simk span{font-size:12.5px;color:var(--muted)}
+#v-sim .simk .neg b{color:var(--pay)} #v-sim .simk .pos b{color:var(--ok)}
+.c-top{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:12px;align-items:start}
+@media (max-width:760px){.c-top{grid-template-columns:1fr}}
+.c-card{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--c,var(--accent));border-radius:10px;padding:14px 16px;display:grid;gap:6px;box-shadow:var(--shadow)}
+.c-card h3{font-family:var(--display);font-size:17px;margin:0;line-height:1.3}
+.c-card .meta{font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 14px}
+.c-card .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.c-chart{overflow-x:auto}
+.c-chart svg{display:block;width:100%;min-width:760px;height:auto}
+.c-chart text{font-family:var(--mono)}
+.c-tbl{overflow-x:auto}
+.dedf{margin-top:-6px}
+.dedh{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.dedh b{font-family:var(--display);font-size:15px;color:var(--fg)}.dedh span{font-size:12px;color:var(--muted);font-weight:400}
+.duo2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(460px,100%),1fr));gap:12px}
+.ctable{min-width:520px;font-size:13px;width:100%;border-collapse:collapse}
+#ctab{min-width:640px}
+.ctable td,.ctable th{padding:7px 9px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.ctable th{position:static;font-size:12px;color:var(--muted)}
+.ctable td:first-child,.ctable th:first-child{text-align:left;white-space:normal}
+.ctable td{font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums}
+.ctable td:first-child{font-family:var(--body);min-width:120px}
+.ctable tr.tot td{font-weight:700;border-top:2px solid var(--line)}
+.ctable .kind{font-family:var(--body);font-size:11.5px;color:var(--muted);text-align:left;white-space:normal}
+.ctable .out{color:var(--pay)}.ctable .in{color:var(--ok)}
+#ctab td:first-child,#ctab th:first-child,#ctab td:nth-child(2),#ctab th:nth-child(2){text-align:left;white-space:normal}
+#ctab td:nth-child(2){font-family:var(--body);color:var(--muted)}
+#ctab .out{color:var(--pay)} #ctab .in{color:var(--ok)} #ctab .neg{color:var(--pay);font-weight:600}
+#ctab tfoot td{font-weight:700;border-top:2px solid var(--line)}
+.simb{border:1px solid var(--accent);background:var(--accent-2);color:var(--fg);border-radius:6px;padding:5px 10px;font-weight:700;font-size:12px;margin-top:6px;display:block;width:100%}
+.simb:hover{background:var(--accent);color:var(--surface)}
+
+.qk{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;background:var(--surface-2);border-radius:8px;padding:8px 10px}
+.qk span{display:flex;flex-direction:column;gap:1px;min-width:0}
+.qk i{font-style:normal;font-size:11px;color:var(--muted)}
+.qk b{font-family:var(--mono);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.qk b.o{color:var(--pay)}.qk b.g{color:var(--ok)}
+.qmini{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.35}
+.simb.inl{display:inline-block;width:auto;margin-top:0;padding:8px 12px;font-size:13px}
+@media (max-width:420px){.qk{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+
+<div class="wrap bar">
+  <div class="top">
+    <div>
+      <div class="eyebrow">Planificar Proyectos S.A.S. · NIT 901.518.558 · ★ Zona foco: Bolívar, Cundinamarca y Bogotá</div>
+      <h1>Radar SECOP</h1>
+      <p class="sub" id="sub"></p>
+    </div>
+    <div class="actions">
+      <button class="btn" id="clear" type="button">✕ Limpiar filtros</button>
+      <button class="btn" id="theme" type="button" aria-label="Cambiar tema"></button>
+    </div>
+  </div>
+
+  <nav class="tabs" role="tablist" aria-label="Secciones">
+    <button class="tab" role="tab" id="t-radar" aria-controls="v-radar" data-v="radar">Radar de procesos <small>dónde hay contratos</small></button>
+    <button class="tab" role="tab" id="t-ruta" aria-controls="v-ruta" data-v="ruta">Ruta del contrato <small>cómo se gana y se cobra</small></button>
+    <button class="tab" role="tab" id="t-sim" aria-controls="v-sim" data-v="sim">Simulación <small>caja y ganancia de un contrato</small></button>
+  </nav>
+
+  <section class="view" id="v-radar" role="tabpanel" aria-labelledby="t-radar">
+  <div class="presets" id="presets"><span class="lbl">Vistas rápidas</span></div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <h2 class="sec-t">Panorama por tipología <small>Clic en una ficha para filtrar todo el tablero</small></h2>
+  <div class="tiles" id="tiles"></div>
+
+  <div class="duo">
+    <div class="panel">
+      <h2>Mapa del país <small>esquemático · un cuadro por departamento</small></h2>
+      <p class="hint">Más oscuro = más procesos. ★ = zona foco. Clic para filtrar.</p>
+      <div class="map" id="map"></div>
+      <div class="scale"><span>0</span><i></i><span id="scaleMax"></span> procesos</div>
+    </div>
+    <div class="panel">
+      <h2>Tipologías por departamento <small id="stkInfo"></small></h2>
+      <p class="hint">Clic en el nombre filtra el departamento; clic en un color filtra departamento y tipología.</p>
+      <div class="stk" id="stk"></div>
+      <div class="legend" id="leg1"></div>
+    </div>
+  </div>
+
+  <div class="duo">
+    <div class="panel">
+      <h2>Modalidad × tipología</h2>
+      <p class="hint">Cuántos procesos de cada tipología salen por cada modalidad. Clic en una celda para filtrar.</p>
+      <div class="heat" id="heat"></div>
+    </div>
+    <div class="panel weeks">
+      <h2>Publicaciones por semana</h2>
+      <p class="hint">Procesos publicados cada semana, por tipología. Pasa el cursor para ver el detalle.</p>
+      <div id="wk"></div>
+      <div class="legend" id="leg2"></div>
+    </div>
+  </div>
+
+  <h2 class="sec-t">Filtros de conveniencia <small>Se pueden marcar varios valores en cada uno</small></h2>
+  <div class="grid4">
+    <div class="panel"><h2>Conveniencia</h2><p class="hint">Puntaje 0–100 para empezar.</p><div class="stack" id="chPri"></div></div>
+    <div class="panel"><h2>¿Exige RUP?</h2><div class="bars" id="ch-rup"></div></div>
+    <div class="panel"><h2>Valor del proceso</h2><div class="bars" id="ch-rng"></div></div>
+    <div class="panel"><h2>Región</h2><div class="bars" id="ch-zona"></div></div>
+    <div class="panel"><h2>Etapa</h2><div class="bars" id="ch-etapa"></div></div>
+    <div class="panel"><h2>Publicado hace</h2><div class="bars" id="ch-edad"></div></div>
+  </div>
+
+  <div class="toolbar" role="search">
+    <input id="q" type="search" placeholder="Buscar entidad, objeto, municipio o referencia" aria-label="Buscar">
+    <div class="chips" id="active"></div>
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="tbl"><table>
+    <thead><tr>
+      <th><button data-s="score">Conveniencia</button></th>
+      <th><button data-s="ent">Tipología, entidad y objeto</button></th>
+      <th><button data-s="dep">Lugar</button></th>
+      <th><button data-s="modG">Modalidad</button></th>
+      <th>RUP</th>
+      <th style="text-align:right"><button data-s="val">Valor</button></th>
+      <th style="text-align:right"><button data-s="vmes">Valor/mes</button></th>
+      <th><button data-s="pub">Publicado</button></th>
+      <th></th>
+    </tr></thead>
+    <tbody id="tb"></tbody>
+  </table></div>
+  <div class="cards" id="cards"></div>
+
+  <div class="note">
+    <div><b>Antes de ofertar:</b> confirma en SECOP la fecha de cierre (los datos abiertos no la traen), si el proceso está limitado a Mipymes de la región y los requisitos habilitantes. Para presentar oferta, el registro de proveedor en SECOP II debe estar finalizado.</div>
+    <div><b>Cómo se calcula la conveniencia:</b> sin RUP +30 (por verificar +15) · valor $50–300 M +25 (punto ideal), $15–50 M +18, $300–1.000 M +12, menos de $15 M +5 · zona foco +20, resto del Caribe o del centro +10 · diseños técnicos o BIM +20, arquitectura o estudios +18, interventoría +16, redes +14, adecuaciones o metálica +12, obra civil o vivienda +10 · publicado hace ≤ 7 días +10, ≤ 15 días +5. Alta ≥ 70, media 45–69, baja &lt; 45.</div>
+    <div id="src"></div>
+  </div>
+  </section>
+
+  <section class="view" id="v-ruta" role="tabpanel" aria-labelledby="t-ruta" hidden>
+<div class="rwrap">
+
+<header class="sec-head">
+  <span class="eyebrow">Planificar Proyectos S.A.S. · NIT 901.518.558 · SECOP II</span>
+  <h2 style="font-size:clamp(24px,3.4vw,32px)">Ruta del contrato estatal en SECOP II</h2>
+  <p class="lead">Del registro como proveedor hasta el último pago y el certificado de experiencia. Muestra qué hace la empresa, qué hace la entidad y qué queda en SECOP II, con los documentos de cada paso.</p>
+  <div class="legend" aria-label="Convenciones">
+    <span><i class="sw" style="background:var(--emp)"></i>Empresa (Planificar)</span>
+    <span><i class="sw" style="background:var(--sec)"></i>Plataforma SECOP II</span>
+    <span><i class="sw" style="background:var(--ent)"></i>Entidad estatal</span>
+    <span><i class="sw" style="background:var(--pay)"></i>Dinero: pólizas, cobros y pagos</span>
+  </div>
+</header>
+
+<section aria-labelledby="mapa">
+  <div class="sec-head"><span class="eyebrow">Mapa general</span><h2 id="mapa">Las 8 fases del proceso</h2></div>
+  <nav class="phasemap" id="phasemap"></nav>
+</section>
+
+<section aria-labelledby="hoy">
+  <div class="sec-head"><span class="eyebrow">Fase 0 · Dónde está la empresa hoy</span><h2 id="hoy">Estado de habilitación de Planificar</h2></div>
+  <div class="status">
+    <ul class="checks">
+      <li><span class="pill ok">Listo</span>Usuario SECOP II creado (planpro2026)</li>
+      <li><span class="pill wip">En curso</span>Formulario de la empresa en SECOP II: faltan cifras 2025 y PDFs</li>
+      <li><span class="pill wip">Solicitado</span>Estados financieros 2025 e indicadores (contador)</li>
+      <li><span class="pill todo">Pendiente</span>Confirmar representante legal vigente (certificado de Cámara)</li>
+      <li><span class="pill todo">Pendiente</span>Renovación de matrícula mercantil 2026</li>
+      <li><span class="pill todo">Pendiente</span>RUT: agregar CIIU 7112, 4330 y 4322; actualizar correo y teléfono</li>
+      <li><span class="pill todo">Pendiente</span>Habilitar facturación electrónica DIAN (sin ella no se cobra)</li>
+      <li><span class="pill todo">Pendiente</span>Recopilar contratos y actas de experiencia a nombre de la empresa</li>
+      <li><span class="pill todo">Pendiente</span>Inscribir RUP con códigos UNSPSC (queda en firme ~10 días hábiles después de publicado)</li>
+    </ul>
+    <div class="tip">
+      <strong>Puerta de entrada: mínima cuantía</strong>
+      <p>Por Ley 1150 de 2007 (art. 6), los procesos de <b>mínima cuantía</b> y la contratación directa no exigen RUP. Con el registro en SECOP II terminado ya se puede ofertar en adecuaciones locativas y diseños pequeños mientras sale el RUP.</p>
+      <p>Allí gana el <b>menor precio</b> que cumpla los requisitos, y la invitación puede estar abierta solo 1 día hábil. Por eso conviene activar las alertas de SECOP II por código UNSPSC.</p>
+      <button class="golink" type="button" data-preset="0">Ver procesos para empezar ya →</button>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="flujo">
+  <div class="sec-head"><span class="eyebrow">Flujograma</span><h2 id="flujo">Paso a paso por carriles</h2>
+  <p class="note">Cada fila es una fase y se lee de arriba hacia abajo. En cada carril los pasos van en orden. Los recuadros pequeños son los documentos que se producen o se exigen.</p></div>
+  <div>
+    <div class="lanes-head" aria-hidden="true">
+      <div>Fase</div>
+      <div><i class="sw" style="background:var(--emp)"></i>Empresa</div>
+      <div><i class="sw" style="background:var(--sec)"></i>SECOP II</div>
+      <div><i class="sw" style="background:var(--ent)"></i>Entidad estatal</div>
+    </div>
+    <div id="lanes"></div>
+  </div>
+</section>
+
+<section aria-labelledby="gantt">
+  <div class="sec-head"><span class="eyebrow">Simulación · cronograma y caja</span><h2 id="gantt">Gantt y flujo de caja de un contrato</h2>
+  <p class="note">Cambia los datos y el Gantt y el flujo de caja se recalculan. La empresa paga la ejecución con recursos propios y la entidad gira el valor neto después de cada cobro aprobado. Las líneas punteadas son la espera entre radicar el cobro y recibir el dinero. Los plazos del proceso de selección son típicos de un concurso de méritos; los reales los fija cada pliego.</p></div>
+  <form class="simf" id="simf" onsubmit="return false">
+    <label>Valor del contrato (millones)<input id="s-val" type="number" min="5" max="5000" step="5" value="100"></label>
+    <label>Plazo de ejecución (meses)<input id="s-mes" type="number" min="1" max="24" step="1" value="4"></label>
+    <label>Forma de pago<select id="s-forma">
+      <option value="hitos">Por hitos 30 / 40 / 30 %</option>
+      <option value="mensual">Pagos mensuales</option>
+      <option value="final">Pago único al final</option>
+      <option value="anticipo">Anticipo + pagos mensuales</option>
+    </select></label>
+    <label id="s-ant-l">Anticipo (% del valor)<input id="s-ant" type="number" min="0" max="50" step="5" value="30"></label>
+    <label>Costo de ejecución (% del valor)<input id="s-cos" type="number" min="10" max="100" step="1" value="70"></label>
+    <label>Retenciones y estampillas (%)<input id="s-des" type="number" min="0" max="30" step="0.5" value="12"></label>
+    <label>Días para recibir cada pago<input id="s-dias" type="number" min="5" max="120" step="5" value="30"></label>
+    <label>Costo del dinero (% mensual)<input id="s-tasa" type="number" min="0" max="5" step="0.1" value="1.5"></label>
+  </form>
+  <div class="simk" id="simk"></div>
+  <div class="gantt-box"><svg id="gsvg" role="img" aria-label="Diagrama de Gantt y flujo de caja del contrato"></svg></div>
+  <p class="note" id="simnote"></p>
+</section>
+
+<section aria-labelledby="rutina">
+  <div class="sec-head"><span class="eyebrow">Rutina de búsqueda · datos reales SECOP II</span><h2 id="rutina">Cuándo revisar SECOP II</h2>
+  <p class="note">Análisis de 18.999 procesos competitivos publicados entre enero de 2025 y septiembre de 2026 por entidades de Bolívar, Cundinamarca y Bogotá, en los códigos UNSPSC 72, 81, 80101 y 9210.</p></div>
+  <div class="duo">
+    <div>
+      <h3>Día de la semana</h3>
+      <div class="bars">
+        <div><span>Lun</span><i style="--v:77%"></i><b>17 %</b></div>
+        <div><span>Mar</span><i style="--v:92%"></i><b>20 %</b></div>
+        <div><span>Mié</span><i style="--v:95%"></i><b>21 %</b></div>
+        <div><span>Jue</span><i style="--v:90%"></i><b>20 %</b></div>
+        <div class="top"><span>Vie</span><i style="--v:100%"></i><b>22 %</b></div>
+        <div><span>Sáb-Dom</span><i style="--v:2%"></i><b>~1 %</b></div>
+      </div>
+      <p class="note">El viernes es el día con más procesos nuevos. En Bolívar el pico es el miércoles.</p>
+    </div>
+    <div>
+      <h3>Tiempo para ofertar (días hábiles)</h3>
+      <div class="bars">
+        <div class="top"><span>Mínima cuantía</span><i style="--v:33%"></i><b>5</b></div>
+        <div><span>Concurso de méritos</span><i style="--v:73%"></i><b>11</b></div>
+        <div><span>Selección abreviada</span><i style="--v:73%"></i><b>11</b></div>
+      </div>
+      <p class="note">Mediana entre la publicación y el cierre. En mínima cuantía el rango normal es de 4 a 6 días y el 9 % cierra en 2 días o menos.</p>
+    </div>
+  </div>
+  <div class="tbl-box"><table>
+    <thead><tr><th>Cuándo</th><th>Qué hacer</th></tr></thead>
+    <tbody>
+      <tr><td class="fit">Cada mañana (7:00–8:30)</td><td>Revisión rápida de 10 minutos con las alertas por código UNSPSC. La hora es una recomendación práctica: los datos abiertos no registran la hora de publicación.</td></tr>
+      <tr><td class="fit">Viernes</td><td>Revisión a fondo y decisión de qué procesos ofertar la semana siguiente.</td></tr>
+      <tr><td class="fit">Días 10–11, 24 y 28</td><td>Picos de publicación del mes; el 28 es el más alto.</td></tr>
+      <tr><td class="fit">Mayo–junio y julio–noviembre</td><td>Temporadas de más procesos. Enero y febrero son los meses más bajos: aprovéchelos para leer los PAA y preparar documentos.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section aria-labelledby="modal">
+  <div class="sec-head"><span class="eyebrow">Modalidades</span><h2 id="modal">¿Por qué tipo de proceso va a entrar la empresa?</h2></div>
+  <div class="tbl-box"><table>
+    <thead><tr><th>Modalidad</th><th>Cuándo se usa</th><th>Cómo se gana</th><th>Plazos clave</th><th>RUP</th><th>Para Planificar</th></tr></thead>
+    <tbody>
+      <tr><td class="fit">Mínima cuantía</td><td>Hasta el 10 % de la menor cuantía de la entidad, para cualquier objeto</td><td>Menor precio, verificando requisitos solo al de menor precio</td><td>Invitación de 1 día hábil o más; informe publicado 1 día hábil; la aceptación de la oferta es el contrato</td><td>No</td><td><span class="mark">Entrada ya</span> adecuaciones, diseños pequeños<br><button class="golink" type="button" data-mod="Mínima cuantía">Ver procesos abiertos →</button></td></tr>
+      <tr><td class="fit">Concurso de méritos</td><td>Consultoría: estudios, diseños, interventoría y asesoría técnica</td><td>Experiencia y equipo de trabajo. El precio no puntúa; la oferta económica se verifica después</td><td>Proyecto de pliego 5 días hábiles o más; traslado del informe 3 días hábiles</td><td>Sí</td><td><span class="mark">Núcleo</span> diseños técnicos, BIM, interventoría<br><button class="golink" type="button" data-mod="Concurso de méritos">Ver procesos abiertos →</button></td></tr>
+      <tr><td class="fit">Selección abreviada de menor cuantía</td><td>Obras, bienes y servicios hasta la menor cuantía de la entidad (no consultoría)</td><td>Factores del pliego (precio, calidad, apoyo a industria nacional, MiPyme)</td><td>Manifestación de interés; sorteo si hay más de 10 interesados</td><td>Sí</td><td>Adecuaciones medianas<br><button class="golink" type="button" data-mod="Selección abreviada">Ver procesos abiertos →</button></td></tr>
+      <tr><td class="fit">Licitación pública</td><td>Regla general para montos altos, sobre todo obra</td><td>Documentos tipo con puntaje por precio, calidad e industria nacional</td><td>Proyecto de pliego 10 días hábiles o más; audiencia de riesgos y de adjudicación</td><td>Sí</td><td>Más adelante, con más experiencia<br><button class="golink" type="button" data-mod="Licitación pública">Ver procesos abiertos →</button></td></tr>
+      <tr><td class="fit">Contratación directa</td><td>Causales cerradas: interadministrativos, urgencia, servicios profesionales, entre otras</td><td>La entidad escoge</td><td>Sin competencia abierta</td><td>No</td><td>Poco frecuente para una empresa</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">Las cuantías dependen del presupuesto anual de cada entidad, expresado en SMMLV. Antes de ofertar, revise en el pliego la modalidad y la cuantía.</p>
+</section>
+
+<section aria-labelledby="pagos">
+  <div class="sec-head"><span class="eyebrow">Fase 5 en detalle</span><h2 id="pagos">Cómo se cobra cada pago</h2>
+  <p class="note">El ciclo se repite en cada pago pactado en el plan de pagos del contrato. El dinero no llega si falta un solo soporte.</p></div>
+  <div class="payflow">
+    <div><span class="who e">Empresa</span><h3>1. Entrega</h3><p>Entregable o informe del periodo según el contrato.</p></div>
+    <div><span class="who n">Supervisor / interventor</span><h3>2. Aprobación</h3><p>Revisa y expide el certificado de cumplimiento o recibo a satisfacción.</p></div>
+    <div><span class="who e">Empresa</span><h3>3. Factura</h3><p>Factura electrónica DIAN y certificación de aportes a seguridad social y parafiscales (art. 50, Ley 789 de 2002).</p></div>
+    <div><span class="who e">Empresa · SECOP II</span><h3>4. Radicación</h3><p>Se carga en <i>Ejecución del contrato → Plan de pagos / Facturas</i> y se radica donde indique la entidad.</p></div>
+    <div><span class="who n">Entidad · financiera</span><h3>5. Causación</h3><p>Verifica soportes, aplica descuentos y expide la orden de pago.</p></div>
+    <div><span class="who p">Tesorería</span><h3>6. Giro</h3><p>Transferencia del valor neto a la cuenta bancaria certificada de la empresa.</p></div>
+  </div>
+  <div class="tbl-box"><table>
+    <thead><tr><th>Concepto</th><th>Qué es</th><th>Ojo</th></tr></thead>
+    <tbody>
+      <tr><td class="fit">Anticipo</td><td>Préstamo de la entidad, hasta el 50 % del valor, para iniciar. Sigue siendo dinero público</td><td>Exige póliza de buen manejo por el 100 % y plan de inversión. En los casos del art. 91 de la Ley 1474 de 2011 se maneja por fiducia</td></tr>
+      <tr><td class="fit">Pago anticipado</td><td>Pago adelantado que ya pertenece al contratista</td><td>Exige garantía de devolución del pago anticipado</td></tr>
+      <tr><td class="fit">Retención en la fuente</td><td>Anticipo de renta que descuenta la entidad</td><td>La tarifa depende del tipo de servicio (consultoría, servicios u obra). Confírmela con el contador</td></tr>
+      <tr><td class="fit">ReteIVA</td><td>Retención del IVA facturado</td><td>Por lo general, el 15 % del IVA cuando la entidad es agente retenedor</td></tr>
+      <tr><td class="fit">ReteICA</td><td>Impuesto de industria y comercio del municipio de ejecución</td><td>La tarifa es municipal</td></tr>
+      <tr><td class="fit">Estampillas</td><td>Tributos departamentales y municipales (pro adulto mayor, pro cultura, pro universidad…)</td><td>Varían por entidad y pueden sumar varios puntos. Léalas en el pliego antes de fijar el precio</td></tr>
+      <tr><td class="fit">Contribución de obra pública</td><td>5 % de los contratos de obra pública (Ley 1106 de 2006)</td><td>Aplica a obra, no a consultoría ni diseño</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">Regla práctica: el precio de la oferta debe absorber descuentos, pólizas y el costo financiero de esperar el pago. Pida al contador una tabla de valor neto por tipo de contrato.</p>
+</section>
+
+<section aria-labelledby="garantias">
+  <div class="sec-head"><span class="eyebrow">Pólizas</span><h2 id="garantias">Garantías que suelen pedir</h2></div>
+  <div class="tbl-box"><table>
+    <thead><tr><th>Garantía</th><th>Momento</th><th>Valor mínimo usual</th><th>Vigencia</th></tr></thead>
+    <tbody>
+      <tr><td class="fit">Seriedad de la oferta</td><td>Con la oferta</td><td>10 % del valor de la oferta o del presupuesto oficial</td><td>Desde el cierre hasta la aprobación de la garantía de cumplimiento</td></tr>
+      <tr><td class="fit">Cumplimiento</td><td>Tras firmar el contrato</td><td>10 % del valor del contrato</td><td>Hasta la liquidación</td></tr>
+      <tr><td class="fit">Salarios y prestaciones sociales</td><td>Tras firmar el contrato</td><td>5 % del valor del contrato</td><td>Plazo del contrato más 3 años</td></tr>
+      <tr><td class="fit">Calidad del servicio</td><td>Tras firmar el contrato</td><td>Según el riesgo, lo fija la entidad</td><td>Según el pliego</td></tr>
+      <tr><td class="fit">Buen manejo del anticipo</td><td>Si hay anticipo</td><td>100 % del anticipo</td><td>Hasta la liquidación</td></tr>
+      <tr><td class="fit">Responsabilidad civil extracontractual</td><td>Obra y los casos que defina la entidad</td><td>Desde 200 SMMLV en contratos de hasta 1.500 SMMLV</td><td>Plazo del contrato</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">En mínima cuantía la entidad decide si exige garantías. Si el contrato se modifica (adición, prórroga o suspensión), hay que ajustar la póliza y cargarla de nuevo en SECOP II.</p>
+</section>
+
+<section aria-labelledby="comp">
+  <div class="sec-head"><span class="eyebrow">Responsabilidades</span><h2 id="comp">Compromisos en ambas direcciones</h2></div>
+  <div class="duo">
+    <div>
+      <h3><i class="sw" style="background:var(--ent)"></i>Del Estado hacia la empresa</h3>
+      <ul>
+        <li>Publicar en SECOP II todos los documentos del proceso y del contrato.</li>
+        <li>Responder las observaciones y evaluar solo con las reglas del pliego.</li>
+        <li>Permitir subsanar lo que no otorga puntaje.</li>
+        <li>Expedir el registro presupuestal, aprobar las garantías y suscribir el acta de inicio.</li>
+        <li>Designar supervisor o interventor y entregar la información necesaria.</li>
+        <li>Pagar en los plazos del plan de pagos.</li>
+        <li>Mantener el equilibrio económico del contrato (Ley 80, arts. 5 y 27).</li>
+        <li>Respetar el debido proceso antes de imponer multas o declarar incumplimientos (Ley 1474, art. 86).</li>
+        <li>Liquidar el contrato y expedir el certificado de experiencia.</li>
+      </ul>
+    </div>
+    <div>
+      <h3><i class="sw" style="background:var(--emp)"></i>De la empresa hacia el Estado</h3>
+      <ul>
+        <li>Ofertar con información veraz y sin inhabilidades ni incompatibilidades.</li>
+        <li>Sostener la oferta: si gana y no firma, se hace efectiva la póliza de seriedad.</li>
+        <li>Cumplir objeto, plazos, calidad y especificaciones.</li>
+        <li>Mantener el personal ofertado; los cambios requieren aprobación.</li>
+        <li>Tener las pólizas vigentes y ajustarlas con cada modificación.</li>
+        <li>Pagar seguridad social y parafiscales y acreditarlo en cada cobro.</li>
+        <li>Entregar informes y atender los requerimientos del supervisor.</li>
+        <li>No ceder ni subcontratar sin autorización.</li>
+        <li>Facturar bien y firmar la liquidación, con salvedades si las hay.</li>
+      </ul>
+    </div>
+    <div class="risk" style="grid-column:1/-1">
+      <h3><i class="sw" style="background:var(--pay)"></i>Lo que pasa si la empresa incumple</h3>
+      <ul>
+        <li><b>Multas</b> por incumplimiento parcial, para apremiar el cumplimiento.</li>
+        <li><b>Cláusula penal</b> por incumplimiento definitivo. Se cobra de la póliza o de los saldos.</li>
+        <li><b>Caducidad</b>: la entidad termina el contrato y la empresa queda inhabilitada 5 años.</li>
+        <li><b>Reporte al RUP</b>: multas y sanciones quedan en el registro y lo ven otras entidades. Ser sancionado repetidamente genera inhabilidad (Ley 1474, art. 90).</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="fuentes">
+  <div class="src">
+    <span class="eyebrow" id="fuentes">Marco normativo y fuentes</span>
+    <ul>
+      <li>Ley 80 de 1993 · Ley 1150 de 2007 (modalidades, RUP, liquidación art. 11) · Ley 1474 de 2011 (anticipo art. 91, multas art. 86) · Ley 1882 de 2018 (subsanación) · Decreto 1082 de 2015 (procedimientos y garantías).</li>
+      <li><a href="https://operaciones.colombiacompra.gov.co/content/cual-debe-ser-el-valor-de-las-garantias" target="_blank" rel="noopener">Colombia Compra: valor de las garantías</a> · <a href="https://www.colombiacompra.gov.co/?p=29411" target="_blank" rel="noopener">Documentos tipo, concurso de méritos para interventoría</a> · <a href="https://formacionvirtual.colombiacompra.gov.co/pluginfile.php/9287/mod_folder/content/0/PDF/M%C3%B3dulo%206/Unidad%204/08_seguimiento_ejecucion.pdf" target="_blank" rel="noopener">SECOP II: seguimiento a la ejecución</a> · <a href="https://www.datos.gov.co/resource/p6dx-8zbt.json" target="_blank" rel="noopener">Datos abiertos SECOP II (procesos)</a> · <a href="https://relatoria.colombiacompra.gov.co/conceptos/c-1495-de-2025/" target="_blank" rel="noopener">Concepto C-1495 de 2025 (mínima cuantía)</a></li>
+    </ul>
+  </div>
+  <footer>Guía de aprendizaje preparada el 4 de octubre de 2026. No reemplaza la lectura del pliego de cada proceso ni la asesoría jurídica y contable.</footer>
+</section>
+</div>
+
+  </section>
+  <section class="view" id="v-sim" role="tabpanel" aria-labelledby="t-sim" hidden>
+    <div class="c-top">
+      <div class="c-card" id="c-card"></div>
+      <label class="c-pick">Contrato a simular
+        <select id="c-sel"></select>
+        <span>También puedes usar el botón <b>Simular</b> de cada proceso en el Radar.</span>
+      </label>
+    </div>
+    <form class="simf" id="cf" onsubmit="return false">
+      <label>Valor del contrato (millones)<input id="c-val" type="number" min="1" max="5000" step="1"></label>
+      <label>Plazo de ejecución (meses)<input id="c-mes" type="number" min="0.5" max="24" step="0.5"></label>
+      <label>Forma de pago<select id="c-forma">
+        <option value="hitos">Por hitos 30 / 40 / 30 %</option>
+        <option value="mensual">Pagos mensuales</option>
+        <option value="final">Pago único al final</option>
+        <option value="anticipo">Anticipo + pagos mensuales</option>
+      </select></label>
+      <label id="c-ant-l">Anticipo (% del valor)<input id="c-ant" type="number" min="0" max="50" step="5" value="30"></label>
+      <label>Costo de ejecución (% del valor)<input id="c-cos" type="number" min="10" max="100" step="1"></label>
+      <label>Días para recibir cada pago<input id="c-dias" type="number" min="5" max="120" step="5"></label>
+      <label>Costo del dinero (% mensual)<input id="c-tasa" type="number" min="0" max="5" step="0.1"></label>
+      <label>Fecha de inicio de la simulación<input id="c-ini" type="date"></label>
+    </form>
+    <form class="simf dedf" id="cd" onsubmit="return false">
+      <div class="dedh"><b>Deducciones e impuestos</b><span>Se llenan según la tipología; ajústalos con el pliego y tu contador.</span></div>
+      <label>IVA (19 %) se cobra sobre<select id="c-ivab">
+        <option value="total">Todo el valor (consultoría y servicios)</option>
+        <option value="aiu">Solo la utilidad del AIU (obra)</option>
+        <option value="no">No aplica / exento</option>
+      </select></label>
+      <label id="c-u-l">Utilidad del AIU (% del costo directo)<input id="c-u" type="number" min="1" max="30" step="1"></label>
+      <label>Retención en la fuente (% de la base)<input id="c-rte" type="number" min="0" max="20" step="0.5"></label>
+      <label>ReteIVA (% del IVA)<input id="c-riva" type="number" min="0" max="100" step="5"></label>
+      <label>ReteICA (% de la base)<input id="c-rica" type="number" min="0" max="3" step="0.05"></label>
+      <label>Estampillas (% de la base)<input id="c-est" type="number" min="0" max="10" step="0.5"></label>
+      <label>Contribución obra pública (%)<input id="c-cont" type="number" min="0" max="5" step="5"></label>
+      <label>Impuesto de renta (%)<input id="c-renta" type="number" min="0" max="40" step="1" value="35"></label>
+    </form>
+    <div class="simk" id="ck"></div>
+    <div class="panel">
+      <h2>Proyección en el tiempo <small id="c-rango"></small></h2>
+      <p class="hint">Barras ámbar: lo que desembolsa la empresa cada semana. Barras verdes: lo que gira el Estado (neto). La línea es el saldo acumulado: cuando cruza el cero ya recuperaste lo invertido y lo que queda arriba es ganancia.</p>
+      <div class="c-chart"><svg id="csvg" role="img" aria-label="Proyección semanal de desembolsos, pagos y saldo"></svg></div>
+    </div>
+    <div class="duo2">
+      <div class="panel">
+        <h2>Deducciones del contrato</h2>
+        <p class="hint">Qué se descuenta del valor, quién se lo queda y si es un costo real para la empresa.</p>
+        <div class="c-tbl"><table id="cded" class="ctable"></table></div>
+      </div>
+      <div class="panel">
+        <h2>Liquidación de cada pago</h2>
+        <p class="hint">Lo que factura la empresa y lo que realmente llega a la cuenta en cada pago.</p>
+        <div class="c-tbl"><table id="cliq" class="ctable"></table></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Cronograma de caja por mes</h2>
+      <div class="c-tbl"><table id="ctab" class="ctable"></table></div>
+    </div>
+    <p class="note" id="c-note"></p>
+  </section>
+</div>
+<div id="tip" role="tooltip"></div>
+
+<script id="meta" type="application/json">{"desde": "2026-08-28", "consulta": "2026-10-12"}</script>
+<script id="datos" type="application/json">[["Adecuaciones locativas","Antioquia","","DEPARTAMENTO ADMINISTRATIVO NACIONAL DE ESTADÍSTICA - DIR TER NOROCCIDENTE - (DANE NOROCCIDENTE)","DTNOC-SAMC-001-2026","3116502726_3118502726_A_02_SERVICIOS_MANTENIMIENTO_2026_contratar las obras de mantenimiento, adecuación y reparaciones locativas de las oficinas de la dirección territor","Selección Abreviada de Menor Cuantía",188500000,"2026-10-05","Presentación de observaciones","72102900","4 Mes(es)","11010731","Sí"],["Adecuaciones locativas","Bogotá D.C.","","AEROCIVIL","26001460 H4 DE 2026","69200C1776 REALIZAR MANTENIMIENTO PREVENTIVO Y CORRECTIVO DE LA SEDE VACACIONAL DE SANTA MARTA DE LA AERONAUTICA CIVIL","Selección Abreviada de Menor Cuantía",903957645,"2026-10-01","Presentación de observaciones","72121400","90 día(s)","10998068","Sí"],["Redes y sistemas","Bogotá D.C.","Bogotá","DIRECCION DE IMPUESTOS Y ADUANAS NACIONALES","IMC-48-011-2026","Servicio de mantenimiento del sistema hidráulico e hidroneumático de las sedes de las Direcciones Seccionales de Impuestos y Aduanas de Cartagena.","Mínima cuantía",16000000,"2026-09-28","Presentación de oferta","72154022","119 día(s)","10971346","No"],["Redes y sistemas","Bogotá D.C.","","INSTITUTO NACIONAL DE MEDICINA LEGAL Y CIENCIAS FORENSES","MIC-0014-DRNO-2026","PRESTAR EL SERVICIO DE MANTENIMIENTO CENTRAL Y RED DE GASES DE LA REGIONAL NOROCCIDENTE DEL INSTITUTO NACIONAL DE MEDICINA LEGAL Y CIENCIAS FORENSES","Mínima cuantía",16000000,"2026-09-25","Presentación de oferta","72101507","0 día(s)","10961561","No"],["Adecuaciones locativas","Bogotá D.C.","Bogotá","ALCALDIA LOCAL DE TUNJUELITO","FDLT-SAMC-310-2026","REALIZAR EL MANTENIMIENTO LOCATIVO INTEGRAL DE LA SEDE ADMINISTRATIVA DE LA ALCALDÍA LOCAL DE TUNJUELITO, EN BOGOTÁ D.C., INCLUYENDO LA IMPERMEABILIZACIÓN DE TANQUES DE A","Selección Abreviada de Menor Cuantía",285000000,"2026-09-21","Presentación de observaciones","72102900","5 Mes(es)","10934410","Sí"],["Obra civil menor","Boyacá","Tunja","TIERRASUA S.A.S","IPVO-039-2026","SUMINISTRO E INSTALACION DE MATERIALES PARA MANTENIMIENTO Y MEJORAMIENTO EN SECTORES DE LA VIA CON CODIGO 6102, PESCA-SOGAMOSO, EN EL MUNICIPIO DE FIRAVITOBA, EN CUMPLIMI","Contratación régimen especial (con ofertas)",431246411,"2026-09-18","Presentación de oferta","72141100","2 Mes(es)","10925719","Por verificar"],["Diseños técnicos","Cundinamarca","Soacha","MUNICIPIO DE SOACHA","CMA-001-2026","ESTUDIOS Y DISEÑOS A NIVEL DE DETALLE PARA VÍAS DEL BARRIO JULIO RINCÓN, COMUNA 4 DEL MUNICIPIO DE SOACHA, CUNDINAMARCA. BMP2024257540014","Concurso de méritos abierto",115000000,"2026-09-15","Presentación de oferta","81101500","3 Mes(es)","10896049","Sí"],["Obra civil menor","Amazonas","Leticia","ALCALDIA MUNICIPIO DE LETICIA","SAMC-009-2026","MEJORAMIENTO DE LA CASA LUDICA DEL MUNICIPIO DE LETICIA - DEPARTAMENTO DEL AMAZONAS","Selección Abreviada de Menor Cuantía",143457483,"2026-09-15","Presentación de observaciones","72103300","0 día(s)","10903236","Sí"],["Adecuaciones locativas","Norte de Santander","Pamplona","Instituto Superior de Educacion Rural","CMC 009 2026","SUMINISTRO E INSTALACIÓN DE CIELO RASO EN DRYWALL EN LOS SALONES BS 102, BS 103 Y BS 106, ASÍ COMO EL MANTENIMIENTO CON IMPRIMACIÓN EN EMULSIÓN ASFÁLTICA Y MANTO ASFÁLTIC","Mínima cuantía",34057885,"2026-09-15","Presentación de oferta","72101507","0 día(s)","10898824","No"],["Adecuaciones locativas","Boyacá","Guateque","ESE HOSPITAL REGIONAL SEGUNDO NIVEL DE ATENCION VALLE DE TENZA","CONVOCATORIA PÚBLICA ESPECIAL No. 015-2026","ADECUACIÓN DEL CENTRO DE SALUD DEL MUNICIPIO DE SUTATENZA SEDE DEL HOSPITAL REGIONAL VALLE DE TENZA E.S.E DEL DEPARTAMENTO DE BOYACÁ","Contratación régimen especial (con ofertas)",721279446,"2026-09-14","Presentación de oferta","72121403","0 día(s)","10894885","Por verificar"],["Interventoría y supervisión","Boyacá","Guateque","ESE HOSPITAL REGIONAL SEGUNDO NIVEL DE ATENCION VALLE DE TENZA","CONVOCATORIA PÚBLICA ESPECIAL No. 016-2026","REALIZAR INTERVENTORÍA TÉCNICA, ADMINISTRATIVA, FINANCIERA Y AMBIENTAL PARA LA ADECUACIÓN DEL CENTRO DE SALUD DEL MUNICIPIO DE SUTATENZA SEDE DEL HOSPITAL REGIONAL VALLE ","Contratación régimen especial (con ofertas)",38838124,"2026-09-14","Presentación de oferta","80101706","0 día(s)","10895215","Por verificar"],["Adecuaciones locativas","Valle del Cauca","Yumbo","INSTITUTO MUNICIPAL DEL DEPORTE Y LA RECREACION DE YUMBO","PLCP-IMDERTY-004.2026","MEJORAMIENTO Y ADECUACIÓN DE CANCHA SINTÉTICA PANORAMA SECTOR EL PORTACHUELO, CANCHA SINTÉTICA DEL COMPLEJO DEPORTIVO TOMÁS CHÁVEZ Y CONSTRUCCIÓN DE CANCHA DE VOLEY PLAYA","Licitación pública Obra Publica",958643923,"2026-09-14","Fase de Selección (Presentación de ofertas)","72101500","75 día(s)","10891512","Sí"],["Diseños técnicos","Huila","","GOBERNACION DEL HUILA","SVCMCN0007-26","ESTUDIOS Y DISEÑOS PARA LA REHABILITACIÓN DE PAVIMENTO FLEXIBLE SOBRE LA VÍA DEPARTAMENTAL DE TERCER ORDEN RUTA 45 - GUACACALLO - ORITOGUAZ - ELIAS - LA PALMA","Concurso de méritos abierto",196528500,"2026-09-14","Proceso de ofertas","80101600","4 Mes(es)","10893059","Sí"],["Interventoría y supervisión","Bogotá D.C.","Bogotá","TERMINAL DE TRANSPORTE S.A","TT-SPO-05-2026","Realizar la Interventoría técnica, administrativa, financiera, contable, jurídica y ambiental a los contratos que celebre la Terminal de Transporte S.A. para la ejecución","Contratación régimen especial (con ofertas)",458314175,"2026-09-14","Presentación de oferta","80101600","7 Mes(es)","10891491","Por verificar"],["Interventoría y supervisión","Cauca","Popayán","EMPRESA SOCIAL DEL ESTADO POPAYAN ESE","EP-CP-005-2026","INTERVENTORIA TECNICA, ADMINISTRATIVA, Y FINANCIERA AL CONTRATO DE OBRA CIVIL A TODO COSTO Y POR EL SISTEMA DE PRECIOS UNITARIOS FIJOS SIN FÓRMULA DE REAJUSTE, PARA LA AD","Contratación régimen especial (con ofertas)",28125396,"2026-09-11","Presentación de oferta","80101500","2 Mes(es)","10879534","Por verificar"],["Interventoría y supervisión","Córdoba","","MUNICIPIO DE PLANETA RICA CORDOBA","CMA-SIP-005-2026.","INTERVENTORÍA TÉCNICA, ADMINISTRATIVA, FINANCIERA, CONTABLE Y JURÍDICA AL PROYECTO CUYO OBJETO ES: CONSTRUCCIÓN DE PAVIMENTO EN CONCRETO RÍGIDO EN EL CORREGIMIENTO CENTRO","Concurso de méritos abierto",294321214,"2026-09-11","Presentación de oferta","80101600","6 Mes(es)","10880765","Sí"],["Adecuaciones locativas","Huila","","GOBERNACION DEL HUILA","SESAMECOB0011-26","CONSTRUCCION DE DOS AULAS ESCOLARES DISTRIBUIDAS DE LA SIGUIENTE MANERA: UN AULA ESCOLAR EN LA INSTITUCION EDUCATIVA YU LUUCX PISHAU SEDE NUEVA ESPERANZA DEL MUNICIPIO DE","Selección Abreviada de Menor Cuantía",299988037,"2026-09-11","Presentación de observaciones","72121400","90 día(s)","10884716","Sí"],["Interventoría y supervisión","Cundinamarca","Mosquera","CUNDINAMARCA-ALCALDIA MUNICIPIO MOSQUERA","CM-007-2026","INTERVENTORÍA TÉCNICA, ADMINISTRATIVA, FINANCIERA, AMBIENTAL Y LEGAL PARA LA CONSTRUCCIÓN DEL SALÓN COMUNAL EN EL BARRIO VILLA JENNY EN EL MUNICIPIO DE MOSQUERA CUNDINAMA","Concurso de méritos abierto",242514811,"2026-09-11","Presentación de oferta","81101500","0 día(s)","10879817","Sí"],["Interventoría y supervisión","Bolívar","Cartagena","ALCALDÍA DEL DISTRITO TURÍSTICO Y CULTURAL DE CARTAGENA DE INDIAS","CMA-SID-003-2026","INTERVENTORIA INTEGRAL AL PROYECTO OBRAS DE REHABILITACIÓN VIAL EN LOS BARRIOS EL LAGUITO Y EL BOSQUE SECTOR MANZANILLO DEL DISTRITO DE CARTAGENA","Concurso de méritos abierto",578657815,"2026-09-11","Presentación de oferta","80101600","0 Mes(es)","10884906","Sí"],["Interventoría y supervisión","Bolívar","El Carmen De Bolívar","ALCALDIA DE EL CARMEN DE BOLIVAR","CMA-003-2026","INTERVENTORIA TECNICA, ADMINISTRATIVA, FINANCIERA Y AMBIENTAL PARA EL MEJORAMIENTO DE LA VIA MATEO GOMEZ - VEREDA LOMA DEL VIENTO, MUNICIPIO DE EL CARMEN DE BOLÍVAR, DEPA","Concurso de méritos abierto",157009345,"2026-09-10","Presentación de observaciones","81101500","3 Mes(es)","10872489","Sí"],["Obra civil menor","Santander","Mogotes","ALCALDIA MUNICIPAL DE MOGOTES","MOG-LP-05-2026","MEJORAMIENTO DE VIAS RURALES EN LAS VEREDAS MARGAJITA SECTOR ESCUELA VEREDA QUEBRADAS SECTOR ARENAL MANZANOS EN EL MUNICIPIO DE MOGOTES SANTANDER.","Licitación pública Obra Publica",508629422,"2026-09-10","Fase de Selección (Presentación de ofertas)","72141000","2 Mes(es)","10876439","Sí"],["Interventoría y supervisión","Valle del Cauca","Roldanillo","ALCALDÍA MUNICIPAL DE ROLDANILLO","CM003DE2026","INTERVENTORÍA TÉCNICA, ADMINISTRATIVA, FINANCIERA, CONTABLE, JURÍDICA Y OPERATIVA, AL CONTRATO DE CONCESIÓN PARA LA OPERACIÓN INTEGRAL DE LOS RECURSOS PROPIOS, EXPEDICIÓN","Concurso de méritos abierto",120000000,"2026-09-10","Presentación de observaciones","80101500","20 Año(s)","10874275","Sí"],["Adecuaciones locativas","Casanare","Monterrey","MUNICIPIO DE MONTERREY","MM-SAMC-SINF-017-2026","REALIZAR EL MEJORAMIENTO DE LA INFRAESTRUCTURA DE LA COMISARÍA DE FAMILIA DEL MUNICIPIO DE MONTERREY, CASANARE, A TRAVÉS DE OBRAS DE MANTENIMIENTO, ADECUACIÓN Y REHABILIT","Selección Abreviada de Menor Cuantía",489234922,"2026-09-10","Presentación de observaciones","72103300","2 Mes(es)","10877720","Sí"],["Adecuaciones locativas","Antioquia","Turbo","E.S.E HOSPITAL FRANCISCO VALDERRAMA DE TURBO","CP-005-2026","ADECUACIÓN DE OBRAS MENORES DE LA INFRAESTRUCTURA FÍSICA PARA EL PUESTO DE SALUD SAN JOSÉ DE MULATOS DE LA ESE HOSPITAL FRANCISCO VALDERRAMA DEL MUNICIPIO DE TURBO - ANTI","Contratación régimen especial (con ofertas)",588245261,"2026-09-09","Fase de ofertas","72121400","71 día(s)","10869960","Por verificar"],["Adecuaciones locativas","Bogotá D.C.","Bogotá","CENTRAL ADMINISTRATIVA ESPECIALIZADA INGENIEROS CENAC INGENIEROS","306-MC-CENACINGENIEROS-2026","LA ADECUACION DE LA RED ELECTRICA DE BAJA TENSION, NECESARIA PARA LA PUESTA EN FUNCIONAMIENTO DEL ÁREA DESTINADA A LA FABRICACION DE SACOS TERREROS DEL BATALLÓN DE INTEND","Mínima cuantía",101518906,"2026-09-09","Presentación de oferta","72101500","45 día(s)","10866694","No"],["Interventoría y supervisión","Antioquia","Turbo","E.S.E HOSPITAL FRANCISCO VALDERRAMA DE TURBO","CP-007-2026","INTERVENTORÍA TÉCNICA, ADMINISTRATIVA Y FINANCIERA AL CONTRATO QUE TIENE POR OBJETO ADECUACIÓN DE OBRAS MENORES DE LA INFRAESTRUCTURA FÍSICA DEL PUESTO DE SALUD SAN JOSÉ ","Contratación régimen especial (con ofertas)",42901018,"2026-09-09","Presentación de oferta","81101500","77 día(s)","10869962","Por verificar"],["Adecuaciones locativas","Antioquia","El Carmen De Viboral","E.S.E HOSPITAL SAN JUAN DE DIOS EL CARMEN DE VIBORAL","CONV-0012026","Adecuación de la infraestructura física del Puesto de salud La Aurora de la ESE Hospital ESE San Juan de Dios de El Carmen de Viboral- Antioquia, mediante asignación de r","Contratación régimen especial (con ofertas)",850911444,"2026-09-09","Presentación de oferta","72152500","4 Mes(es)","10868885","Por verificar"],["Adecuaciones locativas","Huila","Pitalito","SENA REGIONAL HUILA Grupo Administrativo CGDSS","MC-HIL-CGDSS-036-2026","Contratar a todo costo la adecuación de la cubierta y cielo raso de la sala de juntas del equipo Tecnoparque Nodo Pitalito del Centro de Gestión y Desarrollo Sostenible S","Mínima cuantía",29814660,"2026-09-09","Presentación de oferta","72103300","0 día(s)","10866401","No"],["Interventoría y supervisión","Antioquia","Turbo","E.S.E HOSPITAL FRANCISCO VALDERRAMA DE TURBO","CP-008-2026","INTERVENTORÍA TÉCNICA, ADMINISTRATIVA Y FINANCIERA A LA OBRA DE ADECUACIÓN DE OBRAS MENORES DE LA INFRAESTRUCTURA FÍSICA DEL PUESTO DE SALUD SAN VICENTE DEL CONGO DE LA E","Contratación régimen especial (con ofertas)",103429253,"2026-09-09","Presentación de oferta","80101600","190 día(s)","10870064","Por verificar"],["Adecuaciones locativas","Antioquia","Bello","EMPRESA SOCIAL DEL ESTADO BELLOSALUD","C09-004-2026 SAN FELIX","ADECUACIÓN DE INFRAESTRUCTURA FÍSICA para el centro de salud SAN FELIX, de la ESE BELLOSALUD DEL MINICIPIO DE BELLO ANTIOQUIA de conformidad con los recursos asignados me","Contratación régimen especial (con ofertas)",878941919,"2026-09-08","Fase de ofertas","72141100","79 día(s)","10858320","Por verificar"],["Interventoría y supervisión","Caldas","La Dorada","ESE HOSPITAL SAN FELIX LA DORADA","CONVOCATORIA 002 2026","INTERVENTORIA TECNICA, ADMINISTRATIVA Y FINANCIERA AL CONTRATO DE OBRA ADECUACION PARA EL MEJORAMIENTO DE LA PRESTACION DE LOS SERVIIOS DE SALUD EN PEDIATRIA, GINECOLOGIA","Contratación régimen especial (con ofertas)",72010515,"2026-09-08","Presentación de oferta","80101500","4 Mes(es)","10861631","Por verificar"],["Adecuaciones locativas","Bogotá D.C.","","UNIDAD ADMINISTRATIVA ESPECIAL JUNTA CENTRAL DE CONTADORES","038-UAE-JCC-MIC-2026","Contratar los servicios de mantenimiento para las instalaciones de la UAE junta central de contadores.","Mínima cuantía",20720000,"2026-09-07","Presentación de oferta","72102900","0 día(s)","10850062","No"],["Adecuaciones locativas","Huila","Pitalito","SENA REGIONAL HUILA Grupo Administrativo CGDSS","MC-HIL-CGDSS-035-2026","Contratar actividades de mantenimiento de la infraestructura, los sistemas de agua potable y agua residual del Centro de Gestión y Desarrollo Sostenible Surcolombiano del","Mínima cuantía",159803163,"2026-09-07","Presentación de oferta","72103300","0 día(s)","10850296","No"],["Interventoría y supervisión","Amazonas","Leticia","GOBERNACION DEL AMAZONAS","GOB-AMA-CM-0016-2026","INTERVENTORÍA TÉCNICA, ADMINISTRATIVA, FINANCIERA, CONTABLE Y JURÍDICA PARA LA CONSTRUCCION DE LAS VIAS PEATONALES INTERNAS Y LOS SENDEROS ECOLOGICOS ENTRE COMUNIDADES DE","Concurso de méritos abierto",292924118,"2026-09-07","Presentación de oferta","80101600","5 Mes(es)","10852744","Sí"],["Adecuaciones locativas","Antioquia","Ituango","ESE HOSPITAL SAN JUAN DE DIOS DE ITUANGO","CP-004-2026","ADECUACIÓN DE INFRAESTRUCTURA FÍSICA DEL PUESTO DE SALUD LA GRANJA DE LA E.S.E. HOSPITAL SAN JUAN DE DIOS DE ITUANGO, DE CONFORMIDAD A LA ASIGNACION DE RECURSOS AUTORIZAD","Contratación régimen especial (con ofertas)",698558243,"2026-09-07","Presentación de oferta","72103300","60 día(s)","10851523","Por verificar"],["Diseños técnicos","Cauca","Popayán","CORPORACION AUTONOMA REGIONAL DEL CAUCA 12","CRC-MC-0027-2026","CONTRATAR SERVICIOS DE CONSULTORÍA ESPECIALIZADA PARA REALIZAR LOS ESTUDIOS Y DISEÑOS TÉCNICOS PARA LA ADECUACIÓN Y/O SUSTITUCIÓN DE LA CUBIERTA Y SU ESTRUCTURA PORTANTE,","Mínima cuantía",49000000,"2026-09-07","Presentación de oferta","81101500","3 Mes(es)","10854682","No"],["Interventoría y supervisión","Sucre","Sincelejo","GOBERNACION DE SUCRE","CM-009-2026","INTERVENTORÍA TÉCNICA, ADMINISTRATIVA, FINANCIERA Y AMBIENTAL PARA LOS ESTUDIOS Y DISEÑOS PARA LA ADECUACIÓN DE INFRAESTRUCTURA FÍSICA EN EL DEPARTAMENTO DE SUCRE","Concurso de méritos abierto",594611439,"2026-09-04","Presentación de observaciones","80101600","7 Mes(es)","10845043","Sí"],["Interventoría y supervisión","Casanare","Yopal","GOBERNACION DEL CASANARE","CAS-DTV-MC-0002-2026","INTERVENTORIA TECNICA, ADMINISTRATIVA, FINANCIERA, CONTABLE, JURÍDICA Y AMBIENTAL DE LA CONSULTORIA CUYO OBJETO ES FORMULAR LA POLITICA PUBLICA DE VIVIENDA DE INTERÉS SOC","Mínima cuantía",98460404,"2026-09-04","Presentación de oferta","80101600","4 Mes(es)","10843390","No"],["Carpintería metálica y ventanería","Bogotá D.C.","","COMANDO GAULA MILITARES (COGAM)","049-COGAM-2026","SUMINISTRO E INSTALACIÓN Y PUESTA EN FUNCIONAMIENTO DE SISTEMA DE BOMBEO HIDRÁULICO Y CARPINTERÍA METÁLICA DE ACUERDO A LAS ESPECIFICACIONES TÉCNICAS PARA EL PROYECTO DE ","Selección Abreviada de Menor Cuantía",213910922,"2026-09-04","Presentación de observaciones","81101513","0 día(s)","10843020","Sí"],["Interventoría y supervisión","Tolima","Chaparral","ALCALDÍA MUNICIPAL DE CHAPARRAL","CMA-003-2026","CONTRATAR LA INTERVENTORIA PARA EL PROYECTO MEJORAMIENTO DE VIAS TERCIARIAS CON LA CONSTRUCCION DE PLACA HUELLA EN DIFERENTES PUNTOS CRITICOS DISPERSOS EN LA ZONA RURAL D","Concurso de méritos abierto",855137854,"2026-09-03","Presentación de observaciones","80101600","6 Mes(es)","10832849","Sí"],["Adecuaciones locativas","Nariño","Pasto","INSTITUCION EDUCATIVA MUNICIPAL TECNICO INDUSTRIAL - PASTO","IP-2026-001","EL CONTRATISTA SE COMPROMETE PARA CON LA INSTITUCIÓN A REALIZAR LA ETAPA 1 DE LA OBRA DE CONSTRUCCION DE LA CUBIERTA PARA CANCHA PREESCOLAR SEDE AURORA EN LA INSTITUCION ","Mínima cuantía",69997650,"2026-09-03","Fase de ofertas","72101500","2 Mes(es)","10830802","No"],["Interventoría y supervisión","Magdalena","Santa Marta","GOBERNACION DEL MAGDALENA","CM-008-2026","INTERVENTORIA TECNICA, ADMINISTRATIVA, FINANCIERA, AMBIENTAL Y LEGAL A LA CONSTRUCCIÓN DE LA E.S.E. HOSPITAL LOCAL DE SAN ZENON EN EL DEPARTAMENTO DEL MAGDALENA","Concurso de méritos abierto",856215578,"2026-09-02","Presentación de observaciones","80101600","10 Mes(es)","10827000","Sí"],["Diseño arquitectónico","Norte de Santander","Cúcuta","Gobernación Norte de Santander","CMA-SPPEE-3112-2026","ESTUDIOS Y DISEÑOS PARA LA NUEVA CONSTRUCCION DE LA INSTITUCION EDUCATIVA BABEGA MUNICIPIO DE SILOS, DEPARTAMENTO NORTE DE SANTANDER","Concurso de méritos abierto",350000000,"2026-09-01","Presentación de oferta","81101500","4 Mes(es)","10815950","Sí"],["Obra civil menor","Antioquia","Dabeiba","MUNICIPIO DE DABEIBA","SA 011 DE 2026","SUMINISTRO DE MATERIALES DE CONSTRUCCIÓN COMPLEMENTARIOS PARA LA IMPLEMENTACIÓN DE LA ESTRATEGIA DE APOYO HABITACIONAL DIRIGIDA A FAMILIAS AFECTADAS POR EVENTOS NATURALES","Selección Abreviada de Menor Cuantía",489326753,"2026-09-01","Presentación de observaciones","30131600","3 Mes(es)","10814920","Sí"],["Redes y sistemas","Bolívar","Cartagena","INSTITUCION UNIVERSITARIA BELLAS ARTES Y CIENCIAS DE BOLIVAR","UNIBAC-LIC-007-2026","SUMINISTRO, INSTALACIÓN, CONFIGURACIÓN, INTEGRACIÓN, PRUEBAS, CERTIFICACIÓN Y PUESTA EN FUNCIONAMIENTO DE UN SISTEMA INTELIGENTE DE DETECCIÓN, ALARMA Y EXTINCIÓN AUTOMÁTI","Licitación pública",898242781,"2026-09-01","Presentación de oferta","46191600","2 Mes(es)","10814532","Sí"],["Adecuaciones locativas","Tolima","","GOBIERNO DEPARTAMENTAL","MIN-142-2026","CONTRATAR LA ADECUACION Y EL MEJORAMIENTO LOCATIVO DE LA ESTACION DE POLICIA DEL MUNICIPIO DE SANTA ISABEL DEL DEPARTAMENTO DEL TOLIMA","Mínima cuantía",147620683,"2026-09-01","Presentación de oferta","72152000","90 día(s)","10818636","No"],["Diseños técnicos","Meta","Mesetas","MUNICIPIO DE MESETAS","SMC-067-2026","ESTUDIOS Y DISEÑOS PARA EL MEJORAMIENTO DE VÍAS CORRESPONDIENTES A LA CARRERA 24 ENTRE CALLES 8 Y 9; CALLE 9A ENTRE CARRERAS 24, 23, 22D, 22C Y 22B; CALLE 10 ENTRE CARRER","Mínima cuantía",43531780,"2026-08-31","Presentación de oferta","81102200","1 Mes(es)","10807665","No"],["Interventoría y supervisión","Cundinamarca","Subachoque","MUNICIPIO DE SUBACHOQUE","AMS-CM-001-2026","CONTRATAR LA INTERVENTORA TÉCNICA, ADMINISTRATIVA, FINANCIERA, CONTABLE E INTEGRAL AL CONTRATO CUYO OBJETO ES: CONSTRUCCION DE LA CASA SOCIAL DE LA MUJER EN EL MUNICIPIO ","Concurso de méritos abierto",98347299,"2026-08-28","Presentación de oferta","80101600","0 día(s)","10797026","Sí"],["Interventoría y supervisión","Caldas","Manizales","INSTITUTO DE VALORIZACION DE MANIZALES","INV-CM-004-2026","INTERVENTORÍA TÉCNICA, ADMINISTRATIVA, JURÍDICA, FINANCIERA Y AMBIENTAL PARA EL PROYECTO DE CONSTRUCCION DE VÍAS DE ACCESO, PUENTE Y OBRAS COMPLEMENTARIAS ZONA INDUSTRIAL","Concurso de méritos abierto",761792602,"2026-08-28","Proceso de ofertas","80101500","8 Mes(es)","10792292","Sí"]]</script>
+<script>
+const META=JSON.parse(document.getElementById("meta").textContent);
+const U="https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.";
+const FOCUS=new Set(["Bolívar","Cundinamarca","Bogotá D.C."]);
+const CARIBE=new Set(["Bolívar","Atlántico","Sucre","Córdoba","Magdalena","Cesar","La Guajira","San Andrés, Providencia y Santa Catalina"]);
+const CENTRO=new Set(["Bogotá D.C.","Cundinamarca","Boyacá","Tolima","Meta"]);
+const HOY=new Date(META.consulta+"T12:00:00");
+/* Tipologías en orden fijo = posición fija de color (no se reasigna al filtrar) */
+const LINEAS=["Diseños técnicos", "BIM y levantamientos", "Diseño arquitectónico", "Estudios técnicos", "Interventoría y supervisión", "Redes y sistemas", "Adecuaciones locativas", "Obra civil menor", "Mejoramiento de vivienda", "Carpintería metálica y ventanería"];
+const SHORT={"Diseños técnicos": "Diseños", "BIM y levantamientos": "BIM", "Diseño arquitectónico": "Arquitect.", "Estudios técnicos": "Estudios", "Interventoría y supervisión": "Interv.", "Redes y sistemas": "Redes", "Adecuaciones locativas": "Adecuac.", "Obra civil menor": "Obra civil", "Mejoramiento de vivienda": "Vivienda", "Carpintería metálica y ventanería": "Metálica"};
+const SLOT={"Diseños técnicos": "s1", "BIM y levantamientos": "h1", "Diseño arquitectónico": "s2", "Estudios técnicos": "s3", "Interventoría y supervisión": "s4", "Redes y sistemas": "s5", "Adecuaciones locativas": "s6", "Obra civil menor": "s7", "Mejoramiento de vivienda": "h7", "Carpintería metálica y ventanería": "s8"};
+const COL=Object.fromEntries(LINEAS.map(l=>[l,`var(--${SLOT[l]})`]));
+const SOL=Object.fromEntries(LINEAS.map(l=>[l,`var(--s${SLOT[l].slice(1)})`]));
+const PAT=Object.fromEntries(LINEAS.map(l=>[l,SLOT[l][0]==="h"?`url(#p${SLOT[l]})`:`var(--${SLOT[l]})`]));
+const LW={"Diseños técnicos": 20, "BIM y levantamientos": 20, "Diseño arquitectónico": 18, "Estudios técnicos": 18, "Interventoría y supervisión": 16, "Redes y sistemas": 14, "Adecuaciones locativas": 12, "Carpintería metálica y ventanería": 12, "Obra civil menor": 10, "Mejoramiento de vivienda": 10};
+const MODS=[["Mínima cuantía",m=>/M[ií]nima/.test(m)],["Régimen especial / directa con ofertas",m=>/con ofertas/.test(m)],["Selección abreviada",m=>/Selecci/.test(m)],["Licitación pública",m=>/Licitaci/.test(m)],["Concurso de méritos",m=>/Concurso/.test(m)]];
+const RANGES=[["Menos de $15 M",0,1.5e7],["$15 – $50 M",1.5e7,5e7],["$50 – $300 M",5e7,3e8],["$300 – $1.000 M",3e8,1e9],["Más de $1.000 M",1e9,Infinity]];
+/* Mapa esquemático: [departamento, abreviatura, columna, fila] */
+const GEO=[["San Andrés, Providencia y Santa Catalina","SAI",0,0],["La Guajira","GUA",6,0],["Atlántico","ATL",4,1],["Magdalena","MAG",5,1],["Córdoba","COR",2,2],["Sucre","SUC",3,2],["Bolívar","BOL",4,2],["Cesar","CES",5,2],["Chocó","CHO",1,3],["Antioquia","ANT",2,3],["Santander","SAN",4,3],["Norte de Santander","NSA",5,3],["Arauca","ARA",6,3],["Risaralda","RIS",1,4],["Caldas","CAL",2,4],["Cundinamarca","CUN",3,4],["Boyacá","BOY",4,4],["Casanare","CAS",5,4],["Vichada","VIC",6,4],["Valle del Cauca","VAL",1,5],["Quindío","QUI",2,5],["Bogotá D.C.","BOG",3,5],["Meta","MET",4,5],["Guainía","GNA",6,5],["Cauca","CAU",1,6],["Tolima","TOL",2,6],["Huila","HUI",3,6],["Guaviare","GVR",4,6],["Vaupés","VAU",5,6],["Nariño","NAR",1,7],["Putumayo","PUT",2,7],["Caquetá","CAQ",3,7],["Amazonas","AMA",5,7]];
+const D=JSON.parse(document.getElementById("datos").textContent).map(r=>{
+  const d={tipo:r[0],dep:r[1],ciu:r[2],ent:r[3],ref:r[4],obj:r[5],mod:r[6],val:+r[7],pub:r[8],fase:r[9],un:r[10],plazo:r[11],url:U+r[12],rup:r[13]};
+  d.fz=FOCUS.has(d.dep);
+  d.zona=d.fz?"Zona foco":CARIBE.has(d.dep)?"Resto del Caribe":CENTRO.has(d.dep)?"Resto del centro":"Resto del país";
+  d.modG=(MODS.find(([,f])=>f(d.mod))||["Otra"])[0];
+  d.rng=RANGES.find(([,a,b])=>d.val>=a&&d.val<b)[0];
+  d.dias=Math.max(0,Math.round((HOY-new Date(d.pub+"T12:00:00"))/864e5));
+  {const m=/(\d+)\s*(Mes|d[ií]a|Semana|A[ñn]o)/i.exec(d.plazo||"");let mes=m?+m[1]*({m:1,d:1/30,s:7/30,a:12}[m[2][0].toLowerCase()]):0;d.vmes=mes>=0.5?d.val/mes:0;d.meses=mes}
+  d.edad=d.dias<=7?"Últimos 7 días":d.dias<=15?"8 a 15 días":d.dias<=30?"16 a 30 días":"Más de 30 días";
+  d.etapa=/oferta/i.test(d.fase)?"Recibe ofertas":/observaci|borrador|selecci|clarific/i.test(d.fase)?"Observaciones / pliego":"Otra";
+  d.rupG=d.rup==="No"?"No exige":d.rup==="Sí"?"Sí exige":"Por verificar";
+  const w=new Date(d.pub+"T12:00:00");w.setDate(w.getDate()-((w.getDay()+6)%7));d.sem=w.toISOString().slice(0,10);
+  let s=d.rup==="No"?30:d.rup==="Sí"?0:15;
+  s+=d.val<1.5e7?5:d.val<5e7?18:d.val<3e8?25:d.val<=1e9?12:0;
+  s+=d.fz?20:d.zona!=="Resto del país"?10:0;
+  s+=LW[d.tipo]||10;s+=d.dias<=7?10:d.dias<=15?5:0;
+  d.score=Math.min(100,s);d.p=d.score>=70?"Alta":d.score>=45?"Media":"Baja";
+  return d});
+
+const DIMS=[
+  {k:"rupG",el:"ch-rup",list:["No exige","Por verificar","Sí exige"]},
+  {k:"rng",el:"ch-rng",list:RANGES.map(r=>r[0])},
+  {k:"zona",el:"ch-zona",list:["Zona foco","Resto del Caribe","Resto del centro","Resto del país"]},
+  {k:"etapa",el:"ch-etapa",list:["Recibe ofertas","Observaciones / pliego","Otra"]},
+  {k:"edad",el:"ch-edad",list:["Últimos 7 días","8 a 15 días","16 a 30 días","Más de 30 días"]},
+];
+const KEYS=["tipo","dep","modG",...DIMS.map(d=>d.k)];
+const PRESETS=[
+  ["Para empezar ya","sin RUP, $15 – $300 M",{rupG:["No exige","Por verificar"],rng:["$15 – $50 M","$50 – $300 M"]}],
+  ["Pequeños y rentables","$50 – $300 M, menor cuantía",{rng:["$50 – $300 M"],modG:["Mínima cuantía","Selección abreviada","Régimen especial / directa con ofertas"]}],
+  ["Consultoría y diseño","diseños, BIM, arquitectura, estudios",{tipo:["Diseños técnicos","BIM y levantamientos","Diseño arquitectónico","Estudios técnicos"]}],
+  ["Interventoría","",{tipo:["Interventoría y supervisión"]}],
+  ["Obras pequeñas","adecuaciones, redes, obra civil, metálica, vivienda",{tipo:["Redes y sistemas","Adecuaciones locativas","Obra civil menor","Mejoramiento de vivienda","Carpintería metálica y ventanería"]}],
+  ["Zona foco","Bolívar · Cund. · Bogotá",{zona:["Zona foco"]}],
+  ["Recién publicados","≤ 7 días",{edad:["Últimos 7 días"]}],
+];
+const cop=v=>v>=1e9?"$"+(v/1e9).toLocaleString("es-CO",{maximumFractionDigits:1})+" mil M":"$"+(v/1e6).toLocaleString("es-CO",{maximumFractionDigits:v<1e7?1:0})+" M";
+const fecha=s=>new Date(s+"T12:00:00").toLocaleDateString("es-CO",{day:"numeric",month:"short"});
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cap=s=>{s=String(s||"").toLowerCase();return s.charAt(0).toUpperCase()+s.slice(1)};
+const median=a=>{if(!a.length)return 0;const b=[...a].sort((x,y)=>x-y),m=b.length>>1;return b.length%2?b[m]:(b[m-1]+b[m])/2};
+const seq=(n,max)=>n?`color-mix(in oklab, var(--seq-hi) ${Math.round(15+85*n/max)}%, var(--seq-lo))`:"var(--zero)";
+
+const F={p:null,q:""};KEYS.forEach(k=>F[k]=new Set());
+let preset=null,sort={k:"score",dir:-1};
+const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const root=document.documentElement;
+function setTheme(t){root.setAttribute("data-theme",t);document.getElementById("theme").innerHTML=t==="dark"?"☀ Modo claro":"☾ Modo oscuro";ls.set("radar-theme",t)}
+setTheme(ls.get("radar-theme")==="dark"?"dark":"light");
+document.getElementById("theme").onclick=()=>setTheme(root.getAttribute("data-theme")==="dark"?"light":"dark");
+document.getElementById("sub").textContent=`${D.length} procesos abiertos en SECOP II de hasta $1.000 millones en ingeniería civil y arquitectura, en todo el país, publicados desde el ${fecha(META.desde)}. Consulta del ${HOY.toLocaleDateString("es-CO",{day:"numeric",month:"long",year:"numeric"})}.`;
+document.getElementById("src").textContent="Fuente: datos abiertos SECOP II (datos.gov.co, conjunto p6dx-8zbt). Modalidades competitivas en estado Publicado/Abierto. Solo procesos de hasta $1.000 millones en las 10 tipologías de ingeniería civil y arquitectura de la empresa; se excluyen suministros sin instalación, tecnología, equipos y grandes obras de acueducto, alcantarillado y carreteras. BIM y Mejoramiento de vivienda llevan textura rayada sobre el color de su familia. El mapa es esquemático: la posición de cada cuadro es aproximada.";
+
+function pass(d,skip=[]){
+  for(const k of KEYS){if(!skip.includes(k)&&F[k].size&&!F[k].has(d[k]))return false}
+  if(!skip.includes("p")&&F.p&&d.p!==F.p)return false;
+  const q=F.q.trim().toLowerCase();
+  if(q&&!(d.ent+" "+d.obj+" "+d.ciu+" "+d.dep+" "+d.ref).toLowerCase().includes(q))return false;
+  return true;
+}
+const set1=(k,v)=>{const was=F[k].size===1&&F[k].has(v);F[k].clear();if(!was)F[k].add(v)};
+function tog(k,v){F[k].has(v)?F[k].delete(v):F[k].add(v);preset=null;render()}
+function clearAll(){KEYS.forEach(k=>F[k].clear());F.p=null;F.q="";document.getElementById("q").value="";preset=null}
+
+/* Tooltip */
+const tip=document.getElementById("tip");
+function showTip(e,html){tip.innerHTML=html;tip.style.display="block";const x=Math.min(e.clientX+14,innerWidth-tip.offsetWidth-8),y=Math.min(e.clientY+14,innerHeight-tip.offsetHeight-8);tip.style.left=x+"px";tip.style.top=y+"px"}
+function hideTip(){tip.style.display="none"}
+const rowsTip=(title,pairs)=>`<b>${esc(title)}</b>`+pairs.map(([c,l,v])=>`<div class="r"><span>${c?`<i style="--c:${c}"></i>`:""}${esc(l)}</span><span>${v}</span></div>`).join("");
+function bindTip(el,fn){el.addEventListener("mousemove",e=>showTip(e,fn()));el.addEventListener("mouseleave",hideTip)}
+
+const pres=document.getElementById("presets");
+PRESETS.forEach(([n,h,cfg],i)=>{const b=document.createElement("button");b.className="preset";b.type="button";b.dataset.i=i;b.innerHTML=esc(n)+(h?`<small>${esc(h)}</small>`:"");
+  b.onclick=()=>{const was=preset===i;clearAll();if(!was){Object.entries(cfg).forEach(([k,vs])=>vs.forEach(v=>F[k].add(v)));preset=i}render()};pres.appendChild(b)});
+const legend=()=>LINEAS.map(l=>`<span><span class="sw" style="--c:${COL[l]}"></span>${esc(l)}</span>`).join("");
+document.getElementById("leg1").innerHTML=legend();document.getElementById("leg2").innerHTML=legend();
+
+function render(){
+  hideTip();
+  const R=D.filter(d=>pass(d));
+  pres.querySelectorAll(".preset").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.i===preset));
+  // KPIs
+  const k=[["",R.length,"procesos con los filtros"],["",cop(R.reduce((a,b)=>a+b.val,0)),"valor total"],
+    ["hi",R.filter(d=>d.p==="Alta").length,"conveniencia alta"],["",R.filter(d=>d.fz).length,"★ en zona foco"],
+    ["",R.filter(d=>d.rup!=="Sí").length,"sin RUP o por verificar"]];
+  document.getElementById("kpis").innerHTML=k.map(([c,n,l])=>`<div class="kpi ${c}"><b>${n}</b><span>${l}</span></div>`).join("");
+
+  // Fichas por tipología
+  const T=D.filter(d=>pass(d,["tipo"]));
+  const tiles=document.getElementById("tiles");
+  tiles.innerHTML=LINEAS.map(l=>{const a=T.filter(d=>d.tipo===l),n=a.length,sel=F.tipo.has(l),dim=F.tipo.size&&!sel;
+    const sr=n?Math.round(a.filter(d=>d.rup!=="Sí").length/n*100):0;
+    return `<button class="tile${dim?" dim":""}" style="--c:${COL[l]};--cs:${SOL[l]}" aria-pressed="${sel}" data-k="${esc(l)}">
+      <span class="nm">${esc(l)}</span><span class="big">${n}</span>
+      <span class="share"><i style="width:${T.length?n/T.length*100:0}%"></i></span>
+      <span class="sm"><span>${T.length?Math.round(n/T.length*100):0}% del total</span><span>${sr}% sin RUP</span></span>
+      <span class="sm"><span>Valor típico ${n?cop(median(a.map(d=>d.val))):"—"}</span></span></button>`}).join("");
+  tiles.querySelectorAll(".tile").forEach(b=>{b.onclick=()=>tog("tipo",b.dataset.k);bindTip(b,()=>{const a=T.filter(d=>d.tipo===b.dataset.k);return rowsTip(b.dataset.k,[[COL[b.dataset.k],"Procesos",a.length],["","Valor total",cop(a.reduce((x,y)=>x+y.val,0))],["","Valor típico (mediana)",a.length?cop(median(a.map(d=>d.val))):"—"],["","Mínima cuantía",a.filter(d=>d.modG==="Mínima cuantía").length],["","En zona foco",a.filter(d=>d.fz).length]])})});
+
+  // Mapa esquemático
+  const M=D.filter(d=>pass(d,["dep"]));const mc={};M.forEach(d=>mc[d.dep]=(mc[d.dep]||0)+1);
+  const mmax=Math.max(1,...Object.values(mc));document.getElementById("scaleMax").textContent=mmax;
+  const map=document.getElementById("map");
+  map.innerHTML=GEO.map(([dep,ab,c,r])=>{const n=mc[dep]||0,sel=F.dep.has(dep),dim=F.dep.size&&!sel;
+    return `<button class="t${n/mmax>.5?" on":""}${FOCUS.has(dep)?" fz":""}${dim?" dim":""}" style="grid-column:${c+1};grid-row:${r+1};background:${seq(n,mmax)}" aria-pressed="${sel}" aria-label="${esc(dep)}: ${n} procesos" data-k="${esc(dep)}">${FOCUS.has(dep)?"★":""}${ab}<b>${n}</b></button>`}).join("");
+  map.querySelectorAll(".t").forEach(b=>{b.onclick=()=>tog("dep",b.dataset.k);
+    bindTip(b,()=>{const dep=b.dataset.k,a=M.filter(d=>d.dep===dep);return rowsTip(dep+(FOCUS.has(dep)?" ★":""),[["","Procesos",a.length],["","Valor total",cop(a.reduce((x,y)=>x+y.val,0))],...LINEAS.map(l=>[COL[l],l,a.filter(d=>d.tipo===l).length]).filter(x=>x[2])])})});
+
+  // Barras apiladas: departamento × tipología
+  const S=D.filter(d=>pass(d,["dep","tipo"]));const by={};S.forEach(d=>{(by[d.dep]=by[d.dep]||{n:0,t:{}}).n++;by[d.dep].t[d.tipo]=(by[d.dep].t[d.tipo]||0)+1});
+  let deps=Object.keys(by).sort((a,b)=>(FOCUS.has(b)-FOCUS.has(a))||by[b].n-by[a].n);
+  const top=deps.slice(0,14),rest=deps.slice(14);
+  document.getElementById("stkInfo").textContent=deps.length+" departamentos"+(rest.length?` · ${rest.length} con pocos procesos agrupados`:"");
+  const smax=Math.max(1,...top.map(d=>by[d].n));
+  const rowHtml=(name,o,isRest)=>`<div class="srow"><button class="lab${FOCUS.has(name)?" fz":""}" ${isRest?"disabled":""} aria-pressed="${F.dep.has(name)}" data-d="${esc(name)}">${FOCUS.has(name)?"★ ":""}${esc(name)}</button>
+    <div class="trk" style="width:${o.n/smax*100}%">${LINEAS.filter(l=>o.t[l]).map(l=>`<button class="seg" style="--c:${COL[l]};flex:${o.t[l]}" data-d="${esc(name)}" data-t="${esc(l)}" ${isRest?"disabled":""} aria-label="${esc(name)} · ${esc(l)}: ${o.t[l]}"></button>`).join("")}</div><span class="n">${o.n}</span></div>`;
+  let html=top.map(d=>rowHtml(d,by[d])).join("");
+  if(rest.length){const o={n:0,t:{}};rest.forEach(d=>{o.n+=by[d].n;for(const[l,v] of Object.entries(by[d].t))o.t[l]=(o.t[l]||0)+v});html+=rowHtml(`Otros (${rest.length})`,o,true)}
+  const stk=document.getElementById("stk");stk.innerHTML=html||`<div class="empty">Sin procesos con estos filtros.</div>`;
+  stk.querySelectorAll(".lab:not([disabled])").forEach(b=>b.onclick=()=>tog("dep",b.dataset.d));
+  stk.querySelectorAll(".seg").forEach(b=>{if(!b.disabled)b.onclick=()=>{set1("dep",b.dataset.d);set1("tipo",b.dataset.t);preset=null;render()};
+    bindTip(b,()=>{const d=b.dataset.d,o=d.startsWith("Otros")?null:by[d];return rowsTip(d,(o?LINEAS.filter(l=>o.t[l]).map(l=>[COL[l],l,o.t[l]]):[[COL[b.dataset.t],b.dataset.t,""]]))})});
+
+  // Matriz modalidad × tipología
+  const H=D.filter(d=>pass(d,["modG","tipo"]));const hm={};H.forEach(d=>{const k=d.modG+"|"+d.tipo;hm[k]=(hm[k]||0)+1});
+  const hmax=Math.max(1,...Object.values(hm));const heat=document.getElementById("heat");
+  heat.style.gridTemplateColumns=`minmax(110px,1.4fr) repeat(${LINEAS.length},minmax(44px,1fr))`;
+  heat.innerHTML=`<div></div>`+LINEAS.map(l=>`<div class="hd" title="${esc(l)}"><i style="--c:${COL[l]}"></i>${esc(SHORT[l])}</div>`).join("")+
+    MODS.map(([m])=>`<div class="rl">${esc(m)}</div>`+LINEAS.map(l=>{const n=hm[m+"|"+l]||0;const sel=F.modG.has(m)&&F.tipo.has(l);
+      return `<button class="c${n/hmax>.5?" on":""}" style="background:${seq(n,hmax)}${sel?";outline:2px solid var(--accent)":""}" data-m="${esc(m)}" data-t="${esc(l)}" aria-label="${esc(m)} · ${esc(l)}: ${n}">${n||""}</button>`}).join("")).join("");
+  heat.querySelectorAll(".c").forEach(b=>{b.onclick=()=>{set1("modG",b.dataset.m);set1("tipo",b.dataset.t);preset=null;render()};
+    bindTip(b,()=>{const a=H.filter(d=>d.modG===b.dataset.m&&d.tipo===b.dataset.t);return rowsTip(b.dataset.m,[[COL[b.dataset.t],b.dataset.t,a.length],["","Valor total",cop(a.reduce((x,y)=>x+y.val,0))],["","Sin RUP",a.filter(d=>d.rup!=="Sí").length]])})});
+
+  // Publicaciones por semana (columnas apiladas)
+  const W=D.filter(d=>pass(d,["edad"]));const wk={};W.forEach(d=>{(wk[d.sem]=wk[d.sem]||{n:0,t:{}}).n++;wk[d.sem].t[d.tipo]=(wk[d.sem].t[d.tipo]||0)+1});
+  const weeks=[];{const s=new Date(META.desde+"T12:00:00");s.setDate(s.getDate()-((s.getDay()+6)%7));for(let t=new Date(s);t<=HOY;t.setDate(t.getDate()+7))weeks.push(t.toISOString().slice(0,10))}
+  const wmax=Math.max(1,...weeks.map(w=>wk[w]?.n||0));const nice=Math.max(2,Math.ceil(wmax/4)*4);
+  const Wd=560,Hd=230,pl=30,pb=26,pt=8,cw=(Wd-pl-6)/weeks.length,bw=Math.min(36,cw*.62);
+  let g=`<g class="grid">`;for(let i=0;i<=4;i++){const y=pt+(Hd-pt-pb)*(1-i/4);g+=`<line x1="${pl}" x2="${Wd-4}" y1="${y}" y2="${y}"/><text x="${pl-6}" y="${y+4}" text-anchor="end">${Math.round(nice*i/4)}</text>`}g+="</g>";
+  weeks.forEach((w,i)=>{const x=pl+cw*i+(cw-bw)/2;let y=Hd-pb;const o=wk[w];
+    if(o){LINEAS.forEach(l=>{const v=o.t[l];if(!v)return;const h=(Hd-pt-pb)*v/nice;g+=`<rect x="${x}" y="${y-h+1}" width="${bw}" height="${Math.max(h-2,1)}" rx="2" style="fill:${PAT[l]}"/>`;y-=h})}
+    g+=`<text x="${x+bw/2}" y="${Hd-8}" text-anchor="middle">${fecha(w)}</text><rect class="hit" x="${pl+cw*i}" y="${pt}" width="${cw}" height="${Hd-pt-pb}" data-w="${w}"/>`});
+  const wkEl=document.getElementById("wk");const defs=`<defs>${["1","7"].map(n=>`<pattern id="ph${n}" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" style="fill:var(--surface)"/><rect width="3" height="5" style="fill:var(--s${n})"/></pattern>`).join("")}</defs>`;
+  wkEl.innerHTML=`<svg viewBox="0 0 ${Wd} ${Hd}" role="img" aria-label="Procesos publicados por semana y tipología">${defs}${g}</svg>`;
+  wkEl.querySelectorAll("rect.hit").forEach(r=>bindTip(r,()=>{const w=r.dataset.w,o=wk[w];return rowsTip("Semana del "+fecha(w),[["","Procesos",o?.n||0],...(o?LINEAS.filter(l=>o.t[l]).map(l=>[COL[l],l,o.t[l]]):[])])}));
+
+  // Paneles de filtros
+  for(const dm of DIMS){
+    const c={};D.filter(d=>pass(d,[dm.k])).forEach(d=>c[d[dm.k]]=(c[d[dm.k]]||0)+1);
+    const items=dm.list.map(x=>({k:x,n:c[x]||0}));const max=Math.max(1,...items.map(i=>i.n)),Sx=F[dm.k],el=document.getElementById(dm.el);
+    el.innerHTML=items.map(i=>{const sel=Sx.has(i.k),dim=Sx.size&&!sel;return `<button class="bar${dim?" dim":""}" aria-pressed="${sel}" data-k="${esc(i.k)}"><span class="lab">${esc(i.k)}</span><span class="trk"><span class="fill" style="width:${i.n/max*100}%;display:block"></span></span><span class="n">${i.n}</span></button>`}).join("");
+    el.querySelectorAll(".bar").forEach(b=>b.onclick=()=>tog(dm.k,b.dataset.k));
+  }
+  const pc={};D.filter(d=>pass(d,["p"])).forEach(d=>pc[d.p]=(pc[d.p]||0)+1);const tot=Object.values(pc).reduce((a,b)=>a+b,0)||1;
+  const ps=document.getElementById("chPri");
+  ps.innerHTML=["Alta","Media","Baja"].map(x=>{const n=pc[x]||0;return `<button class="s-${x}${F.p&&F.p!==x?" dim":""}" style="flex:${Math.max(n,tot*.12)}" aria-pressed="${F.p===x}" data-k="${x}">${x} · ${n}</button>`}).join("");
+  ps.querySelectorAll("button").forEach(b=>b.onclick=()=>{F.p=F.p===b.dataset.k?null:b.dataset.k;preset=null;render()});
+
+  // Chips activos
+  const act=[];KEYS.forEach(k=>F[k].forEach(v=>act.push([k,v,v])));
+  if(F.p)act.push(["p",F.p,"Conveniencia "+F.p]);if(F.q.trim())act.push(["q","","“"+F.q.trim()+"”"]);
+  const ae=document.getElementById("active");
+  ae.innerHTML=act.map(([k,v,l],i)=>`<span class="chip act">${esc(l)}<button data-i="${i}" aria-label="Quitar filtro ${esc(l)}">×</button></span>`).join("");
+  ae.querySelectorAll("button").forEach(b=>b.onclick=()=>{const [k,v]=act[+b.dataset.i];if(k==="p")F.p=null;else if(k==="q"){F.q="";document.getElementById("q").value=""}else F[k].delete(v);preset=null;render()});
+  document.getElementById("clear").disabled=!act.length;
+  document.getElementById("count").textContent=R.length+" de "+D.length;
+
+  // Tabla
+  const Sx=[...R].sort((a,b)=>{const x=a[sort.k],y=b[sort.k];const c=typeof x==="number"?x-y:String(x).localeCompare(String(y),"es");return c*sort.dir||(b.fz-a.fz)||b.pub.localeCompare(a.pub)});
+  const lugar=d=>esc(d.ciu&&d.ciu!==d.dep?d.ciu+", "+d.dep:d.dep);
+  const rupChip=d=>`<span class="chip ${d.rup==="No"?"rno":""}">${esc(d.rup)}</span>`;
+  const meter=d=>`<span class="meter s-${d.p==="Alta"?"hi":d.p==="Media"?"mid":"lo"}"><i><b style="width:${d.score}%"></b></i>${d.score}</span>`;
+  const tipoTag=d=>`<span class="tipo" style="color:var(--fg)"><span class="sw" style="--c:${COL[d.tipo]};display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--c);margin-right:5px"></span>${esc(d.tipo)}</span>`;
+  window._simRows=Sx;document.getElementById("tb").innerHTML=Sx.length?Sx.map((d,i)=>`<tr>
+    <td class="${d.fz?"fz":""}"><span class="chip p-${d.p}">${d.p}</span><div style="margin-top:5px">${meter(d)}</div>${d.fz?`<div style="margin-top:4px"><span class="chip fz">★ Foco</span></div>`:""}</td>
+    <td class="obj">${tipoTag(d)}<b>${esc(d.ent)}</b>${esc(cap(d.obj))}<div style="margin-top:3px;font-size:11.5px;color:var(--muted);font-family:var(--mono)">${esc(d.ref)} · ${esc(d.etapa)}</div></td>
+    <td>${lugar(d)}</td><td>${esc(d.modG)}</td><td>${rupChip(d)}</td>
+    <td class="num">${cop(d.val)}<div class="qmini">inv. ${cop(quick(d).inv)}<br>gana ${(quick(d).gan<0?"−":"")+cop(Math.abs(quick(d).gan))}</div></td><td class="num">${d.vmes?cop(d.vmes):"—"}</td><td style="white-space:nowrap">${fecha(d.pub)}<div style="font-size:11.5px;color:var(--muted)">hace ${d.dias} d</div></td>
+    <td><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a><a class="ruta-l" href="#f2">Cómo ofertar →</a><button class="simb" type="button" onclick="simContract(${i})">Simular caja</button></td></tr>`).join(""):`<tr><td colspan="9" class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</td></tr>`;
+  document.getElementById("cards").innerHTML=Sx.length?Sx.map((d,i)=>`<article class="card${d.fz?" fz":""}">
+    <div class="row"><span class="chip p-${d.p}">${d.p}</span>${meter(d)}${rupChip(d)}</div>${tipoTag(d)}
+    <h3>${esc(cap(d.obj))}</h3><div class="meta">${esc(d.ent)} · ${lugar(d)} · ${esc(d.modG)} · ${fecha(d.pub)}</div>
+    ${quickHtml(d)}<div class="row" style="justify-content:space-between;gap:8px"><span class="v">${cop(d.val)}</span><span class="row" style="gap:6px"><button class="simb inl" type="button" onclick="simContract(${i})">Simular caja</button><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a></span></div></article>`).join(""):`<div class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</div>`;
+  document.querySelectorAll("th button").forEach(b=>b.textContent=b.textContent.replace(/ [↑↓]$/,"")+(sort.k===b.dataset.s?(sort.dir>0?" ↑":" ↓"):""));
+}
+document.querySelectorAll("th button").forEach(b=>b.onclick=()=>{const k=b.dataset.s;sort=sort.k===k?{k,dir:-sort.dir}:{k,dir:["val","vmes","pub","score"].includes(k)?-1:1};render()});
+document.getElementById("q").addEventListener("input",e=>{F.q=e.target.value;preset=null;render()});
+document.getElementById("clear").onclick=()=>{clearAll();sort={k:"score",dir:-1};render()};
+queueMicrotask(render);
+
+/* ---- Pestañas y enlaces entre Radar y Ruta ---- */
+{const PH = [
+ {n:"0",t:"Habilitación",who:"Empresa",dur:"Una vez; el RUP se renueva cada año",
+  emp:[{t:"<b>Formalizar la empresa</b>: matrícula renovada, RUT con CIIU correctos y facturación electrónica",d:["Certificado de Cámara","RUT","Resolución DIAN facturación"]},
+       {t:"<b>Inscribir el RUP</b> con experiencia en códigos UNSPSC e indicadores financieros",d:["Estados financieros","Certificados de experiencia","Formulario RUP"]},
+       {t:"<b>Preparar el kit fijo</b>: certificado bancario, antecedentes y relación con una aseguradora",d:["Antecedentes Procuraduría, Contraloría y Policía","Certificación bancaria"]}],
+  sec:[{t:"<b>Registro como proveedor</b>: usuario, empresa, documentos y códigos UNSPSC"},{t:"<b>Alertas</b> de procesos por código UNSPSC y región"}],
+  ent:[]},
+ {n:"1",t:"Planeación",who:"Entidad",dur:"Semanas a meses, antes de publicar",
+  emp:[{t:"<b>Vigilar</b> los Planes Anuales de Adquisiciones (PAA) de las entidades objetivo en Bolívar y Cundinamarca"}],
+  sec:[{t:"Publicación del <b>PAA</b> (a más tardar el 31 de enero)"}],
+  ent:[{t:"<b>Necesidad</b>, estudio del sector y <b>estudios previos</b> con presupuesto y riesgos",d:["Estudios previos","Análisis del sector","Matriz de riesgos"]},
+       {t:"<b>CDP</b>: certificado de disponibilidad presupuestal",d:["CDP"]}]},
+ {n:"2",t:"Selección",who:"Ambos",dur:"3 a 10 semanas según modalidad",
+  emp:[{t:"<b>Revisar</b> el proyecto de pliego y enviar observaciones"},
+       {t:"<b>Armar la oferta</b>: requisitos habilitantes (jurídicos, financieros y técnicos), equipo de trabajo y propuesta económica",d:["Carta de presentación","Certificado RUP","Experiencia","Hojas de vida del equipo","Póliza de seriedad","Oferta económica"]},
+       {t:"<b>Presentar</b> antes de la hora de cierre. SECOP II no recibe ofertas después de esa hora"},
+       {t:"<b>Subsanar</b> lo que pidan y observar el informe de evaluación"}],
+  sec:[{t:"Aviso, proyecto de pliego y estudios previos"},{t:"Módulo <b>Mensajes</b>: observaciones y respuestas"},{t:"Pliego definitivo, adendas y <b>Presentar oferta</b> (cuestionario y anexos)"},{t:"Apertura de ofertas, informe de evaluación y adjudicación"}],
+  ent:[{t:"Responde observaciones y expide el <b>acto de apertura</b>",d:["Resolución de apertura","Pliego definitivo"]},
+       {t:"<b>Comité evaluador</b>: verifica requisitos y asigna puntaje",d:["Informe de evaluación"]},
+       {t:"<b>Adjudica</b> o declara desierto. En mínima cuantía emite la aceptación de la oferta",d:["Resolución de adjudicación"]}]},
+ {n:"3",t:"Legalización",who:"Ambos",dur:"1 a 2 semanas",
+  emp:[{t:"<b>Aprobar y firmar</b> el contrato electrónico en SECOP II"},
+       {t:"<b>Constituir garantías</b> y cargarlas con su recibo de pago",d:["Póliza de cumplimiento","Póliza de salarios","Póliza de calidad","Recibo de pago"]}],
+  sec:[{t:"Contrato electrónico en <b>Contratos</b> → sección <b>Garantías</b>"}],
+  ent:[{t:"Firma: el contrato queda <b>perfeccionado</b>"},
+       {t:"<b>Aprueba las garantías</b> y expide el <b>registro presupuestal (RP)</b>",d:["Aprobación de garantías","RP"]},
+       {t:"Designa supervisor o interventor y firma el <b>acta de inicio</b>",d:["Acta de inicio"]}]},
+ {n:"4",t:"Ejecución",who:"Empresa",dur:"Plazo del contrato",
+  emp:[{t:"<b>Ejecutar</b> con el equipo ofertado y entregar productos",d:["Plan de trabajo","Entregables","Informes periódicos"]},
+       {t:"Pedir con tiempo <b>prórrogas, adiciones o suspensiones</b> y ajustar las pólizas"}],
+  sec:[{t:"<b>Ejecución del contrato</b>: documentos, informes y modificaciones"}],
+  ent:[{t:"<b>Supervisión</b>: revisa calidad y avance, cita a comités y aprueba entregables",d:["Actas de seguimiento","Informes de supervisión"]},
+       {t:"Tramita modificaciones. Las adiciones tienen un tope del 50 % del valor inicial (Ley 80, art. 40)",d:["Otrosí","Acta de suspensión o reinicio"]}]},
+ {n:"5",t:"Pagos",who:"Ambos",dur:"Ciclo por cada pago pactado",money:true,
+  emp:[{t:"<b>Cobrar</b>: factura electrónica, aportes a seguridad social e informe aprobado",d:["Factura electrónica","Certificado de aportes","Informe aprobado"],pay:true}],
+  sec:[{t:"<b>Plan de pagos → Facturas</b>: carga y aprobación",pay:true}],
+  ent:[{t:"Supervisor certifica el cumplimiento",d:["Certificado de cumplimiento"]},{t:"Financiera aplica descuentos y <b>tesorería gira</b> el valor neto",d:["Orden de pago","Comprobante de egreso"],pay:true}]},
+ {n:"6",t:"Cierre y liquidación",who:"Ambos",dur:"Hasta 4 meses (mutuo acuerdo)",
+  emp:[{t:"Entrega final y firma del <b>acta de recibo</b>"},{t:"Revisar el balance y firmar la <b>liquidación</b>, con salvedades si hay saldos en discusión",d:["Acta de liquidación"]},{t:"Ajustar la vigencia de las pólizas posteriores (salarios y calidad)"}],
+  sec:[{t:"Publicación del acta de liquidación y cierre del expediente"}],
+  ent:[{t:"Informe final de supervisión y balance financiero",d:["Informe final"]},{t:"Liquida de mutuo acuerdo en el plazo pactado o en 4 meses. Si no hay acuerdo, liquida unilateralmente en los 2 meses siguientes (Ley 1150, art. 11)"}]},
+ {n:"7",t:"Experiencia",who:"Empresa",dur:"Al cerrar y cada abril",
+  emp:[{t:"Solicitar el <b>certificado de experiencia</b> con objeto, valor, plazo y códigos",d:["Certificado de experiencia"]},{t:"Cargarlo al <b>RUP</b> en la renovación (antes del 5.º día hábil de abril)"}],
+  sec:[{t:"El contrato queda como antecedente público consultable"}],
+  ent:[{t:"<b>Reporta</b> a la Cámara de Comercio contratos, multas y sanciones para el RUP"}]}
+];
+
+const lab={emp:["Empresa","--emp"],sec:["SECOP II","--sec"],ent:["Entidad estatal","--ent"]};
+document.getElementById('phasemap').innerHTML = PH.map(p=>`<a href="#f${p.n}" class="${p.money?'money':''} ${p.n==='0'?'here':''}"><span class="n">Fase ${p.n}</span><span class="t">${p.t}</span><span class="who">${p.who}</span></a>`).join('');
+document.getElementById('lanes').innerHTML = PH.map(p=>{
+  const lane=k=>{const items=p[k];if(!items.length)return `<div class="lane"></div>`;
+    return `<div class="lane"><span class="lane-tag"><i class="sw" style="background:var(${lab[k][1]})"></i>${lab[k][0]}</span>`+
+    items.map((s,i)=>`${i?'<div class="arrow" aria-hidden="true">↓</div>':''}<div class="step ${s.pay?'pay':k}"><span class="k">${p.n}.${i+1}</span>${s.t}${s.d?`<div class="docs">${s.d.map(x=>`<span class="doc">${x}</span>`).join('')}</div>`:''}</div>`).join('')+`</div>`;};
+  return `<div class="phase-row" id="f${p.n}"><div class="phase-label"><span class="n">Fase ${p.n}</span><h3>${p.t}</h3><span class="dur">${p.dur}</span></div>${lane('emp')}${lane('sec')}${lane('ent')}</div>`;
+}).join('');
+
+/* Gantt */
+
+}
+function showTab(v,anchor){
+  document.querySelectorAll(".view").forEach(s=>s.hidden=s.id!=="v-"+v);
+  document.querySelectorAll(".tab,.bn-btn").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v));
+  document.getElementById("clear").hidden=v!=="radar";
+  if(anchor){const el=document.getElementById(anchor);if(el)el.scrollIntoView({block:"start"})}else window.scrollTo(0,0);
+}
+document.querySelectorAll(".tab,.bn-btn").forEach(b=>b.onclick=()=>{history.replaceState(null,"","#"+b.dataset.v);showTab(b.dataset.v)});
+function fromHash(){const h=location.hash.slice(1);if(["ruta","radar","sim"].includes(h))return showTab(h);
+  const el=h&&document.getElementById(h);if(el&&el.closest("#v-ruta"))showTab("ruta",h);else showTab("radar")}
+addEventListener("hashchange",fromHash);fromHash();
+document.querySelectorAll("#v-ruta .golink").forEach(b=>b.onclick=()=>{
+  clearAll();if(b.dataset.mod)F.modG.add(b.dataset.mod);
+  if(b.dataset.preset){const [,,cfg]=PRESETS[+b.dataset.preset];Object.entries(cfg).forEach(([k,vs])=>vs.forEach(v=>F[k].add(v)));preset=+b.dataset.preset}
+  render();history.replaceState(null,"","#radar");showTab("radar");document.getElementById("tiles").scrollIntoView({block:"start"})});
+
+/* ---- Simulación: Gantt + flujo de caja (reemplaza el Gantt fijo) ---- */
+const SIM={};
+function simRead(){const n=id=>+document.getElementById(id).value||0;
+  return {V:n("s-val")*1e6,meses:Math.max(1,n("s-mes")),forma:document.getElementById("s-forma").value,ant:Math.min(50,n("s-ant"))/100,cos:n("s-cos")/100,des:n("s-des")/100,dias:n("s-dias"),tasa:n("s-tasa")/100}}
+function simCalc(p){
+  const S=17,E=Math.max(2,Math.round(p.meses*4.33)),End=S+E-1,lag=Math.max(1,Math.ceil(p.dias/7));
+  const pay=[];
+  if(p.forma==="hitos")[[.30,.25,"diagnóstico"],[.40,.7,"avance"],[.30,1,"entrega final"]].forEach(([pc,f,l])=>pay.push({w:S+Math.max(1,Math.round(E*f))-1,pc,l}));
+  else if(p.forma==="final")pay.push({w:End,pc:1,l:"entrega final"});
+  else for(let i=1;i<=p.meses;i++)pay.push({w:Math.min(End,S+Math.round(i*4.33)-1),pc:1/p.meses,l:i===p.meses?"último mes":"mes "+i});
+  const A=p.forma==="anticipo"?p.ant:0;
+  const wk=End+lag+18;const flow=Array(wk+2).fill(0),out=Array(wk+2).fill(0),inn=Array(wk+2).fill(0);
+  const prep=.01*p.V,pol=.015*p.V,C=p.cos*p.V;
+  for(let w=7;w<=11;w++)out[w]+=prep/5;
+  out[S-2]+=pol;
+  for(let w=S;w<=End;w++)out[w]+=C/E;
+  if(A)inn[S]+=A*p.V;
+  pay.forEach(q=>{q.r=q.w+lag;q.net=q.pc*p.V*(1-p.des)-A*p.V*q.pc;inn[q.r]+=q.net});
+  let cum=0,min=0,minW=0,fin=0;const cumA=[];
+  for(let w=1;w<=wk;w++){flow[w]=inn[w]-out[w];cum+=flow[w];
+    if(cum<0)fin+=-cum*p.tasa/4.33;
+    cumA[w]=cum;if(cum<min){min=cum;minW=w}}
+  let be=0;for(let w=minW;w<=wk;w++)if(cumA[w]>=0){be=w;break}
+  const util=p.V*(1-p.des)-C-pol-prep-fin;
+  return {S,E,End,lag,pay,A,wk,out,inn,cumA,min,minW,be,fin,util,pol,prep,C}
+}
+function simDraw(){
+  const p=simRead(),r=simCalc(p);
+  document.getElementById("s-ant-l").hidden=p.forma!=="anticipo";
+  const G=[["1","Estudios previos, CDP y PAA",1,6,"ent"],["2","Proyecto de pliego y observaciones",7,8,"ent"],["2","Preparar la oferta",7,11,"emp"],["2","Pliego definitivo y adendas",9,10,"ent"],["2","Cierre y presentación de la oferta",11,11,"emp","m"],["2","Evaluación (comité)",12,13,"ent"],["2","Traslado del informe y subsanación",14,14,"emp"],["2","Adjudicación",15,15,"ent","m"],["3","Firma, pólizas, RP y acta de inicio",15,16,"emp"]];
+  if(r.A)G.push(["3",`Anticipo ${Math.round(r.A*100)} % (se amortiza en cada pago)`,r.S,r.S,"pay","m"]);
+  G.push(["4",`Ejecución (${r.E} semanas)`,r.S,r.End,"emp"],["4","Supervisión y comités",r.S,r.End,"ent"]);
+  r.pay.forEach((q,i)=>G.push(["5",`Pago ${i+1} · ${Math.round(q.pc*100)} % · ${q.l}`,q.w,q.r,"pay"]));
+  G.push(["6","Liquidación (hasta 4 meses)",r.End+1,r.End+17,"ent"],["7","Certificado de experiencia y RUP",r.End+15,r.End+17,"emp"]);
+  const svg=document.getElementById("gsvg"),W=1100,L=285,R=20,top=34,rh=24,wk=r.wk,ch=190,gap=46;
+  const gH=top+G.length*rh,cy0=gH+gap,H=cy0+ch+40,cw=(W-L-R)/wk,x=w=>L+(w-1)*cw,ns="http://www.w3.org/2000/svg";
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.innerHTML="";
+  const el=(t,a,txt)=>{const e=document.createElementNS(ns,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;svg.appendChild(e);return e};
+  const col={emp:"var(--emp)",ent:"var(--ent)",pay:"var(--pay)"};
+  for(let m=0;m*4.33<wk;m++){const s=1+Math.round(m*4.33),e=Math.min(wk+1,1+Math.round((m+1)*4.33));
+    el("rect",{x:x(s),y:top-6,width:(e-s)*cw,height:H-top-26,style:`fill:${m%2?"var(--bg)":"var(--surface)"}`});
+    if(m%(wk>60?2:1)===0)el("text",{x:x(s)+3,y:top-12,"font-size":11,style:"fill:var(--muted)","font-family":"var(--f-mono)"},`Mes ${m+1}`)}
+  let prev=null;
+  G.forEach((g,i)=>{const y=top+i*rh;
+    if(g[0]!==prev){el("line",{x1:0,x2:W-R,y1:y-3,y2:y-3,style:"stroke:var(--line)"});el("text",{x:4,y:y+12,"font-size":11,style:"fill:var(--muted)","font-family":"var(--f-mono)"},`F${g[0]}`);prev=g[0]}
+    el("text",{x:30,y:y+12,"font-size":12.5,style:"fill:var(--fg)"},g[1]);const c=col[g[4]];
+    if(g[5]==="m"){const cx=x(g[2])+cw/2,cy=y+8;el("path",{d:`M${cx} ${cy-7} L${cx+7} ${cy} L${cx} ${cy+7} L${cx-7} ${cy} Z`,style:`fill:${c}`})}
+    else if(g[4]==="pay"){const a=x(g[2]),b=x(g[2]+1),z=x(g[3])+cw/2;
+      el("rect",{x:a,y:y+2,width:b-a,height:13,rx:3,style:"fill:var(--emp)"});
+      el("line",{x1:b,x2:z-7,y1:y+8,y2:y+8,style:`stroke:${c};stroke-width:2;stroke-dasharray:4 3`});
+      el("path",{d:`M${z} ${y+1} L${z+7} ${y+8} L${z} ${y+15} L${z-7} ${y+8} Z`,style:`fill:${c}`})}
+    else el("rect",{x:x(g[2]),y:y+2,width:x(g[3]+1)-x(g[2]),height:13,rx:3,style:`fill:${c};opacity:${g[4]==="ent"?.85:1}`})});
+  // Flujo de caja (misma escala de semanas)
+  el("text",{x:4,y:cy0-14,"font-size":13,"font-weight":700,style:"fill:var(--fg)"},"Flujo de caja semanal y saldo acumulado");
+  const maxV=Math.max(1,...r.out.map(Math.abs),...r.inn.map(Math.abs),...r.cumA.slice(1).map(Math.abs));
+  const zy=cy0+ch/2,sy=v=>zy-v/maxV*(ch/2);
+  [-1,-.5,.5,1].forEach(f=>{const v=f*maxV;el("line",{x1:L,x2:W-R,y1:sy(v),y2:sy(v),style:"stroke:var(--line);stroke-dasharray:2 3"});el("text",{x:L-6,y:sy(v)+4,"text-anchor":"end","font-size":10.5,style:"fill:var(--muted)","font-family":"var(--f-mono)"},(v/1e6).toFixed(0)+" M")});
+  el("line",{x1:L,x2:W-R,y1:zy,y2:zy,style:"stroke:var(--muted)"});el("text",{x:L-6,y:zy+4,"text-anchor":"end","font-size":10.5,style:"fill:var(--muted)","font-family":"var(--f-mono)"},"0");
+  const bw=Math.max(2,cw*.7);
+  for(let w=1;w<=wk;w++){const o=r.out[w],n=r.inn[w],bx=x(w)+(cw-bw)/2;
+    if(o)el("rect",{x:bx,y:zy+1,width:bw,height:Math.max(1,sy(-o)-zy-1),rx:2,style:"fill:var(--pay)"});
+    if(n)el("rect",{x:bx,y:sy(n),width:bw,height:Math.max(1,zy-sy(n)-1),rx:2,style:"fill:var(--ok)"})}
+  let d="";for(let w=1;w<=wk;w++)d+=(w===1?"M":"L")+(x(w)+cw/2).toFixed(1)+" "+sy(r.cumA[w]).toFixed(1);
+  el("path",{d,style:"fill:none;stroke:var(--fg);stroke-width:2"});
+  const mx=x(r.minW)+cw/2,my=sy(r.min);
+  el("circle",{cx:mx,cy:my,r:5,style:"fill:var(--pay);stroke:var(--surface);stroke-width:2"});
+  el("text",{x:Math.min(mx+10,W-230),y:Math.max(my-10,cy0+12),"font-size":12,"font-weight":700,style:"fill:var(--fg)"},`Capital necesario: ${cop(-r.min)}`);
+  if(r.be){const bx2=x(r.be)+cw/2;el("circle",{cx:bx2,cy:sy(r.cumA[r.be]),r:5,style:"fill:var(--ok);stroke:var(--surface);stroke-width:2"});
+    el("text",{x:Math.min(bx2+9,W-200),y:sy(r.cumA[r.be])-9,"font-size":12,"font-weight":700,style:"fill:var(--fg)"},`Recuperas la caja: semana ${r.be}`)}
+  for(let w=5;w<=wk;w+=5)el("text",{x:x(w)+cw/2,y:cy0+ch+16,"text-anchor":"middle","font-size":10,style:"fill:var(--muted)","font-family":"var(--f-mono)"},`S${w}`);
+  const ly=cy0+ch+32;let lx=L;[["var(--emp)","Empresa"],["var(--ent)","Entidad"],["var(--pay)","Egreso / pago"],["var(--ok)","Ingreso neto"]].forEach(([c,t])=>{el("rect",{x:lx,y:ly-9,width:12,height:10,rx:2,style:`fill:${c}`});el("text",{x:lx+16,y:ly,"font-size":11,style:"fill:var(--muted)"},t);lx+=118});
+  el("line",{x1:lx,x2:lx+18,y1:ly-4,y2:ly-4,style:"stroke:var(--fg);stroke-width:2"});el("text",{x:lx+22,y:ly,"font-size":11,style:"fill:var(--muted)"},"Saldo acumulado");
+  for(let w=1;w<=wk;w++){const h=el("rect",{x:x(w),y:cy0,width:cw,height:ch,style:"fill:transparent"});
+    bindTip(h,()=>rowsTip(`Semana ${w}`,[["var(--pay)","Egresos",r.out[w]?"−"+cop(r.out[w]):"—"],["var(--ok)","Ingresos netos",r.inn[w]?cop(r.inn[w]):"—"],["","Saldo acumulado",(r.cumA[w]<0?"−":"")+cop(Math.abs(r.cumA[w]))]]))}
+  // KPIs y nota
+  const roi=-r.min>0?r.util/(-r.min)*100:0;
+  document.getElementById("simk").innerHTML=[["neg",cop(-r.min),"capital de trabajo necesario"],["",r.be?`Semana ${r.be}`:"—","recuperas la caja"],["",cop(r.fin),"costo del dinero"],[r.util>=0?"pos":"neg",cop(Math.abs(r.util)).replace(/^/,r.util<0?"−":""),"utilidad estimada"],["",roi.toFixed(0)+" %","utilidad / capital invertido"]].map(([c,b,s])=>`<div class="${c}"><b>${b}</b><span>${s}</span></div>`).join("");
+  document.getElementById("simnote").textContent=`Supuestos: preparar la oferta cuesta 1 % del valor (${cop(r.prep)}), las pólizas 1,5 % (${cop(r.pol)}) y la ejecución ${Math.round(p.cos*100)} % repartido por igual en ${r.E} semanas. Cada pago llega ${p.dias} días después de la entrega, con ${p.des*100} % descontado por retenciones y estampillas${r.A?"; el anticipo se descuenta en proporción a cada pago":""}. No incluye IVA ni impuesto de renta. Es una simulación orientativa: valídala con tu contador.`;
+}
+document.querySelectorAll("#simf input,#simf select").forEach(i=>i.addEventListener("input",simDraw));
+simDraw();
+function simFrom(i){const d=window._simRows&&window._simRows[i];if(!d)return;
+  document.getElementById("s-val").value=Math.round(d.val/1e6);if(d.meses>=0.5)document.getElementById("s-mes").value=Math.max(1,Math.round(d.meses));
+  document.getElementById("s-forma").value=/M[ií]nima/.test(d.mod)?"final":"hitos";simDraw();
+  history.replaceState(null,"","#ruta");showTab("ruta","gantt")}
+
+/* ---- Pestaña Simulación: un contrato proyectado en el tiempo, con deducciones ---- */
+const CONS=new Set(["Diseños técnicos","BIM y levantamientos","Diseño arquitectónico","Estudios técnicos","Interventoría y supervisión"]);
+const OBRA=new Set(["Adecuaciones locativas","Obra civil menor","Mejoramiento de vivienda","Redes y sistemas","Carpintería metálica y ventanería"]);
+const CCOS={"Diseños técnicos":55,"BIM y levantamientos":55,"Diseño arquitectónico":55,"Estudios técnicos":60,"Interventoría y supervisión":62,"Redes y sistemas":72,"Adecuaciones locativas":75,"Obra civil menor":78,"Mejoramiento de vivienda":80,"Carpintería metálica y ventanería":72};
+const CIERRE={"Mínima cuantía":1,"Régimen especial / directa con ofertas":2,"Selección abreviada":3,"Concurso de méritos":4,"Licitación pública":6};
+const EJEMPLO={tipo:"Diseños técnicos",ent:"Contrato de ejemplo",obj:"Diseño hidrosanitario y de red contra incendios para una sede institucional",dep:"Bolívar",ciu:"Cartagena",modG:"Concurso de méritos",mod:"Concurso de méritos abierto",val:100e6,meses:4,rup:"Sí",url:"",fz:true,ref:"Ejemplo"};
+let CUR=EJEMPLO;
+const $=id=>document.getElementById(id);
+const fmtF=dt=>dt.toLocaleDateString("es-CO",{day:"numeric",month:"short",year:"numeric"});
+const addD=(dt,n)=>{const x=new Date(dt);x.setDate(x.getDate()+n);return x};
+const pct=v=>(Math.round(v*1000)/10).toLocaleString("es-CO")+" %";
+function cDefaults(d){
+  const cons=CONS.has(d.tipo),obra=OBRA.has(d.tipo),mes=d.meses>=0.5?Math.round(d.meses*2)/2:2;
+  const forma=/M[ií]nima/.test(d.mod||d.modG)?(mes<=2?"final":"mensual"):cons?"hitos":"mensual";
+  return {val:Math.round(d.val/1e6*10)/10,mes,forma,cos:CCOS[d.tipo]||70,dias:30,tasa:1.5,
+    ivab:cons?"total":"aiu",u:5,rte:cons?11:2,riva:15,rica:0.7,est:cons?2.5:3,cont:obra?5:0};
+}
+function cLoad(d){
+  CUR=d;const p=cDefaults(d);
+  for(const[k,v] of Object.entries({"c-val":p.val,"c-mes":p.mes,"c-forma":p.forma,"c-cos":p.cos,"c-dias":p.dias,"c-tasa":p.tasa,"c-ivab":p.ivab,"c-u":p.u,"c-rte":p.rte,"c-riva":p.riva,"c-rica":p.rica,"c-est":p.est,"c-cont":p.cont}))$(k).value=v;
+  const lugar=d.ciu&&d.ciu!==d.dep?d.ciu+", "+d.dep:d.dep;
+  $("c-card").style.setProperty("--c",SOL[d.tipo]||"var(--accent)");
+  $("c-card").innerHTML=`<div class="row"><span class="tipo" style="color:var(--fg)"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${COL[d.tipo]||"var(--accent)"};margin-right:5px"></span>${esc(d.tipo)}</span>${d.fz?`<span class="chip fz">★ Foco</span>`:""}<span class="chip">${esc(d.modG||"")}</span><span class="chip ${d.rup==="No"?"rno":""}">RUP: ${esc(d.rup)}</span></div>
+    <h3>${esc(cap(d.obj))}</h3>
+    <div class="meta"><span><b style="color:var(--fg)">${esc(d.ent)}</b></span><span>${esc(lugar)}</span><span>Valor ${cop(d.val)}</span>${d.plazo?`<span>Plazo ${esc(d.plazo)}</span>`:""}${d.ref?`<span>Ref. ${esc(d.ref)}</span>`:""}</div>
+    ${d.url?`<div class="row"><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir en SECOP ↗</a></div>`:`<div class="meta">Elige un proceso real en la lista o desde el Radar.</div>`}`;
+  cDraw();
+}
+function cRead(){const n=id=>+$(id).value||0;
+  return {V:n("c-val")*1e6,meses:Math.max(.5,n("c-mes")),forma:$("c-forma").value,ant:Math.min(50,n("c-ant"))/100,cos:n("c-cos")/100,dias:n("c-dias"),tasa:n("c-tasa")/100,
+    ivab:$("c-ivab").value,u:n("c-u")/100,rte:n("c-rte")/100,riva:n("c-riva")/100,rica:n("c-rica")/100,est:n("c-est")/100,cont:n("c-cont")/100,renta:n("c-renta")/100}}
+/* Descompone un valor bruto facturado (con IVA incluido) en base, IVA y descuentos */
+function liq(bruto,p){
+  let base,iva;
+  if(p.ivab==="total"){base=bruto/1.19;iva=bruto-base}
+  else if(p.ivab==="aiu"){const k=0.19*p.u/(1+p.u);base=bruto/(1+k);iva=bruto-base}   // IVA solo sobre la utilidad del AIU
+  else{base=bruto;iva=0}
+  const rte=base*p.rte,riva=iva*p.riva,rica=base*p.rica,est=base*p.est,cont=base*p.cont;
+  return {bruto,base,iva,rte,riva,rica,est,cont,neto:bruto-rte-riva-rica-est-cont};
+}
+function cModel(p,d){
+  const cierre=CIERRE[d.modG]||3,S=cierre+5,E=Math.max(1,Math.round(p.meses*4.33)),End=S+E-1,lag=Math.max(1,Math.ceil(p.dias/7));
+  const pay=[];
+  if(p.forma==="hitos")[[.30,.25,"Pago 1 (30 %)"],[.40,.7,"Pago 2 (40 %)"],[.30,1,"Pago final (30 %)"]].forEach(([pc,f,l])=>pay.push({w:S+Math.max(1,Math.round(E*f))-1,pc,l}));
+  else if(p.forma==="final")pay.push({w:End,pc:1,l:"Pago único"});
+  else{const n=Math.max(1,Math.round(p.meses));for(let i=1;i<=n;i++)pay.push({w:Math.min(End,S+Math.round(i*E/n)-1),pc:1/n,l:`Pago ${i} de ${n}`})}
+  const A=p.forma==="anticipo"?p.ant:0,ivaLag=6,wk=End+lag+ivaLag+2;
+  const out=Array(wk+1).fill(0),inn=Array(wk+1).fill(0),ev=Array.from({length:wk+1},()=>[]);
+  const T=liq(p.V,p),prep=.01*T.base,pol=.015*T.base,C=p.cos*T.base;
+  for(let w=1;w<=cierre;w++)out[w]+=prep/cierre;ev[1].push("Preparar oferta");
+  out[S-1]+=pol;ev[S-1].push("Pólizas y legalización");
+  for(let w=S;w<=End;w++)out[w]+=C/E;ev[S].push("Inicia ejecución");ev[End].push("Termina ejecución");
+  if(A){inn[S]+=A*p.V;ev[S].push(`Anticipo ${Math.round(A*100)} %`)}
+  pay.forEach(q=>{q.r=q.w+lag;q.L=liq(q.pc*p.V,p);q.amort=A*p.V*q.pc;q.net=q.L.neto-q.amort;inn[q.r]+=q.net;ev[q.w].push(q.l+" radicado");ev[q.r].push(q.l+" recibido");
+    const ivaDian=q.L.iva-q.L.riva;if(ivaDian>0){out[Math.min(wk,q.r+ivaLag)]+=ivaDian;ev[Math.min(wk,q.r+ivaLag)].push("IVA a la DIAN ("+q.l+")")}});
+  let cum=0,min=0,minW=1,fin=0;const cumA=[0];
+  for(let w=1;w<=wk;w++){cum+=inn[w]-out[w];cumA[w]=cum;if(cum<0)fin+=-cum*p.tasa/4.33;if(cum<min){min=cum;minW=w}}
+  let be=0;for(let w=minW;w<=wk;w++)if(cumA[w]>=0){be=w;break}
+  const totOut=out.reduce((a,b)=>a+b,0),totIn=inn.reduce((a,b)=>a+b,0);
+  const ivaD=T.iva-T.riva;
+  const utilAI=T.base-T.rica-T.est-T.cont-C-pol-prep-fin;      // utilidad antes de renta
+  const renta=Math.max(0,utilAI)*p.renta,rentaPagar=renta-T.rte;  // la retención se descuenta del impuesto
+  const gan=utilAI-renta,margen=T.base?gan/T.base*100:0,roi=-min>0?gan/(-min)*100:0;
+  return {cierre,S,E,End,lag,pay,A,wk,out,inn,ev,T,prep,pol,C,cumA,min,minW,be,fin,totOut,totIn,ivaD,utilAI,renta,rentaPagar,gan,margen,roi};
+}
+function pDef(d){const q=cDefaults(d);return {V:q.val*1e6,meses:q.mes,forma:q.forma,ant:.3,cos:q.cos/100,dias:q.dias,tasa:q.tasa/100,ivab:q.ivab,u:q.u/100,rte:q.rte/100,riva:q.riva/100,rica:q.rica/100,est:q.est/100,cont:q.cont/100,renta:.35}}
+function quick(d){if(d._q)return d._q;const m=cModel(pDef(d),d);const ini=HOY;const fecha=m.be?addD(ini,(m.be-1)*7):null;
+  return d._q={inv:-m.min,gan:m.gan,margen:m.margen,neto:m.totIn,be:fecha,sem:m.wk}}
+function quickHtml(d){const q=quick(d);return `<div class="qk"><span><i>Inversión máx.</i><b class="o">${cop(q.inv)}</b></span><span><i>Ganancia neta</i><b class="${q.gan>=0?"g":"o"}">${(q.gan<0?"−":"")+cop(Math.abs(q.gan))}</b></span><span><i>Margen</i><b>${q.margen.toFixed(0)} %</b></span><span><i>Recuperas</i><b>${q.be?q.be.toLocaleDateString("es-CO",{month:"short",year:"2-digit"}):"—"}</b></span></div>`}
+function cDraw(){
+  const p=cRead(),d=CUR;$("c-ant-l").hidden=p.forma!=="anticipo";$("c-u-l").hidden=p.ivab!=="aiu";
+  const ini=$("c-ini").value?new Date($("c-ini").value+"T12:00:00"):HOY;
+  const {cierre,S,E,End,lag,pay,A,wk,out,inn,ev,T,prep,pol,C,cumA,min,minW,be,fin,totOut,totIn,ivaD,utilAI,renta,rentaPagar,gan,margen,roi}=cModel(p,d);
+  const wd=w=>addD(ini,(w-1)*7);
+  $("c-rango").textContent=`${fmtF(wd(1))} → ${fmtF(wd(wk))}`;
+  const sg=v=>(v<0?"−":"")+cop(Math.abs(v));
+  $("ck").innerHTML=[["neg",cop(-min),"inversión máxima que pones tú"],["pos",cop(totIn),"te gira el Estado (neto)"],["neg",cop(T.rte+T.riva+T.rica+T.est+T.cont),"deducciones en los pagos"],[utilAI>=0?"pos":"neg",sg(utilAI),"utilidad antes de renta"],[gan>=0?"pos":"neg",sg(gan),`ganancia neta (tras renta ${Math.round(p.renta*100)} %)`],["",margen.toFixed(1)+" %","margen neto sobre la base"],["",roi.toFixed(0)+" %","ganancia neta / inversión máxima"],["",be?fmtF(wd(be)):"—","recuperas tu inversión"]].map(([c,b,s])=>`<div class="${c}"><b>${b}</b><span>${s}</span></div>`).join("");
+  // Tabla de deducciones
+  const R=(c,b,t,v,k,cls="")=>`<tr><td>${c}</td><td>${b}</td><td>${t}</td><td class="${cls}">${v}</td><td class="kind">${k}</td></tr>`;
+  $("cded").innerHTML=`<thead><tr><th>Concepto</th><th>Base</th><th>Tarifa</th><th>Valor</th><th>Qué es</th></tr></thead><tbody>`+
+    R("Valor del contrato","—","—",cop(T.bruto),"Lo que paga la entidad, IVA incluido")+
+    R("IVA facturado",p.ivab==="aiu"?"Utilidad AIU":"Base",p.ivab==="no"?"—":"19 %",cop(T.iva),"Se cobra a la entidad y se paga a la DIAN")+
+    R("Base sin IVA","—","—",cop(T.base),"Ingreso real de la empresa")+
+    R("Retención en la fuente","Base",pct(p.rte),"−"+cop(T.rte),"Anticipo de renta: se descuenta del impuesto","out")+
+    R("ReteIVA","IVA",pct(p.riva),"−"+cop(T.riva),"Se descuenta del IVA a pagar","out")+
+    R("ReteICA","Base",pct(p.rica),"−"+cop(T.rica),"Costo: impuesto municipal de industria y comercio","out")+
+    R("Estampillas","Base",pct(p.est),"−"+cop(T.est),"Costo: tributos departamentales y municipales","out")+
+    R("Contribución obra pública","Base",pct(p.cont),"−"+cop(T.cont),p.cont?"Costo: solo contratos de obra (Ley 1106 de 2006)":"No aplica a consultoría","out")+
+    `<tr class="tot"><td>Neto que gira la entidad</td><td></td><td></td><td class="in">${cop(T.neto)}</td><td class="kind">${pct(T.neto/T.bruto)} del valor${A?"; el anticipo se amortiza en los pagos":""}</td></tr>`+
+    R("IVA neto a pagar a la DIAN","IVA − ReteIVA","—","−"+cop(ivaD),"Sale de la caja unas semanas después de cada pago","out")+
+    R("Renta estimada","Utilidad",pct(p.renta),"−"+cop(renta),"Se paga al declarar el año","out")+
+    R("Saldo de renta tras la retención","—","—",sg(-rentaPagar),rentaPagar>=0?"Lo que faltaría pagar al declarar":"Saldo a favor: la retención superó el impuesto",rentaPagar>=0?"out":"in")+`</tbody>`;
+  // Liquidación por pago
+  const c=v=>v?cop(v):"—";
+  $("cliq").innerHTML=`<thead><tr><th>Pago</th><th>Bruto</th><th>IVA</th><th>Retefuente</th><th>ReteIVA</th><th title="ReteICA, estampillas y contribución">Otras deducc.</th>${A?"<th>Amortiza anticipo</th>":""}<th>Neto recibido</th></tr></thead><tbody>`+
+    pay.map(q=>`<tr><td>${esc(q.l)}<div style="font-size:11px;color:var(--muted)">${fmtF(wd(q.r))}</div></td><td>${cop(q.L.bruto)}</td><td>${c(q.L.iva)}</td><td class="out">−${cop(q.L.rte)}</td><td class="out">${q.L.riva?"−"+cop(q.L.riva):"—"}</td><td class="out">−${cop(q.L.rica+q.L.est+q.L.cont)}</td>${A?`<td class="out">−${cop(q.amort)}</td>`:""}<td class="in">${cop(q.net)}</td></tr>`).join("")+
+    `<tr class="tot"><td>Total</td><td>${cop(T.bruto)}</td><td>${c(T.iva)}</td><td class="out">−${cop(T.rte)}</td><td class="out">${T.riva?"−"+cop(T.riva):"—"}</td><td class="out">−${cop(T.rica+T.est+T.cont)}</td>${A?`<td class="out">−${cop(A*p.V)}</td>`:""}<td class="in">${cop(pay.reduce((a,q)=>a+q.net,0))}</td></tr></tbody>`;
+  // Gráfico semanal con fechas
+  const svg=$("csvg"),W=1100,L=64,Rr=16,Tp=40,ch=260,H=Tp+ch+64,cw=(W-L-Rr)/wk,x=w=>L+(w-1)*cw,ns="http://www.w3.org/2000/svg";
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.innerHTML="";
+  const el=(t,a,txt)=>{const e=document.createElementNS(ns,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;svg.appendChild(e);return e};
+  const ph=[["Oferta",1,cierre,"var(--sec-soft)"],["Selección y legalización",cierre+1,S-1,"var(--ent-soft)"],["Ejecución",S,End,"var(--emp-soft)"],["Cobros e impuestos",End+1,wk,"var(--pay-soft)"]];
+  ph.forEach(([n,a,b,cc])=>{if(b<a)return;el("rect",{x:x(a),y:Tp-26,width:(b-a+1)*cw,height:18,rx:3,style:`fill:${cc}`});const wpx=(b-a+1)*cw,lab=wpx>n.length*7.2+12?n:(wpx>64?n.split(" ")[0]:"");if(lab)el("text",{x:x(a)+6,y:Tp-13,"font-size":11,style:"fill:var(--fg);font-family:var(--body)"},lab)});
+  const maxV=Math.max(1,...out.map(Math.abs),...inn.map(Math.abs),...cumA.map(Math.abs)),zy=Tp+ch/2,sy=v=>zy-v/maxV*(ch/2-6);
+  [-1,-.5,.5,1].forEach(f=>{const v=f*maxV;el("line",{x1:L,x2:W-Rr,y1:sy(v),y2:sy(v),style:"stroke:var(--line);stroke-dasharray:2 3"});el("text",{x:L-6,y:sy(v)+4,"text-anchor":"end","font-size":10.5,style:"fill:var(--muted)"},(v/1e6).toFixed(Math.abs(v)<1e7?1:0)+" M")});
+  el("line",{x1:L,x2:W-Rr,y1:zy,y2:zy,style:"stroke:var(--muted)"});el("text",{x:L-6,y:zy+4,"text-anchor":"end","font-size":10.5,style:"fill:var(--muted)"},"0");
+  let lastM=-1;for(let w=1;w<=wk;w++){const dt=wd(w);if(dt.getMonth()!==lastM){lastM=dt.getMonth();el("line",{x1:x(w),x2:x(w),y1:Tp,y2:Tp+ch,style:"stroke:var(--line)"});el("text",{x:x(w)+3,y:Tp+ch+16,"font-size":10.5,style:"fill:var(--muted)"},dt.toLocaleDateString("es-CO",{month:"short",year:"2-digit"}))}}
+  const bw=Math.max(2,cw*.66);
+  for(let w=1;w<=wk;w++){const bx=x(w)+(cw-bw)/2;
+    if(out[w])el("rect",{x:bx,y:zy+1,width:bw,height:Math.max(1,sy(-out[w])-zy-1),rx:2,style:"fill:var(--pay)"});
+    if(inn[w])el("rect",{x:bx,y:sy(inn[w]),width:bw,height:Math.max(1,zy-sy(inn[w])-1),rx:2,style:"fill:var(--ok)"})}
+  let dd="";for(let w=1;w<=wk;w++)dd+=(w===1?"M":"L")+(x(w)+cw/2).toFixed(1)+" "+sy(cumA[w]).toFixed(1);
+  el("path",{d:dd,style:"fill:none;stroke:var(--fg);stroke-width:2"});
+  const mx=x(minW)+cw/2,my=sy(min);el("circle",{cx:mx,cy:my,r:5,style:"fill:var(--pay);stroke:var(--surface);stroke-width:2"});
+  el("text",{x:Math.min(mx+9,W-250),y:Math.min(my+16,Tp+ch-4),"font-size":12,"font-weight":700,style:"fill:var(--fg)"},`Máxima inversión: ${cop(-min)}`);
+  const fx=x(wk)+cw/2,fy=sy(cumA[wk]);el("circle",{cx:fx,cy:fy,r:5,style:"fill:var(--ok);stroke:var(--surface);stroke-width:2"});
+  el("text",{x:fx-8,y:fy-10,"text-anchor":"end","font-size":12,"font-weight":700,style:"fill:var(--fg)"},`Caja final (antes de renta): ${sg(cumA[wk])}`);
+  const ly=H-14;let lx=L;[["var(--pay)","Desembolsos (costos e IVA a la DIAN)"],["var(--ok)","Pagos del Estado (neto)"]].forEach(([cc,t])=>{el("rect",{x:lx,y:ly-9,width:12,height:10,rx:2,style:`fill:${cc}`});el("text",{x:lx+16,y:ly,"font-size":11,style:"fill:var(--muted)"},t);lx+=270});
+  el("line",{x1:lx,x2:lx+18,y1:ly-4,y2:ly-4,style:"stroke:var(--fg);stroke-width:2"});el("text",{x:lx+22,y:ly,"font-size":11,style:"fill:var(--muted)"},"Saldo acumulado");
+  for(let w=1;w<=wk;w++){const h=el("rect",{x:x(w),y:Tp,width:cw,height:ch,style:"fill:transparent"});
+    bindTip(h,()=>rowsTip(`Semana del ${fmtF(wd(w))}`,[["var(--pay)","Desembolsas",out[w]?"−"+cop(out[w]):"—"],["var(--ok)","Te pagan",inn[w]?cop(inn[w]):"—"],["","Saldo acumulado",sg(cumA[w])],...ev[w].map(e=>["","•",e])]))}
+  // Cronograma mensual
+  const M=new Map();for(let w=1;w<=wk;w++){const dt=wd(w),k=dt.getFullYear()*12+dt.getMonth();if(!M.has(k))M.set(k,{dt,o:0,i:0,ev:[],w});const m=M.get(k);m.o+=out[w];m.i+=inn[w];m.ev.push(...ev[w]);m.w=w}
+  let rows="";M.forEach(m=>{const acc=cumA[m.w],f=m.i-m.o;rows+=`<tr><td>${m.dt.toLocaleDateString("es-CO",{month:"long",year:"numeric"})}</td><td class="kind">${esc([...new Set(m.ev)].join(" · ")||"Ejecución")}</td><td class="out">${m.o?"−"+cop(m.o):"—"}</td><td class="in">${m.i?cop(m.i):"—"}</td><td>${sg(f)}</td><td class="${acc<0?"out":""}">${sg(acc)}</td></tr>`});
+  $("ctab").innerHTML=`<thead><tr><th>Mes</th><th>Qué pasa</th><th>Desembolsas</th><th>Te paga el Estado</th><th>Flujo del mes</th><th>Saldo acumulado</th></tr></thead><tbody>${rows}<tr class="tot"><td>Total</td><td></td><td class="out">−${cop(totOut)}</td><td class="in">${cop(totIn)}</td><td>${sg(cumA[wk])}</td><td></td></tr></tbody>`;
+  $("c-note").textContent=`Cómo se calcula: preparar la oferta cuesta 1 % de la base sin IVA y las pólizas 1,5 %; la ejecución (${Math.round(p.cos*100)} % de la base) se reparte por igual en ${E} semanas. La entidad paga ${p.dias} días después de cada entrega aprobada y gira el neto tras las deducciones. El IVA neto (IVA menos ReteIVA) se paga a la DIAN unas 6 semanas después de cada pago. La retención en la fuente sale de la caja, pero se descuenta del impuesto de renta. El costo del dinero (${cop(fin)}) es lo que cuesta financiar la inversión. No incluye IVA descontable de compras. Tarifas por defecto estimadas según la tipología (consultoría: retención 11 %; obra: 2 % y contribución 5 %): confírmalas en el pliego, en el estatuto tributario del municipio y con tu contador.`;
+}
+(function(){
+  const sel=$("c-sel"),opts=[...D].sort((a,b)=>b.score-a.score);window._cOpts=opts;
+  sel.innerHTML=`<option value="-1">Contrato de ejemplo · diseño de $100 M</option>`+opts.map((d,i)=>`<option value="${i}">${esc(cop(d.val))} · ${esc(d.tipo)} · ${esc(d.ent.slice(0,40))} (${esc(d.dep)})</option>`).join("");
+  sel.onchange=()=>cLoad(+sel.value<0?EJEMPLO:opts[+sel.value]);
+  $("c-ini").value=META.consulta;
+  document.querySelectorAll("#cf input,#cf select,#cd input,#cd select").forEach(i=>i.addEventListener("input",cDraw));
+  cLoad(EJEMPLO);
+})();
+function simContract(i){const d=window._simRows&&window._simRows[i];if(!d)return;cLoad(d);const k=(window._cOpts||[]).indexOf(d);$("c-sel").value=k;history.replaceState(null,"","#sim");showTab("sim");window.scrollTo(0,0)}
+</script>
+
+<nav class="bottom-nav" role="tablist" aria-label="Navegación principal">
+  <button class="bn-btn" role="tab" data-v="radar" aria-selected="true">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+    Radar
+  </button>
+  <button class="bn-btn" role="tab" data-v="ruta" aria-selected="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Ruta
+  </button>
+  <button class="bn-btn" role="tab" data-v="sim" aria-selected="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    Simulación
+  </button>
+</nav>
+
+
+<!-- Acceso: solo miembros de Planificar Proyectos SAS (no plan familiar) -->
+<style>
+.pp-gate{position:fixed;inset:0;z-index:50;background:#111315;color:#F2F2EE;display:flex;align-items:center;justify-content:center;padding:20px;font-family:var(--body,"Public Sans",system-ui,sans-serif)}
+.pp-card{width:min(400px,100%);background:#1C1F22;border:1px solid #3A3F44;border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:12px}
+.pp-card img{width:56px;height:56px;border-radius:14px}
+.pp-card h1{margin:0;font-family:var(--display,"Archivo","Arial Narrow",Arial,sans-serif);font-size:22px}
+.pp-card p{margin:0;color:#A3A8AD;font-size:14px;line-height:1.45}
+.pp-card input{background:#111315;color:#F2F2EE;border:1px solid #3A3F44;border-radius:12px;padding:12px;font-size:15px;font:inherit}
+.pp-card .pp-primary{background:#4fb6bc;border:none;border-radius:12px;padding:12px;font:inherit;font-weight:700;font-size:15px;color:#0e1418;cursor:pointer}
+.pp-card .pp-lnk{background:none;border:0;color:#A3A8AD;text-decoration:underline;cursor:pointer;font:inherit;padding:0;align-self:flex-start}
+#aMsg{color:#FF9B8A;font-size:13px;min-height:1em}
+</style>
+<div class="pp-gate" id="gate">
+  <form class="pp-card" id="loginForm" novalidate>
+    <img src="icon.svg" alt="">
+    <h1>Radar SECOP</h1>
+    <p id="gateTxt">Planificar Proyectos SAS · Inicia sesión con tu cuenta de Planificar Proyectos Apps.</p>
+    <div data-google-slot></div>
+    <input id="lEm" type="email" placeholder="Correo" autocomplete="email" inputmode="email">
+    <input id="lPw" type="password" placeholder="Contraseña" autocomplete="current-password">
+    <button class="pp-primary" type="submit">Iniciar sesión</button>
+    <div id="aMsg" role="alert"></div>
+    <button class="pp-lnk" type="button" id="lOut" hidden>Usar otra cuenta</button>
+    <a class="pp-lnk" href="/planificar-proyectos-apps/">Ir a Planificar Proyectos Apps</a>
+  </form>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="/google-login.js"></script>
+<script src="../apariencia.js"></script>
+<script src="../uso.js"></script>
+<script>
+(function(){
+  var PP_EMP='planificar-proyectos-sas', $g=function(id){return document.getElementById(id)};
+  if(!window.firebase||!window.FIREBASE_CONFIG){$g('aMsg').textContent='Sin conexión. Revisa tu internet.';return}
+  firebase.initializeApp(window.FIREBASE_CONFIG);
+  var auth=firebase.auth(),fs=firebase.firestore();
+  if(window.GoogleLogin) GoogleLogin.usar(auth);
+  // Tema compartido
+  if(window.Apariencia){var apl=function(st){var r=document.documentElement,light=st.mode==='light';
+      r.setAttribute('data-theme',light?'light':'dark');};
+    var l0=Apariencia.local();if(l0)apl(l0);Apariencia.on(function(st){apl(st)});}
+  $g('loginForm').addEventListener('submit',function(e){e.preventDefault();var em=$g('lEm').value.trim(),pw=$g('lPw').value;
+    if(!em||!pw){$g('aMsg').textContent='Escribe tu correo y contraseña.';return}
+    auth.signInWithEmailAndPassword(em,pw).catch(function(x){$g('aMsg').textContent=/password|credential|user-not-found/.test(x&&x.code||'')?'Correo o contraseña incorrectos.':'No se pudo iniciar sesión ('+(x&&x.code||'error')+')'})});
+  function salir(){auth.signOut().then(function(){location.reload()})}
+  $g('lOut').onclick=salir;
+  function sinAcceso(u){$g('gate').hidden=false;$g('lEm').hidden=$g('lPw').hidden=true;
+    $g('loginForm').querySelector('.pp-primary').hidden=true;
+    var gs=document.querySelector('[data-google-slot]');if(gs)gs.hidden=true;$g('lOut').hidden=false;
+    $g('gateTxt').textContent='La cuenta '+u.email+' no tiene acceso al Radar SECOP. Es solo para miembros de Planificar Proyectos SAS; pide acceso al administrador.'}
+  auth.onAuthStateChanged(function(u){
+    if(!u){$g('gate').hidden=false;return}
+    var em=String(u.email||'').toLowerCase();
+    Uso.esAdmin(fs,u).then(function(adm){
+      if(adm) return {ok:true};
+      return fs.collection('invitaciones').doc(em).get().then(function(sn){var d=sn.exists?sn.data():null;
+        return {ok:!!d&&d.estado!=='revocado'&&d.empresaId===PP_EMP&&Uso.tipoDe(d)!=='familiar'&&(d.apps||{}).radar!==false}
+      },function(){return {ok:false}});
+    }).then(function(r){
+      if(!r.ok) return sinAcceso(u);
+      $g('gate').hidden=true;
+      try{Uso.start(fs,u,'radar')}catch(e){}
+      try{if(window.Apariencia) Apariencia.connect(fs,u.uid,function(){return Apariencia.local()})}catch(e){}
+    });
+  });
+})();
+</script>
+</body></html>
