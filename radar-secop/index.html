@@ -11,14 +11,14 @@
 <meta name="twitter:image" content="https://www.planificarproyectos.com/og-image.jpg">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Layout general: barra (tema + limpiar) → vistas rápidas → KPIs → paneles de gráficos-filtro (multiselección) → chips activos + búsqueda → tabla ordenada por conveniencia */
 :root{
   --bg:#f4f6f7; --surface:#ffffff; --surface-2:#f8fafa; --fg:#16212a; --muted:#5d6a74; --line:#dde3e7;
   --accent:#0d6b72; --accent-2:#e3f1f1; --focus:#c2560f; --focus-soft:#fbe9dc; --bar:#9fb4bd; --bar-sel:#0d6b72;
   --hi:#1f7a3f; --hi-bg:#ddf2e3; --mid:#8a5a00; --mid-bg:#fbefcf; --lo:#5d6a74; --lo-bg:#edf0f2;
-  --display:"Archivo","Arial Narrow",Arial,sans-serif; --body:"Public Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --display:"Raleway","Helvetica Neue",Arial,sans-serif; --body:"Manrope",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
   --shadow:0 1px 2px rgba(22,33,42,.06);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
@@ -401,7 +401,6 @@ td.fz{box-shadow:inset 3px 0 0 var(--focus)}
     </div>
     <div class="actions">
       <button class="btn" id="clear" type="button">✕ Limpiar filtros</button>
-      <button class="btn" id="theme" type="button" aria-label="Cambiar tema"></button>
     </div>
   </div>
 
@@ -409,6 +408,7 @@ td.fz{box-shadow:inset 3px 0 0 var(--focus)}
     <button class="tab" role="tab" id="t-radar" aria-controls="v-radar" data-v="radar">Radar de procesos <small>dónde hay contratos</small></button>
     <button class="tab" role="tab" id="t-ruta" aria-controls="v-ruta" data-v="ruta">Ruta del contrato <small>cómo se gana y se cobra</small></button>
     <button class="tab" role="tab" id="t-sim" aria-controls="v-sim" data-v="sim">Simulación <small>caja y ganancia de un contrato</small></button>
+    <button class="tab" role="tab" id="t-cuenta" aria-controls="v-cuenta" data-v="cuenta">Cuenta <small>apariencia y sesión</small></button>
   </nav>
 
   <section class="view" id="v-radar" role="tabpanel" aria-labelledby="t-radar">
@@ -779,6 +779,57 @@ td.fz{box-shadow:inset 3px 0 0 var(--focus)}
     </div>
     <p class="note" id="c-note"></p>
   </section>
+
+  <style>
+  #v-cuenta .cta-wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+  #v-cuenta .cta-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+  #v-cuenta .cta-card>.cta-head{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:14px 16px 0}
+  #v-cuenta .cta-body{padding:16px;display:flex;flex-direction:column;gap:16px}
+  #v-cuenta .cta-name{font-family:var(--display);font-weight:700;font-size:20px;padding:16px 16px 4px}
+  #v-cuenta .cta-line{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:0 16px 16px}
+  #v-cuenta .cta-email{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+  #v-cuenta .cta-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  #v-cuenta .cta-rl{display:flex;flex-direction:column;gap:2px;min-width:0}
+  #v-cuenta .cta-rl b{font-weight:600;font-size:15px}
+  #v-cuenta .cta-sub{font-size:12.5px;color:var(--muted)}
+  #v-cuenta .cta-switch{position:relative;flex:0 0 auto;width:46px;height:26px;border-radius:99px;border:0;background:var(--line);cursor:pointer;transition:background .15s}
+  #v-cuenta .cta-switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+  #v-cuenta .cta-switch[aria-checked="true"]{background:var(--accent)}
+  #v-cuenta .cta-switch[aria-checked="true"]::after{transform:translateX(20px)}
+  #v-cuenta .cta-pick{--ap-bg:var(--surface)}
+  #v-cuenta .cta-link{display:flex;align-items:center;justify-content:space-between;gap:10px;text-decoration:none;color:var(--fg);font-weight:500}
+  #v-cuenta .cta-link svg{width:18px;height:18px;flex:0 0 auto;margin-right:8px;stroke:var(--muted);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px}
+  #v-cuenta .cta-go{color:var(--accent);font-size:13px;white-space:nowrap}
+  #v-cuenta .cta-salir{margin-top:4px;padding:12px;border:1px solid var(--line);border-radius:12px;background:transparent;color:var(--focus);font:inherit;font-weight:600;cursor:pointer}
+  #v-cuenta .cta-salir:hover{border-color:var(--focus)}
+  </style>
+  <section class="view" id="v-cuenta" role="tabpanel" aria-labelledby="t-cuenta" hidden>
+    <div class="cta-wrap">
+      <div class="cta-card">
+        <div class="cta-name" id="cta-nombre">—</div>
+        <div class="cta-line"><span class="cta-email" id="cta-email"></span><span data-cuenta-tipo hidden></span></div>
+      </div>
+      <div class="cta-card">
+        <div class="cta-head">Apariencia</div>
+        <div class="cta-body">
+          <div class="cta-row">
+            <div class="cta-rl"><b>Modo oscuro</b><span class="cta-sub" id="cta-modo-sub"></span></div>
+            <button class="cta-switch" role="switch" id="cta-modo" aria-checked="false" aria-label="Modo oscuro" type="button"></button>
+          </div>
+          <div class="cta-pick" id="cta-apariencia-slot"></div>
+        </div>
+      </div>
+      <div class="cta-card">
+        <div class="cta-body">
+          <a class="cta-link" href="/planificar-proyectos-apps/">
+            <span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Planificar Proyectos Apps</span>
+            <span class="cta-go">Ir al panel →</span>
+          </a>
+        </div>
+      </div>
+      <button class="cta-salir" id="cta-salir" type="button">Cerrar sesión</button>
+    </div>
+  </section>
 </div>
 <div id="tip" role="tooltip"></div>
 
@@ -964,10 +1015,7 @@ const seq=(n,max)=>n?`color-mix(in oklab, var(--seq-hi) ${Math.round(15+85*n/max
 const F={p:null,q:""};KEYS.forEach(k=>F[k]=new Set());
 let preset=null,sort={k:"score",dir:-1};
 const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
-const root=document.documentElement;
-function setTheme(t){root.setAttribute("data-theme",t);document.getElementById("theme").innerHTML=t==="dark"?"☀ Modo claro":"☾ Modo oscuro";ls.set("radar-theme",t)}
-setTheme(ls.get("radar-theme")==="dark"?"dark":"light");
-document.getElementById("theme").onclick=()=>setTheme(root.getAttribute("data-theme")==="dark"?"light":"dark");
+/* El modo claro/oscuro y el color de énfasis los maneja Apariencia (compartido con las demás apps); ver script al final */
 function actualizarSub(esFallback){
   const desde=D.length?D.reduce((m,r)=>r.pub<m?r.pub:m,D[0].pub):META.desde;
   const sufijo=esFallback?" · <span style='color:var(--focus);font-size:12px'>⚠ Datos de muestra — API no disponible</span>":" · <span style='color:var(--hi);font-size:12px'>✓ Actualizado en tiempo real</span>";
@@ -1198,7 +1246,7 @@ function showTab(v,anchor){
 }
 /* Delegación: funciona aunque la barra inferior se declare en el HTML después de este script */
 document.addEventListener("click",e=>{const b=e.target.closest(".tab,.bn-btn");if(!b)return;history.replaceState(null,"","#"+b.dataset.v);showTab(b.dataset.v)});
-function fromHash(){const h=location.hash.slice(1);if(["ruta","radar","sim"].includes(h))return showTab(h);
+function fromHash(){const h=location.hash.slice(1);if(["ruta","radar","sim","cuenta"].includes(h))return showTab(h);
   const el=h&&document.getElementById(h);if(el&&el.closest("#v-ruta"))showTab("ruta",h);else showTab("radar")}
 addEventListener("hashchange",fromHash);fromHash();
 document.querySelectorAll("#v-ruta .golink").forEach(b=>b.onclick=()=>{
@@ -1443,6 +1491,10 @@ function simContract(i){const d=window._simRows&&window._simRows[i];if(!d)return
     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
     Simulación
   </button>
+  <button class="bn-btn" role="tab" data-v="cuenta" aria-selected="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Cuenta
+  </button>
 </nav>
 
 
@@ -1486,15 +1538,19 @@ function simContract(i){const d=window._simRows&&window._simRows[i];if(!d)return
   firebase.initializeApp(window.FIREBASE_CONFIG);
   var auth=firebase.auth(),fs=firebase.firestore();
   if(window.GoogleLogin) GoogleLogin.usar(auth);
-  // Tema compartido
-  if(window.Apariencia){var apl=function(st){var r=document.documentElement,light=st.mode==='light';
-      r.setAttribute('data-theme',light?'light':'dark');};
-    var l0=Apariencia.local();if(l0)apl(l0);Apariencia.on(function(st){apl(st)});}
+  // Color de énfasis y modo claro/oscuro compartidos con las demás apps
+  if(window.Apariencia){var apl=function(st){var r=document.documentElement,light=st.mode==='light',a=light?Apariencia.forLight(st.accent):st.accent;
+      r.setAttribute('data-theme',light?'light':'dark');
+      r.style.setProperty('--accent',a);r.style.setProperty('--bar-sel',a);
+      r.style.setProperty('--accent-2','color-mix(in srgb,'+a+' 15%, transparent)');
+      var sw=$g('cta-modo');if(sw){sw.setAttribute('aria-checked',String(!light));var sub=$g('cta-modo-sub');if(sub)sub.textContent=(light?'Desactivado':'Activado')+' · no depende del dispositivo';}};
+    var l0=Apariencia.local();if(l0)apl(l0);Apariencia.on(function(st){apl(st)});
+    var sw0=$g('cta-modo');if(sw0)sw0.onclick=function(){var dark=sw0.getAttribute('aria-checked')==='true';Apariencia.set({mode:dark?'light':'dark'});};}
   $g('loginForm').addEventListener('submit',function(e){e.preventDefault();var em=$g('lEm').value.trim(),pw=$g('lPw').value;
     if(!em||!pw){$g('aMsg').textContent='Escribe tu correo y contraseña.';return}
     auth.signInWithEmailAndPassword(em,pw).catch(function(x){$g('aMsg').textContent=/password|credential|user-not-found/.test(x&&x.code||'')?'Correo o contraseña incorrectos.':'No se pudo iniciar sesión ('+(x&&x.code||'error')+')'})});
   function salir(){auth.signOut().then(function(){location.reload()})}
-  $g('lOut').onclick=salir;
+  $g('lOut').onclick=salir;var _cs=$g('cta-salir');if(_cs)_cs.onclick=salir;
   function sinAcceso(u){$g('gate').hidden=false;$g('lEm').hidden=$g('lPw').hidden=true;
     $g('loginForm').querySelector('.pp-primary').hidden=true;
     var gs=document.querySelector('[data-google-slot]');if(gs)gs.hidden=true;$g('lOut').hidden=false;
@@ -1510,6 +1566,10 @@ function simContract(i){const d=window._simRows&&window._simRows[i];if(!d)return
     }).then(function(r){
       if(!r.ok) return sinAcceso(u);
       $g('gate').hidden=true;
+      // Poblar sección Cuenta
+      $g('cta-email').textContent=em;
+      try{fs.collection('users').doc(u.uid).collection('perfil').doc('datos').onSnapshot(function(d){var n=d.exists&&d.data().nombre||'';$g('cta-nombre').textContent=n||em.split('@')[0]})}catch(e){$g('cta-nombre').textContent=em.split('@')[0]}
+      if(window.Apariencia){try{var slot=$g('cta-apariencia-slot');slot.innerHTML='';slot.appendChild(Apariencia.picker())}catch(e){}}
       try{Uso.start(fs,u,'radar')}catch(e){}
       try{if(window.Apariencia) Apariencia.connect(fs,u.uid,function(){return Apariencia.local()})}catch(e){}
     });
