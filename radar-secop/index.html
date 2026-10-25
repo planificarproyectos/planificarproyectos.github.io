@@ -404,7 +404,7 @@ td.fz{box-shadow:inset 3px 0 0 var(--focus)}
   --hi:var(--accent-fg); --hi-bg:color-mix(in srgb,var(--accent) 18%,transparent);
   --mid:#FFD27A; --mid-bg:rgba(255,210,122,.14); --lo:#A3A8AD; --lo-bg:#2A2E32;
   --focus:var(--accent-fg); --focus-soft:color-mix(in srgb,var(--accent) 14%,transparent);
-  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#2f9e2f;--s7:#9085e9;--s8:#e66767;
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#2f9e2f;--s7:#9085e9;--s8:#e66767;--s0:#5C6268;
   --seq-lo:#2A2E32; --seq-hi:var(--accent); --seq-ink:var(--accent-ink); --zero:#24282C;
   --emp:#4cc3b0;--emp-soft:#16302b;--ent:#93a3ec;--ent-soft:#1f2540;--sec:#a9ada6;--sec-soft:#252a27;--pay:#e2a94a;--pay-soft:#33291a;--ok:#5fc48c;--warn:#e2a94a;--todo:#6c7671;
   --shadow:none;
@@ -417,7 +417,7 @@ td.fz{box-shadow:inset 3px 0 0 var(--focus)}
   --hi:var(--accent-fg); --hi-bg:color-mix(in srgb,var(--accent) 26%,transparent);
   --mid:#8a5a00; --mid-bg:#fbefcf; --lo:#596066; --lo-bg:#E8EBE5;
   --focus:var(--accent-fg); --focus-soft:color-mix(in srgb,var(--accent) 20%,transparent);
-  --seq-lo:#E8EBE5; --seq-hi:var(--accent); --seq-ink:var(--accent-ink); --zero:#EEF0EC;
+  --s0:#B4BAB0; --seq-lo:#E8EBE5; --seq-hi:var(--accent); --seq-ink:var(--accent-ink); --zero:#EEF0EC;
   --shadow:none;
 }
 :root{
@@ -503,6 +503,8 @@ td{border-bottom-color:var(--line)}
 td.fz{box-shadow:inset 3px 0 0 var(--accent)}
 tr:hover td{background:var(--surface-2)}
 .srow .lab[aria-pressed="true"]{background:var(--accent-2)}
+#ch-sec .bar{grid-template-columns:minmax(0,1.5fr) minmax(60px,1fr) 42px}
+#ch-sec .bar .lab{white-space:normal;line-height:1.2}
 
 /* Menú inferior */
 .bottom-nav{border-top:0;min-height:72px}
@@ -609,6 +611,7 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
   <h2 class="sec-t">Filtros de conveniencia <small>Se pueden marcar varios valores en cada uno</small></h2>
   <div class="grid4">
     <div class="panel"><h2>Conveniencia</h2><p class="hint">Puntaje 0–100 para empezar.</p><div class="stack" id="chPri"></div></div>
+    <div class="panel"><h2>Sector</h2><p class="hint">Según el objeto del proceso.</p><div class="bars" id="ch-sec"></div></div>
     <div class="panel"><h2>¿Exige RUP?</h2><div class="bars" id="ch-rup"></div></div>
     <div class="panel"><h2>Valor del proceso</h2><div class="bars" id="ch-rng"></div></div>
     <div class="panel"><h2>Región</h2><div class="bars" id="ch-zona"></div></div>
@@ -637,6 +640,7 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
     <tbody id="tb"></tbody>
   </table></div>
   <div class="cards" id="cards"></div>
+  <button class="btn" id="mas" type="button" hidden style="justify-self:center">Ver más</button>
 
   <div class="note">
     <div><b>Antes de ofertar:</b> confirma en SECOP la fecha de cierre (los datos abiertos no la traen), si el proceso está limitado a Mipymes de la región y los requisitos habilitantes. Para presentar oferta, el registro de proveedor en SECOP II debe estar finalizado.</div>
@@ -996,27 +1000,53 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
 <script>
 /* ── Clasificador de tipología por UNSPSC y palabras clave ── */
 function clasificarTipo(unspsc, obj){
-  const o=(obj||"").toLowerCase();
+  const o=(obj||"").toLowerCase().replace(/mano de obra/g,"");
   const u=String(unspsc||"");
-  if(/bim|scan|escaner|nube de puntos|levantamiento topogr/i.test(o))return"BIM y levantamientos";
+  if(/\bbim\b|escaneo l[aá]ser|nube de puntos|levantamientos? topogr|topograf[ií]a/i.test(o))return"BIM y levantamientos";
   if(/mejoramiento.{0,30}vivienda|viviendas.{0,30}mejoram/i.test(o))return"Mejoramiento de vivienda";
   if(/interventor[ií]a|supervisi[oó]n t[eé]cn/i.test(o))return"Interventoría y supervisión";
-  if(/estudios? y dise[ñn]|dise[ñn]os?.{0,30}(vía|vial|hidr|sanit|estructur|eléctric)|estudios? de fact/i.test(o))return"Diseños técnicos";
+  if(/estudios? y dise[ñn]|dise[ñn]os?.{0,30}(v[ií]a|vial|hidr|sanit|estructur|el[eé]ctric)|estudios? de fact/i.test(o))return"Diseños técnicos";
   if(/arquitect|dise[ñn]o.{0,20}(arq|espac|urban)/i.test(o))return"Diseño arquitectónico";
-  if(/estudio.{0,30}(suelo|geot|ambi|hidr|topo|sísm|vulner)/i.test(o))return"Estudios técnicos";
-  if(/red.{0,30}(eléctric|hidrosanitari|gas|voz|datos|cctv|detecc)|sistema.{0,30}(bomb|incend|alarma|hidráulic)/i.test(o))return"Redes y sistemas";
-  if(/carpintería metálica|ventaner|alumin|cerrajer|herrería/i.test(o))return"Carpintería metálica y ventanería";
-  if(/adecuac|mantenimiento|locativ|remodelac|reforzam|cubierta|imperme|pintura|cielo raso|drywall/i.test(o))return"Adecuaciones locativas";
-  if(/obra.{0,20}(civil|constru|pavim|vía|placa|muro|cerco|parque)|constru|mejoramiento.{0,30}(vía|vial|infraestr)/i.test(o))return"Obra civil menor";
-  // fallback por UNSPSC
+  if(/estudio.{0,30}(suelo|geot|ambi|hidr|topo|s[ií]sm|vulner)/i.test(o))return"Estudios técnicos";
+  if(/\bred(es)?\b.{0,30}(el[eé]ctric|hidrosanitari|gas|voz|datos|cctv|detecc)|sistema.{0,30}(bomb|incend|alarma|hidr[aá]ulic)/i.test(o))return"Redes y sistemas";
+  if(/carpinter[ií]a met[aá]lica|ventaner|cerrajer|herrer[ií]a/i.test(o))return"Carpintería metálica y ventanería";
+  if(/adecuaci|locativ|remodelaci|reforzamiento|cubierta|impermeabiliz|cielo raso|drywall|mantenimiento.{0,50}(infraestructura|edific|sede|inmueble|instalaciones f[ií]sicas|planta f[ií]sica|fachada|ba[ñn]os|aulas|cubierta)|pintura.{0,40}(sede|edific|fachada|instalaciones|muros|paredes|aulas)/i.test(o))return"Adecuaciones locativas";
+  if(/obras? (civil|de construcci|f[ií]sica|p[uú]blica|menor)|construcci[oó]n de (la |el |los |las |una? )?(v[ií]a|placa|muro|cerco|parque|puente|sede|edific|aula|cancha|bater[ií]a|anden|pozo|tanque|alcantarill|acueduct|redes|centro|polideportivo|escenario|vivienda)|pavimentaci|placa huella|parcheo|mejoramiento.{0,30}(v[ií]a|vial|infraestr)|(mantenimiento|rehabilitaci[oó]n|recuperaci[oó]n).{0,40}(malla vial|v[ií]as?\b|vial|puente|andenes)/i.test(o))return"Obra civil menor";
+  // respaldo por código UNSPSC (cuando la entidad lo registró)
   if(["81101500","81101513","81102200","80101500","80101600","80101706"].includes(u))return"Interventoría y supervisión";
-  if(["72101500","72101507"].includes(u))return"Adecuaciones locativas";
-  if(["72102900","72103300","72121400","72121403"].includes(u))return"Adecuaciones locativas";
+  if(["72101500","72101507","72102900","72103300","72121400","72121403"].includes(u))return"Adecuaciones locativas";
   if(["72141000","72141100"].includes(u))return"Obra civil menor";
-  if(["72152000","72152500","72154022"].includes(u))return"Redes y sistemas";
+  if(["72152000","72152500","72154022","46191600"].includes(u))return"Redes y sistemas";
   if(["30131600"].includes(u))return"Mejoramiento de vivienda";
-  if(["46191600"].includes(u))return"Redes y sistemas";
-  return"Obra civil menor";
+  if(/^72/.test(u))return"Obra civil menor";
+  return"Otros sectores";
+}
+
+/* ── Sector: tipología de ingeniería → código UNSPSC (si existe) → palabras del objeto ──
+   En datos.gov.co ~95 % de los procesos vigentes viene sin código UNSPSC, por eso se clasifica por texto. */
+const SECTORES=["Construcción y obra","Ingeniería y consultoría","Mantenimiento de equipos y vehículos","Tecnología y comunicaciones","Salud","Alimentos","Aseo, cafetería y vigilancia","Transporte y combustibles","Suministros y dotación","Eventos, capacitación y publicidad","Seguros","Ambiental","Servicios profesionales","Otros"];
+const SEC_TIPO={"Diseños técnicos":1,"BIM y levantamientos":1,"Diseño arquitectónico":1,"Estudios técnicos":1,"Interventoría y supervisión":1};
+const SEC_SEG={"72":0,"30":0,"81":1,"85":4,"42":4,"51":4,"43":3,"50":5,"76":6,"92":6,"78":7,"15":7,"25":7,"84":10,"86":9,"82":9,"77":11,"80":12};
+const SEC_RE=[
+  [10,/p[oó]liza|programa de seguros|seguros? (de|para|que|todo)|intermediario de seguros|corredor de seguros/],
+  [4,/medicament|m[eé]dic|odontol|hospital|cl[ií]nic|laboratorio cl|f[aá]rmac|salud|paciente|ambulancia|vacuna|enfermer/],
+  [5,/aliment|refrigerio|v[ií]veres|raciones|\bpae\b|comida|almuerzo|catering|restaurante|mercados?\b/],
+  [6,/\baseo\b|cafeter[ií]a|vigilancia|seguridad privada|limpieza|fumigaci|desinfecci/],
+  [2,/mantenimiento.{0,60}(veh[ií]cul|parque automotor|equipos?|maquinaria|aires? acondicionado|ascensor|planta el[eé]ctrica|motobomba|extintor|motos?\b)|repuestos|llantas|lubricantes/],
+  [3,/software|licencia|computador|c[oó]mputo|tecnol[oó]g|inform[aá]tic|internet|conectividad|hosting|servidor|impresora|plataforma|digital|fibra [oó]ptica|telecomunic|c[aá]maras? de seguridad|cctv|\bti\b/],
+  [7,/transporte|combustible|gasolina|\bacpm\b|di[eé]sel|veh[ií]culos?|mensajer[ií]a|tiquetes|pasajes|parqueadero/],
+  [9,/evento|capacitaci|formaci[oó]n|talleres? de|publicidad|publicitari|impres(os|i[oó]n)|divulgaci|comunicaciones|audiovisual|log[ií]stica|diplomado|curso/],
+  [11,/ambiental|residuos|reforest|siembra|vivero|arborizaci|saneamiento|cuenca|forestal/],
+  [8,/suministro|adquisici[oó]n|compra|dotaci[oó]n|papeler[ií]a|uniforme|mobiliario|elementos|insumos|materiales|ferreter|equipos?\b/],
+  [0,/obras?\b|construcci|adecuaci|remodelaci|pavimen|mantenimiento.{0,40}(infraestructura|edific|sede|v[ií]a|instalaciones)/],
+  [1,/consultor[ií]a|estudios?\b|dise[ñn]o|interventor|topograf/],
+  [12,/prestaci[oó]n de servicios|asesor[ií]a|apoyo a la gesti[oó]n|profesional|jur[ií]dic|contable|auditor/]
+];
+function sectorDe(tipo,unspsc,obj){
+  if(tipo!=="Otros sectores")return SECTORES[SEC_TIPO[tipo]?1:0];
+  const g=String(unspsc||"").slice(0,2);if(g in SEC_SEG)return SECTORES[SEC_SEG[g]];
+  const o=String(obj||"").toLowerCase();for(const[i,re]of SEC_RE)if(re.test(o))return SECTORES[i];
+  return"Otros";
 }
 
 /* ── Normalizador de modalidad ── */
@@ -1024,6 +1054,7 @@ function normMod(m){
   m=String(m||"");
   if(/m[ií]nima/i.test(m))return"Mínima cuantía";
   if(/con ofertas/i.test(m))return"Contratación régimen especial (con ofertas)";
+  if(/subasta inversa/i.test(m))return"Selección abreviada subasta inversa";
   if(/selec/i.test(m))return"Selección Abreviada de Menor Cuantía";
   if(/licitaci/i.test(m))return"Licitación pública";
   if(/concurso/i.test(m))return"Concurso de méritos abierto";
@@ -1050,7 +1081,7 @@ function normRup(v){
 const DEP_NORM={"Distrito Capital de Bogotá":"Bogotá D.C.","Bogotá":"Bogotá D.C.","Archipiélago de San Andrés, Providencia y Santa Catalina":"San Andrés, Providencia y Santa Catalina","No Definido":"Sin definir"};
 function modRup(m){
   if(/m[ií]nima/i.test(m))return"No";           // Ley 1150 art. 6: mínima cuantía no exige RUP
-  if(/con ofertas/i.test(m))return"Por verificar";
+  if(/con ofertas|solicitud de informaci|enajenaci/i.test(m))return"Por verificar";
   return"Sí";
 }
 function apiToRow(r){
@@ -1074,58 +1105,36 @@ function apiToRow(r){
     obj.slice(0,200), mod, val, pub, fase, unspsc, plazo, uid, rup];
 }
 
-const FASES_ACTIVAS=new Set([
-  "Publicado","Abierto","Presentación de oferta","Presentación de observaciones",
-  "Fase de ofertas","Fase de Selección (Presentación de ofertas)","Proceso de ofertas",
-  "Manifestación de interés","Clarificaciones","Clarification","Selección","Calificación"
-]);
-
-const UNSPSC_FILTRO=[
-  "30131600","46191600",
-  "72101500","72101507","72102900","72103300","72121400","72121403",
-  "72141000","72141100","72152000","72152500","72154022",
-  "80101500","80101600","80101706","81101500","81101513","81102200"
-];
-
-/* Modalidades competitivas (se excluyen contratación directa y régimen especial sin ofertas) */
+/* Modalidades en las que una empresa puede presentar oferta (se excluyen contratación directa y régimen especial
+   sin ofertas: ~95 % de los registros vigentes, casi todos contratos con personas naturales) */
 const MODS_API=[
-  "Mínima cuantía","Selección Abreviada de Menor Cuantía","Concurso de méritos abierto",
-  "Licitación pública","Licitación pública Obra Publica",
-  "Contratación régimen especial (con ofertas)","Contratación Directa (con ofertas)"
+  "Mínima cuantía","Selección Abreviada de Menor Cuantía","Seleccion Abreviada Menor Cuantia Sin Manifestacion Interes",
+  "Selección abreviada subasta inversa","Concurso de méritos abierto",
+  "Licitación pública","Licitación pública Obra Publica","Licitación Pública Acuerdo Marco de Precios",
+  "Contratación régimen especial (con ofertas)","Contratación Directa (con ofertas)",
+  "Solicitud de información a los Proveedores","Enajenación de bienes con subasta","Enajenación de bienes con sobre cerrado"
 ];
-
-const VALOR_MAX=1e9;
 const DIAS_ATRAS=60;
+const CAMPOS="entidad,departamento_entidad,ciudad_entidad,referencia_del_proceso,descripci_n_del_procedimiento,modalidad_de_contratacion,precio_base,fecha_de_publicacion_del,fase,codigo_principal_de_categoria,duracion,unidad_de_duracion,urlproceso";
 
 async function cargarDesdeAPI(){
   const base="https://www.datos.gov.co/resource/p6dx-8zbt.json";
-  // En datos.gov.co los códigos UNSPSC vienen con prefijo "V1." (ej. V1.72102900)
   const lista=a=>a.map(v=>`'${v.replace(/'/g,"''")}'`).join(",");
   const desde=new Date(Date.now()-DIAS_ATRAS*864e5).toISOString().slice(0,10)+"T00:00:00";
   const where=[
-    `codigo_principal_de_categoria in(${lista(UNSPSC_FILTRO.map(c=>"V1."+c))})`,
     `modalidad_de_contratacion in(${lista(MODS_API)})`,
-    `estado_del_procedimiento in('Publicado','Abierto')`, // abiertos a ofertas (la columna "fase" conserva la última fase aunque ya cerró)
-    `precio_base > 0 AND precio_base <= ${VALOR_MAX}`,
+    `estado_del_procedimiento in('Publicado','Abierto')`, // vigentes (la columna "fase" conserva la última fase aunque ya cerró)
     `fecha_de_publicacion_del >= '${desde}'`
   ].join(" AND ");
-  const PAG=1000, TOPE=10000, todo=[];
-  for(let off=0;off<TOPE;off+=PAG){
-    const params=new URLSearchParams({"$where":where,"$order":"fecha_de_publicacion_del DESC, id_del_proceso","$limit":String(PAG),"$offset":String(off)});
-    const resp=await fetch(`${base}?${params}`,{signal:AbortSignal.timeout(20000)});
-    if(!resp.ok)throw new Error("HTTP "+resp.status);
-    const pag=await resp.json();
-    todo.push(...pag);
-    if(pag.length<PAG)break;
-  }
-  // Filtrar fases activas
-  return todo
-    .filter(r=>{
-      const f=String(r.fase||r.estado_del_procedimiento||"");
-      return [...FASES_ACTIVAS].some(fa=>f.toLowerCase().includes(fa.toLowerCase()));
-    })
+  const get=async p=>{const r=await fetch(`${base}?${new URLSearchParams({"$where":where,...p})}`,{signal:AbortSignal.timeout(30000)});if(!r.ok)throw new Error("HTTP "+r.status);return r.json()};
+  const n=+((await get({"$select":"count(*) as n"}))[0]||{}).n||0;
+  const PAG=1000, pags=Math.min(20,Math.ceil(n/PAG));
+  // Las páginas se piden en paralelo: unos 6.500 procesos cargan en pocos segundos
+  const res=await Promise.all(Array.from({length:pags},(_,i)=>get({"$select":CAMPOS,"$order":"fecha_de_publicacion_del DESC, id_del_proceso","$limit":String(PAG),"$offset":String(i*PAG)})));
+  const vistos=new Set();
+  return res.flat().filter(r=>{const k=(r.urlproceso&&r.urlproceso.url)||r.referencia_del_proceso+"|"+r.entidad;if(vistos.has(k))return false;vistos.add(k);return true})
     .map(apiToRow)
-    .filter(r=>r[7]>0&&r[8]); // debe tener valor y fecha
+    .filter(r=>r[8]); // debe tener fecha
 }
 
 /* ── Inicialización ── */
@@ -1139,20 +1148,21 @@ const CENTRO=new Set(["Bogotá D.C.","Cundinamarca","Boyacá","Tolima","Meta"]);
 let META=_META_FB;
 const HOY=new Date();
 /* Tipologías en orden fijo = posición fija de color (no se reasigna al filtrar) */
-const LINEAS=["Diseños técnicos", "BIM y levantamientos", "Diseño arquitectónico", "Estudios técnicos", "Interventoría y supervisión", "Redes y sistemas", "Adecuaciones locativas", "Obra civil menor", "Mejoramiento de vivienda", "Carpintería metálica y ventanería"];
-const SHORT={"Diseños técnicos": "Diseños", "BIM y levantamientos": "BIM", "Diseño arquitectónico": "Arquitect.", "Estudios técnicos": "Estudios", "Interventoría y supervisión": "Interv.", "Redes y sistemas": "Redes", "Adecuaciones locativas": "Adecuac.", "Obra civil menor": "Obra civil", "Mejoramiento de vivienda": "Vivienda", "Carpintería metálica y ventanería": "Metálica"};
-const SLOT={"Diseños técnicos": "s1", "BIM y levantamientos": "h1", "Diseño arquitectónico": "s2", "Estudios técnicos": "s3", "Interventoría y supervisión": "s4", "Redes y sistemas": "s5", "Adecuaciones locativas": "s6", "Obra civil menor": "s7", "Mejoramiento de vivienda": "h7", "Carpintería metálica y ventanería": "s8"};
+const LINEAS=["Diseños técnicos", "BIM y levantamientos", "Diseño arquitectónico", "Estudios técnicos", "Interventoría y supervisión", "Redes y sistemas", "Adecuaciones locativas", "Obra civil menor", "Mejoramiento de vivienda", "Carpintería metálica y ventanería", "Otros sectores"];
+const SHORT={"Diseños técnicos": "Diseños", "BIM y levantamientos": "BIM", "Diseño arquitectónico": "Arquitect.", "Estudios técnicos": "Estudios", "Interventoría y supervisión": "Interv.", "Redes y sistemas": "Redes", "Adecuaciones locativas": "Adecuac.", "Obra civil menor": "Obra civil", "Mejoramiento de vivienda": "Vivienda", "Carpintería metálica y ventanería": "Metálica", "Otros sectores": "Otros"};
+const SLOT={"Diseños técnicos": "s1", "BIM y levantamientos": "h1", "Diseño arquitectónico": "s2", "Estudios técnicos": "s3", "Interventoría y supervisión": "s4", "Redes y sistemas": "s5", "Adecuaciones locativas": "s6", "Obra civil menor": "s7", "Mejoramiento de vivienda": "h7", "Carpintería metálica y ventanería": "s8", "Otros sectores": "s0"};
 const COL=Object.fromEntries(LINEAS.map(l=>[l,`var(--${SLOT[l]})`]));
 const SOL=Object.fromEntries(LINEAS.map(l=>[l,`var(--s${SLOT[l].slice(1)})`]));
 const PAT=Object.fromEntries(LINEAS.map(l=>[l,SLOT[l][0]==="h"?`url(#p${SLOT[l]})`:`var(--${SLOT[l]})`]));
-const LW={"Diseños técnicos": 20, "BIM y levantamientos": 20, "Diseño arquitectónico": 18, "Estudios técnicos": 18, "Interventoría y supervisión": 16, "Redes y sistemas": 14, "Adecuaciones locativas": 12, "Carpintería metálica y ventanería": 12, "Obra civil menor": 10, "Mejoramiento de vivienda": 10};
-const MODS=[["Mínima cuantía",m=>/M[ií]nima/.test(m)],["Régimen especial / directa con ofertas",m=>/con ofertas/.test(m)],["Selección abreviada",m=>/Selecci/.test(m)],["Licitación pública",m=>/Licitaci/.test(m)],["Concurso de méritos",m=>/Concurso/.test(m)]];
-const RANGES=[["Menos de $15 M",0,1.5e7],["$15 – $50 M",1.5e7,5e7],["$50 – $300 M",5e7,3e8],["$300 – $1.000 M",3e8,1e9],["Más de $1.000 M",1e9,Infinity]];
+const LW={"Diseños técnicos": 20, "BIM y levantamientos": 20, "Diseño arquitectónico": 18, "Estudios técnicos": 18, "Interventoría y supervisión": 16, "Redes y sistemas": 14, "Adecuaciones locativas": 12, "Carpintería metálica y ventanería": 12, "Obra civil menor": 10, "Mejoramiento de vivienda": 10, "Otros sectores": -30}; // fuera de las líneas de la empresa: conveniencia máxima «Media»
+const MODS=[["Mínima cuantía",m=>/M[ií]nima/.test(m)],["Régimen especial / directa con ofertas",m=>/con ofertas/.test(m)],["Subasta inversa",m=>/subasta inversa/i.test(m)],["Selección abreviada",m=>/Selecci/.test(m)],["Licitación pública",m=>/Licitaci/.test(m)],["Concurso de méritos",m=>/Concurso/.test(m)],["Solicitud de información",m=>/Solicitud de informaci/i.test(m)],["Enajenación",m=>/Enajenaci/i.test(m)]];
+const RANGES=[["Sin valor publicado",0,1],["Menos de $15 M",1,1.5e7],["$15 – $50 M",1.5e7,5e7],["$50 – $300 M",5e7,3e8],["$300 – $1.000 M",3e8,1e9],["Más de $1.000 M",1e9,Infinity]];
 /* Mapa esquemático: [departamento, abreviatura, columna, fila] */
 const GEO=[["San Andrés, Providencia y Santa Catalina","SAI",0,0],["La Guajira","GUA",6,0],["Atlántico","ATL",4,1],["Magdalena","MAG",5,1],["Córdoba","COR",2,2],["Sucre","SUC",3,2],["Bolívar","BOL",4,2],["Cesar","CES",5,2],["Chocó","CHO",1,3],["Antioquia","ANT",2,3],["Santander","SAN",4,3],["Norte de Santander","NSA",5,3],["Arauca","ARA",6,3],["Risaralda","RIS",1,4],["Caldas","CAL",2,4],["Cundinamarca","CUN",3,4],["Boyacá","BOY",4,4],["Casanare","CAS",5,4],["Vichada","VIC",6,4],["Valle del Cauca","VAL",1,5],["Quindío","QUI",2,5],["Bogotá D.C.","BOG",3,5],["Meta","MET",4,5],["Guainía","GNA",6,5],["Cauca","CAU",1,6],["Tolima","TOL",2,6],["Huila","HUI",3,6],["Guaviare","GVR",4,6],["Vaupés","VAU",5,6],["Nariño","NAR",1,7],["Putumayo","PUT",2,7],["Caquetá","CAQ",3,7],["Amazonas","AMA",5,7]];
 function enriquecer(r){
   const d={tipo:r[0],dep:r[1],ciu:r[2],ent:r[3],ref:r[4],obj:r[5],mod:r[6],val:+r[7],pub:r[8],fase:r[9],un:r[10],plazo:r[11],url:/^https?:/.test(r[12])?r[12]:U+r[12],rup:r[13]};
   d.fz=FOCUS.has(d.dep);
+  d.sec=sectorDe(d.tipo,d.un,d.obj);
   d.zona=d.fz?"Zona foco":CARIBE.has(d.dep)?"Resto del Caribe":CENTRO.has(d.dep)?"Resto del centro":"Resto del país";
   d.modG=(MODS.find(([,f])=>f(d.mod))||["Otra"])[0];
   d.rng=RANGES.find(([,a,b])=>d.val>=a&&d.val<b)||RANGES[RANGES.length-1];d.rng=d.rng[0];
@@ -1166,12 +1176,13 @@ function enriquecer(r){
   s+=d.val<1.5e7?5:d.val<5e7?18:d.val<3e8?25:d.val<=1e9?12:0;
   s+=d.fz?20:d.zona!=="Resto del país"?10:0;
   s+=LW[d.tipo]||10;s+=d.dias<=7?10:d.dias<=15?5:0;
-  d.score=Math.min(100,s);d.p=d.score>=70?"Alta":d.score>=45?"Media":"Baja";
+  d.score=Math.max(0,Math.min(100,s));d.p=d.score>=70?"Alta":d.score>=45?"Media":"Baja";
   return d;
 }
 let D=_DATOS_FB.map(enriquecer);
 
 const DIMS=[
+  {k:"sec",el:"ch-sec",list:SECTORES},
   {k:"rupG",el:"ch-rup",list:["No exige","Por verificar","Sí exige"]},
   {k:"rng",el:"ch-rng",list:RANGES.map(r=>r[0])},
   {k:"zona",el:"ch-zona",list:["Zona foco","Resto del Caribe","Resto del centro","Resto del país"]},
@@ -1180,6 +1191,7 @@ const DIMS=[
 ];
 const KEYS=["tipo","dep","modG",...DIMS.map(d=>d.k)];
 const PRESETS=[
+  ["Ingeniería y arquitectura","las 10 tipologías de la empresa",{tipo:LINEAS.filter(l=>l!=="Otros sectores")}],
   ["Para empezar ya","sin RUP, $15 – $300 M",{rupG:["No exige","Por verificar"],rng:["$15 – $50 M","$50 – $300 M"]}],
   ["Pequeños y rentables","$50 – $300 M, menor cuantía",{rng:["$50 – $300 M"],modG:["Mínima cuantía","Selección abreviada","Régimen especial / directa con ofertas"]}],
   ["Consultoría y diseño","diseños, BIM, arquitectura, estudios",{tipo:["Diseños técnicos","BIM y levantamientos","Diseño arquitectónico","Estudios técnicos"]}],
@@ -1202,8 +1214,8 @@ const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k
 function actualizarSub(esFallback){
   const desde=D.length?D.reduce((m,r)=>r.pub<m?r.pub:m,D[0].pub):META.desde;
   const sufijo=esFallback?" · <span style='color:var(--focus);font-size:12px'>⚠ Datos de muestra — API no disponible</span>":" · <span style='color:var(--hi);font-size:12px'>✓ Actualizado en tiempo real</span>";
-  document.getElementById("sub").innerHTML=`${D.length} procesos abiertos en SECOP II de hasta $1.000 millones en ingeniería civil y arquitectura, en todo el país, publicados desde el ${fecha(desde)}. Consulta del ${HOY.toLocaleDateString("es-CO",{day:"numeric",month:"long",year:"numeric"})}.${sufijo}`;
-  document.getElementById("src").textContent="Fuente: datos abiertos SECOP II (datos.gov.co, conjunto p6dx-8zbt). Modalidades competitivas en estado Publicado/Abierto. Solo procesos de hasta $1.000 millones en las 10 tipologías de ingeniería civil y arquitectura de la empresa; se excluyen suministros sin instalación, tecnología, equipos y grandes obras de acueducto, alcantarillado y carreteras. BIM y Mejoramiento de vivienda llevan textura rayada sobre el color de su familia. El mapa es esquemático: la posición de cada cuadro es aproximada.";
+  document.getElementById("sub").innerHTML=`${D.length.toLocaleString("es-CO")} procesos vigentes en SECOP II abiertos a ofertas, de todos los sectores y valores, en todo el país, publicados desde el ${fecha(desde)}. Consulta del ${HOY.toLocaleDateString("es-CO",{day:"numeric",month:"long",year:"numeric"})}.${sufijo}`;
+  document.getElementById("src").textContent="Fuente: datos abiertos SECOP II (datos.gov.co, conjunto p6dx-8zbt). Procesos en estado Publicado o Abierto de los últimos 60 días, en modalidades que reciben ofertas (no incluye contratación directa ni régimen especial sin ofertas). Sector y tipología se deducen del objeto del proceso, porque la mayoría no trae código UNSPSC. BIM y Mejoramiento de vivienda llevan textura rayada sobre el color de su familia. El mapa es esquemático: la posición de cada cuadro es aproximada.";
 }
 actualizarSub(true);
 
@@ -1327,13 +1339,16 @@ function render(){
   const rupChip=d=>`<span class="chip ${d.rup==="No"?"rno":""}">${esc(d.rup)}</span>`;
   const meter=d=>`<span class="meter s-${d.p==="Alta"?"hi":d.p==="Media"?"mid":"lo"}"><i><b style="width:${d.score}%"></b></i>${d.score}</span>`;
   const tipoTag=d=>`<span class="tipo" style="color:var(--fg)"><span class="sw" style="--c:${COL[d.tipo]};display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--c);margin-right:5px"></span>${esc(d.tipo)}</span>`;
-  window._simRows=Sx;document.getElementById("tb").innerHTML=Sx.length?Sx.map((d,i)=>`<tr>
+  {const sig=JSON.stringify([KEYS.map(k=>[...F[k]]),F.p,F.q,sort]);if(sig!==render._sig){render._sig=sig;render._lim=60}}
+  const V=Sx.slice(0,render._lim||60),mas=Sx.length-V.length;
+  const masEl=document.getElementById("mas");if(masEl){masEl.hidden=mas<=0;masEl.textContent=`Ver ${Math.min(60,mas)} más · faltan ${mas}`}
+  window._simRows=Sx;document.getElementById("tb").innerHTML=V.length?V.map((d,i)=>`<tr>
     <td class="${d.fz?"fz":""}"><span class="chip p-${d.p}">${d.p}</span><div style="margin-top:5px">${meter(d)}</div>${d.fz?`<div style="margin-top:4px"><span class="chip fz">★ Foco</span></div>`:""}</td>
     <td class="obj">${tipoTag(d)}<b>${esc(d.ent)}</b>${esc(cap(d.obj))}<div style="margin-top:3px;font-size:11.5px;color:var(--muted);font-family:var(--mono)">${esc(d.ref)} · ${esc(d.etapa)}</div></td>
     <td>${lugar(d)}</td><td>${esc(d.modG)}</td><td>${rupChip(d)}</td>
     <td class="num">${cop(d.val)}<div class="qmini">inv. ${cop(quick(d).inv)}<br>gana ${(quick(d).gan<0?"−":"")+cop(Math.abs(quick(d).gan))}</div></td><td class="num">${d.vmes?cop(d.vmes):"—"}</td><td style="white-space:nowrap">${fecha(d.pub)}<div style="font-size:11.5px;color:var(--muted)">hace ${d.dias} d</div></td>
     <td><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a><a class="ruta-l" href="#f2">Cómo ofertar →</a><button class="simb" type="button" onclick="simContract(${i})">Simular caja</button></td></tr>`).join(""):`<tr><td colspan="9" class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</td></tr>`;
-  document.getElementById("cards").innerHTML=Sx.length?Sx.map((d,i)=>`<article class="card${d.fz?" fz":""}">
+  document.getElementById("cards").innerHTML=V.length?V.map((d,i)=>`<article class="card${d.fz?" fz":""}">
     <div class="row"><span class="chip p-${d.p}">${d.p}</span>${meter(d)}${rupChip(d)}</div>${tipoTag(d)}
     <h3>${esc(cap(d.obj))}</h3><div class="meta">${esc(d.ent)} · ${lugar(d)} · ${esc(d.modG)} · ${fecha(d.pub)}</div>
     ${quickHtml(d)}<div class="row" style="justify-content:space-between;gap:8px"><span class="v">${cop(d.val)}</span><span class="row" style="gap:6px"><button class="simb inl" type="button" onclick="simContract(${i})">Simular caja</button><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a></span></div></article>`).join(""):`<div class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</div>`;
@@ -1342,6 +1357,7 @@ function render(){
 document.querySelectorAll("th button").forEach(b=>b.onclick=()=>{const k=b.dataset.s;sort=sort.k===k?{k,dir:-sort.dir}:{k,dir:["val","vmes","pub","score"].includes(k)?-1:1};render()});
 document.getElementById("q").addEventListener("input",e=>{F.q=e.target.value;preset=null;render()});
 document.getElementById("clear").onclick=()=>{clearAll();sort={k:"score",dir:-1};render()};
+document.getElementById("mas").onclick=()=>{render._lim=(render._lim||60)+60;render()};
 queueMicrotask(render);
 
 /* ── Carga desde API SECOP II (datos.gov.co) ── */
@@ -1352,6 +1368,8 @@ queueMicrotask(render);
     D.length=0;
     filas.map(enriquecer).forEach(r=>D.push(r));
     D.sort((a,b)=>b.score-a.score);
+    META={...META,desde:D.reduce((m,r)=>r.pub<m?r.pub:m,D[0].pub),fallback:false};
+    if(window.cOpciones)cOpciones();
     actualizarSub(false);
     render();
   }catch(e){
@@ -1651,14 +1669,17 @@ function cDraw(){
   $("c-note").textContent=`Cómo se calcula: preparar la oferta cuesta 1 % de la base sin IVA y las pólizas 1,5 %; la ejecución (${Math.round(p.cos*100)} % de la base) se reparte por igual en ${E} semanas. La entidad paga ${p.dias} días después de cada entrega aprobada y gira el neto tras las deducciones. El IVA neto (IVA menos ReteIVA) se paga a la DIAN unas 6 semanas después de cada pago. La retención en la fuente sale de la caja, pero se descuenta del impuesto de renta. El costo del dinero (${cop(fin)}) es lo que cuesta financiar la inversión. No incluye IVA descontable de compras. Tarifas por defecto estimadas según la tipología (consultoría: retención 11 %; obra: 2 % y contribución 5 %): confírmalas en el pliego, en el estatuto tributario del municipio y con tu contador.`;
 }
 (function(){
-  const sel=$("c-sel"),opts=[...D].sort((a,b)=>b.score-a.score);window._cOpts=opts;
-  sel.innerHTML=`<option value="-1">Contrato de ejemplo · diseño de $100 M</option>`+opts.map((d,i)=>`<option value="${i}">${esc(cop(d.val))} · ${esc(d.tipo)} · ${esc(d.ent.slice(0,40))} (${esc(d.dep)})</option>`).join("");
-  sel.onchange=()=>cLoad(+sel.value<0?EJEMPLO:opts[+sel.value]);
+  const sel=$("c-sel");
+  // El simulador lista los 300 procesos de mayor conveniencia (el resto se abre con «Simular caja» desde el radar)
+  window.cOpciones=function(extra){let opts=[...D].sort((a,b)=>b.score-a.score).slice(0,300);if(extra&&!opts.includes(extra))opts=[extra,...opts];window._cOpts=opts;
+    sel.innerHTML=`<option value="-1">Contrato de ejemplo · diseño de $100 M</option>`+opts.map((d,i)=>`<option value="${i}">${esc(cop(d.val))} · ${esc(d.tipo)} · ${esc(d.ent.slice(0,40))} (${esc(d.dep)})</option>`).join("")};
+  cOpciones();
+  sel.onchange=()=>cLoad(+sel.value<0?EJEMPLO:window._cOpts[+sel.value]);
   $("c-ini").value=META.consulta;
   document.querySelectorAll("#cf input,#cf select,#cd input,#cd select").forEach(i=>i.addEventListener("input",cDraw));
   cLoad(EJEMPLO);
 })();
-function simContract(i){const d=window._simRows&&window._simRows[i];if(!d)return;cLoad(d);const k=(window._cOpts||[]).indexOf(d);$("c-sel").value=k;history.replaceState(null,"","#sim");showTab("sim");window.scrollTo(0,0)}
+function simContract(i){const d=window._simRows&&window._simRows[i];if(!d)return;if(window.cOpciones&&!(window._cOpts||[]).includes(d))cOpciones(d);cLoad(d);const k=(window._cOpts||[]).indexOf(d);$("c-sel").value=k;history.replaceState(null,"","#sim");showTab("sim");window.scrollTo(0,0)}
 </script>
 
 <nav class="bottom-nav" role="tablist" aria-label="Navegación principal">
