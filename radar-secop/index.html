@@ -546,14 +546,9 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
 <div class="wrap bar">
   <div class="top">
     <div>
-      <div class="brand" data-reload role="button" tabindex="0" title="Actualizar la página" aria-label="Radar SECOP · actualizar la página"><svg viewBox="14 9 36 46" aria-hidden="true"><path d="M19 12h19l9 9v31H19z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M38 12v9h9" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M36.5 30.5c-1-1.6-2.7-2.3-4.5-2.3-2.4 0-4.2 1.2-4.2 3.2 0 4.6 9 2.6 9 7.4 0 2.1-2 3.4-4.6 3.4-2 0-3.8-.8-4.8-2.5M32 25.5v2.7M32 41.7v2.8" fill="none" stroke="var(--accent-fg)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg><b>RADAR<span>SECOP</span></b></div>
-      <div class="fecha" id="fecha"></div>
+      <div class="hrow"><div class="brand" data-reload role="button" tabindex="0" title="Actualizar la página" aria-label="Radar SECOP · actualizar la página"><svg viewBox="14 9 36 46" aria-hidden="true"><path d="M19 12h19l9 9v31H19z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M38 12v9h9" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M36.5 30.5c-1-1.6-2.7-2.3-4.5-2.3-2.4 0-4.2 1.2-4.2 3.2 0 4.6 9 2.6 9 7.4 0 2.1-2 3.4-4.6 3.4-2 0-3.8-.8-4.8-2.5M32 25.5v2.7M32 41.7v2.8" fill="none" stroke="var(--accent-fg)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg><b>RADAR<span>SECOP</span></b></div><div class="fecha" id="fecha"></div></div>
       <h1 id="saludo">Radar SECOP</h1>
       <p class="sub" id="sub"></p>
-      <div class="eyebrow">Planificar Proyectos S.A.S. · NIT 901.518.558 · ★ Zona foco: Bolívar, Cundinamarca y Bogotá</div>
-    </div>
-    <div class="actions">
-      <button class="btn" id="clear" type="button">✕ Limpiar filtros</button>
     </div>
   </div>
   <script>/* Fecha y saludo como en PowerFit; el nombre llega del perfil compartido al iniciar sesión */
@@ -572,55 +567,54 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
   </nav>
 
   <section class="view" id="v-radar" role="tabpanel" aria-labelledby="t-radar">
-  <div class="presets" id="presets"><span class="lbl">Vistas rápidas</span></div>
+  <div class="presets" id="presets"></div>
 
   <div class="kpis" id="kpis"></div>
 
-  <h2 class="sec-t">Panorama por tipología <small>Clic en una ficha para filtrar todo el tablero</small></h2>
+  <details class="fold" data-fold="panorama"><summary>Panorama</summary><div class="fold-in">
   <div class="tiles" id="tiles"></div>
 
   <div class="duo">
     <div class="panel">
-      <h2>Mapa del país <small>esquemático · un cuadro por departamento</small></h2>
-      <p class="hint">Más intenso = más procesos. ★ = zona foco. Clic para filtrar.</p>
+      <h2>Mapa</h2>
       <div class="map" id="map"></div>
       <div class="scale"><span>0</span><i></i><span id="scaleMax"></span> procesos</div>
     </div>
     <div class="panel">
-      <h2>Tipologías por departamento <small id="stkInfo"></small></h2>
-      <p class="hint">Clic en el nombre filtra el departamento; clic en un color filtra departamento y tipología.</p>
+      <h2>Por departamento <small id="stkInfo" hidden></small></h2>
       <div class="stk" id="stk"></div>
-      <div class="legend" id="leg1"></div>
+      <div class="legend" id="leg1" hidden></div>
     </div>
   </div>
 
   <div class="duo">
     <div class="panel">
       <h2>Modalidad × tipología</h2>
-      <p class="hint">Cuántos procesos de cada tipología salen por cada modalidad. Clic en una celda para filtrar.</p>
       <div class="heat" id="heat"></div>
     </div>
     <div class="panel weeks">
-      <h2>Publicaciones por semana</h2>
-      <p class="hint">Procesos publicados cada semana, por tipología. Pasa el cursor para ver el detalle.</p>
+      <h2>Por semana</h2>
       <div id="wk"></div>
-      <div class="legend" id="leg2"></div>
+      <div class="legend" id="leg2" hidden></div>
     </div>
   </div>
+  </div></details>
 
-  <h2 class="sec-t">Filtros de conveniencia <small>Se pueden marcar varios valores en cada uno</small></h2>
+  <details class="fold" data-fold="filtros"><summary>Filtros</summary><div class="fold-in">
   <div class="grid4">
-    <div class="panel"><h2>Conveniencia</h2><p class="hint">Puntaje 0–100 para empezar.</p><div class="stack" id="chPri"></div></div>
-    <div class="panel"><h2>Sector</h2><p class="hint">Según el objeto del proceso.</p><div class="bars" id="ch-sec"></div></div>
+    <div class="panel"><h2>Conveniencia</h2><div class="stack" id="chPri"></div></div>
+    <div class="panel"><h2>Sector</h2><div class="bars" id="ch-sec"></div></div>
     <div class="panel"><h2>¿Exige RUP?</h2><div class="bars" id="ch-rup"></div></div>
     <div class="panel"><h2>Valor del proceso</h2><div class="bars" id="ch-rng"></div></div>
     <div class="panel"><h2>Región</h2><div class="bars" id="ch-zona"></div></div>
     <div class="panel"><h2>Etapa</h2><div class="bars" id="ch-etapa"></div></div>
     <div class="panel"><h2>Publicado hace</h2><div class="bars" id="ch-edad"></div></div>
   </div>
+  </div></details>
 
   <div class="toolbar" role="search">
-    <input id="q" type="search" placeholder="Buscar entidad, objeto, municipio o referencia" aria-label="Buscar">
+    <input id="q" type="search" placeholder="Buscar entidad, objeto, municipio…" aria-label="Buscar">
+    <button class="btn sm" id="clear" type="button" title="Limpiar filtros">✕ Limpiar</button>
     <div class="chips" id="active"></div>
     <span class="count" id="count"></span>
   </div>
@@ -642,20 +636,18 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
   <div class="cards" id="cards"></div>
   <button class="btn" id="mas" type="button" hidden style="justify-self:center">Ver más</button>
 
-  <div class="note">
+  <details class="fold mini" data-fold="notas"><summary>Antes de ofertar · cómo se calcula</summary><div class="note">
     <div><b>Antes de ofertar:</b> confirma en SECOP la fecha de cierre (los datos abiertos no la traen), si el proceso está limitado a Mipymes de la región y los requisitos habilitantes. Para presentar oferta, el registro de proveedor en SECOP II debe estar finalizado.</div>
-    <div><b>Cómo se calcula la conveniencia:</b> sin RUP +30 (por verificar +15) · valor $50–300 M +25 (punto ideal), $15–50 M +18, $300–1.000 M +12, menos de $15 M +5 · zona foco +20, resto del Caribe o del centro +10 · diseños técnicos o BIM +20, arquitectura o estudios +18, interventoría +16, redes +14, adecuaciones o metálica +12, obra civil o vivienda +10 · publicado hace ≤ 7 días +10, ≤ 15 días +5. Alta ≥ 70, media 45–69, baja &lt; 45.</div>
+    <div><b>Conveniencia:</b> sin RUP +30 (por verificar +15) · valor $50–300 M +25 (punto ideal), $15–50 M +18, $300–1.000 M +12, menos de $15 M +5 · zona foco +20, resto del Caribe o del centro +10 · diseños técnicos o BIM +20, arquitectura o estudios +18, interventoría +16, redes +14, adecuaciones o metálica +12, obra civil o vivienda +10 · publicado hace ≤ 7 días +10, ≤ 15 días +5. Alta ≥ 70, media 45–69, baja &lt; 45.</div>
     <div id="src"></div>
-  </div>
+  </div></details>
   </section>
 
   <section class="view" id="v-ruta" role="tabpanel" aria-labelledby="t-ruta" hidden>
 <div class="rwrap">
 
 <header class="sec-head">
-  <span class="eyebrow">Planificar Proyectos S.A.S. · NIT 901.518.558 · SECOP II</span>
-  <h2 style="font-size:clamp(24px,3.4vw,32px)">Ruta del contrato estatal en SECOP II</h2>
-  <p class="lead">Del registro como proveedor hasta el último pago y el certificado de experiencia. Muestra qué hace la empresa, qué hace la entidad y qué queda en SECOP II, con los documentos de cada paso.</p>
+  <h2 style="font-size:clamp(24px,3.4vw,32px)">Ruta del contrato en SECOP II</h2>
   <div class="legend" aria-label="Convenciones">
     <span><i class="sw" style="background:var(--emp)"></i>Empresa (Planificar)</span>
     <span><i class="sw" style="background:var(--sec)"></i>Plataforma SECOP II</span>
@@ -665,12 +657,12 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
 </header>
 
 <section aria-labelledby="mapa">
-  <div class="sec-head"><span class="eyebrow">Mapa general</span><h2 id="mapa">Las 8 fases del proceso</h2></div>
+  <div class="sec-head"><h2 id="mapa">Las 8 fases del proceso</h2></div>
   <nav class="phasemap" id="phasemap"></nav>
 </section>
 
 <section aria-labelledby="hoy">
-  <div class="sec-head"><span class="eyebrow">Fase 0 · Dónde está la empresa hoy</span><h2 id="hoy">Estado de habilitación de Planificar</h2></div>
+  <div class="sec-head"><h2 id="hoy">Estado de habilitación de Planificar</h2></div>
   <div class="status">
     <ul class="checks">
       <li><span class="pill ok">Listo</span>Usuario SECOP II creado (planpro2026)</li>
@@ -693,8 +685,7 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
 </section>
 
 <section aria-labelledby="flujo">
-  <div class="sec-head"><span class="eyebrow">Flujograma</span><h2 id="flujo">Paso a paso por carriles</h2>
-  <p class="note">Cada fila es una fase y se lee de arriba hacia abajo. En cada carril los pasos van en orden. Los recuadros pequeños son los documentos que se producen o se exigen.</p></div>
+  <div class="sec-head"><h2 id="flujo">Paso a paso por carriles</h2></div>
   <div>
     <div class="lanes-head" aria-hidden="true">
       <div>Fase</div>
@@ -707,8 +698,7 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
 </section>
 
 <section aria-labelledby="gantt">
-  <div class="sec-head"><span class="eyebrow">Simulación · cronograma y caja</span><h2 id="gantt">Gantt y flujo de caja de un contrato</h2>
-  <p class="note">Cambia los datos y el Gantt y el flujo de caja se recalculan. La empresa paga la ejecución con recursos propios y la entidad gira el valor neto después de cada cobro aprobado. Las líneas punteadas son la espera entre radicar el cobro y recibir el dinero. Los plazos del proceso de selección son típicos de un concurso de méritos; los reales los fija cada pliego.</p></div>
+  <div class="sec-head"><h2 id="gantt">Gantt y flujo de caja de un contrato</h2></div>
   <form class="simf" id="simf" onsubmit="return false">
     <label>Valor del contrato (millones)<input id="s-val" type="number" min="5" max="5000" step="5" value="100"></label>
     <label>Plazo de ejecución (meses)<input id="s-mes" type="number" min="1" max="24" step="1" value="4"></label>
@@ -730,7 +720,7 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
 </section>
 
 <section aria-labelledby="rutina">
-  <div class="sec-head"><span class="eyebrow">Rutina de búsqueda · datos reales SECOP II</span><h2 id="rutina">Cuándo revisar SECOP II</h2>
+  <div class="sec-head"><h2 id="rutina">Cuándo revisar SECOP II</h2>
   <p class="note">Análisis de 18.999 procesos competitivos publicados entre enero de 2025 y septiembre de 2026 por entidades de Bolívar, Cundinamarca y Bogotá, en los códigos UNSPSC 72, 81, 80101 y 9210.</p></div>
   <div class="duo">
     <div>
@@ -767,7 +757,7 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
 </section>
 
 <section aria-labelledby="modal">
-  <div class="sec-head"><span class="eyebrow">Modalidades</span><h2 id="modal">¿Por qué tipo de proceso va a entrar la empresa?</h2></div>
+  <div class="sec-head"><h2 id="modal">¿Por qué tipo de proceso va a entrar la empresa?</h2></div>
   <div class="tbl-box"><table>
     <thead><tr><th>Modalidad</th><th>Cuándo se usa</th><th>Cómo se gana</th><th>Plazos clave</th><th>RUP</th><th>Para Planificar</th></tr></thead>
     <tbody>
@@ -782,7 +772,7 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
 </section>
 
 <section aria-labelledby="pagos">
-  <div class="sec-head"><span class="eyebrow">Fase 5 en detalle</span><h2 id="pagos">Cómo se cobra cada pago</h2>
+  <div class="sec-head"><h2 id="pagos">Cómo se cobra cada pago</h2>
   <p class="note">El ciclo se repite en cada pago pactado en el plan de pagos del contrato. El dinero no llega si falta un solo soporte.</p></div>
   <div class="payflow">
     <div><span class="who e">Empresa</span><h3>1. Entrega</h3><p>Entregable o informe del periodo según el contrato.</p></div>
@@ -808,7 +798,7 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
 </section>
 
 <section aria-labelledby="garantias">
-  <div class="sec-head"><span class="eyebrow">Pólizas</span><h2 id="garantias">Garantías que suelen pedir</h2></div>
+  <div class="sec-head"><h2 id="garantias">Garantías que suelen pedir</h2></div>
   <div class="tbl-box"><table>
     <thead><tr><th>Garantía</th><th>Momento</th><th>Valor mínimo usual</th><th>Vigencia</th></tr></thead>
     <tbody>
@@ -824,7 +814,7 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
 </section>
 
 <section aria-labelledby="comp">
-  <div class="sec-head"><span class="eyebrow">Responsabilidades</span><h2 id="comp">Compromisos en ambas direcciones</h2></div>
+  <div class="sec-head"><h2 id="comp">Compromisos en ambas direcciones</h2></div>
   <div class="duo">
     <div>
       <h3><i class="sw" style="background:var(--ent)"></i>Del Estado hacia la empresa</h3>
@@ -884,7 +874,6 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
       <div class="c-card" id="c-card"></div>
       <label class="c-pick">Contrato a simular
         <select id="c-sel"></select>
-        <span>También puedes usar el botón <b>Simular</b> de cada proceso en el Radar.</span>
       </label>
     </div>
     <form class="simf" id="cf" onsubmit="return false">
@@ -903,7 +892,7 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
       <label>Fecha de inicio de la simulación<input id="c-ini" type="date"></label>
     </form>
     <form class="simf dedf" id="cd" onsubmit="return false">
-      <div class="dedh"><b>Deducciones e impuestos</b><span>Se llenan según la tipología; ajústalos con el pliego y tu contador.</span></div>
+      <div class="dedh"><b>Deducciones e impuestos</b></div>
       <label>IVA (19 %) se cobra sobre<select id="c-ivab">
         <option value="total">Todo el valor (consultoría y servicios)</option>
         <option value="aiu">Solo la utilidad del AIU (obra)</option>
@@ -919,19 +908,17 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
     </form>
     <div class="simk" id="ck"></div>
     <div class="panel">
-      <h2>Proyección en el tiempo <small id="c-rango"></small></h2>
-      <p class="hint">Barras ámbar: lo que desembolsa la empresa cada semana. Barras verdes: lo que gira el Estado (neto). La línea es el saldo acumulado: cuando cruza el cero ya recuperaste lo invertido y lo que queda arriba es ganancia.</p>
+      <h2>Proyección <small id="c-rango"></small></h2>
+      <p class="hint">Ámbar: desembolsos · verde: pagos del Estado · línea: saldo.</p>
       <div class="c-chart"><svg id="csvg" role="img" aria-label="Proyección semanal de desembolsos, pagos y saldo"></svg></div>
     </div>
     <div class="duo2">
       <div class="panel">
         <h2>Deducciones del contrato</h2>
-        <p class="hint">Qué se descuenta del valor, quién se lo queda y si es un costo real para la empresa.</p>
         <div class="c-tbl"><table id="cded" class="ctable"></table></div>
       </div>
       <div class="panel">
         <h2>Liquidación de cada pago</h2>
-        <p class="hint">Lo que factura la empresa y lo que realmente llega a la cuenta en cada pago.</p>
         <div class="c-tbl"><table id="cliq" class="ctable"></table></div>
       </div>
     </div>
@@ -994,6 +981,9 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
   </section>
 </div>
 <div id="tip" role="tooltip"></div>
+<script>document.querySelectorAll("details.fold[data-fold]").forEach(function(d){var k="radar:fold:"+d.dataset.fold;
+  try{if(localStorage.getItem(k)==="1")d.open=true}catch(e){}
+  d.addEventListener("toggle",function(){try{localStorage.setItem(k,d.open?"1":"0")}catch(e){}})});</script>
 
 <script id="meta" type="application/json">{"desde": "2026-08-28", "consulta": "2026-10-12", "fallback": true}</script>
 <script id="datos" type="application/json">[["Adecuaciones locativas","Antioquia","","DEPARTAMENTO ADMINISTRATIVO NACIONAL DE ESTADÍSTICA - DIR TER NOROCCIDENTE - (DANE NOROCCIDENTE)","DTNOC-SAMC-001-2026","3116502726_3118502726_A_02_SERVICIOS_MANTENIMIENTO_2026_contratar las obras de mantenimiento, adecuación y reparaciones locativas de las oficinas de la dirección territor","Selección Abreviada de Menor Cuantía",188500000,"2026-10-05","Presentación de observaciones","72102900","4 Mes(es)","11010731","Sí"],["Adecuaciones locativas","Bogotá D.C.","","AEROCIVIL","26001460 H4 DE 2026","69200C1776 REALIZAR MANTENIMIENTO PREVENTIVO Y CORRECTIVO DE LA SEDE VACACIONAL DE SANTA MARTA DE LA AERONAUTICA CIVIL","Selección Abreviada de Menor Cuantía",903957645,"2026-10-01","Presentación de observaciones","72121400","90 día(s)","10998068","Sí"],["Redes y sistemas","Bogotá D.C.","Bogotá","DIRECCION DE IMPUESTOS Y ADUANAS NACIONALES","IMC-48-011-2026","Servicio de mantenimiento del sistema hidráulico e hidroneumático de las sedes de las Direcciones Seccionales de Impuestos y Aduanas de Cartagena.","Mínima cuantía",16000000,"2026-09-28","Presentación de oferta","72154022","119 día(s)","10971346","No"],["Redes y sistemas","Bogotá D.C.","","INSTITUTO NACIONAL DE MEDICINA LEGAL Y CIENCIAS FORENSES","MIC-0014-DRNO-2026","PRESTAR EL SERVICIO DE MANTENIMIENTO CENTRAL Y RED DE GASES DE LA REGIONAL NOROCCIDENTE DEL INSTITUTO NACIONAL DE MEDICINA LEGAL Y CIENCIAS FORENSES","Mínima cuantía",16000000,"2026-09-25","Presentación de oferta","72101507","0 día(s)","10961561","No"],["Adecuaciones locativas","Bogotá D.C.","Bogotá","ALCALDIA LOCAL DE TUNJUELITO","FDLT-SAMC-310-2026","REALIZAR EL MANTENIMIENTO LOCATIVO INTEGRAL DE LA SEDE ADMINISTRATIVA DE LA ALCALDÍA LOCAL DE TUNJUELITO, EN BOGOTÁ D.C., INCLUYENDO LA IMPERMEABILIZACIÓN DE TANQUES DE A","Selección Abreviada de Menor Cuantía",285000000,"2026-09-21","Presentación de observaciones","72102900","5 Mes(es)","10934410","Sí"],["Obra civil menor","Boyacá","Tunja","TIERRASUA S.A.S","IPVO-039-2026","SUMINISTRO E INSTALACION DE MATERIALES PARA MANTENIMIENTO Y MEJORAMIENTO EN SECTORES DE LA VIA CON CODIGO 6102, PESCA-SOGAMOSO, EN EL MUNICIPIO DE FIRAVITOBA, EN CUMPLIMI","Contratación régimen especial (con ofertas)",431246411,"2026-09-18","Presentación de oferta","72141100","2 Mes(es)","10925719","Por verificar"],["Diseños técnicos","Cundinamarca","Soacha","MUNICIPIO DE SOACHA","CMA-001-2026","ESTUDIOS Y DISEÑOS A NIVEL DE DETALLE PARA VÍAS DEL BARRIO JULIO RINCÓN, COMUNA 4 DEL MUNICIPIO DE SOACHA, CUNDINAMARCA. BMP2024257540014","Concurso de méritos abierto",115000000,"2026-09-15","Presentación de oferta","81101500","3 Mes(es)","10896049","Sí"],["Obra civil menor","Amazonas","Leticia","ALCALDIA MUNICIPIO DE LETICIA","SAMC-009-2026","MEJORAMIENTO DE LA CASA LUDICA DEL MUNICIPIO DE LETICIA - DEPARTAMENTO DEL AMAZONAS","Selección Abreviada de Menor Cuantía",143457483,"2026-09-15","Presentación de observaciones","72103300","0 día(s)","10903236","Sí"],["Adecuaciones locativas","Norte de Santander","Pamplona","Instituto Superior de Educacion Rural","CMC 009 2026","SUMINISTRO E INSTALACIÓN DE CIELO RASO EN DRYWALL EN LOS SALONES BS 102, BS 103 Y BS 106, ASÍ COMO EL MANTENIMIENTO CON IMPRIMACIÓN EN EMULSIÓN ASFÁLTICA Y MANTO ASFÁLTIC","Mínima cuantía",34057885,"2026-09-15","Presentación de oferta","72101507","0 día(s)","10898824","No"],["Adecuaciones locativas","Boyacá","Guateque","ESE HOSPITAL REGIONAL SEGUNDO NIVEL DE ATENCION VALLE DE TENZA","CONVOCATORIA PÚBLICA ESPECIAL No. 015-2026","ADECUACIÓN DEL CENTRO DE SALUD DEL MUNICIPIO DE SUTATENZA SEDE DEL HOSPITAL REGIONAL VALLE DE TENZA E.S.E DEL DEPARTAMENTO DE BOYACÁ","Contratación régimen especial (con ofertas)",721279446,"2026-09-14","Presentación de oferta","72121403","0 día(s)","10894885","Por verificar"],["Interventoría y supervisión","Boyacá","Guateque","ESE HOSPITAL REGIONAL SEGUNDO NIVEL DE ATENCION VALLE DE TENZA","CONVOCATORIA PÚBLICA ESPECIAL No. 016-2026","REALIZAR INTERVENTORÍA TÉCNICA, ADMINISTRATIVA, FINANCIERA Y AMBIENTAL PARA LA ADECUACIÓN DEL CENTRO DE SALUD DEL MUNICIPIO DE SUTATENZA SEDE DEL HOSPITAL REGIONAL VALLE ","Contratación régimen especial (con ofertas)",38838124,"2026-09-14","Presentación de oferta","80101706","0 día(s)","10895215","Por verificar"],["Adecuaciones locativas","Valle del Cauca","Yumbo","INSTITUTO MUNICIPAL DEL DEPORTE Y LA RECREACION DE YUMBO","PLCP-IMDERTY-004.2026","MEJORAMIENTO Y ADECUACIÓN DE CANCHA SINTÉTICA PANORAMA SECTOR EL PORTACHUELO, CANCHA SINTÉTICA DEL COMPLEJO DEPORTIVO TOMÁS CHÁVEZ Y CONSTRUCCIÓN DE CANCHA DE VOLEY PLAYA","Licitación pública Obra Publica",958643923,"2026-09-14","Fase de Selección (Presentación de ofertas)","72101500","75 día(s)","10891512","Sí"],["Diseños técnicos","Huila","","GOBERNACION DEL HUILA","SVCMCN0007-26","ESTUDIOS Y DISEÑOS PARA LA REHABILITACIÓN DE PAVIMENTO FLEXIBLE SOBRE LA VÍA DEPARTAMENTAL DE TERCER ORDEN RUTA 45 - GUACACALLO - ORITOGUAZ - ELIAS - LA PALMA","Concurso de méritos abierto",196528500,"2026-09-14","Proceso de ofertas","80101600","4 Mes(es)","10893059","Sí"],["Interventoría y supervisión","Bogotá D.C.","Bogotá","TERMINAL DE TRANSPORTE S.A","TT-SPO-05-2026","Realizar la Interventoría técnica, administrativa, financiera, contable, jurídica y ambiental a los contratos que celebre la Terminal de Transporte S.A. para la ejecución","Contratación régimen especial (con ofertas)",458314175,"2026-09-14","Presentación de oferta","80101600","7 Mes(es)","10891491","Por verificar"],["Interventoría y supervisión","Cauca","Popayán","EMPRESA SOCIAL DEL ESTADO POPAYAN ESE","EP-CP-005-2026","INTERVENTORIA TECNICA, ADMINISTRATIVA, Y FINANCIERA AL CONTRATO DE OBRA CIVIL A TODO COSTO Y POR EL SISTEMA DE PRECIOS UNITARIOS FIJOS SIN FÓRMULA DE REAJUSTE, PARA LA AD","Contratación régimen especial (con ofertas)",28125396,"2026-09-11","Presentación de oferta","80101500","2 Mes(es)","10879534","Por verificar"],["Interventoría y supervisión","Córdoba","","MUNICIPIO DE PLANETA RICA CORDOBA","CMA-SIP-005-2026.","INTERVENTORÍA TÉCNICA, ADMINISTRATIVA, FINANCIERA, CONTABLE Y JURÍDICA AL PROYECTO CUYO OBJETO ES: CONSTRUCCIÓN DE PAVIMENTO EN CONCRETO RÍGIDO EN EL CORREGIMIENTO CENTRO","Concurso de méritos abierto",294321214,"2026-09-11","Presentación de oferta","80101600","6 Mes(es)","10880765","Sí"],["Adecuaciones locativas","Huila","","GOBERNACION DEL HUILA","SESAMECOB0011-26","CONSTRUCCION DE DOS AULAS ESCOLARES DISTRIBUIDAS DE LA SIGUIENTE MANERA: UN AULA ESCOLAR EN LA INSTITUCION EDUCATIVA YU LUUCX PISHAU SEDE NUEVA ESPERANZA DEL MUNICIPIO DE","Selección Abreviada de Menor Cuantía",299988037,"2026-09-11","Presentación de observaciones","72121400","90 día(s)","10884716","Sí"],["Interventoría y supervisión","Cundinamarca","Mosquera","CUNDINAMARCA-ALCALDIA MUNICIPIO MOSQUERA","CM-007-2026","INTERVENTORÍA TÉCNICA, ADMINISTRATIVA, FINANCIERA, AMBIENTAL Y LEGAL PARA LA CONSTRUCCIÓN DEL SALÓN COMUNAL EN EL BARRIO VILLA JENNY EN EL MUNICIPIO DE MOSQUERA CUNDINAMA","Concurso de méritos abierto",242514811,"2026-09-11","Presentación de oferta","81101500","0 día(s)","10879817","Sí"],["Interventoría y supervisión","Bolívar","Cartagena","ALCALDÍA DEL DISTRITO TURÍSTICO Y CULTURAL DE CARTAGENA DE INDIAS","CMA-SID-003-2026","INTERVENTORIA INTEGRAL AL PROYECTO OBRAS DE REHABILITACIÓN VIAL EN LOS BARRIOS EL LAGUITO Y EL BOSQUE SECTOR MANZANILLO DEL DISTRITO DE CARTAGENA","Concurso de méritos abierto",578657815,"2026-09-11","Presentación de oferta","80101600","0 Mes(es)","10884906","Sí"],["Interventoría y supervisión","Bolívar","El Carmen De Bolívar","ALCALDIA DE EL CARMEN DE BOLIVAR","CMA-003-2026","INTERVENTORIA TECNICA, ADMINISTRATIVA, FINANCIERA Y AMBIENTAL PARA EL MEJORAMIENTO DE LA VIA MATEO GOMEZ - VEREDA LOMA DEL VIENTO, MUNICIPIO DE EL CARMEN DE BOLÍVAR, DEPA","Concurso de méritos abierto",157009345,"2026-09-10","Presentación de observaciones","81101500","3 Mes(es)","10872489","Sí"],["Obra civil menor","Santander","Mogotes","ALCALDIA MUNICIPAL DE MOGOTES","MOG-LP-05-2026","MEJORAMIENTO DE VIAS RURALES EN LAS VEREDAS MARGAJITA SECTOR ESCUELA VEREDA QUEBRADAS SECTOR ARENAL MANZANOS EN EL MUNICIPIO DE MOGOTES SANTANDER.","Licitación pública Obra Publica",508629422,"2026-09-10","Fase de Selección (Presentación de ofertas)","72141000","2 Mes(es)","10876439","Sí"],["Interventoría y supervisión","Valle del Cauca","Roldanillo","ALCALDÍA MUNICIPAL DE ROLDANILLO","CM003DE2026","INTERVENTORÍA TÉCNICA, ADMINISTRATIVA, FINANCIERA, CONTABLE, JURÍDICA Y OPERATIVA, AL CONTRATO DE CONCESIÓN PARA LA OPERACIÓN INTEGRAL DE LOS RECURSOS PROPIOS, EXPEDICIÓN","Concurso de méritos abierto",120000000,"2026-09-10","Presentación de observaciones","80101500","20 Año(s)","10874275","Sí"],["Adecuaciones locativas","Casanare","Monterrey","MUNICIPIO DE MONTERREY","MM-SAMC-SINF-017-2026","REALIZAR EL MEJORAMIENTO DE LA INFRAESTRUCTURA DE LA COMISARÍA DE FAMILIA DEL MUNICIPIO DE MONTERREY, CASANARE, A TRAVÉS DE OBRAS DE MANTENIMIENTO, ADECUACIÓN Y REHABILIT","Selección Abreviada de Menor Cuantía",489234922,"2026-09-10","Presentación de observaciones","72103300","2 Mes(es)","10877720","Sí"],["Adecuaciones locativas","Antioquia","Turbo","E.S.E HOSPITAL FRANCISCO VALDERRAMA DE TURBO","CP-005-2026","ADECUACIÓN DE OBRAS MENORES DE LA INFRAESTRUCTURA FÍSICA PARA EL PUESTO DE SALUD SAN JOSÉ DE MULATOS DE LA ESE HOSPITAL FRANCISCO VALDERRAMA DEL MUNICIPIO DE TURBO - ANTI","Contratación régimen especial (con ofertas)",588245261,"2026-09-09","Fase de ofertas","72121400","71 día(s)","10869960","Por verificar"],["Adecuaciones locativas","Bogotá D.C.","Bogotá","CENTRAL ADMINISTRATIVA ESPECIALIZADA INGENIEROS CENAC INGENIEROS","306-MC-CENACINGENIEROS-2026","LA ADECUACION DE LA RED ELECTRICA DE BAJA TENSION, NECESARIA PARA LA PUESTA EN FUNCIONAMIENTO DEL ÁREA DESTINADA A LA FABRICACION DE SACOS TERREROS DEL BATALLÓN DE INTEND","Mínima cuantía",101518906,"2026-09-09","Presentación de oferta","72101500","45 día(s)","10866694","No"],["Interventoría y supervisión","Antioquia","Turbo","E.S.E HOSPITAL FRANCISCO VALDERRAMA DE TURBO","CP-007-2026","INTERVENTORÍA TÉCNICA, ADMINISTRATIVA Y FINANCIERA AL CONTRATO QUE TIENE POR OBJETO ADECUACIÓN DE OBRAS MENORES DE LA INFRAESTRUCTURA FÍSICA DEL PUESTO DE SALUD SAN JOSÉ ","Contratación régimen especial (con ofertas)",42901018,"2026-09-09","Presentación de oferta","81101500","77 día(s)","10869962","Por verificar"],["Adecuaciones locativas","Antioquia","El Carmen De Viboral","E.S.E HOSPITAL SAN JUAN DE DIOS EL CARMEN DE VIBORAL","CONV-0012026","Adecuación de la infraestructura física del Puesto de salud La Aurora de la ESE Hospital ESE San Juan de Dios de El Carmen de Viboral- Antioquia, mediante asignación de r","Contratación régimen especial (con ofertas)",850911444,"2026-09-09","Presentación de oferta","72152500","4 Mes(es)","10868885","Por verificar"],["Adecuaciones locativas","Huila","Pitalito","SENA REGIONAL HUILA Grupo Administrativo CGDSS","MC-HIL-CGDSS-036-2026","Contratar a todo costo la adecuación de la cubierta y cielo raso de la sala de juntas del equipo Tecnoparque Nodo Pitalito del Centro de Gestión y Desarrollo Sostenible S","Mínima cuantía",29814660,"2026-09-09","Presentación de oferta","72103300","0 día(s)","10866401","No"],["Interventoría y supervisión","Antioquia","Turbo","E.S.E HOSPITAL FRANCISCO VALDERRAMA DE TURBO","CP-008-2026","INTERVENTORÍA TÉCNICA, ADMINISTRATIVA Y FINANCIERA A LA OBRA DE ADECUACIÓN DE OBRAS MENORES DE LA INFRAESTRUCTURA FÍSICA DEL PUESTO DE SALUD SAN VICENTE DEL CONGO DE LA E","Contratación régimen especial (con ofertas)",103429253,"2026-09-09","Presentación de oferta","80101600","190 día(s)","10870064","Por verificar"],["Adecuaciones locativas","Antioquia","Bello","EMPRESA SOCIAL DEL ESTADO BELLOSALUD","C09-004-2026 SAN FELIX","ADECUACIÓN DE INFRAESTRUCTURA FÍSICA para el centro de salud SAN FELIX, de la ESE BELLOSALUD DEL MINICIPIO DE BELLO ANTIOQUIA de conformidad con los recursos asignados me","Contratación régimen especial (con ofertas)",878941919,"2026-09-08","Fase de ofertas","72141100","79 día(s)","10858320","Por verificar"],["Interventoría y supervisión","Caldas","La Dorada","ESE HOSPITAL SAN FELIX LA DORADA","CONVOCATORIA 002 2026","INTERVENTORIA TECNICA, ADMINISTRATIVA Y FINANCIERA AL CONTRATO DE OBRA ADECUACION PARA EL MEJORAMIENTO DE LA PRESTACION DE LOS SERVIIOS DE SALUD EN PEDIATRIA, GINECOLOGIA","Contratación régimen especial (con ofertas)",72010515,"2026-09-08","Presentación de oferta","80101500","4 Mes(es)","10861631","Por verificar"],["Adecuaciones locativas","Bogotá D.C.","","UNIDAD ADMINISTRATIVA ESPECIAL JUNTA CENTRAL DE CONTADORES","038-UAE-JCC-MIC-2026","Contratar los servicios de mantenimiento para las instalaciones de la UAE junta central de contadores.","Mínima cuantía",20720000,"2026-09-07","Presentación de oferta","72102900","0 día(s)","10850062","No"],["Adecuaciones locativas","Huila","Pitalito","SENA REGIONAL HUILA Grupo Administrativo CGDSS","MC-HIL-CGDSS-035-2026","Contratar actividades de mantenimiento de la infraestructura, los sistemas de agua potable y agua residual del Centro de Gestión y Desarrollo Sostenible Surcolombiano del","Mínima cuantía",159803163,"2026-09-07","Presentación de oferta","72103300","0 día(s)","10850296","No"],["Interventoría y supervisión","Amazonas","Leticia","GOBERNACION DEL AMAZONAS","GOB-AMA-CM-0016-2026","INTERVENTORÍA TÉCNICA, ADMINISTRATIVA, FINANCIERA, CONTABLE Y JURÍDICA PARA LA CONSTRUCCION DE LAS VIAS PEATONALES INTERNAS Y LOS SENDEROS ECOLOGICOS ENTRE COMUNIDADES DE","Concurso de méritos abierto",292924118,"2026-09-07","Presentación de oferta","80101600","5 Mes(es)","10852744","Sí"],["Adecuaciones locativas","Antioquia","Ituango","ESE HOSPITAL SAN JUAN DE DIOS DE ITUANGO","CP-004-2026","ADECUACIÓN DE INFRAESTRUCTURA FÍSICA DEL PUESTO DE SALUD LA GRANJA DE LA E.S.E. HOSPITAL SAN JUAN DE DIOS DE ITUANGO, DE CONFORMIDAD A LA ASIGNACION DE RECURSOS AUTORIZAD","Contratación régimen especial (con ofertas)",698558243,"2026-09-07","Presentación de oferta","72103300","60 día(s)","10851523","Por verificar"],["Diseños técnicos","Cauca","Popayán","CORPORACION AUTONOMA REGIONAL DEL CAUCA 12","CRC-MC-0027-2026","CONTRATAR SERVICIOS DE CONSULTORÍA ESPECIALIZADA PARA REALIZAR LOS ESTUDIOS Y DISEÑOS TÉCNICOS PARA LA ADECUACIÓN Y/O SUSTITUCIÓN DE LA CUBIERTA Y SU ESTRUCTURA PORTANTE,","Mínima cuantía",49000000,"2026-09-07","Presentación de oferta","81101500","3 Mes(es)","10854682","No"],["Interventoría y supervisión","Sucre","Sincelejo","GOBERNACION DE SUCRE","CM-009-2026","INTERVENTORÍA TÉCNICA, ADMINISTRATIVA, FINANCIERA Y AMBIENTAL PARA LOS ESTUDIOS Y DISEÑOS PARA LA ADECUACIÓN DE INFRAESTRUCTURA FÍSICA EN EL DEPARTAMENTO DE SUCRE","Concurso de méritos abierto",594611439,"2026-09-04","Presentación de observaciones","80101600","7 Mes(es)","10845043","Sí"],["Interventoría y supervisión","Casanare","Yopal","GOBERNACION DEL CASANARE","CAS-DTV-MC-0002-2026","INTERVENTORIA TECNICA, ADMINISTRATIVA, FINANCIERA, CONTABLE, JURÍDICA Y AMBIENTAL DE LA CONSULTORIA CUYO OBJETO ES FORMULAR LA POLITICA PUBLICA DE VIVIENDA DE INTERÉS SOC","Mínima cuantía",98460404,"2026-09-04","Presentación de oferta","80101600","4 Mes(es)","10843390","No"],["Carpintería metálica y ventanería","Bogotá D.C.","","COMANDO GAULA MILITARES (COGAM)","049-COGAM-2026","SUMINISTRO E INSTALACIÓN Y PUESTA EN FUNCIONAMIENTO DE SISTEMA DE BOMBEO HIDRÁULICO Y CARPINTERÍA METÁLICA DE ACUERDO A LAS ESPECIFICACIONES TÉCNICAS PARA EL PROYECTO DE ","Selección Abreviada de Menor Cuantía",213910922,"2026-09-04","Presentación de observaciones","81101513","0 día(s)","10843020","Sí"],["Interventoría y supervisión","Tolima","Chaparral","ALCALDÍA MUNICIPAL DE CHAPARRAL","CMA-003-2026","CONTRATAR LA INTERVENTORIA PARA EL PROYECTO MEJORAMIENTO DE VIAS TERCIARIAS CON LA CONSTRUCCION DE PLACA HUELLA EN DIFERENTES PUNTOS CRITICOS DISPERSOS EN LA ZONA RURAL D","Concurso de méritos abierto",855137854,"2026-09-03","Presentación de observaciones","80101600","6 Mes(es)","10832849","Sí"],["Adecuaciones locativas","Nariño","Pasto","INSTITUCION EDUCATIVA MUNICIPAL TECNICO INDUSTRIAL - PASTO","IP-2026-001","EL CONTRATISTA SE COMPROMETE PARA CON LA INSTITUCIÓN A REALIZAR LA ETAPA 1 DE LA OBRA DE CONSTRUCCION DE LA CUBIERTA PARA CANCHA PREESCOLAR SEDE AURORA EN LA INSTITUCION ","Mínima cuantía",69997650,"2026-09-03","Fase de ofertas","72101500","2 Mes(es)","10830802","No"],["Interventoría y supervisión","Magdalena","Santa Marta","GOBERNACION DEL MAGDALENA","CM-008-2026","INTERVENTORIA TECNICA, ADMINISTRATIVA, FINANCIERA, AMBIENTAL Y LEGAL A LA CONSTRUCCIÓN DE LA E.S.E. HOSPITAL LOCAL DE SAN ZENON EN EL DEPARTAMENTO DEL MAGDALENA","Concurso de méritos abierto",856215578,"2026-09-02","Presentación de observaciones","80101600","10 Mes(es)","10827000","Sí"],["Diseño arquitectónico","Norte de Santander","Cúcuta","Gobernación Norte de Santander","CMA-SPPEE-3112-2026","ESTUDIOS Y DISEÑOS PARA LA NUEVA CONSTRUCCION DE LA INSTITUCION EDUCATIVA BABEGA MUNICIPIO DE SILOS, DEPARTAMENTO NORTE DE SANTANDER","Concurso de méritos abierto",350000000,"2026-09-01","Presentación de oferta","81101500","4 Mes(es)","10815950","Sí"],["Obra civil menor","Antioquia","Dabeiba","MUNICIPIO DE DABEIBA","SA 011 DE 2026","SUMINISTRO DE MATERIALES DE CONSTRUCCIÓN COMPLEMENTARIOS PARA LA IMPLEMENTACIÓN DE LA ESTRATEGIA DE APOYO HABITACIONAL DIRIGIDA A FAMILIAS AFECTADAS POR EVENTOS NATURALES","Selección Abreviada de Menor Cuantía",489326753,"2026-09-01","Presentación de observaciones","30131600","3 Mes(es)","10814920","Sí"],["Redes y sistemas","Bolívar","Cartagena","INSTITUCION UNIVERSITARIA BELLAS ARTES Y CIENCIAS DE BOLIVAR","UNIBAC-LIC-007-2026","SUMINISTRO, INSTALACIÓN, CONFIGURACIÓN, INTEGRACIÓN, PRUEBAS, CERTIFICACIÓN Y PUESTA EN FUNCIONAMIENTO DE UN SISTEMA INTELIGENTE DE DETECCIÓN, ALARMA Y EXTINCIÓN AUTOMÁTI","Licitación pública",898242781,"2026-09-01","Presentación de oferta","46191600","2 Mes(es)","10814532","Sí"],["Adecuaciones locativas","Tolima","","GOBIERNO DEPARTAMENTAL","MIN-142-2026","CONTRATAR LA ADECUACION Y EL MEJORAMIENTO LOCATIVO DE LA ESTACION DE POLICIA DEL MUNICIPIO DE SANTA ISABEL DEL DEPARTAMENTO DEL TOLIMA","Mínima cuantía",147620683,"2026-09-01","Presentación de oferta","72152000","90 día(s)","10818636","No"],["Diseños técnicos","Meta","Mesetas","MUNICIPIO DE MESETAS","SMC-067-2026","ESTUDIOS Y DISEÑOS PARA EL MEJORAMIENTO DE VÍAS CORRESPONDIENTES A LA CARRERA 24 ENTRE CALLES 8 Y 9; CALLE 9A ENTRE CARRERAS 24, 23, 22D, 22C Y 22B; CALLE 10 ENTRE CARRER","Mínima cuantía",43531780,"2026-08-31","Presentación de oferta","81102200","1 Mes(es)","10807665","No"],["Interventoría y supervisión","Cundinamarca","Subachoque","MUNICIPIO DE SUBACHOQUE","AMS-CM-001-2026","CONTRATAR LA INTERVENTORA TÉCNICA, ADMINISTRATIVA, FINANCIERA, CONTABLE E INTEGRAL AL CONTRATO CUYO OBJETO ES: CONSTRUCCION DE LA CASA SOCIAL DE LA MUJER EN EL MUNICIPIO ","Concurso de méritos abierto",98347299,"2026-08-28","Presentación de oferta","80101600","0 día(s)","10797026","Sí"],["Interventoría y supervisión","Caldas","Manizales","INSTITUTO DE VALORIZACION DE MANIZALES","INV-CM-004-2026","INTERVENTORÍA TÉCNICA, ADMINISTRATIVA, JURÍDICA, FINANCIERA Y AMBIENTAL PARA EL PROYECTO DE CONSTRUCCION DE VÍAS DE ACCESO, PUENTE Y OBRAS COMPLEMENTARIAS ZONA INDUSTRIAL","Concurso de méritos abierto",761792602,"2026-08-28","Proceso de ofertas","80101500","8 Mes(es)","10792292","Sí"]]</script>
@@ -1213,8 +1203,8 @@ const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k
 /* El modo claro/oscuro y el color de énfasis los maneja Apariencia (compartido con las demás apps); ver script al final */
 function actualizarSub(esFallback){
   const desde=D.length?D.reduce((m,r)=>r.pub<m?r.pub:m,D[0].pub):META.desde;
-  const sufijo=esFallback?" · <span style='color:var(--focus);font-size:12px'>⚠ Datos de muestra — API no disponible</span>":" · <span style='color:var(--hi);font-size:12px'>✓ Actualizado en tiempo real</span>";
-  document.getElementById("sub").innerHTML=`${D.length.toLocaleString("es-CO")} procesos vigentes en SECOP II abiertos a ofertas, de todos los sectores y valores, en todo el país, publicados desde el ${fecha(desde)}. Consulta del ${HOY.toLocaleDateString("es-CO",{day:"numeric",month:"long",year:"numeric"})}.${sufijo}`;
+  const sufijo=esFallback?" · <span style='color:var(--focus)'>⚠ Datos de muestra</span>":" · <span style='color:var(--hi)'>✓ En vivo</span>";
+  document.getElementById("sub").innerHTML=`${D.length.toLocaleString("es-CO")} procesos vigentes · desde ${fecha(desde)}${sufijo}`;
   document.getElementById("src").textContent="Fuente: datos abiertos SECOP II (datos.gov.co, conjunto p6dx-8zbt). Procesos en estado Publicado o Abierto de los últimos 60 días, en modalidades que reciben ofertas (no incluye contratación directa ni régimen especial sin ofertas). Sector y tipología se deducen del objeto del proceso, porque la mayoría no trae código UNSPSC. BIM y Mejoramiento de vivienda llevan textura rayada sobre el color de su familia. El mapa es esquemático: la posición de cada cuadro es aproximada.";
 }
 actualizarSub(true);
@@ -1238,7 +1228,7 @@ const rowsTip=(title,pairs)=>`<b>${esc(title)}</b>`+pairs.map(([c,l,v])=>`<div c
 function bindTip(el,fn){el.addEventListener("mousemove",e=>showTip(e,fn()));el.addEventListener("mouseleave",hideTip)}
 
 const pres=document.getElementById("presets");
-PRESETS.forEach(([n,h,cfg],i)=>{const b=document.createElement("button");b.className="preset";b.type="button";b.dataset.i=i;b.innerHTML=esc(n)+(h?`<small>${esc(h)}</small>`:"");
+PRESETS.forEach(([n,h,cfg],i)=>{const b=document.createElement("button");b.className="preset";b.type="button";b.dataset.i=i;b.textContent=n;if(h)b.title=h;
   b.onclick=()=>{const was=preset===i;clearAll();if(!was){Object.entries(cfg).forEach(([k,vs])=>vs.forEach(v=>F[k].add(v)));preset=i}render()};pres.appendChild(b)});
 const legend=()=>LINEAS.map(l=>`<span><span class="sw" style="--c:${COL[l]}"></span>${esc(l)}</span>`).join("");
 document.getElementById("leg1").innerHTML=legend();document.getElementById("leg2").innerHTML=legend();
@@ -1248,9 +1238,9 @@ function render(){
   const R=D.filter(d=>pass(d));
   pres.querySelectorAll(".preset").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.i===preset));
   // KPIs
-  const k=[["",R.length,"procesos con los filtros"],["",cop(R.reduce((a,b)=>a+b.val,0)),"valor total"],
-    ["hi",R.filter(d=>d.p==="Alta").length,"conveniencia alta"],["",R.filter(d=>d.fz).length,"★ en zona foco"],
-    ["",R.filter(d=>d.rup!=="Sí").length,"sin RUP o por verificar"]];
+  const k=[["",R.length.toLocaleString("es-CO"),"procesos"],["",cop(R.reduce((a,b)=>a+b.val,0)),"valor"],
+    ["hi",R.filter(d=>d.p==="Alta").length.toLocaleString("es-CO"),"alta"],["",R.filter(d=>d.fz).length.toLocaleString("es-CO"),"★ foco"],
+    ["",R.filter(d=>d.rup!=="Sí").length.toLocaleString("es-CO"),"sin RUP"]];
   document.getElementById("kpis").innerHTML=k.map(([c,n,l])=>`<div class="kpi ${c}"><b>${n}</b><span>${l}</span></div>`).join("");
 
   // Fichas por tipología
@@ -1259,10 +1249,7 @@ function render(){
   tiles.innerHTML=LINEAS.map(l=>{const a=T.filter(d=>d.tipo===l),n=a.length,sel=F.tipo.has(l),dim=F.tipo.size&&!sel;
     const sr=n?Math.round(a.filter(d=>d.rup!=="Sí").length/n*100):0;
     return `<button class="tile${dim?" dim":""}" style="--c:${COL[l]};--cs:${SOL[l]}" aria-pressed="${sel}" data-k="${esc(l)}">
-      <span class="nm">${esc(l)}</span><span class="big">${n}</span>
-      <span class="share"><i style="width:${T.length?n/T.length*100:0}%"></i></span>
-      <span class="sm"><span>${T.length?Math.round(n/T.length*100):0}% del total</span><span>${sr}% sin RUP</span></span>
-      <span class="sm"><span>Valor típico ${n?cop(median(a.map(d=>d.val))):"—"}</span></span></button>`}).join("");
+      <span class="nm">${esc(l)}</span><span class="big">${n}</span></button>`}).join("");
   tiles.querySelectorAll(".tile").forEach(b=>{b.onclick=()=>tog("tipo",b.dataset.k);bindTip(b,()=>{const a=T.filter(d=>d.tipo===b.dataset.k);return rowsTip(b.dataset.k,[[COL[b.dataset.k],"Procesos",a.length],["","Valor total",cop(a.reduce((x,y)=>x+y.val,0))],["","Valor típico (mediana)",a.length?cop(median(a.map(d=>d.val))):"—"],["","Mínima cuantía",a.filter(d=>d.modG==="Mínima cuantía").length],["","En zona foco",a.filter(d=>d.fz).length]])})});
 
   // Mapa esquemático
@@ -1336,7 +1323,7 @@ function render(){
   // Tabla
   const Sx=[...R].sort((a,b)=>{const x=a[sort.k],y=b[sort.k];const c=typeof x==="number"?x-y:String(x).localeCompare(String(y),"es");return c*sort.dir||(b.fz-a.fz)||b.pub.localeCompare(a.pub)});
   const lugar=d=>esc(d.ciu&&d.ciu!==d.dep?d.ciu+", "+d.dep:d.dep);
-  const rupChip=d=>`<span class="chip ${d.rup==="No"?"rno":""}">${esc(d.rup)}</span>`;
+  const rupChip=d=>`<span class="chip ${d.rup==="No"?"rno":""}">${d.rup==="No"?"Sin RUP":d.rup==="Sí"?"RUP":"RUP ?"}</span>`;
   const meter=d=>`<span class="meter s-${d.p==="Alta"?"hi":d.p==="Media"?"mid":"lo"}"><i><b style="width:${d.score}%"></b></i>${d.score}</span>`;
   const tipoTag=d=>`<span class="tipo" style="color:var(--fg)"><span class="sw" style="--c:${COL[d.tipo]};display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--c);margin-right:5px"></span>${esc(d.tipo)}</span>`;
   {const sig=JSON.stringify([KEYS.map(k=>[...F[k]]),F.p,F.q,sort]);if(sig!==render._sig){render._sig=sig;render._lim=60}}
@@ -1347,11 +1334,11 @@ function render(){
     <td class="obj">${tipoTag(d)}<b>${esc(d.ent)}</b>${esc(cap(d.obj))}<div style="margin-top:3px;font-size:11.5px;color:var(--muted);font-family:var(--mono)">${esc(d.ref)} · ${esc(d.etapa)}</div></td>
     <td>${lugar(d)}</td><td>${esc(d.modG)}</td><td>${rupChip(d)}</td>
     <td class="num">${cop(d.val)}<div class="qmini">inv. ${cop(quick(d).inv)}<br>gana ${(quick(d).gan<0?"−":"")+cop(Math.abs(quick(d).gan))}</div></td><td class="num">${d.vmes?cop(d.vmes):"—"}</td><td style="white-space:nowrap">${fecha(d.pub)}<div style="font-size:11.5px;color:var(--muted)">hace ${d.dias} d</div></td>
-    <td><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a><a class="ruta-l" href="#f2">Cómo ofertar →</a><button class="simb" type="button" onclick="simContract(${i})">Simular caja</button></td></tr>`).join(""):`<tr><td colspan="9" class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</td></tr>`;
+    <td><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a><button class="simb" type="button" onclick="simContract(${i})">Simular caja</button></td></tr>`).join(""):`<tr><td colspan="9" class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</td></tr>`;
   document.getElementById("cards").innerHTML=V.length?V.map((d,i)=>`<article class="card${d.fz?" fz":""}">
-    <div class="row"><span class="chip p-${d.p}">${d.p}</span>${meter(d)}${rupChip(d)}</div>${tipoTag(d)}
+    <div class="row"><span class="chip p-${d.p}">${d.p} ${d.score}</span>${rupChip(d)}${tipoTag(d)}</div>
     <h3>${esc(cap(d.obj))}</h3><div class="meta">${esc(d.ent)} · ${lugar(d)} · ${esc(d.modG)} · ${fecha(d.pub)}</div>
-    ${quickHtml(d)}<div class="row" style="justify-content:space-between;gap:8px"><span class="v">${cop(d.val)}</span><span class="row" style="gap:6px"><button class="simb inl" type="button" onclick="simContract(${i})">Simular caja</button><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a></span></div></article>`).join(""):`<div class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</div>`;
+    ${quickHtml(d)}<div class="row ft"><span class="v">${cop(d.val)}</span><button class="simb inl" type="button" onclick="simContract(${i})">Simular</button><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a></div></article>`).join(""):`<div class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</div>`;
   document.querySelectorAll("th button").forEach(b=>b.textContent=b.textContent.replace(/ [↑↓]$/,"")+(sort.k===b.dataset.s?(sort.dir>0?" ↑":" ↓"):""));
 }
 document.querySelectorAll("th button").forEach(b=>b.onclick=()=>{const k=b.dataset.s;sort=sort.k===k?{k,dir:-sort.dir}:{k,dir:["val","vmes","pub","score"].includes(k)?-1:1};render()});
@@ -1566,7 +1553,7 @@ function cLoad(d){
   $("c-card").innerHTML=`<div class="row"><span class="tipo" style="color:var(--fg)"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${COL[d.tipo]||"var(--accent)"};margin-right:5px"></span>${esc(d.tipo)}</span>${d.fz?`<span class="chip fz">★ Foco</span>`:""}<span class="chip">${esc(d.modG||"")}</span><span class="chip ${d.rup==="No"?"rno":""}">RUP: ${esc(d.rup)}</span></div>
     <h3>${esc(cap(d.obj))}</h3>
     <div class="meta"><span><b style="color:var(--fg)">${esc(d.ent)}</b></span><span>${esc(lugar)}</span><span>Valor ${cop(d.val)}</span>${d.plazo?`<span>Plazo ${esc(d.plazo)}</span>`:""}${d.ref?`<span>Ref. ${esc(d.ref)}</span>`:""}</div>
-    ${d.url?`<div class="row"><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir en SECOP ↗</a></div>`:`<div class="meta">Elige un proceso real en la lista o desde el Radar.</div>`}`;
+    ${d.url?`<div class="row"><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir en SECOP ↗</a></div>`:""}`;
   cDraw();
 }
 function cRead(){const n=id=>+$(id).value||0;
@@ -1609,7 +1596,7 @@ function cModel(p,d){
 function pDef(d){const q=cDefaults(d);return {V:q.val*1e6,meses:q.mes,forma:q.forma,ant:.3,cos:q.cos/100,dias:q.dias,tasa:q.tasa/100,ivab:q.ivab,u:q.u/100,rte:q.rte/100,riva:q.riva/100,rica:q.rica/100,est:q.est/100,cont:q.cont/100,renta:.35}}
 function quick(d){if(d._q)return d._q;const m=cModel(pDef(d),d);const ini=HOY;const fecha=m.be?addD(ini,(m.be-1)*7):null;
   return d._q={inv:-m.min,gan:m.gan,margen:m.margen,neto:m.totIn,be:fecha,sem:m.wk}}
-function quickHtml(d){const q=quick(d);return `<div class="qk"><span><i>Inversión máx.</i><b class="o">${cop(q.inv)}</b></span><span><i>Ganancia neta</i><b class="${q.gan>=0?"g":"o"}">${(q.gan<0?"−":"")+cop(Math.abs(q.gan))}</b></span><span><i>Margen</i><b>${q.margen.toFixed(0)} %</b></span><span><i>Recuperas</i><b>${q.be?q.be.toLocaleDateString("es-CO",{month:"short",year:"2-digit"}):"—"}</b></span></div>`}
+function quickHtml(d){const q=quick(d);return `<div class="qk1">Inv. <b class="o">${cop(q.inv)}</b> · gana <b class="${q.gan>=0?"g":"o"}">${(q.gan<0?"−":"")+cop(Math.abs(q.gan))}</b> · ${q.margen.toFixed(0)} % · recupera ${q.be?q.be.toLocaleDateString("es-CO",{month:"short",year:"2-digit"}):"—"}</div>`}
 function cDraw(){
   const p=cRead(),d=CUR;$("c-ant-l").hidden=p.forma!=="anticipo";$("c-u-l").hidden=p.ivab!=="aiu";
   const ini=$("c-ini").value?new Date($("c-ini").value+"T12:00:00"):HOY;
@@ -1728,6 +1715,131 @@ function simContract(i){const d=window._simRows&&window._simRows[i];if(!d)return
     <a class="pp-lnk" href="/planificar-proyectos-apps/">Ir a Planificar Proyectos Apps</a>
   </form>
 </div>
+<style id="compacto">
+/* Compacto: menos relleno, separación y alturas en todas las vistas */
+body{font-size:14px}
+.wrap{gap:10px;padding-block:10px calc(56px + env(safe-area-inset-bottom,0px) + 12px)}
+.view{gap:10px}
+.wrap>.top{gap:6px}
+.hrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
+.brand{margin:0}
+.brand svg{width:22px;height:22px}
+.brand b{font-size:22px}
+.fecha{margin:0;font-size:13px;white-space:nowrap}
+h1{font-size:26px;margin:0 0 2px}
+.sub{font-size:12.5px}
+/* Vistas rápidas: una fila deslizable */
+.presets{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:8px;border-radius:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.presets::-webkit-scrollbar{display:none}
+.preset{flex:none;width:auto;min-height:34px;padding:0 14px;border-radius:999px;font-size:13px;white-space:nowrap}
+/* Cifras en línea */
+.kpis{display:flex;flex-wrap:wrap;gap:4px 16px;background:var(--surface);border-radius:14px;padding:8px 12px}
+.kpi{display:flex;flex-direction:row;align-items:baseline;gap:5px;padding:0;background:none;border-radius:0}
+.kpi b{font-size:20px;line-height:1.1}
+.kpi span{font-size:12px}
+/* Plegables */
+.fold{background:transparent}
+.fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;background:var(--surface);border-radius:14px;padding:9px 14px;font-family:var(--display);font-weight:700;font-size:17px;text-transform:uppercase;letter-spacing:.5px}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--accent-fg);border-bottom:2px solid var(--accent-fg);transform:rotate(45deg);margin:-4px 4px 0 0;transition:transform .15s}
+.fold[open]>summary::after{transform:rotate(-135deg);margin-top:4px}
+.fold-in{display:grid;gap:8px;margin-top:8px}
+.fold.mini>summary{background:none;padding:4px 2px;font-family:var(--body);font-size:12.5px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--muted)}
+.fold.mini .note{padding:4px 2px 8px}
+/* Fichas de tipología en una línea */
+.tiles{grid-template-columns:repeat(auto-fill,minmax(min(170px,45%),1fr));gap:6px}
+.tile{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px 7px 13px;border-radius:12px}
+.tile::before{width:4px}
+.tile .nm{min-height:0;font-size:12px;line-height:1.2}
+.tile .big{font-size:20px}
+/* Paneles y gráficos */
+.duo{gap:8px}
+.grid4{gap:8px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.panel{padding:10px 12px 8px;border-radius:14px}
+.panel h2{font-size:15px;margin-bottom:4px}
+.hint{font-size:11.5px;margin:0 0 4px}
+.bars{gap:1px}
+.bar{padding:2px 4px}
+.bar .trk{height:9px}
+.bar .lab{font-size:12px}
+.stack{height:28px}
+.map{gap:3px;margin-top:2px}
+.scale{margin-top:6px}
+.stk{gap:3px}
+.srow .trk{height:12px}
+.heat .c{min-height:26px}
+/* Búsqueda */
+.toolbar{gap:6px;padding-block:6px}
+.toolbar input{min-height:38px;flex:1 1 180px}
+.btn.sm{min-height:38px;padding:0 12px;font-size:13px}
+/* Tarjetas de procesos */
+.cards{gap:8px}
+.card{padding:10px 12px;gap:4px;border-radius:14px}
+.card .row{gap:5px}
+.card .tipo{font-size:10.5px}
+.card h3{font-size:14px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .meta{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .v{font-size:19px;margin-right:auto}
+.card .ft{gap:6px;flex-wrap:nowrap}
+.qk1{font-size:12px;color:var(--muted)}
+.qk1 b{font-weight:700;color:var(--fg)} .qk1 b.o{color:var(--pay)} .qk1 b.g{color:var(--ok)}
+.go{padding:6px 12px}
+.simb.inl{width:auto;margin:0;padding:6px 12px;display:inline-block}
+td{padding:6px 8px} th{padding:7px 8px}
+#mas{min-height:38px}
+/* Menú inferior */
+.bottom-nav{min-height:56px}
+.bottom-nav button{min-height:56px;padding:6px 4px;gap:2px;font-size:10.5px}
+.bottom-nav button svg{width:20px;height:20px}
+/* Ruta */
+#v-ruta{font-size:14px}
+body #v-ruta .rwrap{gap:22px;padding-block:4px 16px!important}
+#v-ruta section{gap:10px}
+#v-ruta .sec-head{gap:2px}
+#v-ruta h2{font-size:20px}
+#v-ruta .note{font-size:13px}
+#v-ruta .status{padding:12px;gap:12px}
+#v-ruta .phasemap a{padding:8px}
+#v-ruta .gantt-box,#v-ruta .payflow div,#v-ruta .duo>div{padding:10px}
+#v-ruta .simf,#v-ruta .simk{gap:8px} #v-ruta .simf{padding:10px}
+#v-ruta td,#v-ruta th{padding:6px 8px}
+/* Simulación */
+#v-sim .simf{gap:8px;padding:10px}
+#v-sim .simf label,.c-pick{gap:2px;font-size:12px}
+#v-sim .simf input,#v-sim .simf select,.c-pick select{min-height:36px;padding:5px 9px;font-size:13.5px}
+#v-sim .simk{gap:6px}
+#v-sim .simk div{padding:8px 10px}
+#v-sim .simk b{font-size:20px}
+.c-top{gap:8px}
+.c-card{padding:10px 12px;gap:4px}
+.duo2{gap:8px}
+.ctable td,.ctable th{padding:5px 7px}
+/* Cuenta */
+body #v-cuenta .cta-wrap{gap:8px}
+body #v-cuenta .cta-name{font-size:20px;padding:10px 14px 2px}
+body #v-cuenta .cta-line{padding:0 14px 10px}
+body #v-cuenta .cta-card>.cta-head{padding:10px 14px 0;font-size:14px}
+body #v-cuenta .cta-body{padding:10px 14px;gap:10px}
+body #v-cuenta .cta-salir{min-height:42px;margin-top:0}
+/* Saludo y resumen solo en el Radar */
+.wrap:has(#v-radar[hidden]) #saludo,.wrap:has(#v-radar[hidden]) #sub{display:none}
+/* Mapa más bajo */
+.map .t{aspect-ratio:1.3;font-size:10px}.map .t b{font-size:12px}
+/* Ruta */
+#v-ruta h2[style]{font-size:22px!important}
+#v-ruta .legend{gap:2px 12px;font-size:12px}
+#v-ruta .phasemap a{gap:0;padding:6px 8px}
+#v-ruta .phasemap .t{font-size:13px}
+#v-ruta .phasemap .n,#v-ruta .phasemap .who{font-size:11px}
+#v-ruta .checks{font-size:13px;gap:4px}
+#v-ruta .checks li{grid-template-columns:82px 1fr;gap:8px}
+#v-ruta .status p,#v-ruta .tip{font-size:13px}
+#v-ruta .tip{padding:10px;gap:4px}
+/* Simulación: dos campos por fila en el celular */
+#v-sim .simf{grid-template-columns:repeat(auto-fill,minmax(min(150px,45%),1fr))}
+#v-sim .simk{grid-template-columns:repeat(auto-fill,minmax(min(140px,45%),1fr))}
+#v-sim .simk span{font-size:11.5px}
+</style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
