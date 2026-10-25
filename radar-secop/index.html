@@ -11,7 +11,7 @@
 <meta name="twitter:image" content="https://www.planificarproyectos.com/og-image.jpg">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap">
 <style>
 /* Layout general: barra (tema + limpiar) → vistas rápidas → KPIs → paneles de gráficos-filtro (multiselección) → chips activos + búsqueda → tabla ordenada por conveniencia */
 :root{
@@ -392,17 +392,175 @@ td.fz{box-shadow:inset 3px 0 0 var(--focus)}
 @media (max-width:420px){.qk{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 
+<style id="tema-powerfit">
+/* Apariencia Planificar Proyectos Apps (igual a PowerFit): fondo grafito, tarjetas redondeadas sin borde, píldoras,
+   Barlow Condensed + DM Sans y el color de énfasis de la cuenta (Apariencia) en todo lo activo.
+   --accent = relleno · --accent-fg = textos y detalles (más oscuro en modo claro) · --accent-ink = texto sobre el énfasis */
+:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#111315; --surface:#1C1F22; --surface-2:#2A2E32; --line:#3A3F44; --fg:#F2F2EE; --muted:#A3A8AD; --dim:#767C82;
+  --accent:#C6F432; --accent-fg:#C6F432; --accent-ink:#111315; --accent-2:color-mix(in srgb,var(--accent) 16%,transparent);
+  --bar:#3A3F44; --bar-sel:var(--accent);
+  --hi:var(--accent-fg); --hi-bg:color-mix(in srgb,var(--accent) 18%,transparent);
+  --mid:#FFD27A; --mid-bg:rgba(255,210,122,.14); --lo:#A3A8AD; --lo-bg:#2A2E32;
+  --focus:var(--accent-fg); --focus-soft:color-mix(in srgb,var(--accent) 14%,transparent);
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#2f9e2f;--s7:#9085e9;--s8:#e66767;
+  --seq-lo:#2A2E32; --seq-hi:var(--accent); --seq-ink:var(--accent-ink); --zero:#24282C;
+  --emp:#4cc3b0;--emp-soft:#16302b;--ent:#93a3ec;--ent-soft:#1f2540;--sec:#a9ada6;--sec-soft:#252a27;--pay:#e2a94a;--pay-soft:#33291a;--ok:#5fc48c;--warn:#e2a94a;--todo:#6c7671;
+  --shadow:none;
+}
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#F3F4F1; --surface:#FFFFFF; --surface-2:#E8EBE5; --line:#CDD2CA; --fg:#15181A; --muted:#596066; --dim:#868D93;
+  --accent:#C6F432; --accent-fg:#5F7518; --accent-ink:#111315; --accent-2:color-mix(in srgb,var(--accent) 22%,transparent);
+  --bar:#CDD2CA; --bar-sel:var(--accent);
+  --hi:var(--accent-fg); --hi-bg:color-mix(in srgb,var(--accent) 26%,transparent);
+  --mid:#8a5a00; --mid-bg:#fbefcf; --lo:#596066; --lo-bg:#E8EBE5;
+  --focus:var(--accent-fg); --focus-soft:color-mix(in srgb,var(--accent) 20%,transparent);
+  --seq-lo:#E8EBE5; --seq-hi:var(--accent); --seq-ink:var(--accent-ink); --zero:#EEF0EC;
+  --shadow:none;
+}
+:root{
+  --display:'Barlow Condensed','Arial Narrow',sans-serif; --body:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif; --mono:var(--body);
+  --f-display:var(--display); --f-body:var(--body); --f-mono:var(--body);
+}
+body{font-family:var(--body);font-size:15px}
+:focus-visible{outline-color:var(--accent-fg)}
+
+/* Encabezado (como PowerFit): marca · fecha · saludo */
+.wrap>.top{align-items:flex-start}
+.brand{display:inline-flex;align-items:center;gap:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:14px}
+.brand svg{width:30px;height:30px;flex:none}
+.brand b{font-family:var(--display);font-weight:700;font-size:30px;letter-spacing:1.5px;line-height:1}
+.brand b span{color:var(--accent-fg)}
+.brand:active{opacity:.6}
+.fecha{color:var(--muted);font-size:15px;margin-bottom:6px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(36px,6vw,48px);line-height:1.02;margin:0 0 10px}
+.sub{font-size:14px}
+.wrap>.top .eyebrow{font-family:var(--body);font-size:12px;letter-spacing:.06em;color:var(--muted);margin-top:8px;font-weight:600}
+.eyebrow{color:var(--accent-fg)}
+
+/* Píldoras y botones */
+.btn{border-radius:999px;border:1px solid var(--line);background:transparent;min-height:44px;padding:0 18px;font-weight:600}
+.btn:hover{border-color:var(--accent-fg)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chip{border-radius:999px;padding:4px 10px}
+.chip.act{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700;padding:4px 4px 4px 12px}
+.chip.act button{color:var(--accent-ink)}
+.chip.act button:hover{background:rgba(0,0,0,.15);color:var(--accent-ink)}
+.chip.p-Alta{background:var(--accent);color:var(--accent-ink)}
+.chip.rno{background:var(--hi-bg);color:var(--hi)}
+.chip.fz{background:var(--focus-soft);color:var(--accent-fg)}
+.toolbar{border-bottom:0;padding-block:10px}
+.toolbar input{border-radius:999px;border:1px solid var(--line);background:var(--surface);padding:0 18px;min-height:46px}
+.toolbar input:focus{border-color:var(--accent-fg);outline:0}
+.go{background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:8px 16px}
+
+/* Vistas rápidas = tarjeta de énfasis (como «¿Qué entrenas hoy?») */
+.presets{background:var(--accent);color:var(--accent-ink);border-radius:20px;padding:16px;gap:8px}
+.presets .lbl{flex-basis:100%;font-family:var(--display);font-size:26px;font-weight:700;letter-spacing:.5px;color:var(--accent-ink);margin:0 0 4px}
+.preset{border:0;background:rgba(0,0,0,.13);color:var(--accent-ink);border-radius:14px;min-height:48px;padding:6px 16px;font-weight:700;font-size:14px;box-shadow:none;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15}
+.preset:hover{background:rgba(0,0,0,.2)}
+.preset small{font-weight:500;font-size:11px;opacity:.75;margin:2px 0 0}
+.preset[aria-pressed="true"]{background:var(--accent-ink);color:var(--accent)}
+.presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(150px,40%),1fr))}
+.presets .lbl{grid-column:1/-1}
+.preset{width:100%;text-align:center}
+
+/* Tarjetas: superficie lisa, esquinas redondeadas, sin borde */
+.kpi,.panel,.tile,.card,.tbl,#tip{border:0;border-radius:18px;box-shadow:none}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(min(150px,45%),1fr))}
+.kpi{padding:14px 16px;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:2px;text-align:left}
+.kpi b{font-family:var(--display);font-size:34px;font-weight:700}
+.kpi.hi b,.kpi.fz b{color:var(--accent-fg)}
+button.kpi:hover{outline:1px solid var(--line)}
+.kpi[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border:0}
+.kpi[aria-pressed="true"] b,.kpi[aria-pressed="true"] span{color:var(--accent-ink)}
+.panel{padding:16px 16px 12px}
+.panel h2{font-family:var(--display);font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.panel h2{display:block}
+.panel h2 small{display:block;margin-top:2px;text-transform:none;letter-spacing:0}
+.sec-t{font-family:var(--display);font-weight:700;font-size:28px;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 -4px}
+.sec-t small{text-transform:none;letter-spacing:0}
+.tile .big{font-family:var(--display);font-weight:700;font-size:34px}
+.tile:hover{outline:1px solid var(--cs)}
+.card.fz{border-left:4px solid var(--accent)}
+.card h3{font-family:var(--body);font-weight:700;font-size:15px}
+.card .v{font-family:var(--display);font-weight:700;font-size:22px}
+.tipo{color:var(--accent-fg)}
+.bar .fill{border-radius:999px}.bar .trk{border-radius:999px}
+.bar.focus .lab{color:var(--accent-fg)} .bar.focus .fill{background:var(--accent)}
+.bar[aria-pressed="true"]{background:var(--accent-2)}
+.meter i{border:0;background:var(--surface-2)} .meter.s-hi i b{background:var(--accent)}
+.stack .s-Alta{background:var(--accent);color:var(--accent-ink)}
+.map .t{border-radius:8px}
+.map .t.fz{box-shadow:inset 0 0 0 2px var(--fg)}
+.map .t[aria-pressed="true"]{outline-color:var(--fg)}
+.heat .c{border-radius:6px}
+.heat .c:hover{outline-color:var(--fg)}
+th{background:var(--surface)}
+td{border-bottom-color:var(--line)}
+td.fz{box-shadow:inset 3px 0 0 var(--accent)}
+tr:hover td{background:var(--surface-2)}
+.srow .lab[aria-pressed="true"]{background:var(--accent-2)}
+
+/* Menú inferior */
+.bottom-nav{border-top:0;min-height:72px}
+.bottom-nav button{font-size:11px;font-weight:500}
+.bottom-nav button[aria-selected="true"]{color:var(--accent-fg);font-weight:700}
+.tab[aria-selected="true"]{border-bottom-color:var(--accent)}
+
+/* Ruta y Simulación */
+.golink,.simb{border:0;background:var(--accent);color:var(--accent-ink);border-radius:999px}
+.golink:hover,.simb:hover{background:var(--accent);color:var(--accent-ink);filter:brightness(1.08)}
+.ruta-l,.sim-l{color:var(--accent-fg)}
+#v-ruta .phasemap a,#v-ruta .status,#v-ruta .gantt-box,#v-ruta .tbl-box,#v-ruta .payflow div,#v-ruta .duo>div,#v-ruta .simf,#v-ruta .simk div,
+#v-sim .simf,#v-sim .simk div,.c-card{border:0;border-radius:18px;box-shadow:none}
+.c-card{border-left:5px solid var(--c,var(--accent))}
+#v-ruta .step,#v-ruta .tip{border-radius:12px}
+#v-ruta .simf input,#v-ruta .simf select,#v-sim .simf input,#v-sim .simf select,.c-pick select{border-radius:12px;min-height:42px}
+#v-ruta .simk b,#v-sim .simk b{font-family:var(--display);font-weight:700;font-size:26px}
+#v-ruta h2{font-family:var(--display);text-transform:uppercase;letter-spacing:.5px}
+.qk{border-radius:14px}
+
+/* Cuenta */
+body #v-cuenta .cta-card{border:0;border-radius:18px;box-shadow:none}
+body #v-cuenta .cta-card>.cta-head{font-family:var(--display);font-size:16px;letter-spacing:.5px}
+body #v-cuenta .cta-name{font-family:var(--display);font-size:26px}
+body #v-cuenta .cta-switch{width:52px;height:30px}
+body #v-cuenta .cta-switch::after{width:24px;height:24px}
+body #v-cuenta .cta-switch[aria-checked="true"]::after{transform:translateX(22px);background:var(--accent-ink)}
+body #v-cuenta .cta-go{color:var(--accent-fg)}
+body #v-cuenta .cta-salir{border-radius:999px;min-height:48px}
+
+/* Inicio de sesión */
+body .pp-gate{background:var(--bg);color:var(--fg);font-family:var(--body)}
+body .pp-card{background:var(--surface);border:0;border-radius:20px}
+body .pp-card h1{font-family:var(--display);font-size:32px;margin:0}
+body .pp-card p{color:var(--muted)}
+body .pp-card input{background:var(--bg);color:var(--fg);border-color:var(--line);border-radius:999px;padding:12px 18px}
+body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);border-radius:999px;min-height:48px}
+</style>
 <div class="wrap bar">
   <div class="top">
     <div>
-      <div class="eyebrow">Planificar Proyectos S.A.S. · NIT 901.518.558 · ★ Zona foco: Bolívar, Cundinamarca y Bogotá</div>
-      <h1>Radar SECOP</h1>
+      <div class="brand" data-reload role="button" tabindex="0" title="Actualizar la página" aria-label="Radar SECOP · actualizar la página"><svg viewBox="14 9 36 46" aria-hidden="true"><path d="M19 12h19l9 9v31H19z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M38 12v9h9" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M36.5 30.5c-1-1.6-2.7-2.3-4.5-2.3-2.4 0-4.2 1.2-4.2 3.2 0 4.6 9 2.6 9 7.4 0 2.1-2 3.4-4.6 3.4-2 0-3.8-.8-4.8-2.5M32 25.5v2.7M32 41.7v2.8" fill="none" stroke="var(--accent-fg)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg><b>RADAR<span>SECOP</span></b></div>
+      <div class="fecha" id="fecha"></div>
+      <h1 id="saludo">Radar SECOP</h1>
       <p class="sub" id="sub"></p>
+      <div class="eyebrow">Planificar Proyectos S.A.S. · NIT 901.518.558 · ★ Zona foco: Bolívar, Cundinamarca y Bogotá</div>
     </div>
     <div class="actions">
       <button class="btn" id="clear" type="button">✕ Limpiar filtros</button>
     </div>
   </div>
+  <script>/* Fecha y saludo como en PowerFit; el nombre llega del perfil compartido al iniciar sesión */
+  (function(){var DIA=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'],MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'],nom='';
+    function pinta(){var n=new Date(),h=n.getHours(),g=h<12?'Buenos días':h<19?'Buenas tardes':'Buenas noches';
+      document.getElementById('fecha').textContent=DIA[n.getDay()]+', '+n.getDate()+' '+MES[n.getMonth()];
+      document.getElementById('saludo').textContent=g+(nom?', '+nom:'');}
+    window.ppSaludo=function(n){nom=String(n||'').trim();pinta()};pinta();setInterval(pinta,60000);
+    var b=document.querySelector('.brand[data-reload]');if(b){b.onclick=function(){location.reload()};b.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();location.reload()}}}})();</script>
 
   <nav class="tabs" role="tablist" aria-label="Secciones">
     <button class="tab" role="tab" id="t-radar" aria-controls="v-radar" data-v="radar">Radar de procesos <small>dónde hay contratos</small></button>
@@ -422,7 +580,7 @@ td.fz{box-shadow:inset 3px 0 0 var(--focus)}
   <div class="duo">
     <div class="panel">
       <h2>Mapa del país <small>esquemático · un cuadro por departamento</small></h2>
-      <p class="hint">Más oscuro = más procesos. ★ = zona foco. Clic para filtrar.</p>
+      <p class="hint">Más intenso = más procesos. ★ = zona foco. Clic para filtrar.</p>
       <div class="map" id="map"></div>
       <div class="scale"><span>0</span><i></i><span id="scaleMax"></span> procesos</div>
     </div>
@@ -1566,10 +1724,10 @@ function simContract(i){const d=window._simRows&&window._simRows[i];if(!d)return
   // Color de énfasis y modo claro/oscuro compartidos con las demás apps
   if(window.Apariencia){var apl=function(st){var r=document.documentElement,light=st.mode==='light',a=light?Apariencia.forLight(st.accent):st.accent;
       r.setAttribute('data-theme',light?'light':'dark');
-      r.style.setProperty('--accent',a);r.style.setProperty('--bar-sel',a);
-      r.style.setProperty('--accent-2','color-mix(in srgb,'+a+' 15%, transparent)');
+      var c=st.accent;r.style.setProperty('--accent',c);r.style.setProperty('--accent-fg',a);r.style.setProperty('--accent-ink',Apariencia.ink(c));r.style.setProperty('--bar-sel',c);
+      r.style.setProperty('--accent-2','color-mix(in srgb,'+c+' '+(light?22:16)+'%, transparent)');
       var sw=$g('cta-modo');if(sw){sw.setAttribute('aria-checked',String(!light));var sub=$g('cta-modo-sub');if(sub)sub.textContent=(light?'Desactivado':'Activado')+' · no depende del dispositivo';}};
-    var l0=Apariencia.local();if(l0)apl(l0);Apariencia.on(function(st){apl(st)});
+    var l0=Apariencia.local();if(l0)apl(l0);Apariencia.on(function(st,preview){apl(st);var sl=$g('cta-apariencia-slot');if(!preview&&sl&&sl.innerHTML){try{sl.innerHTML=Apariencia.picker()}catch(e){}}});
     var sw0=$g('cta-modo');if(sw0)sw0.onclick=function(){var dark=sw0.getAttribute('aria-checked')==='true';Apariencia.set({mode:dark?'light':'dark'});};}
   $g('loginForm').addEventListener('submit',function(e){e.preventDefault();var em=$g('lEm').value.trim(),pw=$g('lPw').value;
     if(!em||!pw){$g('aMsg').textContent='Escribe tu correo y contraseña.';return}
@@ -1593,7 +1751,7 @@ function simContract(i){const d=window._simRows&&window._simRows[i];if(!d)return
       $g('gate').hidden=true;
       // Poblar sección Cuenta
       $g('cta-email').textContent=em;
-      try{fs.collection('users').doc(u.uid).collection('perfil').doc('datos').onSnapshot(function(d){var n=d.exists&&d.data().nombre||'';$g('cta-nombre').textContent=n||em.split('@')[0]})}catch(e){$g('cta-nombre').textContent=em.split('@')[0]}
+      try{fs.collection('users').doc(u.uid).collection('perfil').doc('datos').onSnapshot(function(d){var n=d.exists&&d.data().nombre||'';$g('cta-nombre').textContent=n||em.split('@')[0];if(window.ppSaludo)ppSaludo(n)})}catch(e){$g('cta-nombre').textContent=em.split('@')[0]}
       if(window.Apariencia){try{$g('cta-apariencia-slot').innerHTML=Apariencia.picker()}catch(e){}}
       try{Uso.start(fs,u,'radar')}catch(e){}
       try{if(window.Apariencia) Apariencia.connect(fs,u.uid,function(){return Apariencia.local()})}catch(e){}
