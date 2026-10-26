@@ -36,6 +36,8 @@ window.pfApplyTheme=function(t){ t=t||{}; var h=pfAccHex(t.accent), k=Object.key
 (function(){ var t=window.Apariencia&&Apariencia.local(); if(!t) try{ t=JSON.parse(localStorage.getItem('powerfit:theme')||'null'); }catch(e){} pfApplyTheme(t); })();
 </script>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}.cpanel{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:20px;background:var(--accent);color:var(--accent-ink)}
 .cpanel h2{color:var(--accent-ink);font-size:20px}

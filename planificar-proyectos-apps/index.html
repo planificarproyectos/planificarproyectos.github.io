@@ -22,14 +22,15 @@
 <meta name="twitter:image" content="https://www.planificarproyectos.com/og-image.jpg">
 <meta name="theme-color" content="#111315">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script>/* Dos identidades: Wellness Apps (familiar: Mind Focus, PowerFit, Lumen) y Planificar Proyectos Apps (empresarial: con Proyecta).
    La marca se decide al iniciar sesión según el acceso a Proyecta y se recuerda en el equipo; sin dato, Wellness Apps. */
 (function(){var m='w';try{m=localStorage.getItem('pp:marca')||'w'}catch(e){}
  var pp=m==='pp',h=document.head,px=pp?'':'w-';document.documentElement.setAttribute('data-marca',m);
  window.MARCA={id:m,nombre:pp?'Planificar Proyectos Apps':'Wellness Apps',corto:pp?'PP Apps':'Wellness',px:px};
  document.title=MARCA.nombre+' · Planificar Proyectos';
- function L(r,hr,t){var l=document.createElement('link');l.rel=r;l.href=hr;if(t)l.type=t;h.appendChild(l)}
- L('icon',px+'icon.svg','image/svg+xml');L('apple-touch-icon',px+'apple-touch-icon.png');L('manifest',pp?'manifest.webmanifest':'manifest-wellness.webmanifest');
+ function L(r,hr,t,z){var l=document.createElement('link');l.rel=r;l.href=hr;if(t)l.type=t;if(z)l.sizes=z;h.appendChild(l)}
+ L('icon',px+'icon.svg','image/svg+xml');L('icon',px+'favicon-48.png','image/png','48x48');L('icon',px+'favicon-32.png','image/png','32x32');L('apple-touch-icon',px+'apple-touch-icon.png');L('manifest',pp?'manifest.webmanifest':'manifest-wellness.webmanifest');
  var t=document.createElement('meta');t.name='apple-mobile-web-app-title';t.content=MARCA.corto;h.appendChild(t);
  window.setMarca=function(n){var o;try{o=localStorage.getItem('pp:marca')||'w';localStorage.setItem('pp:marca',n)}catch(e){}if(o!==n)location.reload()};})();
 </script>

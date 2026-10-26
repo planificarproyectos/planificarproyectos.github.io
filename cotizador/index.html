@@ -21,8 +21,11 @@
 <meta name="theme-color" content="#111315">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Cotizador">
 <style>body{margin:0}[hidden]:not([hidden=until-found i]){display:none!important}</style>
 </head>
@@ -403,6 +406,8 @@ body[data-vista="cuenta"] .app{padding-bottom:0}
         <div class="cuenta-card-head">Apariencia</div>
         <div class="cuenta-card-body" id="cuenta-apariencia-slot" style="padding:16px"></div>
       </div>
+      <!-- Instalar como app -->
+      <div class="cuenta-card" id="cuenta-instalar" hidden></div>
       <!-- Soporte -->
       <div class="cuenta-card">
         <div class="cuenta-card-head">Soporte y recomendaciones</div>
@@ -1792,6 +1797,55 @@ window.__cotiStart = (fs) => {
           return b.commit().then(function(){aviso((cfg?'Datos de la empresa guardados. ':'')+(n?'Importadas '+n+' cotizaciones':'No había cotizaciones nuevas para importar'))})})})
       .catch(function(x){aviso('No se pudo importar: '+((x&&(x.code||x.message))||'archivo no válido'))});e.target.value=''})}
 })();
+</script>
+<!-- Instalar como app (mismo aviso que PowerFit, Mind Focus, Lumen, Proyecta y Radar SECOP) -->
+<style>
+.installbar{box-sizing:border-box;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(72px + 12px + env(safe-area-inset-bottom,0px));z-index:45;width:calc(100% - 32px);max-width:448px;background:var(--panel);color:var(--ink);border:1px solid var(--accent);border-radius:20px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:10px;animation:ib-in .35s ease-out}
+.installbar[hidden]{display:none}
+.installbar ol,#cuenta-instalar ol{margin:0;padding-left:20px;font-size:13.5px;display:flex;flex-direction:column;gap:4px}
+.ib-row{display:flex;align-items:center;gap:12px}
+.ib-row img{width:40px;height:40px;border-radius:10px;flex:none}
+.ib-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ib-txt span{font-size:12.5px;color:var(--muted)}
+.ib-btns{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px}
+.ib-btns .btn{justify-content:center;min-height:42px}
+#cuenta-instalar .ib-wrap{padding:16px;display:flex;flex-direction:column;gap:10px}
+@keyframes ib-in{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
+@media (prefers-reduced-motion:reduce){.installbar{animation:none}}
+@media (min-width:980px){.installbar{left:auto;right:24px;transform:none;bottom:24px;animation:none}}
+</style>
+<div class="installbar" id="install" role="dialog" aria-label="Instalar Cotizador" hidden></div>
+<script>
+var Inst={prompt:null,KEY:'cotizador:installDismiss',
+  standalone:function(){ try{ return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true; }catch(e){ return false; } },
+  ios:function(){ var u=navigator.userAgent||''; return /iphone|ipad|ipod/i.test(u)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1); },
+  can:function(){ return !this.standalone()&&(!!this.prompt||this.ios()); },
+  dismissed:function(){ try{ return Date.now()-(+localStorage.getItem(this.KEY)||0)<12*36e5; }catch(e){ return false; } },
+  body:function(inBar){
+    var head=function(t,sub){ return '<div class="ib-row"><img src="icon-192.png" alt="" width="40" height="40"><div class="ib-txt"><b>'+t+'</b><span>'+sub+'</span></div></div>'; };
+    if(this.prompt) return head('Instala el Cotizador','Ábrelo desde tu pantalla de inicio, a pantalla completa y más rápido.')+
+      '<div class="ib-btns">'+(inBar?'<button class="btn" type="button" data-inst="no">Ahora no</button>':'')+'<button class="btn primary" type="button" data-inst="go">Instalar</button></div>';
+    return head('Instala el Cotizador en tu iPhone','En Safari:')+
+      '<ol><li>Toca <b>Compartir</b> (el cuadro con la flecha hacia arriba).</li><li>Elige <b>Agregar a pantalla de inicio</b> y luego <b>Agregar</b>.</li></ol>'+
+      (inBar?'<div class="ib-btns"><button class="btn" type="button" data-inst="no">Entendido</button></div>':'');
+  },
+  show:function(){ var el=document.getElementById('install'),g=document.getElementById('gate'),cf=document.getElementById('confirm'); if(!el) return;
+    var on=this.can()&&!this.dismissed()&&g&&g.hidden&&!(cf&&!cf.hidden);
+    if(on){ el.innerHTML=this.body(true); el.hidden=false; } else el.hidden=true;
+    var c=document.getElementById('cuenta-instalar'); if(c){
+      if(this.standalone()){ c.innerHTML='<div class="ib-wrap"><div class="ib-row"><img src="icon-192.png" alt="" width="40" height="40"><div class="ib-txt"><b>App instalada</b><span>Estás usando el Cotizador como app</span></div></div></div>'; c.hidden=false; }
+      else if(this.can()){ c.innerHTML='<div class="ib-wrap">'+this.body(false)+'</div>'; c.hidden=false; }
+      else c.hidden=true; } },
+  go:function(){ var pr=this.prompt,self=this; if(!pr) return; pr.prompt(); (pr.userChoice||Promise.resolve({})).then(function(ch){
+    if(ch&&ch.outcome==='accepted') self.prompt=null; else { try{ localStorage.setItem(self.KEY,Date.now()); }catch(e){} } self.show(); }); },
+  no:function(){ try{ localStorage.setItem(this.KEY,Date.now()); }catch(e){} this.show(); }
+};
+document.addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('[data-inst]'); if(!b) return; b.dataset.inst==='go'?Inst.go():Inst.no(); });
+window.addEventListener('beforeinstallprompt',function(e){ e.preventDefault(); Inst.prompt=e; Inst.show(); });
+window.addEventListener('appinstalled',function(){ Inst.prompt=null; Inst.show(); });
+(function(){ if(!window.MutationObserver) return; var g=document.getElementById('gate'),cf=document.getElementById('confirm'),o=new MutationObserver(function(){ setTimeout(function(){ Inst.show(); },300); });
+  if(g) o.observe(g,{attributes:true,attributeFilter:['hidden']}); if(cf) o.observe(cf,{attributes:true,attributeFilter:['hidden']}); })();
+setTimeout(function(){ Inst.show(); },2700);
 </script>
 </body>
 </html>
