@@ -1271,6 +1271,7 @@ function enriquecer(r){
   d.dc=d.cierre?Math.round((new Date(d.cierre+"T12:00:00")-new Date(HOY.toISOString().slice(0,10)+"T12:00:00"))/864e5):null;
   d.dcs=d.dc==null?5000:d.dc<0?9000-d.dc:d.dc;
   d.cierreG=d.dc==null?"Sin fecha":d.dc<0?"Ya cerrado":d.dc===0?"Hoy":d.dc<=3?"1 a 3 días":d.dc<=7?"4 a 7 días":d.dc<=15?"8 a 15 días":"Más de 15 días";
+  if(d.dc!=null&&d.dc<0)d.etapa="Cerrado (en evaluación)"; // SECOP deja la fase en «Presentación de oferta» aunque ya cerró
   if(d.dc!=null){if(d.dc<0)s=Math.min(s,30);else if(d.dc<=1)s-=10;}
   d.score=Math.max(0,Math.min(100,s));d.p=d.score>=70?"Alta":d.score>=45?"Media":"Baja";
   return d;
@@ -1283,7 +1284,7 @@ const DIMS=[
   {k:"cierreG",el:"ch-cierre",list:["Ya cerrado","Hoy","1 a 3 días","4 a 7 días","8 a 15 días","Más de 15 días","Sin fecha"]},
   {k:"rng",el:"ch-rng",list:RANGES.map(r=>r[0])},
   {k:"zona",el:"ch-zona",list:["Zona foco","Resto del Caribe","Resto del centro","Resto del país"]},
-  {k:"etapa",el:"ch-etapa",list:["Recibe ofertas","Observaciones / pliego","Otra"]},
+  {k:"etapa",el:"ch-etapa",list:["Recibe ofertas","Observaciones / pliego","Cerrado (en evaluación)","Otra"]},
   {k:"edad",el:"ch-edad",list:["Últimos 7 días","8 a 15 días","16 a 30 días","Más de 30 días"]},
 ];
 const KEYS=["tipo","dep","modG",...DIMS.map(d=>d.k)];
@@ -1320,13 +1321,13 @@ const Fav={map:new Map(),uid:null,yo:null,fs:null,ok:false,err:null,_idx:null,_n
   quien(d){const f=this.doc(d);return f&&f.por?Object.values(f.por).sort((a,b)=>(a.t||0)-(b.t||0)):[]},
   mio(d){const f=this.doc(d);return!!(f&&f.por&&this.uid&&f.por[this.uid])},
   n(d){return this.quien(d).length},
-  fila(d){return[d.tipo,d.dep,d.ciu,d.ent,d.ref,d.obj,d.mod,d.val,d.pub,d.fase,d.un,d.plazo,d.url,d.rup,d.cierre||"",d.comp||[0,0,0,0],d.pid||""]},
+  fila(d){return[d.tipo,d.dep,d.ciu,d.ent,d.ref,d.obj,d.mod,d.val,d.pub,d.fase,d.un,d.plazo,d.url,d.rup,d.cierre||"",d.comp||[0,0,0,0],d.pid||""].map(v=>v===undefined||v===null||(typeof v==="number"&&!isFinite(v))?"":v)},
   toggle(d){if(!this.ok||!this.fs)return aviso(this.err?"Los favoritos aún no están habilitados.":"Inicia sesión para usar favoritos.");
     const ref=this.fs.collection("radar_favoritos").doc(this.id(d)),FV=firebase.firestore.FieldValue;
     if(this.mio(d)){const otros=this.quien(d).length-1;
       (otros>0?ref.update({["por."+this.uid]:FV.delete(),act:Date.now()}):ref.delete()).catch(e=>aviso("No se pudo quitar ("+(e.code||"error")+")"));}
     else ref.set({fila:this.fila(d),act:Date.now(),por:{[this.uid]:{n:this.yo.n,e:this.yo.e,t:Date.now()}}},{merge:true})
-      .then(()=>aviso("♥ Guardado en favoritos")).catch(e=>aviso("No se pudo guardar ("+(e.code||"error")+")"));},
+      .then(()=>aviso("♥ Guardado en favoritos")).catch(e=>{console.warn("Favorito no guardado:",this.id(d),e);aviso("No se pudo guardar el favorito: "+(e.code==="permission-denied"?"tu cuenta no tiene permiso":(e.message||e.code||"error")))});},
   /* Procesos de la lista: los vigentes salen del radar; los que ya no están se arman con la copia guardada */
   rows(modo){if(this._n!==D.length){this._idx=new Map(D.map(d=>[this.id(d),d]));this._n=D.length}
     const out=[];this.map.forEach((f,id)=>{if(modo==="mios"&&!(f.por&&f.por[this.uid]))return;
@@ -1344,7 +1345,7 @@ const corazon=(d,i)=>{if(Fav.err)return"";const on=Fav.mio(d),n=Fav.n(d),q=Fav.q
 const favPor=d=>{if(!F.fav)return"";const q=Fav.quien(d);if(!q.length)return"";
   return `<div class="favby">♥ ${esc(q.map(x=>x.n).join(", "))}${d.nv?' · <span class="nv">Ya no vigente</span>':""}</div>`};
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-fav]");if(!b)return;e.preventDefault();
-  const d=(window._simRows||[])[+b.dataset.fav];if(d)Fav.toggle(d)});
+  const d=(window._radarRows||[])[+b.dataset.fav];if(d)Fav.toggle(d)});
 
 const F={p:null,q:"",fav:null};KEYS.forEach(k=>F[k]=new Set());
 let preset=null,sort={k:"score",dir:-1};
@@ -1490,7 +1491,7 @@ function render(){
   {const sig=JSON.stringify([KEYS.map(k=>[...F[k]]),F.p,F.q,F.fav,sort]);if(sig!==render._sig){render._sig=sig;render._lim=60}}
   const V=Sx.slice(0,render._lim||60),mas=Sx.length-V.length;
   const masEl=document.getElementById("mas");if(masEl){masEl.hidden=mas<=0;masEl.textContent=`Ver ${Math.min(60,mas)} más · faltan ${mas}`}
-  window._simRows=Sx;document.getElementById("tb").innerHTML=V.length?V.map((d,i)=>`<tr>
+  window._radarRows=window._simRows=Sx;document.getElementById("tb").innerHTML=V.length?V.map((d,i)=>`<tr>
     <td class="${d.fz?"fz":""}"><div class="c1"><span class="chip p-${d.p}">${d.p}</span>${corazon(d,i)}</div><div style="margin-top:5px">${meter(d)}</div>${d.fz?`<div style="margin-top:4px"><span class="chip fz">★ Foco</span></div>`:""}</td>
     <td class="obj det-go" data-det="${i}" title="Ver detalle">${tipoTag(d)}<b>${esc(d.ent)}</b>${esc(cap(d.obj))}<div style="margin-top:3px;font-size:11.5px;color:var(--muted);font-family:var(--mono)">${esc(d.ref)} · ${esc(d.etapa)}</div>${favPor(d)}</td>
     <td>${lugar(d)}<div class="sub2">${esc(d.modG)}</div></td><td>${rupChip(d)}</td>
@@ -1692,7 +1693,7 @@ function simDraw(){
 }
 document.querySelectorAll("#simf input,#simf select").forEach(i=>i.addEventListener("input",simDraw));
 simDraw();
-function simFrom(i){const d=window._simRows&&window._simRows[i];if(!d)return;
+function simFrom(i){const d=typeof i==="object"?i:(window._radarRows||[])[i];if(!d)return;
   document.getElementById("s-val").value=Math.round(d.val/1e6);if(d.meses>=0.5)document.getElementById("s-mes").value=Math.max(1,Math.round(d.meses));
   document.getElementById("s-forma").value=/M[ií]nima/.test(d.mod)?"final":"hitos";simDraw();
   history.replaceState(null,"","#ruta");showTab("ruta","gantt")}
@@ -1835,7 +1836,7 @@ function cDraw(){
   document.querySelectorAll("#cf input,#cf select,#cd input,#cd select").forEach(i=>i.addEventListener("input",cDraw));
   cLoad(EJEMPLO);
 })();
-function simContract(i){const d=window._simRows&&window._simRows[i];if(!d)return;if(window.cOpciones&&!(window._cOpts||[]).includes(d))cOpciones(d);cLoad(d);const k=(window._cOpts||[]).indexOf(d);$("c-sel").value=k;history.replaceState(null,"","#sim");showTab("sim");window.scrollTo(0,0)}
+function simContract(i){const d=typeof i==="object"?i:(window._radarRows||[])[i];if(!d)return;if(window.cOpciones&&!(window._cOpts||[]).includes(d))cOpciones(d);cLoad(d);const k=(window._cOpts||[]).indexOf(d);$("c-sel").value=k;history.replaceState(null,"","#sim");showTab("sim");window.scrollTo(0,0)}
 </script>
 
 <nav class="bottom-nav" role="tablist" aria-label="Navegación principal">
@@ -2117,7 +2118,7 @@ function renderComp(){
 function cpBind(){
   document.querySelectorAll("#cp-body [data-cs]").forEach(b=>b.onclick=()=>{const i=b.dataset.cs;CP.sel.has(i)?CP.sel.delete(i):CP.sel.add(i);renderComp()});
   document.querySelectorAll("#cp-body [data-cp-sim]").forEach(b=>b.onclick=()=>{const d=cpLista().find(x=>Fav.id(x)===b.dataset.cpSim);if(!d)return;
-    window._simRows=[d];simContract(0)});
+    simContract(d)});
 }
 function cpPesos(){
   const el=document.getElementById("cp-pesos");if(!el)return;const NV=["Nada","Poco","Normal","Mucho"];
@@ -2328,13 +2329,13 @@ const Det={d:null,cache:new Map(),hist:false,_idx:null,_n:-1,
       ${window.Chat&&Chat.ok?'<button class="btn" type="button" id="det-chat" title="Compartir en el chat del equipo">Al chat</button>':""}
       ${d.url?`<a class="btn primary" href="${d.url}" target="_blank" rel="noopener">Abrir en SECOP ↗</a>`:""}`;
     const f=document.getElementById("det-fav");if(f)f.onclick=()=>Fav.toggle(d);
-    document.getElementById("det-sim").onclick=()=>{this.cerrar();window._simRows=[d];simContract(0)};
+    document.getElementById("det-sim").onclick=()=>{this.cerrar();simContract(d)};
     const ch=document.getElementById("det-chat");if(ch)ch.onclick=()=>{this.cerrar();Chat.adj=d;Chat.abrir(true);Chat.pintaAdj();setTimeout(()=>document.getElementById("chat-t").focus(),60)}}
 };
 window.Det=Det;
 document.addEventListener("click",e=>{
   if(e.target.closest("button,a,input,select,label,textarea"))return;
-  const t=e.target.closest("[data-det]");if(t){const d=(window._simRows||[])[+t.dataset.det];if(d)Det.abrir(d);return}},true);
+  const t=e.target.closest("[data-det]");if(t){const d=(window._radarRows||[])[+t.dataset.det];if(d)Det.abrir(d);return}},true);
 document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-det-id]");if(!t)return;
   if(t.tagName!=="BUTTON"&&e.target.closest("button,a"))return;const d=Det.porId(t.dataset.detId);if(d){e.preventDefault();Det.abrir(d)}else aviso("Ese proceso ya no está en el radar")});
 document.getElementById("det-x").onclick=()=>Det.cerrar();
