@@ -2262,8 +2262,8 @@ const Det={d:null,cache:new Map(),hist:false,_idx:null,_n:-1,
     this.pintaPie()},
   pintaPie(){const d=this.d;if(!d)return;const on=Fav.ok&&Fav.mio(d);
     document.getElementById("det-f").innerHTML=`${Fav.err?"":`<button class="btn det-fav${on?" on":""}" type="button" id="det-fav" aria-pressed="${on}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-9.3-9.2C1.5 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.7 3.5 4.5 6.8-1.8 4.8-9.3 9.2-9.3 9.2z"/></svg>${on?"Favorito":"Favorito"}</button>`}
-      <button class="btn" type="button" id="det-sim">Simular caja</button>
-      ${window.Chat&&Chat.ok?'<button class="btn" type="button" id="det-chat">Compartir en el chat</button>':""}
+      <button class="btn" type="button" id="det-sim">Simular</button>
+      ${window.Chat&&Chat.ok?'<button class="btn" type="button" id="det-chat" title="Compartir en el chat del equipo">Al chat</button>':""}
       ${d.url?`<a class="btn primary" href="${d.url}" target="_blank" rel="noopener">Abrir en SECOP ↗</a>`:""}`;
     const f=document.getElementById("det-fav");if(f)f.onclick=()=>Fav.toggle(d);
     document.getElementById("det-sim").onclick=()=>{this.cerrar();window._simRows=[d];simContract(0)};
@@ -2473,8 +2473,8 @@ html.lock-det,html.lock-det body{overflow:hidden}
 .det-r span{color:var(--muted)}.det-r span small{display:block;font-size:11.5px}
 .det-r b{text-align:right;font-weight:600;overflow-wrap:anywhere}
 .det-nota{margin:6px 0 0;font-size:12px;color:var(--muted)}
-.det-f{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--bg)}
-.det-f .btn{min-height:44px;justify-content:center;text-decoration:none;color:var(--fg)}
+.det-f{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--bg)}
+.det-f .btn{min-height:42px;padding:0 8px;font-size:13.5px;justify-content:center;text-decoration:none;color:var(--fg)}
 .det-f .btn.primary{color:var(--accent-ink)}
 .det-fav{display:inline-flex;align-items:center;gap:6px}
 .det-fav svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2}
