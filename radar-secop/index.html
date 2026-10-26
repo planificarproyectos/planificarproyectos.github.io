@@ -1267,7 +1267,7 @@ function enriquecer(r){
   s+=d.fz?20:d.zona!=="Resto del país"?10:0;
   s+=LW[d.tipo]||10;s+=d.dias<=7?10:d.dias<=15?5:0;
   // Cierre (recepción de ofertas): días que faltan, sin hora (la hora exacta está en SECOP)
-  d.pid=r[16]||"";d.cierre=r[14]||"";d.comp=Array.isArray(r[15])?r[15]:[0,0,0,0];
+  d.pid=r[16]||"";d.cierre=r[14]||"";d.comp=Array.isArray(r[15])?r[15]:typeof r[15]==="string"&&r[15]?r[15].split(",").map(n=>+n||0):[0,0,0,0];
   d.dc=d.cierre?Math.round((new Date(d.cierre+"T12:00:00")-new Date(HOY.toISOString().slice(0,10)+"T12:00:00"))/864e5):null;
   d.dcs=d.dc==null?5000:d.dc<0?9000-d.dc:d.dc;
   d.cierreG=d.dc==null?"Sin fecha":d.dc<0?"Ya cerrado":d.dc===0?"Hoy":d.dc<=3?"1 a 3 días":d.dc<=7?"4 a 7 días":d.dc<=15?"8 a 15 días":"Más de 15 días";
@@ -1321,7 +1321,7 @@ const Fav={map:new Map(),uid:null,yo:null,fs:null,ok:false,err:null,_idx:null,_n
   quien(d){const f=this.doc(d);return f&&f.por?Object.values(f.por).sort((a,b)=>(a.t||0)-(b.t||0)):[]},
   mio(d){const f=this.doc(d);return!!(f&&f.por&&this.uid&&f.por[this.uid])},
   n(d){return this.quien(d).length},
-  fila(d){return[d.tipo,d.dep,d.ciu,d.ent,d.ref,d.obj,d.mod,d.val,d.pub,d.fase,d.un,d.plazo,d.url,d.rup,d.cierre||"",d.comp||[0,0,0,0],d.pid||""].map(v=>v===undefined||v===null||(typeof v==="number"&&!isFinite(v))?"":v)},
+  fila(d){return[d.tipo,d.dep,d.ciu,d.ent,d.ref,d.obj,d.mod,d.val,d.pub,d.fase,d.un,d.plazo,d.url,d.rup,d.cierre||"",(d.comp||[0,0,0,0]).join(","),d.pid||""].map(v=>v===undefined||v===null||(typeof v==="number"&&!isFinite(v))?"":v)},
   toggle(d){if(!this.ok||!this.fs)return aviso(this.err?"Los favoritos aún no están habilitados.":"Inicia sesión para usar favoritos.");
     const ref=this.fs.collection("radar_favoritos").doc(this.id(d)),FV=firebase.firestore.FieldValue;
     if(this.mio(d)){const otros=this.quien(d).length-1;
