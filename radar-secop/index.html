@@ -1024,7 +1024,8 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
   #v-cuenta .cta-salir:hover{border-color:var(--focus)}
   </style>
   <section class="view" id="v-rad" role="tabpanel" aria-labelledby="t-rad" hidden>
-    <div class="cp-head"><h2>Simulador radicación</h2><span class="rd-pill" id="rd-pill"></span></div>
+    <div class="cp-head"><h2>Simulador radicación</h2><span class="rd-hd"><label class="rd-apr"><input type="checkbox" id="rd-apr"> Modo aprendiz</label><span class="rd-pill" id="rd-pill"></span></span></div>
+    <details class="rd-guia" id="rd-guia"><summary><b>Mi primera oferta</b><span>El recorrido completo en 7 etapas</span></summary><ol id="rd-guia-l"></ol></details>
     <label class="rd-pick">Proceso a radicar<select id="rd-sel"></select></label>
     <div class="rd-grid">
       <div class="rd-main">
@@ -1034,6 +1035,8 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
       </div>
       <aside class="rd-eval" id="rd-eval" aria-live="polite"></aside>
     </div>
+    <details class="fold mini rd-glos"><summary>Glosario de contratación pública</summary><dl id="rd-glos"></dl></details>
+    <div class="rd-gpop" id="rd-gpop" role="dialog" hidden></div>
   </section>
 
   <section class="view" id="v-cuenta" role="tabpanel" aria-labelledby="t-cuenta" hidden>
@@ -1959,6 +1962,41 @@ function simContract(i){const d=typeof i==="object"?i:(window._radarRows||[])[i]
 .rd-comp .n{font-family:var(--mono,monospace);font-size:15px;color:var(--accent-fg);font-weight:700}
 .rd-comp.no{border-color:#FF5A5F}.rd-comp.no .n{color:#FF7A7E}
 .rd-acc{display:flex;flex-wrap:wrap;gap:8px}
+/* Modo aprendiz */
+.rd-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rd-apr{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer}
+.rd-apr input{width:18px;height:18px;accent-color:var(--accent);margin:0}
+.rd-guia{background:var(--surface);border-radius:18px;padding:0;border:2px solid var(--accent-2)}
+.rd-guia>summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.rd-guia>summary::-webkit-details-marker{display:none}
+.rd-guia>summary b{font-family:var(--display);font-size:17px;text-transform:uppercase;letter-spacing:.5px;color:var(--accent-fg)}
+.rd-guia>summary span{font-size:12.5px;color:var(--muted)}
+.rd-guia>summary::after{content:"▾";margin-left:auto;color:var(--muted)}
+.rd-guia[open]>summary::after{content:"▴"}
+.rd-guia ol{margin:0;padding:0 14px 14px;list-style:none;display:grid;gap:8px;counter-reset:g}
+.rd-guia li{counter-increment:g;display:grid;grid-template-columns:28px 1fr;gap:2px 10px;font-size:13.5px;line-height:1.4}
+.rd-guia li::before{content:counter(g);grid-row:span 3;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:13px}
+.rd-guia li b{font-size:14px}
+.rd-guia li .rd-acc{margin-top:2px}
+.rd-guia li .btn{min-height:34px;padding:0 12px;font-size:12.5px}
+.rd-learn{border-left:4px solid var(--accent);background:var(--surface-2);border-radius:12px;padding:10px 12px;display:grid;gap:6px;font-size:13.5px;line-height:1.45}
+.rd-learn>b{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--accent-fg)}
+.rd-learn ul{margin:0;padding-left:18px;display:grid;gap:3px}
+.rd-learn .err{color:var(--muted);font-size:12.5px}
+.rd-learn .err b{color:#FFB547}
+.rd-g{display:inline;border:0;background:none;padding:0;font:inherit;color:inherit;text-decoration:underline dotted var(--accent-fg);text-decoration-thickness:2px;text-underline-offset:3px;cursor:help}
+.rd-gpop{position:fixed;z-index:60;max-width:min(340px,calc(100vw - 24px));background:var(--surface);color:var(--fg);border:1px solid var(--accent);border-radius:14px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.45);font-size:13.5px;line-height:1.45}
+.rd-gpop b{display:block;color:var(--accent-fg);margin-bottom:3px}
+.rd-glos dl,#rd-glos{margin:8px 0 0;display:grid;gap:8px;font-size:13px;line-height:1.4}
+#rd-glos dt{font-weight:700;color:var(--accent-fg)}#rd-glos dd{margin:0 0 4px;color:var(--fg)}
+.rd-ib{border:1px solid var(--line);background:transparent;color:var(--accent-fg);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer}
+.rd-ib[aria-expanded="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.rd-di{grid-column:2;display:grid;gap:5px;font-size:12.8px;line-height:1.45;background:var(--surface);border-radius:10px;padding:9px 11px}
+.rd-di[hidden]{display:none}
+.rd-di p{margin:0}.rd-di p b{color:var(--accent-fg);font-weight:700}
+.rd-doc.flash{outline:2px solid var(--accent);transition:outline .3s}
+.rd-fix{grid-column:2;justify-self:start;border:0;background:none;color:var(--accent-fg);font-weight:700;font-size:12px;padding:2px 0;cursor:pointer}
+html.rd-noapr .rd-learn{display:none}
 /* Evaluador */
 .rd-eval{background:var(--surface);border-radius:18px;padding:14px;display:grid;gap:10px;align-content:start;min-width:0;overflow-wrap:anywhere}
 .rd-ev-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -1985,6 +2023,77 @@ function simContract(i){const d=typeof i==="object"?i:(window._radarRows||[])[i]
 /* ═════════ Simulador radicación: emula la presentación de la oferta en SECOP II y la evalúa como lo haría la entidad.
    Los archivos NO se suben: solo se leen su nombre, tipo y tamaño en este dispositivo. El avance se guarda en la cuenta
    (users/{uid}/radar/radicacion) para seguir en cualquier dispositivo. ═════════ */
+/* ── Modo aprendiz: qué es cada documento, glosario y guía para quien nunca ha ofertado ── */
+const DOC_INFO={
+  carta:{q:"Carta en la que la empresa presenta formalmente su oferta, con el formato que trae el pliego.",p:"Es la manifestación de voluntad: acepta las reglas del proceso, declara plazo y valor, y compromete a la empresa.",d:"Formato anexo del pliego o de la invitación. La firma el representante legal.",c:"Si el representante tiene límite de cuantía en la Cámara, adjunta la autorización de la junta de socios."},
+  camara:{q:"Certificado que prueba que la empresa existe, su objeto social y quién la representa.",p:"La entidad verifica que la empresa puede contratar ese objeto y que quien firma tiene facultades.",d:"Cámara de Comercio de tu domicilio (se descarga en línea).",c:"Suele exigirse con máximo 30 días de expedido al cierre. Revisa que la matrícula esté renovada."},
+  rutd:{q:"Registro Único Tributario de la empresa ante la DIAN.",p:"Confirma NIT, régimen de IVA y actividades económicas (CIIU) acordes al objeto.",d:"Portal MUISCA de la DIAN.",c:"Debe estar actualizado; si el objeto es diseño u obra, incluye las actividades CIIU correspondientes."},
+  cedula:{q:"Copia de la cédula de ciudadanía del representante legal.",p:"Identifica a quien firma la oferta.",d:"Escaneo legible por ambas caras.",c:"Debe coincidir con el representante que aparece en el certificado de Cámara."},
+  aportes:{q:"Certificación de que la empresa está al día en salud, pensión, riesgos laborales y parafiscales (art. 50 Ley 789 de 2002).",p:"La ley prohíbe contratar con quien no esté al día con la seguridad social de sus trabajadores.",d:"La firma el revisor fiscal (si la empresa está obligada a tenerlo) o el representante legal; cubre los últimos 6 meses.",c:"Si la firma el revisor fiscal, adjunta su tarjeta profesional y el certificado de la Junta Central de Contadores."},
+  antec:{q:"Certificados de antecedentes disciplinarios (Procuraduría), fiscales (Contraloría), judiciales (Policía) y de medidas correctivas (RNMC).",p:"Demuestran que ni la empresa ni su representante están inhabilitados para contratar.",d:"Páginas web de cada entidad; son gratuitos. Procuraduría y Contraloría también por el NIT de la empresa.",c:"Descárgalos cerca del cierre. Muchas entidades también los consultan por su cuenta."},
+  inhab:{q:"Declaración juramentada de no estar en ninguna inhabilidad o incompatibilidad (art. 8 Ley 80 de 1993).",p:"Protege la transparencia: hay personas y empresas que la ley no deja contratar.",d:"Formato del pliego; muchas veces va dentro de la carta de presentación.",c:"Declarar algo falso puede acarrear sanciones penales."},
+  anticorr:{q:"Compromiso de no ofrecer dádivas ni pactar con otros oferentes.",p:"Requisito de transparencia exigido en la mayoría de los pliegos.",d:"Formato anexo del pliego, firmado por el representante legal.",c:"Usa el formato exacto de la entidad."},
+  garantia:{q:"Póliza de seguro que garantiza que mantendrás la oferta y firmarás el contrato si ganas.",p:"Si el ganador se retira, la entidad cobra la póliza.",d:"Aseguradora o corredor de seguros. Tomador: tu empresa. Beneficiaria: la entidad.",c:"No entregarla con la oferta es causal de rechazo (no se subsana). Revisa valor, vigencia y adjunta el recibo de pago. En mínima cuantía la entidad puede no exigirla."},
+  rupd:{q:"Certificado del Registro Único de Proponentes.",p:"Certifica la experiencia (por códigos UNSPSC) y la capacidad financiera y organizacional de la empresa.",d:"Cámara de Comercio. Se renueva cada año antes del quinto día hábil de abril.",c:"Debe estar en firme al cierre: queda en firme unos 10 días hábiles después de publicado. Lo exigen licitación, selección abreviada y concurso; no la mínima cuantía."},
+  eeff:{q:"Balance general y estado de resultados del último año, con sus notas.",p:"De ellos salen los indicadores (liquidez, endeudamiento, cobertura de intereses, rentabilidad) que piden los pliegos.",d:"Los prepara el contador; los firman el representante legal, el contador y el revisor fiscal si lo hay.",c:"En procesos con RUP, la entidad toma los indicadores del certificado RUP."},
+  exp:{q:"Pruebas de contratos que la empresa ya ejecutó: certificaciones, o contrato más acta de liquidación.",p:"Demuestran que sabes hacer lo que se contrata, por valor y códigos UNSPSC.",d:"Las expide el cliente de cada contrato; en procesos con RUP la experiencia se toma del registro.",c:"Deben mostrar objeto, valor, fechas y quién contrató. Si la empresa tiene menos de 3 años, la ley permite acreditar la de sus socios: confírmalo en el pliego."},
+  personal:{q:"Hojas de vida, diplomas, matrícula profesional y cartas de compromiso del equipo propuesto.",p:"En consultoría la entidad evalúa la formación y experiencia del equipo.",d:"Cada profesional; vigencia de matrícula en COPNIA (ingenieros) o CPNAA (arquitectos).",c:"Si da puntaje, no se puede completar después del cierre."},
+  tecnica:{q:"Documento que explica cómo cumplirás las especificaciones técnicas: alcance, metodología, cronograma, productos.",p:"Es parte de la oferta: la entidad compara lo que ofreces con lo que pidió.",d:"La preparas tú, siguiendo el anexo técnico del pliego.",c:"No se puede cambiar después del cierre porque sería mejorar la oferta. Responde punto por punto."},
+  economica:{q:"Formulario de precios del pliego con tu valor ofertado.",p:"Es lo que la entidad compara para elegir; en mínima cuantía gana el menor precio que cumpla.",d:"Formato del pliego. En SECOP II el mismo valor se escribe en la lista de precios del cuestionario.",c:"No se subsana. No puede superar el presupuesto oficial. El valor del formulario y el del cuestionario deben ser iguales."},
+  nacional:{q:"Declaración de que los servicios o bienes ofrecidos son nacionales (Ley 816 de 2003).",p:"Da puntaje adicional por apoyo a la industria nacional.",d:"Formato del pliego, firmado por el representante legal.",c:"Si no la entregas con la oferta pierdes ese puntaje; no se subsana."},
+  mipyme:{q:"Certificación de que la empresa es Mipyme o emprendimiento de mujeres.",p:"Sirve para criterios de desempate y para participar en convocatorias limitadas a Mipymes.",d:"La firman el representante legal y el contador o revisor fiscal; formato del pliego.",c:"Revisa en el pliego qué documento exacto piden."},
+  discap:{q:"Certificado de trabajadores con discapacidad en la nómina (Decreto 392 de 2018).",p:"Da un puntaje adicional (1 %) y sirve en desempates.",d:"Lo expide el Ministerio del Trabajo; se acompaña de certificación del representante legal.",c:"Debe estar vigente al cierre."}
+};
+const GLOS={
+  secop:["SECOP II","Plataforma oficial de compras públicas de Colombia (Colombia Compra Eficiente). Las entidades publican sus procesos y los proveedores presentan sus ofertas en línea."],
+  pliego:["Pliego de condiciones","Documento con las reglas del proceso: objeto, requisitos, criterios de evaluación, cronograma y contrato. La oferta debe ajustarse a él."],
+  invitacion:["Invitación pública","Documento de reglas en la mínima cuantía. Equivale al pliego, pero más corto."],
+  cronograma:["Cronograma","Fechas del proceso: observaciones, cierre, evaluación, traslado y adjudicación."],
+  cierre:["Cierre","Fecha y hora límite para presentar ofertas. Después de esa hora SECOP II no recibe ofertas."],
+  adenda:["Adenda","Documento con el que la entidad modifica el pliego (fechas, requisitos, cantidades). Leerlas es obligatorio."],
+  observaciones:["Observaciones","Preguntas o solicitudes que los interesados hacen al pliego dentro del plazo. La entidad las responde públicamente."],
+  manifestacion:["Manifestación de interés","Aviso previo que el proveedor da en algunos procesos (como la selección abreviada de menor cuantía). Si no se hace a tiempo, no se puede ofertar."],
+  habilitantes:["Requisitos habilitantes","Mínimos para participar: capacidad jurídica, financiera, organizacional y experiencia. Se califican «cumple / no cumple» y no dan puntos."],
+  puntaje:["Puntaje","Factores con los que se elige la mejor oferta entre las habilitadas: precio, calidad, industria nacional, etc."],
+  subsanar:["Subsanar","Corregir o completar un documento cuando la entidad lo pide. Se puede hasta el traslado del informe de evaluación (Ley 1882 de 2018), salvo lo que da puntaje o mejora la oferta."],
+  rechazo:["Rechazo","Exclusión de la oferta por una causal del pliego o de la ley: precio mayor al presupuesto, oferta extemporánea, sin garantía de seriedad, etc."],
+  informe:["Informe de evaluación","Documento en el que la entidad publica quién cumple, quién debe subsanar y el puntaje de cada oferente."],
+  traslado:["Traslado","Plazo en que el informe de evaluación queda publicado para que los oferentes lo revisen, hagan observaciones y subsanen."],
+  adjudicacion:["Adjudicación","Decisión con la que la entidad elige al ganador. Luego se firma el contrato."],
+  rup:["RUP","Registro Único de Proponentes, en la Cámara de Comercio. Certifica experiencia y capacidad financiera y organizacional. Lo exigen licitación, selección abreviada y concurso; no la mínima cuantía."],
+  unspsc:["Código UNSPSC","Clasificador de bienes y servicios de Naciones Unidas. Los procesos y el RUP lo usan para saber qué experiencia sirve."],
+  minima:["Mínima cuantía","Modalidad para contratos pequeños (hasta el 10 % de la menor cuantía de la entidad). Plazos cortos, no exige RUP y gana el menor precio que cumpla."],
+  selabrev:["Selección abreviada","Modalidad para contratos de menor cuantía o bienes y servicios uniformes. Exige RUP."],
+  licitacion:["Licitación pública","Modalidad general para contratos grandes, como la obra pública. Es la más larga y exigente."],
+  concurso:["Concurso de méritos","Modalidad para consultoría (estudios, diseños, interventoría). Se gana por experiencia y calidad, no por precio."],
+  especial:["Régimen especial","Entidades con manual de contratación propio (hospitales ESE, empresas del Estado). Sus reglas están en su manual y en la invitación."],
+  garantia:["Garantía de seriedad","Póliza que asegura que el oferente mantendrá la oferta y firmará el contrato si gana. No entregarla con la oferta es causal de rechazo."],
+  presupuesto:["Presupuesto oficial","Valor máximo que la entidad pagará. La oferta no puede superarlo."],
+  aiu:["AIU","Administración, Imprevistos y Utilidad: porcentajes que se suman al costo directo en contratos de obra. El IVA se calcula sobre la utilidad."],
+  bajo:["Precio artificialmente bajo","Oferta tan por debajo del presupuesto que la entidad pide justificarla y puede rechazarla si no es sustentable."]
+};
+const gl=t=>String(t).replace(/\[\[(\w+)(?:\|([^\]]+))?\]\]/g,(m,k,l)=>GLOS[k]?`<button type="button" class="rd-g" data-g="${k}">${l||(/^.[a-záéíóúñ]/.test(GLOS[k][0])?GLOS[k][0][0].toLowerCase()+GLOS[k][0].slice(1):GLOS[k][0])}</button>`:(l||k));
+const RAD_LEARN={
+  1:{t:"Qué harías en SECOP II",i:["Entras con tu usuario de proveedor, buscas el proceso por su número y abres su detalle.","Lees completo el [[pliego]] (en mínima cuantía, la [[invitacion|invitación]]) y todas sus [[adenda|adendas]]: objeto, [[habilitantes|requisitos habilitantes]], criterios de [[puntaje]] y [[cronograma]].","Si algo no es claro, haces [[observaciones]] dentro del plazo. En algunos procesos debes hacer la [[manifestacion|manifestación de interés]] antes de ofertar."],e:"ofertar sin leer las adendas, no revisar si exige [[rup|RUP]], dejar pasar la fecha de observaciones."},
+  2:{t:"Antes de cualquier oferta",i:["La empresa se registra una sola vez como proveedor en [[secop|SECOP II]] y mantiene sus datos al día.","El [[rup|RUP]] solo lo exigen licitación, [[selabrev|selección abreviada]] y [[concurso]]; la [[minima|mínima cuantía]] no. Tarda semanas: empiézalo pronto.","Marca aquí lo que ya tienes: se usa en todos los procesos."],e:"RUT con actividades distintas al objeto, matrícula mercantil sin renovar (vence el 31 de marzo), RUP que no queda en firme antes del [[cierre]]."},
+  3:{t:"Cómo se define el precio",i:["En SECOP II el precio se escribe en la lista de precios del cuestionario y debe ser igual al del formulario económico que adjuntas.","Nunca puede superar el [[presupuesto|presupuesto oficial]]. En [[minima|mínima cuantía]] gana el menor precio que cumpla; en [[concurso]] no se compite por precio.","Calcula primero costos, impuestos y caja en el Simulador caja."],e:"olvidar el IVA o el [[aiu|AIU]], valores distintos en cuestionario y formulario, un [[bajo|precio tan bajo]] que no alcanza para ejecutar."},
+  4:{t:"Cómo funcionan los documentos",i:["Cada PDF se carga en la sección del cuestionario que indica el pliego.","Hay tres clases: [[habilitantes]] (cumple / no cumple; casi todos se pueden [[subsanar]]), de [[puntaje]] (suman puntos; no se subsanan) y los que forman la oferta (técnica y económica; no se cambian después del cierre).","Toca «¿Qué es?» en cada documento para saber para qué sirve y dónde se consigue."],e:"escaneos borrosos, documentos sin firma, certificados vencidos, póliza sin recibo de pago."},
+  5:{t:"Presentar y lo que sigue",i:["Al tocar «Presentar oferta» SECOP II pide confirmar y entrega una constancia: guárdala. Hasta el [[cierre]] puedes retirar la oferta, corregirla y presentarla de nuevo.","Después del cierre: apertura de ofertas → [[informe|informe de evaluación]] → [[traslado]] para [[subsanar]] y hacer observaciones → [[adjudicacion|adjudicación]] → firma del contrato, garantía de cumplimiento y acta de inicio."],e:"radicar en el último minuto (la plataforma se congestiona), no revisar los mensajes de la entidad durante la evaluación."}
+};
+const RAD_GUIA=[
+  ["Habilita la empresa","Usuario de proveedor en SECOP II, RUT, Cámara de Comercio y facturación electrónica. El [[rup|RUP]] cuando vayas por procesos más grandes.",[["Ver la Ruta","#ruta"],["Mi registro","p2"]]],
+  ["Encuentra procesos","En el Radar usa «Abiertos para ofertar» y empieza por [[minima|mínima cuantía]]: no exige RUP.",[["Ir al Radar","#radar"]]],
+  ["Elige el mejor","Marca con ♥ los que te interesen y compáralos para saber cuál conviene.",[["Comparar","#comp"]]],
+  ["Estudia el pliego","Lee el [[pliego]], sus [[adenda|adendas]] y el [[cronograma]]. Pregunta en [[observaciones]] si algo no es claro.",[["Paso 1 · Proceso","p1"]]],
+  ["Calcula precio y caja","Cuánto invertirás, cuánto ganarás y cuándo te pagan.",[["Simulador caja","#sim"]]],
+  ["Prepara y radica","Precio, documentos y presentación antes del [[cierre]]. Practica aquí con un proceso de ejemplo.",[["Practicar","ej"]]],
+  ["Después del cierre","Revisa el [[informe|informe de evaluación]], [[subsanar|subsana]] si te lo piden y espera la [[adjudicacion|adjudicación]].",[]]
+];
+/* Procesos de práctica: no son reales */
+const RAD_EJ=(()=>{const f=n=>{const x=new Date(HOY);x.setDate(x.getDate()+n);return x.toISOString().slice(0,10)};
+  const mk=o=>Object.assign({tipo:"Diseños técnicos",dep:"Cundinamarca",ciu:"Chía",url:"",fz:true,pid:"",comp:[0,0,0,0],score:0,un:"",fase:"Presentación de oferta",ej:true,dc:7,cierre:f(7),cierreG:"4 a 7 días",etapa:"Recibe ofertas"},o);
+  return[mk({ent:"PRÁCTICA · Entidad de ejemplo",ref:"PRACTICA-MC-001",obj:"Ejemplo para practicar: diseño de redes hidrosanitarias para la adecuación de una sede administrativa.",mod:"Mínima cuantía",modG:"Mínima cuantía",val:45e6,rup:"No",plazo:"2 Mes(es)",meses:2}),
+    Object.assign({},EJEMPLO,{ej:true,ent:"PRÁCTICA · "+EJEMPLO.ent,ref:"PRACTICA-CM-002",dc:12,cierre:f(12),plazo:"4 Mes(es)",comp:[0,0,0,0],pid:""})]})();
 const RAD_PASOS=["Proceso","Registro","Precio","Documentos","Presentar"];
 const RAD_REG=[
   {k:"usuario",t:"Usuario de proveedor activo en SECOP II",h:"Sin usuario la plataforma no deja crear la oferta",def:true},
@@ -2028,7 +2137,7 @@ const Rad={st:{sel:null,reg:null,emp:{},p:{}},d:null,paso:1,ref:null,t:0,ult:"",
   pe(){const id=this.d?Fav.id(this.d):"_";let o=this.st.p[id];if(!o)o=this.st.p[id]={base:null,iva:19,hora:"",docs:{},decl:false,env:null,paso:1};o.u=Date.now();return o},
   doc(x){const box=x.a==="emp"?this.st.emp:this.pe().docs;return box[x.k]||(box[x.k]={})},
   ser(){const ks=Object.entries(this.st.p).sort((a,b)=>(b[1].u||0)-(a[1].u||0)).slice(0,40);return JSON.stringify({...this.st,p:Object.fromEntries(ks)})},
-  apl(j){try{const o=JSON.parse(j);if(o&&typeof o==="object")this.st={sel:o.sel||null,reg:o.reg||null,emp:o.emp||{},p:o.p||{}};this.ult=j}catch(e){}},
+  apl(j){try{const o=JSON.parse(j);if(o&&typeof o==="object")this.st={sel:o.sel||null,reg:o.reg||null,emp:o.emp||{},p:o.p||{},apr:o.apr,guiaC:o.guiaC};this.ult=j}catch(e){}},
   guardar(){const j=this.ser();if(j===this.ult)return;this.ult=j;this.t=Date.now();
     try{localStorage.setItem(this.KEY,JSON.stringify({j,t:this.t}))}catch(e){}
     clearTimeout(this._tm);if(this.ref)this._tm=setTimeout(()=>this.ref.set({j:this.ult,t:this.t,dev:this.DEV}).catch(e=>console.warn("Radicación:",e&&e.code)),900)},
@@ -2041,12 +2150,12 @@ const Rad={st:{sel:null,reg:null,emp:{},p:{}},d:null,paso:1,ref:null,t:0,ult:"",
   lista(){const fav=Fav.ok?Fav.rows("todos"):[],ids=new Set(fav.map(d=>Fav.id(d)));
     const favS=fav.map(d=>[d,cpEval(d).idx]).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
     const top=[...D].filter(d=>!ids.has(Fav.id(d))&&(d.dc==null||d.dc>=0)).sort((a,b)=>b.score-a.score).slice(0,150);
-    if(this.d&&!ids.has(Fav.id(this.d))&&!top.includes(this.d))top.unshift(this.d);
+    if(this.d&&!this.d.ej&&!ids.has(Fav.id(this.d))&&!top.includes(this.d))top.unshift(this.d);
     return{fav:favS,top}},
   vis(){const v=document.getElementById("v-rad");return v&&!v.hidden},
   abrir(d){this.d=d;this.st.sel=Fav.id(d);this.paso=this.pe().paso||1;this.guardar();history.replaceState(null,"","#rad");showTab("rad");window.scrollTo(0,0)},
   /* ── Evaluador: revisa la oferta como el comité evaluador ── */
-  evalua(){const d=this.d,o=this.pe(),R=this.reg(),T=radTipo(d),out=[];const add=(s,g,t,h,w)=>out.push({s,g,t,h:h||"",w:w==null?1:w});
+  evalua(){const d=this.d,o=this.pe(),R=this.reg(),T=radTipo(d),out=[];let cur=null;const add=(s,g,t,h,w)=>out.push({s,g,t,h:h||"",w:w==null?1:w,k:cur});
     const ci=d.cierre?new Date(d.cierre+"T12:00:00"):null;
     // Plazo
     if(d.dc==null)add("av","Plazo","Sin fecha de cierre en los datos","Confírmala en el cronograma del proceso",2);
@@ -2074,7 +2183,7 @@ const Rad={st:{sel:null,reg:null,emp:{},p:{}},d:null,paso:1,ref:null,t:0,ult:"",
     else add("av","Precio","Sin presupuesto publicado para comparar","Verifícalo en el pliego",2);
     // Documentos
     const docs=radDocs(d);let nf=0;
-    docs.forEach(x=>{const z=this.doc(x),ok=!!z.ok;
+    docs.forEach(x=>{cur=x.k;const z=this.doc(x),ok=!!z.ok;
       if(x.r==="pts"){if(!ok)add("pts","Puntaje",x.t,"Sin este documento pierdes el puntaje (no es subsanable)",0.5);else add("ok","Puntaje",x.t,"Suma puntaje",0.5);return}
       if(!ok){if(x.r==="req")add(x.ns?"rech":"sub","Documentos",`Falta: ${x.t}`,x.ns?"No se puede subsanar: debe ir con la oferta":"Subsanable hasta el traslado del informe de evaluación",x.ns?3:2);return}
       nf++;
@@ -2085,7 +2194,7 @@ const Rad={st:{sel:null,reg:null,emp:{},p:{}},d:null,paso:1,ref:null,t:0,ult:"",
       if(z.n){if(!/\.pdf$/i.test(z.n)&&!(x.k==="economica"&&/\.(xlsx?|pdf)$/i.test(z.n)))add("av","Formato",`${z.n}: no es PDF`,"Convierte el documento a PDF",1);
         if(z.s>25*1048576)add("av","Formato",`${z.n}: pesa ${(z.s/1048576).toFixed(0)} MB`,"Archivos grandes pueden fallar al cargar: comprímelo o divídelo",1);
         if(/[^A-Za-z0-9 ._()\-]/.test(z.n)||z.n.length>80)add("av","Formato",`${z.n}: nombre con tildes, símbolos o muy largo`,"Renómbralo (ej. 01_Carta_presentacion.pdf)",0.5)}});
-    const req=docs.filter(x=>x.r==="req"),reqOk=req.filter(x=>this.doc(x).ok).length;
+    cur=null;const req=docs.filter(x=>x.r==="req"),reqOk=req.filter(x=>this.doc(x).ok).length;
     if(reqOk===req.length)add("ok","Documentos",`Documentos obligatorios completos (${reqOk}/${req.length})`,"",1);
     if(!o.decl)add("av","Presentación","Falta confirmar que la información es veraz","",0.5);
     // Resultado
@@ -2094,12 +2203,12 @@ const Rad={st:{sel:null,reg:null,emp:{},p:{}},d:null,paso:1,ref:null,t:0,ult:"",
     return{out,score:sw?Math.round(sv/sw*100):0,ver,nr:n("rech"),ns:n("sub"),na:n("av"),tot,base,pres,reqOk,nreq:req.length}},
   /* ── Interfaz ── */
   pinta(){const sel=document.getElementById("rd-sel");if(!sel)return;
-    if(this.d){const k=Fav.id(this.d),n=D.find(x=>Fav.id(x)===k);if(n)this.d=n}
+    if(this.d&&!this.d.ej){const k=Fav.id(this.d),n=D.find(x=>Fav.id(x)===k);if(n)this.d=n}
     const L=this.lista();
-    if(!this.d){const all=[...L.fav,...L.top];this.d=all.find(d=>Fav.id(d)===this.st.sel)||L.fav[0]||L.top[0]||null;if(this.d)this.paso=this.pe().paso||1}
+    if(!this.d){const all=[...RAD_EJ,...L.fav,...L.top];this.d=all.find(d=>Fav.id(d)===this.st.sel)||(this.st.sel?L.fav[0]||L.top[0]:RAD_EJ[0])||null;if(this.d)this.paso=this.pe().paso||1}
     const opt=d=>`<option value="${esc(Fav.id(d))}">${esc((d.ref||"").slice(0,28))} · ${esc(cop(d.val))} · ${esc((d.ent||"").slice(0,38))}</option>`;
-    sel.innerHTML=(L.fav.length?`<optgroup label="♥ Favoritos">${L.fav.map(opt).join("")}</optgroup>`:"")+`<optgroup label="Más convenientes del radar">${L.top.map(opt).join("")}</optgroup>`;
-    this._L=[...L.fav,...L.top];
+    sel.innerHTML=`<optgroup label="Práctica (procesos de ejemplo)">${RAD_EJ.map(d=>`<option value="${esc(Fav.id(d))}">${esc(d.modG)} · ${esc(cop(d.val))} · ejemplo</option>`).join("")}</optgroup>`+(L.fav.length?`<optgroup label="♥ Favoritos">${L.fav.map(opt).join("")}</optgroup>`:"")+`<optgroup label="Más convenientes del radar">${L.top.map(opt).join("")}</optgroup>`;
+    this._L=[...RAD_EJ,...L.fav,...L.top];this.guia();
     if(!this.d){document.getElementById("rd-body").innerHTML=`<p class="rd-sec">Aún no hay procesos cargados.</p>`;return}
     sel.value=Fav.id(this.d);this.cuerpo();this.eval()},
   cuerpo(){const d=this.d,o=this.pe(),b=document.getElementById("rd-body"),P=this.paso,R=this.reg();
@@ -2112,14 +2221,14 @@ const Rad={st:{sel:null,reg:null,emp:{},p:{}},d:null,paso:1,ref:null,t:0,ult:"",
         <div><span>RUP</span>${esc(d.rup||"Por verificar")}</div><div><span>Plazo de ejecución</span>${esc(d.plazo||"—")}</div></div>
       <p class="rd-obj">${esc(d.obj)}</p>
       <div class="rd-f"><label>Hora de cierre (del cronograma)<input type="time" id="rd-hora" value="${esc(o.hora||"")}"></label></div>
-      <div class="rd-acc"><button class="btn" type="button" id="rd-det">Ver detalle</button>${d.url?`<a class="btn" href="${d.url}" target="_blank" rel="noopener">Abrir en SECOP ↗</a>`:""}</div>`}
+      <div class="rd-acc">${d.ej?"":'<button class="btn" type="button" id="rd-det">Ver detalle</button>'}${d.url?`<a class="btn" href="${d.url}" target="_blank" rel="noopener">Abrir en SECOP ↗</a>`:""}</div>`}
     else if(P===2){h=`<h3>2 · Registro de la empresa</h3><p class="rd-sec">Aplica a todos los procesos. Márcalo a medida que lo tengas listo (Fase 0 de la Ruta).</p>
       <ul class="rd-ck">${RAD_REG.map(x=>`<li><label><input type="checkbox" data-rg="${x.k}" ${R[x.k]?"checked":""}><span>${x.t}${x.h?`<small>${x.h}</small>`:""}</span></label></li>`).join("")}</ul>`}
     else if(P===3){h=`<h3>3 · Precio (cuestionario)</h3><p class="rd-sec">En SECOP II el precio se escribe en el cuestionario de la oferta y debe coincidir con el formulario económico.</p>
       <div class="rd-f"><label>Valor antes de IVA (COP)<input type="number" id="rd-base" min="0" step="1000" inputmode="numeric" value="${o.base||""}" placeholder="Ej. 15462185"></label>
         <label>IVA<select id="rd-iva">${[19,5,0].map(v=>`<option value="${v}" ${+o.iva===v?"selected":""}>${v} %</option>`).join("")}</select></label></div>
       <div class="rd-tot" id="rd-tot"></div>
-      <div class="rd-acc"><button class="btn" type="button" data-sug=".97">Sugerir 97 % del presupuesto</button><button class="btn" type="button" data-sug=".9">90 %</button></div>`}
+      <div class="rd-acc"><button class="btn" type="button" data-sug=".97">Sugerir 97 % del presupuesto</button><button class="btn" type="button" data-sug=".9">90 %</button><button class="btn" type="button" id="rd-caja">Calcular en Simulador caja</button></div>`}
     else if(P===4){const docs=radDocs(d),cats=[...new Set(docs.map(x=>x.c))];
       h=`<h3>4 · Documentos</h3><p class="rd-sec">Carga cada PDF para revisarlo o márcalo como listo. Los archivos no salen de tu dispositivo. Los marcados «empresa» sirven para todos los procesos.</p>
       <div class="rd-docs">${cats.map(c=>`<div class="rd-cat"><h4>${c}</h4>${docs.filter(x=>x.c===c).map(x=>this.filaDoc(x)).join("")}</div>`).join("")}</div>`}
@@ -2130,15 +2239,31 @@ const Rad={st:{sel:null,reg:null,emp:{},p:{}},d:null,paso:1,ref:null,t:0,ult:"",
       ${env?this.comprobante(env,E):`<ul class="rd-ck"><li><label><input type="checkbox" id="rd-decl" ${o.decl?"checked":""}><span>Declaro que la información de la oferta es veraz (como lo pide SECOP II al presentar)</span></label></li></ul>
       <button class="btn primary rd-go" type="button" id="rd-go">Presentar oferta (simulación)</button>
       <p class="rd-nota">Es un simulacro: no se envía nada a SECOP II.</p>`}`}
-    b.innerHTML=h;
+    b.innerHTML=h.replace("</h3>","</h3>"+this.learn(P));
     document.getElementById("rd-prev").disabled=P===1;const nx=document.getElementById("rd-next");nx.disabled=P===5;nx.hidden=P===5;
     this.enlaza()},
   filaDoc(x){const z=this.doc(x),tag=x.r==="req"?`<em class="req">Obligatorio</em>`:x.r==="pts"?`<em>Puntaje</em>`:`<em>Según pliego</em>`;
-    return `<div class="rd-doc"><input type="checkbox" data-dk="${x.k}" ${z.ok?"checked":""} aria-label="${esc(x.t)} listo">
+    return `<div class="rd-doc" id="rd-doc-${x.k}"><input type="checkbox" data-dk="${x.k}" ${z.ok?"checked":""} aria-label="${esc(x.t)} listo">
       <div class="t">${esc(x.t)}${tag}${x.ns?`<em class="ns">No subsanable</em>`:""}${x.a==="emp"?`<em>Empresa</em>`:""}</div>
-      <div class="x"><span class="rd-file">${z.n?"Cambiar":"Cargar PDF"}<input type="file" data-df="${x.k}" accept=".pdf,application/pdf${x.k==="economica"?",.xls,.xlsx":""}"></span>
+      <div class="x">${DOC_INFO[x.k]?`<button type="button" class="rd-ib" data-di="${x.k}" aria-expanded="${this._open.has(x.k)}">ⓘ ¿Qué es?</button>`:""}<span class="rd-file">${z.n?"Cambiar":"Cargar PDF"}<input type="file" data-df="${x.k}" accept=".pdf,application/pdf${x.k==="economica"?",.xls,.xlsx":""}"></span>
         ${z.n?`<span class="rd-fn">${esc(z.n)}</span><span>${z.s<1048576?Math.max(1,Math.round(z.s/1024))+" KB":(z.s/1048576).toFixed(1)+" MB"}</span>`:""}
-        ${x.vig?`<label>Expedido<input type="date" data-dv="${x.k}" value="${esc(z.f||"")}"></label><span>máx. ${x.vig} días</span>`:""}</div></div>`},
+        ${x.vig?`<label>Expedido<input type="date" data-dv="${x.k}" value="${esc(z.f||"")}"></label><span>máx. ${x.vig} días</span>`:""}</div>
+      ${DOC_INFO[x.k]?`<div class="rd-di" id="rd-di-${x.k}" ${this._open.has(x.k)?"":"hidden"}><p><b>Qué es:</b> ${esc(DOC_INFO[x.k].q)}</p><p><b>Para qué:</b> ${esc(DOC_INFO[x.k].p)}</p><p><b>Dónde se obtiene:</b> ${esc(DOC_INFO[x.k].d)}</p><p><b>Cuidado:</b> ${esc(DOC_INFO[x.k].c)}</p></div>`:""}</div>`},
+  _open:new Set(),
+  apr(){return this.st.apr!==false},
+  learn(P){const L=RAD_LEARN[P];if(!L||!this.apr())return"";
+    return `<div class="rd-learn"><b>Modo aprendiz · ${L.t}</b><ul>${L.i.map(x=>`<li>${gl(x)}</li>`).join("")}</ul><p class="err"><b>Errores típicos:</b> ${gl(L.e)}</p></div>`},
+  guia(){const l=document.getElementById("rd-guia-l");if(!l||l.dataset.ok)return;l.dataset.ok=1;
+    l.innerHTML=RAD_GUIA.map(([t,x,bs])=>`<li><b>${t}</b><span>${gl(x)}</span>${bs.length?`<div class="rd-acc">${bs.map(([n,g])=>`<button class="btn" type="button" data-gg="${g}">${n}</button>`).join("")}</div>`:""}</li>`).join("");
+    document.getElementById("rd-glos").innerHTML=Object.values(GLOS).sort((a,b)=>a[0].localeCompare(b[0],"es")).map(([t,x])=>`<dt>${t}</dt><dd>${esc(x)}</dd>`).join("");
+    l.querySelectorAll("[data-gg]").forEach(b=>b.onclick=()=>{const g=b.dataset.gg;
+      if(g[0]==="#"){history.replaceState(null,"",g);showTab(g.slice(1));return}
+      if(g==="ej"){this.d=RAD_EJ[0];this.st.sel=Fav.id(this.d);this.paso=this.pe().paso||1;this.pinta();document.getElementById("rd-steps").scrollIntoView({behavior:"smooth"});return}
+      this.ir(+g.slice(1));document.getElementById("rd-steps").scrollIntoView({behavior:"smooth"})});
+    const ap=document.getElementById("rd-apr"),gu=document.getElementById("rd-guia");ap.checked=this.apr();gu.open=this.apr()&&!this.st.guiaC;
+    document.documentElement.classList.toggle("rd-noapr",!this.apr());
+    ap.onchange=()=>{this.st.apr=ap.checked;document.documentElement.classList.toggle("rd-noapr",!ap.checked);gu.open=ap.checked;this.guardar();this.cuerpo()};
+    gu.ontoggle=()=>{this.st.guiaC=!gu.open;this.guardar()}},
   comprobante(env,E){const no=env.no;
     return `<div class="rd-comp${no?" no":""}"><b>${no?"SECOP II no recibió la oferta":"Oferta presentada · acuse de recibo (simulado)"}</b>
       <span class="n">${esc(env.n)}</span>
@@ -2171,7 +2296,10 @@ const Rad={st:{sel:null,reg:null,emp:{},p:{}},d:null,paso:1,ref:null,t:0,ult:"",
       Object.assign(z,{ok:true,n:f.name,s:f.size,ty:f.type});this.cambio(true)});
     const dc=$q("#rd-decl");if(dc)dc.onchange=()=>{o.decl=dc.checked;this.cambio()};
     const go=$q("#rd-go");if(go)go.onclick=()=>this.presentar();
-    const rt=$q("#rd-ret");if(rt)rt.onclick=()=>{o.env=null;this.cambio(true)}},
+    const rt=$q("#rd-ret");if(rt)rt.onclick=()=>{o.env=null;this.cambio(true)};
+    const cj=$q("#rd-caja");if(cj)cj.onclick=()=>simContract(this.d);
+    document.querySelectorAll("#v-rad [data-di]").forEach(b=>b.onclick=()=>{const k=b.dataset.di,el=document.getElementById("rd-di-"+k),on=el.hidden;
+      el.hidden=!on;b.setAttribute("aria-expanded",on);on?this._open.add(k):this._open.delete(k)})},
   ir(i){this.paso=Math.max(1,Math.min(5,i));this.pe().paso=this.paso;this.guardar();this.cuerpo();const s=document.getElementById("rd-steps");if(s&&s.getBoundingClientRect().top<0)s.scrollIntoView({block:"start"})},
   presentar(){const d=this.d,o=this.pe(),R=this.reg(),E=this.evalua();let no="";
     if(!R.usuario)no="No tienes usuario de proveedor activo.";
@@ -2187,16 +2315,27 @@ const Rad={st:{sel:null,reg:null,emp:{},p:{}},d:null,paso:1,ref:null,t:0,ult:"",
     pill.className="rd-pill v-"+E.ver;pill.title="Ver el evaluador";pill.onclick=()=>el.scrollIntoView({behavior:"smooth",block:"start"});pill.textContent=`${VT[0]} · ${E.score}/100`;
     const ord={rech:0,sub:1,av:2,pts:3,ok:4},TAG={rech:"Rechazo",sub:"Subsanable",av:"Revisar",pts:"Puntaje",ok:"Cumple"};
     const L=[...E.out].sort((a,b)=>ord[a.s]-ord[b.s]),pend=L.filter(c=>c.s!=="ok"),ok=L.filter(c=>c.s==="ok");
-    const li=c=>`<li class="e-${c.s}"><b>${TAG[c.s]}</b>${esc(c.t)}${c.h?`<span>${esc(c.h)}</span>`:""}</li>`;
+    const PG={Plazo:1,Registro:2,Precio:3,Documentos:4,Formato:4,Puntaje:4,"Presentación":5};
+    const li=c=>`<li class="e-${c.s}"><b>${TAG[c.s]}</b>${esc(c.t)}${c.h?`<span>${esc(c.h)}</span>`:""}${c.s!=="ok"&&PG[c.g]&&!(PG[c.g]===1&&c.s==="rech")?`<button type="button" class="rd-fix" data-fix="${PG[c.g]}" data-fk="${c.k||""}">${PG[c.g]===this.paso&&!c.k?"Está en este paso":"Ir a corregir →"}</button>`:""}</li>`;
     el.innerHTML=`<div class="rd-ev-h"><h3>Evaluador</h3><div class="rd-sc"><b>${E.score}</b>preparación</div></div>
       <div class="rd-bar"><i style="width:${E.score}%"></i></div>
       <div class="rd-ver v-${E.ver}">${o_(E.ver)}${VT[0]}<small>${VT[1]}</small></div>
       ${pend.length?`<p class="rd-ev-g">Qué corregir (${pend.length})</p><ul class="rd-ev">${pend.map(li).join("")}</ul>`:""}
       ${ok.length?`<details class="fold mini"><summary>Cumple (${ok.length})</summary><ul class="rd-ev">${ok.map(li).join("")}</ul></details>`:""}
       <p class="rd-nota">Criterios generales de la Ley 1150 de 2007, el Decreto 1082 de 2015 y la Ley 1882 de 2018. El pliego de cada proceso manda: confirma requisitos, vigencias y causales de rechazo.</p>`;
+    el.querySelectorAll("[data-fix]").forEach(b=>b.onclick=()=>{const p=+b.dataset.fix,k=b.dataset.fk;if(p!==this.paso)this.ir(p);
+      const t=k&&document.getElementById("rd-doc-"+k);if(t){t.scrollIntoView({behavior:"smooth",block:"center"});t.classList.add("flash");setTimeout(()=>t.classList.remove("flash"),1600)}
+      else document.getElementById("rd-steps").scrollIntoView({behavior:"smooth",block:"start"})});
     function o_(v){return v==="ok"?"✓ ":v==="sub"?"! ":"✕ "}}
 };
 window.Rad=Rad;
+document.addEventListener("click",e=>{const pop=document.getElementById("rd-gpop");if(!pop)return;const g=e.target.closest(".rd-g");
+  if(!g){if(!pop.hidden&&!e.target.closest("#rd-gpop"))pop.hidden=true;return}
+  const [t,x]=GLOS[g.dataset.g]||[];if(!t)return;pop.innerHTML=`<b>${esc(t)}</b>${esc(x)}`;pop.hidden=false;
+  const r=g.getBoundingClientRect(),w=pop.offsetWidth,h=pop.offsetHeight;let top=r.bottom+8;if(top+h>innerHeight-80)top=Math.max(8,r.top-h-8);
+  pop.style.top=top+"px";pop.style.left=Math.max(12,Math.min(innerWidth-w-12,r.left+r.width/2-w/2))+"px"});
+addEventListener("keydown",e=>{if(e.key==="Escape"){const p=document.getElementById("rd-gpop");if(p)p.hidden=true}});
+addEventListener("scroll",()=>{const p=document.getElementById("rd-gpop");if(p&&!p.hidden)p.hidden=true},{passive:true});
 {try{const l=JSON.parse(localStorage.getItem(Rad.KEY)||"null");if(l&&l.j){Rad.apl(l.j);Rad.t=l.t||0}}catch(e){}}
 document.getElementById("rd-sel").onchange=e=>{const d=(Rad._L||[]).find(x=>Fav.id(x)===e.target.value);if(!d)return;Rad.d=d;Rad.st.sel=Fav.id(d);Rad.paso=Rad.pe().paso||1;Rad.guardar();Rad.cuerpo();Rad.eval()};
 document.getElementById("rd-prev").onclick=()=>Rad.ir(Rad.paso-1);
