@@ -1494,12 +1494,12 @@ function render(){
   window._radarRows=window._simRows=Sx;document.getElementById("tb").innerHTML=V.length?V.map((d,i)=>`<tr>
     <td class="${d.fz?"fz":""}"><div class="c1"><span class="chip p-${d.p}">${d.p}</span>${corazon(d,i)}</div><div style="margin-top:5px">${meter(d)}</div>${d.fz?`<div style="margin-top:4px"><span class="chip fz">★ Foco</span></div>`:""}</td>
     <td class="obj det-go" data-det="${i}" title="Ver detalle">${tipoTag(d)}<b>${esc(d.ent)}</b>${esc(cap(d.obj))}<div style="margin-top:3px;font-size:11.5px;color:var(--muted);font-family:var(--mono)">${esc(d.ref)} · ${esc(d.etapa)}</div>${favPor(d)}</td>
-    <td>${lugar(d)}<div class="sub2">${esc(d.modG)}</div></td><td>${rupChip(d)}</td>
+    <td><b class="lugar">${lugar(d)}</b><div><span class="modal">${esc(d.modG)}</span></div></td><td>${rupChip(d)}</td>
     <td class="num">${cop(d.val)}<div class="qmini">${d.vmes?cop(d.vmes)+"/mes<br>":""}inv. ${cop(quick(d).inv)}<br>gana ${(quick(d).gan<0?"−":"")+cop(Math.abs(quick(d).gan))}</div></td><td>${cierreTag(d)}<div class="sub2">${d.cierre?fecha(d.cierre)+" · ":""}pub. ${fecha(d.pub)}</div></td>
     <td><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a><button class="simb" type="button" onclick="simContract(${i})">Simular</button></td></tr>`).join(""):`<tr><td colspan="7" class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</td></tr>`;
   document.getElementById("cards").innerHTML=V.length?V.map((d,i)=>`<article class="card${d.fz?" fz":""}">
     <div class="row"><span class="chip p-${d.p}">${d.p} ${d.score}</span>${rupChip(d)}${tipoTag(d)}${corazon(d,i)}</div>
-    <h3 class="det-go" data-det="${i}">${esc(cap(d.obj))}</h3><div class="meta det-go" data-det="${i}">${esc(d.ent)} · ${lugar(d)} · ${esc(d.modG)}</div><div class="row">${cierreTag(d)}<span class="sub2">${d.cierre?"cierre "+fecha(d.cierre)+" · ":""}pub. ${fecha(d.pub)}</span></div>${favPor(d)}
+    <h3 class="det-go" data-det="${i}">${esc(cap(d.obj))}</h3><div class="meta det-go" data-det="${i}">${esc(d.ent)}</div><div class="row lm"><span class="lugar-c">${lugar(d)}</span><span class="modal">${esc(d.modG)}</span></div><div class="row">${cierreTag(d)}<span class="sub2">${d.cierre?"cierre "+fecha(d.cierre)+" · ":""}pub. ${fecha(d.pub)}</span></div>${favPor(d)}
     ${quickHtml(d)}<div class="row ft"><span class="v">${cop(d.val)}</span><button class="simb inl" type="button" onclick="simContract(${i})">Simular</button><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a></div></article>`).join(""):`<div class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</div>`;
   document.querySelectorAll("th button").forEach(b=>b.textContent=b.textContent.replace(/ [↑↓]$/,"")+(sort.k===b.dataset.s?(sort.dir>0?" ↑":" ↓"):""));
 }
@@ -2314,7 +2314,7 @@ const Det={d:null,cache:new Map(),hist:false,_idx:null,_n:-1,
           ${x&&x.fecha_de_apertura_de_respuesta?fila("Apertura de ofertas",fecha(x.fecha_de_apertura_de_respuesta.slice(0,10))):""}</div>
         <div class="det-card"><h3>Proceso</h3>
           ${fila("Referencia",esc(d.ref||"—"))}
-          ${fila("Modalidad",esc(d.mod))}
+          ${fila("Modalidad",`<span class="acc">${esc(d.mod)}</span>`)}
           ${x&&x.justificaci_n_modalidad_de&&x.justificaci_n_modalidad_de!=="No Definido"?fila("Justificación",esc(x.justificaci_n_modalidad_de)):""}
           ${fila("Fase",esc(x&&x.fase||d.fase||"—"))}
           ${fila("Estado",v("estado_del_procedimiento"))}
@@ -2324,7 +2324,7 @@ const Det={d:null,cache:new Map(),hist:false,_idx:null,_n:-1,
           ${fila("Entidad",esc(d.ent))}
           ${fila("NIT",v("nit_entidad"))}
           ${fila("Orden",v("ordenentidad"))}
-          ${fila("Lugar",esc(d.ciu&&d.ciu!==d.dep?d.ciu+", "+d.dep:d.dep))}
+          ${fila("Lugar",`<span class="acc">${esc(d.ciu&&d.ciu!==d.dep?d.ciu+", "+d.dep:d.dep)}</span>`)}
           ${fila("Ciudad de la unidad",v("ciudad_de_la_unidad_de"))}</div>
         <div class="det-card"><h3>Competencia</h3>
           ${fila("Proveedores invitados",String(x?+x.proveedores_invitados||0:c[3]))}
@@ -2468,6 +2468,14 @@ html.lock,html.lock body{overflow:hidden}
 #v-sim .simf label[hidden]{display:none}
 .dedh{padding-bottom:2px}
 #v-sim .simk{grid-template-columns:repeat(2,minmax(0,1fr))}
+/* Lugar y modalidad resaltados con el color de énfasis */
+.tbl .lugar{color:var(--accent-fg);font-weight:700;display:block}
+.modal{display:inline-flex;align-items:center;border-radius:999px;padding:2px 9px;margin-top:4px;font-size:11.5px;font-weight:700;background:var(--accent-2);color:var(--accent-fg);line-height:1.3}
+.card .lm{gap:6px;margin-top:-1px}
+.card .lugar-c{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:700;border:1px solid var(--accent-fg);color:var(--accent-fg);line-height:1.3}
+.card .lugar-c::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.card .modal{margin-top:0}
+.det-r .acc{color:var(--accent-fg)}
 /* Cierre */
 .cierre{display:inline-flex;align-items:center;border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:700;white-space:nowrap}
 .cierre.c4{background:var(--surface-2);color:var(--fg)}
