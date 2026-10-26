@@ -1067,6 +1067,7 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
       <button class="chat-op buzz" id="chat-buzz" type="button" title="Enviar un zumbido al equipo" aria-label="Enviar un zumbido"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span id="chat-buzz-t"></span></button>
       <button class="side-x" id="chat-x" type="button" aria-label="Cerrar chat">✕</button>
     </div></header>
+  <p class="chat-ios" id="chat-ios" hidden>En iPhone: quita el modo silencio para oír los avisos. La vibración no está disponible.</p>
   <div class="chat-l" id="chat-l" aria-live="polite"></div>
   <div class="chat-adj" id="chat-adj" hidden></div>
   <form class="chat-f" id="chat-f" autocomplete="off">
@@ -2150,9 +2151,17 @@ const Aviso={ctx:null,
   paraTitulo(){clearInterval(this._tt);this._tt=null;this._n=0;document.title=this._t0}
 };
 window.Aviso=Aviso;
-/* El navegador solo deja sonar después de un toque: se prepara el audio con la primera interacción */
-["pointerdown","keydown","touchstart"].forEach(ev=>addEventListener(ev,()=>{Aviso.audio()},{once:true,passive:true}));
-document.addEventListener("visibilitychange",()=>{if(!document.hidden)Aviso.paraTitulo()});
+/* El navegador solo deja sonar después de un toque completo (en iPhone: al levantar el dedo o con un clic).
+   Se reintenta en cada toque hasta que el audio quede activo y se reproduce un sonido silencioso para dejarlo listo. */
+Aviso.ios=/iphone|ipad|ipod/i.test(navigator.userAgent||"")||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+Aviso.desbloquear=function(){const c=this.audio();if(!c)return;
+  try{if(c.state!=="running")c.resume();const b=c.createBuffer(1,1,22050),src=c.createBufferSource();src.buffer=b;src.connect(c.destination);src.start(0)}catch(e){}};
+["touchend","click","keydown"].forEach(ev=>addEventListener(ev,()=>{if(!Aviso.ctx||Aviso.ctx.state!=="running")Aviso.desbloquear()},{passive:true,capture:true}));
+/* Al volver al frente: se reactiva el audio (iOS lo suspende en segundo plano) y suena lo que llegó mientras tanto */
+Aviso.pend=null;
+document.addEventListener("visibilitychange",()=>{if(document.hidden)return;Aviso.paraTitulo();
+  if(Aviso.ctx&&Aviso.ctx.state!=="running"){try{Aviso.ctx.resume()}catch(e){}}
+  const p=Aviso.pend;Aviso.pend=null;if(p)setTimeout(()=>{p==="zumbido"?Aviso.buzz():Aviso.tono()},250)});
 const Chat={fs:null,uid:null,ms:[],ok:false,err:null,adj:null,abierto:false,KEY:"radar:chatLeido",
   start(fs,u){this.fs=fs;this.uid=u.uid;if(this.unsub)this.unsub();
     this.unsub=fs.collection("radar_chat").orderBy("t","desc").limit(200).onSnapshot(sn=>{
@@ -2166,6 +2175,7 @@ const Chat={fs:null,uid:null,ms:[],ok:false,err:null,adj:null,abierto:false,KEY:
   leido(){const t=this.ms.length?this.ms[this.ms.length-1].t:Date.now();try{localStorage.setItem(this.KEY,String(Math.max(t,this.leidoT())))}catch(e){}},
   sinLeer(){const t=this.leidoT();return this.ms.filter(m=>m.uid!==this.uid&&m.t>t).length},
   llega(ms){const z=ms.find(m=>m.tipo==="zumbido");
+    if(document.hidden){Aviso.pend=z?"zumbido":(Aviso.pend||"tono");Aviso.titulo(ms.length);if(z&&!this.abierto)this.abrir(true);return}
     if(z){Aviso.buzz();Aviso.vibra([220,90,220,90,420]);document.documentElement.classList.remove("sacude");void document.documentElement.offsetWidth;document.documentElement.classList.add("sacude");
       setTimeout(()=>document.documentElement.classList.remove("sacude"),900);aviso(`⚡ ${z.n||"Alguien"} te envió un zumbido`);if(!this.abierto)this.abrir(true)}
     else{Aviso.tono();Aviso.vibra(90)}
@@ -2217,7 +2227,8 @@ function confirmarBorrado(id){const b=document.querySelector(`[data-chat-del="${
  fab.onclick=()=>Chat.abrir(true);document.getElementById("chat-x").onclick=()=>Chat.abrir(false);
  const tg=(id,k)=>{const b=document.getElementById(id);const p=()=>b.setAttribute("aria-pressed",Aviso.pref(k));p();b.onclick=()=>{Aviso.pref(k,!Aviso.pref(k));p();if(k==="Sonido"&&Aviso.pref(k))Aviso.tono();if(k==="Vibra"&&Aviso.pref(k))Aviso.vibra(60)}};
  tg("chat-snd","Sonido");tg("chat-vib","Vibra");
- if(!navigator.vibrate)document.getElementById("chat-vib").hidden=true;
+ if(!navigator.vibrate||Aviso.ios)document.getElementById("chat-vib").hidden=true;
+ if(Aviso.ios)document.getElementById("chat-ios").hidden=false;
  document.getElementById("chat-buzz").onclick=()=>Chat.zumbido();Chat.pintaBuzz();
  addEventListener("keydown",e=>{if(e.key==="Escape"&&Chat.abierto)Chat.abrir(false)});
  const auto=()=>{t.style.height="auto";t.style.height=Math.min(120,t.scrollHeight)+"px"};t.addEventListener("input",auto);
@@ -2565,6 +2576,8 @@ html.lock-det,html.lock-det body{overflow:hidden}
 .chat-op.buzz span{font-size:12px;font-weight:700}.chat-op.buzz span:empty{display:none}
 .chat-h>div:first-child{min-width:0}
 @media (max-width:420px){.chat-h b{font-size:17px;white-space:nowrap}.chat-h span{display:none}}
+.chat-ios{margin:0;padding:6px 14px;font-size:12px;color:var(--muted);background:var(--surface);border-bottom:1px solid var(--line)}
+.chat-ios[hidden]{display:none}
 .chat-buzz-m{align-self:center;font-size:12.5px;font-weight:700;color:var(--accent-fg);background:var(--accent-2);border-radius:999px;padding:4px 12px;margin:8px 0}
 @keyframes sacude{0%,100%{transform:none}10%,50%,90%{transform:translate(-9px,2px) rotate(-1deg)}30%,70%{transform:translate(9px,-2px) rotate(1deg)}}
 html.sacude body{animation:sacude .7s cubic-bezier(.36,.07,.19,.97) both}
