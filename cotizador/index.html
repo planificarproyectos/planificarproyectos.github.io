@@ -26,7 +26,7 @@
 <meta name="apple-mobile-web-app-title" content="Cotizador">
 <style>body{margin:0}[hidden]:not([hidden=until-found i]){display:none!important}</style>
 </head>
-<body>
+<body data-vista="cotizar">
 <title>Cotizador Planificar Proyectos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -208,7 +208,11 @@ textarea{resize:vertical;line-height:1.45}
 .bottom-nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 .bottom-nav button[aria-selected="true"]{color:var(--accent)}
 .app{padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+body:not([data-vista="cotizar"]) .bar .actions{display:none}
+body[data-vista="cuenta"] .app{padding-bottom:0}
+#view-cuenta{padding-top:0!important}
 /* ── Vista Cuenta ────────────────────────────────────────────── */
+#view-cuenta{padding:14px 16px calc(84px + env(safe-area-inset-bottom,0px))}
 .cuenta-view{display:flex;flex-direction:column;gap:12px;max-width:540px;margin-inline:auto;padding-block:4px}
 .cuenta-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 .cuenta-card-head{padding:12px 16px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
@@ -232,8 +236,11 @@ textarea{resize:vertical;line-height:1.45}
   .htable td{padding:0;border:0;text-align:left!important}
   .htable td.n{text-align:left!important;white-space:normal}
   .htable td::before{content:attr(data-label);display:block;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
-  .htable td:empty,.htable td[data-label=""]{display:none}
-  .htable .acts{margin-top:4px}
+  .htable tr{box-sizing:border-box}
+  .htable td:empty{display:none}
+  .htable td.acts-td::before{display:none}
+  .htable .acts{margin-top:6px;padding-top:10px;border-top:1px solid var(--line);gap:8px}
+  .htable .acts .btn{flex:1 1 auto;min-height:40px;font-size:13px}
 }
 </style>
 
@@ -1631,7 +1638,7 @@ function pintarHistorial() {
     h('td', { 'data-label': 'Servicio' }, (TIPOS[c.tipo] || TIPOS.otro).label),
     h('td', { class: 'n', 'data-label': 'Total' }, money(c.total)),
     h('td', { 'data-label': 'Estado' }, h('span', { class: 'pill ' + c.estado }, c.estado)),
-    h('td', { 'data-label': '' }, h('div', { class: 'acts' },
+    h('td', { class: 'acts-td', 'data-label': '' }, h('div', { class: 'acts' },
       h('button', { type: 'button', class: 'btn small', onclick: () => pedir('La cotización abierta tiene cambios sin guardar.', () => abrir(c)) }, 'Abrir'),
       h('button', { type: 'button', class: 'btn small', onclick: () => pedir('La cotización abierta tiene cambios sin guardar.', () => abrir(c, 'version')) }, 'Nueva versión'),
       h('button', { type: 'button', class: 'btn small', onclick: () => pedir('La cotización abierta tiene cambios sin guardar.', () => abrir(c, 'duplicar')) }, 'Duplicar'))))));
@@ -1648,6 +1655,7 @@ document.querySelectorAll('.htable th[data-k]').forEach((th) => th.addEventListe
 $('h-limpiar').addEventListener('click', () => { $('h-buscar').value = ''; ['h-estado', 'h-tipo', 'h-cliente', 'h-anio'].forEach((id) => ($(id).value = '')); $('h-orden').value = 'fecha-desc'; pintarHistorial(); });
 
 function mostrar(v) {
+  document.body.dataset.vista = v;
   $('view-cotizar').hidden = v !== 'cotizar'; $('view-historial').hidden = v !== 'historial'; $('view-cuenta').hidden = v !== 'cuenta';
   ['cotizar','historial','cuenta'].forEach(t => $('tab-'+t).setAttribute('aria-selected', String(v === t)));
   if (v === 'historial') pintarHistorial();
@@ -1680,7 +1688,7 @@ window.__cotiStart = (fs) => {
   let primera = true;
   db.collection('cotizaciones').onSnapshot((snap) => {
     lista = snap.docs.map((s) => ({ id: s.id, ...s.data() }));
-    if (primera && !q.id) { primera = false; q.anio = Number(q.fecha.slice(0, 4)); if (!q.codigo_base) q.consecutivo = siguienteConsecutivo(); q.codigo = codigoDe(q); $('f-codigo').textContent = q.codigo; pintarPapel(); }
+    if (primera && !q.id) { primera = false; q.anio = Number(q.fecha.slice(0, 4)); if (!q.codigo_base) q.consecutivo = siguienteConsecutivo(); q.codigo = codigoDe(q); $('f-codigo').textContent = q.codigo; pintarPapel(); estadoGuardado(); }
     if (!$('view-historial').hidden) pintarHistorial(); else $('hist-count').textContent = lista.length ? '(' + lista.length + ')' : '';
   }, () => { $('db-off').hidden = false; db = null; $('btn-guardar').disabled = true; });
 };
