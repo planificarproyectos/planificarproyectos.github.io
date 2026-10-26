@@ -597,6 +597,7 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
       <span class="count" id="count"></span>
     </div>
     <div class="chips" id="active"></div>
+    <div class="favbar" id="favbar" hidden></div>
     <div class="presets" id="presets"></div>
     <div class="kpis" id="kpis"></div>
   <div class="tbl"><table>
@@ -1208,7 +1209,46 @@ const cap=s=>{s=String(s||"").toLowerCase();return s.charAt(0).toUpperCase()+s.s
 const median=a=>{if(!a.length)return 0;const b=[...a].sort((x,y)=>x-y),m=b.length>>1;return b.length%2?b[m]:(b[m-1]+b[m])/2};
 const seq=(n,max)=>n?`color-mix(in oklab, var(--seq-hi) ${Math.round(15+85*n/max)}%, var(--seq-lo))`:"var(--zero)";
 
-const F={p:null,q:""};KEYS.forEach(k=>F[k]=new Set());
+/* ── Favoritos del equipo ──
+   Colección radar_favoritos/{id}: una ficha por proceso con copia de sus datos (fila) y quién lo marcó (por.{uid}).
+   La comparten todos los miembros de Planificar Proyectos SAS con acceso al Radar y se actualiza en vivo. */
+const Fav={map:new Map(),uid:null,yo:null,fs:null,ok:false,err:null,_idx:null,_n:-1,
+  id(d){const m=/noticeUID=CO1\.NTC\.(\d+)/.exec(d.url||"");if(m)return"ntc_"+m[1];
+    let h=0;const t=(d.url||"")+"|"+d.ref+"|"+d.ent;for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))|0;return"u_"+(h>>>0).toString(36)},
+  start(fs,u,nombre){this.fs=fs;this.uid=u.uid;this.yo={n:nombre||String(u.email||"").split("@")[0],e:String(u.email||"").toLowerCase()};
+    if(this.unsub)this.unsub();
+    this.unsub=fs.collection("radar_favoritos").onSnapshot(sn=>{this.map=new Map(sn.docs.map(x=>[x.id,x.data()]));this.ok=true;this.err=null;render()},
+      e=>{console.warn("Favoritos:",e&&e.code);this.err=e&&e.code||"error";this.ok=false;render()})},
+  nombre(n){if(this.yo&&n)this.yo.n=n},
+  doc(d){return this.map.get(this.id(d))},
+  quien(d){const f=this.doc(d);return f&&f.por?Object.values(f.por).sort((a,b)=>(a.t||0)-(b.t||0)):[]},
+  mio(d){const f=this.doc(d);return!!(f&&f.por&&this.uid&&f.por[this.uid])},
+  n(d){return this.quien(d).length},
+  fila(d){return[d.tipo,d.dep,d.ciu,d.ent,d.ref,d.obj,d.mod,d.val,d.pub,d.fase,d.un,d.plazo,d.url,d.rup]},
+  toggle(d){if(!this.ok||!this.fs)return aviso(this.err?"Los favoritos aún no están habilitados.":"Inicia sesión para usar favoritos.");
+    const ref=this.fs.collection("radar_favoritos").doc(this.id(d)),FV=firebase.firestore.FieldValue;
+    if(this.mio(d)){const otros=this.quien(d).length-1;
+      (otros>0?ref.update({["por."+this.uid]:FV.delete(),act:Date.now()}):ref.delete()).catch(e=>aviso("No se pudo quitar ("+(e.code||"error")+")"));}
+    else ref.set({fila:this.fila(d),act:Date.now(),por:{[this.uid]:{n:this.yo.n,e:this.yo.e,t:Date.now()}}},{merge:true})
+      .then(()=>aviso("♥ Guardado en favoritos")).catch(e=>aviso("No se pudo guardar ("+(e.code||"error")+")"));},
+  /* Procesos de la lista: los vigentes salen del radar; los que ya no están se arman con la copia guardada */
+  rows(modo){if(this._n!==D.length){this._idx=new Map(D.map(d=>[this.id(d),d]));this._n=D.length}
+    const out=[];this.map.forEach((f,id)=>{if(modo==="mios"&&!(f.por&&f.por[this.uid]))return;
+      let d=this._idx.get(id);if(!d&&Array.isArray(f.fila)){d=enriquecer(f.fila);d.nv=true;d.etapa="Ya no vigente"}
+      if(d)out.push(d)});return out},
+  total(modo){let n=0;this.map.forEach(f=>{if(modo!=="mios"||(f.por&&f.por[this.uid]))n++});return n}
+};
+window.Fav=Fav;
+function aviso(t){let el=document.getElementById("aviso");if(!el){el=document.createElement("div");el.id="aviso";el.className="aviso";el.setAttribute("role","status");document.body.appendChild(el)}
+  el.textContent=t;el.classList.add("on");clearTimeout(aviso._t);aviso._t=setTimeout(()=>el.classList.remove("on"),2200)}
+const corazon=(d,i)=>{if(Fav.err)return"";const on=Fav.mio(d),n=Fav.n(d),q=Fav.quien(d).map(x=>x.n).join(", ");
+  return `<button class="fav${on?" on":""}" type="button" data-fav="${i}" aria-pressed="${on}" aria-label="${on?"Quitar de favoritos":"Agregar a favoritos"}" title="${esc(q?"Favorito de: "+q:"Agregar a favoritos")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-9.3-9.2C1.5 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.7 3.5 4.5 6.8-1.8 4.8-9.3 9.2-9.3 9.2z"/></svg>${n>1?`<b>${n}</b>`:""}</button>`};
+const favPor=d=>{if(!F.fav)return"";const q=Fav.quien(d);if(!q.length)return"";
+  return `<div class="favby">♥ ${esc(q.map(x=>x.n).join(", "))}${d.nv?' · <span class="nv">Ya no vigente</span>':""}</div>`};
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-fav]");if(!b)return;e.preventDefault();
+  const d=(window._simRows||[])[+b.dataset.fav];if(d)Fav.toggle(d)});
+
+const F={p:null,q:"",fav:null};KEYS.forEach(k=>F[k]=new Set());
 let preset=null,sort={k:"score",dir:-1};
 const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 /* El modo claro/oscuro y el color de énfasis los maneja Apariencia (compartido con las demás apps); ver script al final */
@@ -1229,7 +1269,7 @@ function pass(d,skip=[]){
 }
 const set1=(k,v)=>{const was=F[k].size===1&&F[k].has(v);F[k].clear();if(!was)F[k].add(v)};
 function tog(k,v){F[k].has(v)?F[k].delete(v):F[k].add(v);preset=null;render()}
-function clearAll(){KEYS.forEach(k=>F[k].clear());F.p=null;F.q="";document.getElementById("q").value="";preset=null}
+function clearAll(){KEYS.forEach(k=>F[k].clear());F.p=null;F.q="";F.fav=null;document.getElementById("q").value="";preset=null}
 
 /* Tooltip */
 const tip=document.getElementById("tip");
@@ -1241,12 +1281,22 @@ function bindTip(el,fn){el.addEventListener("mousemove",e=>showTip(e,fn()));el.a
 const pres=document.getElementById("presets");
 PRESETS.forEach(([n,h,cfg],i)=>{const b=document.createElement("button");b.className="preset";b.type="button";b.dataset.i=i;b.textContent=n;if(h)b.title=h;
   b.onclick=()=>{const was=preset===i;clearAll();if(!was){Object.entries(cfg).forEach(([k,vs])=>vs.forEach(v=>F[k].add(v)));preset=i}render()};pres.appendChild(b)});
+{const fb=document.createElement("button");fb.className="preset favp";fb.type="button";fb.id="favp";
+  fb.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-9.3-9.2C1.5 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.7 3.5 4.5 6.8-1.8 4.8-9.3 9.2-9.3 9.2z"/></svg>Favoritos<b></b>';
+  fb.onclick=()=>{const was=!!F.fav;clearAll();if(!was)F.fav="todos";render()};pres.prepend(fb)}
+function favUI(){const fb=document.getElementById("favp"),bar=document.getElementById("favbar");if(!fb||!bar)return;
+  fb.hidden=!!Fav.err;fb.setAttribute("aria-pressed",!!F.fav);fb.querySelector("b").textContent=Fav.ok?Fav.total("todos"):"";
+  bar.hidden=!F.fav||!!Fav.err;if(bar.hidden)return;
+  const t=Fav.total("todos"),m=Fav.total("mios");
+  bar.innerHTML=`<b>♥ Favoritos del equipo</b><span class="seg"><button type="button" data-fm="todos" aria-pressed="${F.fav==="todos"}">Todos · ${t}</button><button type="button" data-fm="mios" aria-pressed="${F.fav==="mios"}">Míos · ${m}</button></span><button type="button" class="favx" data-fm="" aria-label="Salir de favoritos">✕</button>`;
+  bar.querySelectorAll("[data-fm]").forEach(x=>x.onclick=()=>{F.fav=x.dataset.fm||null;render()});}
 const legend=()=>LINEAS.map(l=>`<span><span class="sw" style="--c:${COL[l]}"></span>${esc(l)}</span>`).join("");
 document.getElementById("leg1").innerHTML=legend();document.getElementById("leg2").innerHTML=legend();
 
 function render(){
   hideTip();
-  const R=D.filter(d=>pass(d));
+  const R=(F.fav&&!Fav.err?Fav.rows(F.fav):D).filter(d=>pass(d));
+  favUI();
   pres.querySelectorAll(".preset").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.i===preset));
   // KPIs
   const k=[["",R.length.toLocaleString("es-CO"),"procesos"],["",cop(R.reduce((a,b)=>a+b.val,0)),"valor"],
@@ -1339,18 +1389,18 @@ function render(){
   const rupChip=d=>`<span class="chip ${d.rup==="No"?"rno":""}">${d.rup==="No"?"Sin RUP":d.rup==="Sí"?"RUP":"RUP ?"}</span>`;
   const meter=d=>`<span class="meter s-${d.p==="Alta"?"hi":d.p==="Media"?"mid":"lo"}"><i><b style="width:${d.score}%"></b></i>${d.score}</span>`;
   const tipoTag=d=>`<span class="tipo" style="color:var(--fg)"><span class="sw" style="--c:${COL[d.tipo]};display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--c);margin-right:5px"></span>${esc(d.tipo)}</span>`;
-  {const sig=JSON.stringify([KEYS.map(k=>[...F[k]]),F.p,F.q,sort]);if(sig!==render._sig){render._sig=sig;render._lim=60}}
+  {const sig=JSON.stringify([KEYS.map(k=>[...F[k]]),F.p,F.q,F.fav,sort]);if(sig!==render._sig){render._sig=sig;render._lim=60}}
   const V=Sx.slice(0,render._lim||60),mas=Sx.length-V.length;
   const masEl=document.getElementById("mas");if(masEl){masEl.hidden=mas<=0;masEl.textContent=`Ver ${Math.min(60,mas)} más · faltan ${mas}`}
   window._simRows=Sx;document.getElementById("tb").innerHTML=V.length?V.map((d,i)=>`<tr>
-    <td class="${d.fz?"fz":""}"><span class="chip p-${d.p}">${d.p}</span><div style="margin-top:5px">${meter(d)}</div>${d.fz?`<div style="margin-top:4px"><span class="chip fz">★ Foco</span></div>`:""}</td>
-    <td class="obj">${tipoTag(d)}<b>${esc(d.ent)}</b>${esc(cap(d.obj))}<div style="margin-top:3px;font-size:11.5px;color:var(--muted);font-family:var(--mono)">${esc(d.ref)} · ${esc(d.etapa)}</div></td>
+    <td class="${d.fz?"fz":""}"><div class="c1"><span class="chip p-${d.p}">${d.p}</span>${corazon(d,i)}</div><div style="margin-top:5px">${meter(d)}</div>${d.fz?`<div style="margin-top:4px"><span class="chip fz">★ Foco</span></div>`:""}</td>
+    <td class="obj">${tipoTag(d)}<b>${esc(d.ent)}</b>${esc(cap(d.obj))}<div style="margin-top:3px;font-size:11.5px;color:var(--muted);font-family:var(--mono)">${esc(d.ref)} · ${esc(d.etapa)}</div>${favPor(d)}</td>
     <td>${lugar(d)}<div class="sub2">${esc(d.modG)}</div></td><td>${rupChip(d)}</td>
     <td class="num">${cop(d.val)}<div class="qmini">${d.vmes?cop(d.vmes)+"/mes<br>":""}inv. ${cop(quick(d).inv)}<br>gana ${(quick(d).gan<0?"−":"")+cop(Math.abs(quick(d).gan))}</div></td><td style="white-space:nowrap">${fecha(d.pub)}<div style="font-size:11.5px;color:var(--muted)">hace ${d.dias} d</div></td>
     <td><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a><button class="simb" type="button" onclick="simContract(${i})">Simular</button></td></tr>`).join(""):`<tr><td colspan="7" class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</td></tr>`;
   document.getElementById("cards").innerHTML=V.length?V.map((d,i)=>`<article class="card${d.fz?" fz":""}">
-    <div class="row"><span class="chip p-${d.p}">${d.p} ${d.score}</span>${rupChip(d)}${tipoTag(d)}</div>
-    <h3>${esc(cap(d.obj))}</h3><div class="meta">${esc(d.ent)} · ${lugar(d)} · ${esc(d.modG)} · ${fecha(d.pub)}</div>
+    <div class="row"><span class="chip p-${d.p}">${d.p} ${d.score}</span>${rupChip(d)}${tipoTag(d)}${corazon(d,i)}</div>
+    <h3>${esc(cap(d.obj))}</h3><div class="meta">${esc(d.ent)} · ${lugar(d)} · ${esc(d.modG)} · ${fecha(d.pub)}</div>${favPor(d)}
     ${quickHtml(d)}<div class="row ft"><span class="v">${cop(d.val)}</span><button class="simb inl" type="button" onclick="simContract(${i})">Simular</button><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a></div></article>`).join(""):`<div class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</div>`;
   document.querySelectorAll("th button").forEach(b=>b.textContent=b.textContent.replace(/ [↑↓]$/,"")+(sort.k===b.dataset.s?(sort.dir>0?" ↑":" ↓"):""));
 }
@@ -1958,6 +2008,34 @@ html.lock,html.lock body{overflow:hidden}
 #v-sim .simf label[hidden]{display:none}
 .dedh{padding-bottom:2px}
 #v-sim .simk{grid-template-columns:repeat(2,minmax(0,1fr))}
+/* Favoritos */
+.fav{flex:none;display:inline-flex;align-items:center;gap:3px;border:0;background:transparent;color:var(--muted);padding:4px;margin:-4px;border-radius:999px;cursor:pointer;min-width:32px;min-height:32px;justify-content:center}
+.fav svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round;transition:transform .15s}
+.fav:hover{color:var(--fg)}
+.fav.on{color:#FF4F6D}.fav.on svg{fill:currentColor}
+.fav:active svg{transform:scale(.85)}
+.fav b{font-size:11px;font-weight:700}
+.card{position:relative}
+.card>.row:first-child{padding-right:30px}
+.card .row .fav{position:absolute;top:8px;right:8px;margin:0}
+.c1{display:flex;align-items:center;justify-content:space-between;gap:4px}
+.favby{font-size:11.5px;color:#FF7A90;margin-top:3px}
+.favby .nv{color:var(--muted);font-weight:700}
+.preset.favp{display:inline-flex;flex-direction:row;align-items:center;gap:6px}
+.preset.favp svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2}
+.preset.favp[aria-pressed="true"] svg{fill:#FF4F6D;stroke:#FF4F6D}
+.preset.favp b{font-size:11px;opacity:.75}
+.preset.favp b:empty{display:none}
+.favbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface);border-radius:14px;padding:8px 10px 8px 14px}
+.favbar[hidden]{display:none}
+.favbar>b{font-family:var(--display);font-size:16px;text-transform:uppercase;letter-spacing:.5px;color:#FF7A90;margin-right:auto}
+.favbar .seg{display:inline-flex;background:var(--bg);border-radius:999px;padding:3px}
+.favbar .seg button{border:0;background:transparent;color:var(--muted);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600}
+.favbar .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.favx{border:0;background:var(--bg);color:var(--fg);width:32px;height:32px;border-radius:50%}
+.aviso{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;pointer-events:none;background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;font-size:13.5px;z-index:70;transition:opacity .2s,transform .2s;max-width:calc(100% - 32px)}
+.aviso.on{opacity:1;transform:translate(-50%,0)}
+@media (min-width:980px){.aviso{bottom:24px}}
 /* Instalar como app */
 .installbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(56px + 12px + env(safe-area-inset-bottom,0px));z-index:45;width:calc(100% - 32px);max-width:448px;background:var(--surface);border:1px solid var(--accent-fg);border-radius:20px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:10px;animation:ib-in .35s ease-out}
 .installbar[hidden]{display:none}
@@ -2044,9 +2122,10 @@ html.lock,html.lock body{overflow:hidden}
       $g('gate').hidden=true;
       // Poblar sección Cuenta
       $g('cta-email').textContent=em;
-      try{fs.collection('users').doc(u.uid).collection('perfil').doc('datos').onSnapshot(function(d){var n=d.exists&&d.data().nombre||'';$g('cta-nombre').textContent=n||em.split('@')[0];if(window.ppSaludo)ppSaludo(n)})}catch(e){$g('cta-nombre').textContent=em.split('@')[0]}
+      try{fs.collection('users').doc(u.uid).collection('perfil').doc('datos').onSnapshot(function(d){var n=d.exists&&d.data().nombre||'';$g('cta-nombre').textContent=n||em.split('@')[0];if(window.ppSaludo)ppSaludo(n);if(window.Fav)Fav.nombre(n)})}catch(e){$g('cta-nombre').textContent=em.split('@')[0]}
       if(window.Apariencia){try{$g('cta-apariencia-slot').innerHTML=Apariencia.picker()}catch(e){}}
       try{Uso.start(fs,u,'radar')}catch(e){}
+      try{if(window.Fav)Fav.start(fs,u,u.displayName)}catch(e){console.warn(e)}
       try{if(window.Apariencia) Apariencia.connect(fs,u.uid,function(){return Apariencia.local()})}catch(e){}
     });
   });

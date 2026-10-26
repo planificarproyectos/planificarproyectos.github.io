@@ -79,6 +79,15 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Radar SECOP: favoritos compartidos por los miembros de Planificar Proyectos SAS con acceso al Radar
+    function ppRadar() {
+      return invited() && get(invitePath()).data.get('empresaId', '') == 'planificar-proyectos-sas'
+        && get(invitePath()).data.get('apps', {}).get('radar', true) != false;
+    }
+    match /radar_favoritos/{id} {
+      allow read, write: if isAdmin() || ppRadar();
+    }
+
     // Lista de administradores: cada quien puede ver si es administrador; solo un administrador da o quita el rol
     match /admins/{uid} {
       allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
