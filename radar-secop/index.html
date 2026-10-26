@@ -1049,6 +1049,18 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
   </section>
 </div>
 <div id="tip" role="tooltip"></div>
+<button class="chat-fab" id="chat-fab" type="button" aria-label="Chat del equipo" aria-controls="chat" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.7A8 8 0 1 1 21 12z"/><path d="M8.5 10.5h7M8.5 14h4.5"/></svg><b id="chat-n" hidden></b></button>
+<section class="chat" id="chat" role="dialog" aria-label="Chat del equipo" hidden>
+  <header class="chat-h"><div><b>Chat del equipo</b><span>Planificar Proyectos SAS</span></div><button class="side-x" id="chat-x" type="button" aria-label="Cerrar chat">✕</button></header>
+  <div class="chat-l" id="chat-l" aria-live="polite"></div>
+  <div class="chat-adj" id="chat-adj" hidden></div>
+  <form class="chat-f" id="chat-f" autocomplete="off">
+    <button class="chat-clip" id="chat-clip" type="button" aria-label="Adjuntar un proceso favorito" title="Adjuntar un proceso favorito"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5 12.6 20a5.5 5.5 0 0 1-7.8-7.8l8.8-8.8a3.7 3.7 0 0 1 5.2 5.2l-8.8 8.8a1.8 1.8 0 0 1-2.6-2.6l8-8"/></svg></button>
+    <textarea id="chat-t" rows="1" maxlength="2000" placeholder="Escribe un mensaje…" aria-label="Mensaje"></textarea>
+    <button class="chat-send" type="submit" aria-label="Enviar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12 20 4l-6 16-3-7z"/></svg></button>
+  </form>
+  <div class="chat-pick" id="chat-pick" hidden></div>
+</section>
 <div class="installbar" id="install" role="dialog" aria-label="Instalar Radar SECOP" hidden></div>
 <script>document.querySelectorAll("details.fold[data-fold]").forEach(function(d){var k="radar:fold:"+d.dataset.fold;
   try{if(localStorage.getItem(k)==="1")d.open=true}catch(e){}
@@ -2105,6 +2117,64 @@ cpPesos();
 {const r0=render;window.render=render=function(){r0.apply(this,arguments);try{renderComp()}catch(e){console.warn(e)}}}
 </script>
 <script>
+/* ═════════ Chat del equipo: colección radar_chat (miembros de Planificar Proyectos SAS con acceso al Radar) ═════════ */
+const Chat={fs:null,uid:null,ms:[],ok:false,err:null,adj:null,abierto:false,KEY:"radar:chatLeido",
+  start(fs,u){this.fs=fs;this.uid=u.uid;if(this.unsub)this.unsub();
+    this.unsub=fs.collection("radar_chat").orderBy("t","desc").limit(200).onSnapshot(sn=>{
+      this.ms=sn.docs.map(x=>{const d=x.data({serverTimestamps:"estimate"});const t=d.t&&d.t.toMillis?d.t.toMillis():Date.now();return{id:x.id,...d,t}}).sort((a,b)=>a.t-b.t);
+      this.ok=true;this.err=null;if(this.abierto)this.leido();this.pinta()},
+      e=>{console.warn("Chat:",e&&e.code);this.err=e&&e.code||"error";this.ok=false;this.pinta()})},
+  leidoT(){try{return+localStorage.getItem(this.KEY)||0}catch(e){return 0}},
+  leido(){const t=this.ms.length?this.ms[this.ms.length-1].t:Date.now();try{localStorage.setItem(this.KEY,String(Math.max(t,this.leidoT())))}catch(e){}},
+  sinLeer(){const t=this.leidoT();return this.ms.filter(m=>m.uid!==this.uid&&m.t>t).length},
+  enviar(txt){txt=String(txt||"").trim();if(!txt&&!this.adj)return;if(!this.ok)return aviso("El chat aún no está habilitado.");
+    const yo=Fav.yo||{n:"",e:""},doc={uid:this.uid,n:yo.n||yo.e.split("@")[0],e:yo.e,txt:txt.slice(0,2000),t:firebase.firestore.FieldValue.serverTimestamp()};
+    if(this.adj){const d=this.adj;doc.ref={id:Fav.id(d),ent:String(d.ent||"").slice(0,120),obj:String(d.obj||"").slice(0,200),val:+d.val||0,cierre:d.cierre||"",url:d.url||"",ref:d.ref||""}}
+    this.adj=null;this.pintaAdj();
+    return this.fs.collection("radar_chat").add(doc).catch(e=>aviso("No se pudo enviar ("+(e.code||"error")+")"))},
+  borrar(id){if(!confirmarBorrado(id))return;this.fs.collection("radar_chat").doc(id).delete().catch(e=>aviso("No se pudo eliminar ("+(e.code||"error")+")"))},
+  abrir(on){this.abierto=on;const el=document.getElementById("chat");el.hidden=!on;document.documentElement.classList.toggle("lock-chat",on);
+    if(on){this.leido();this.pinta();setTimeout(()=>{const l=document.getElementById("chat-l");l.scrollTop=l.scrollHeight;if(matchMedia("(min-width:980px)").matches)document.getElementById("chat-t").focus()},30)}else this.pinta()},
+  pintaAdj(){const el=document.getElementById("chat-adj");if(!this.adj){el.hidden=true;el.innerHTML="";return}
+    el.hidden=false;el.innerHTML=`<span>📎 ${esc(this.adj.ent)} · ${cop(this.adj.val)}</span><button type="button" aria-label="Quitar adjunto" id="chat-adj-x">✕</button>`;
+    document.getElementById("chat-adj-x").onclick=()=>{this.adj=null;this.pintaAdj()}},
+  pinta(){
+    const fab=document.getElementById("chat-fab"),g=document.getElementById("gate");
+    fab.hidden=!!this.err||!this.ok||!(g&&g.hidden)||this.abierto;
+    const n=this.sinLeer(),b=document.getElementById("chat-n");b.hidden=!n;b.textContent=n>99?"99+":n;
+    if(!this.abierto)return;
+    const l=document.getElementById("chat-l"),abajo=l.scrollHeight-l.scrollTop-l.clientHeight<80;
+    if(!this.ms.length){l.innerHTML=`<div class="chat-v"><b>Aún no hay mensajes</b><span>Escribe al equipo o adjunta un proceso favorito con 📎.</span></div>`;return}
+    const hoy=new Date().toDateString(),ayer=new Date(Date.now()-864e5).toDateString();
+    let dia="",prev=null,html="";
+    this.ms.forEach(m=>{const f=new Date(m.t),ds=f.toDateString();
+      if(ds!==dia){dia=ds;prev=null;html+=`<div class="chat-dia">${ds===hoy?"Hoy":ds===ayer?"Ayer":f.toLocaleDateString("es-CO",{weekday:"long",day:"numeric",month:"short"})}</div>`}
+      const mio=m.uid===this.uid,seguido=prev&&prev.uid===m.uid&&m.t-prev.t<5*6e4;prev=m;
+      const ini=String(m.n||"?").split(/\s+/).map(x=>x[0]).slice(0,2).join("").toUpperCase(),hue=[...String(m.uid||"")].reduce((a,c)=>a+c.charCodeAt(0),0)%360;
+      const r=m.ref?`<div class="chat-ref"><b>${esc(m.ref.ent)}</b><span>${esc(cap(m.ref.obj).slice(0,120))}</span><span class="chat-ref-m">${m.ref.val?cop(m.ref.val):""}${m.ref.cierre?" · cierre "+fecha(m.ref.cierre):""}</span><span class="chat-ref-b"><button type="button" data-chat-ver="${esc(m.ref.ref||m.ref.ent)}">Ver en Radar</button>${m.ref.url?`<a href="${esc(m.ref.url)}" target="_blank" rel="noopener">SECOP ↗</a>`:""}</span></div>`:"";
+      html+=`<div class="msg${mio?" mio":""}${seguido?" seg":""}">${mio||seguido?"":`<span class="av" style="--h:${hue}">${esc(ini)}</span>`}<div class="bub">${mio||seguido?"":`<b class="who">${esc(m.n||"")}</b>`}${m.txt?`<p>${esc(m.txt).replace(/\n/g,"<br>")}</p>`:""}${r}<span class="hr">${f.toLocaleTimeString("es-CO",{hour:"numeric",minute:"2-digit"})}${mio?` · <button type="button" class="del" data-chat-del="${m.id}">Eliminar</button>`:""}</span></div></div>`});
+    l.innerHTML=html;if(abajo||this._prim!==true){l.scrollTop=l.scrollHeight;this._prim=true}
+  }
+};
+window.Chat=Chat;
+function confirmarBorrado(id){const b=document.querySelector(`[data-chat-del="${id}"]`);if(!b)return true;if(b.dataset.ok==="1")return true;
+  b.dataset.ok="1";b.textContent="¿Eliminar? toca otra vez";setTimeout(()=>{if(b.isConnected){b.dataset.ok="";b.textContent="Eliminar"}},3000);return false}
+{const fab=document.getElementById("chat-fab"),t=document.getElementById("chat-t");
+ fab.onclick=()=>Chat.abrir(true);document.getElementById("chat-x").onclick=()=>Chat.abrir(false);
+ addEventListener("keydown",e=>{if(e.key==="Escape"&&Chat.abierto)Chat.abrir(false)});
+ const auto=()=>{t.style.height="auto";t.style.height=Math.min(120,t.scrollHeight)+"px"};t.addEventListener("input",auto);
+ t.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();document.getElementById("chat-f").requestSubmit()}});
+ document.getElementById("chat-f").onsubmit=e=>{e.preventDefault();const v=t.value;if(!v.trim()&&!Chat.adj)return;Chat.enviar(v);t.value="";auto()};
+ document.getElementById("chat-clip").onclick=()=>{const pk=document.getElementById("chat-pick");if(!pk.hidden){pk.hidden=true;return}
+   const L=Fav.ok?Fav.rows("todos"):[];
+   pk.innerHTML=L.length?`<b>Adjuntar un favorito</b>`+L.map((d,i)=>`<button type="button" data-pk="${i}"><span>${esc(d.ent)}</span><small>${cop(d.val)} · ${esc(cierreTxt(d))}</small></button>`).join(""):`<b>No hay favoritos</b><small>Marca procesos con ♥ en el Radar para adjuntarlos.</small>`;
+   pk.hidden=false;pk.querySelectorAll("[data-pk]").forEach(b=>b.onclick=()=>{Chat.adj=L[+b.dataset.pk];pk.hidden=true;Chat.pintaAdj();t.focus()})};
+ document.getElementById("chat-l").addEventListener("click",e=>{const d=e.target.closest("[data-chat-del]");if(d){Chat.borrar(d.dataset.chatDel);return}
+   const v=e.target.closest("[data-chat-ver]");if(v){Chat.abrir(false);clearAll();F.q=v.dataset.chatVer;document.getElementById("q").value=F.q;render();history.replaceState(null,"","#radar");showTab("radar")}});
+ const g=document.getElementById("gate");if(g&&window.MutationObserver)new MutationObserver(()=>Chat.pinta()).observe(g,{attributes:true,attributeFilter:["hidden"]});
+ setInterval(()=>{if(Chat.abierto)Chat.pinta()},60000);}
+</script>
+<script>
 /* ---------- Instalar como app (mismo aviso que PowerFit, Mind Focus y Lumen) ---------- */
 var Inst={prompt:null,KEY:'radar:installDismiss',
   standalone:function(){ try{ return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true; }catch(e){ return false; } },
@@ -2265,6 +2335,59 @@ html.lock,html.lock body{overflow:hidden}
 .cp-chk{display:flex;align-items:center;gap:8px;font-size:13.5px}
 .cp-chk input{width:18px;height:18px;accent-color:var(--accent)}
 #cp-reset{justify-self:start;min-height:38px}
+/* Chat del equipo */
+.chat-fab{position:fixed;right:16px;bottom:calc(56px + 16px + env(safe-area-inset-bottom,0px));z-index:38;width:56px;height:56px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.chat-fab[hidden]{display:none}
+.chat-fab svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chat-fab b{position:absolute;top:-2px;right:-2px;min-width:22px;height:22px;border-radius:11px;background:#FF4F6D;color:#fff;font-size:11.5px;display:flex;align-items:center;justify-content:center;padding:0 6px;border:2px solid var(--bg)}
+.chat-fab b[hidden]{display:none}
+.chat{position:fixed;inset:0;z-index:65;background:var(--bg);display:flex;flex-direction:column}
+.chat[hidden]{display:none}
+html.lock-chat,html.lock-chat body{overflow:hidden}
+.chat-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;border-bottom:1px solid var(--line)}
+.chat-h b{display:block;font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:.5px}
+.chat-h span{font-size:12px;color:var(--muted)}
+.chat-l{flex:1;min-height:0;overflow:auto;padding:10px 12px;display:flex;flex-direction:column;gap:2px;overscroll-behavior:contain}
+.chat-v{margin:auto;text-align:center;display:grid;gap:6px;color:var(--muted);padding:20px}.chat-v b{color:var(--fg)}
+.chat-dia{align-self:center;font-size:11.5px;color:var(--muted);background:var(--surface);border-radius:999px;padding:3px 10px;margin:10px 0 6px;text-transform:capitalize}
+.msg{display:flex;align-items:flex-end;gap:8px;max-width:86%;margin-top:6px}
+.msg.seg{margin-top:2px;padding-left:36px}
+.msg.mio{align-self:flex-end;flex-direction:row-reverse;padding-left:0}
+.av{flex:none;width:28px;height:28px;border-radius:50%;background:hsl(var(--h) 55% 45%);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.bub{background:var(--surface);border-radius:16px 16px 16px 4px;padding:7px 11px;display:grid;gap:3px;min-width:0}
+.msg.mio .bub{background:var(--accent);color:var(--accent-ink);border-radius:16px 16px 4px 16px}
+.bub .who{font-size:12px;color:var(--accent-fg)}
+.bub p{margin:0;font-size:14.5px;line-height:1.4;overflow-wrap:anywhere;white-space:normal}
+.bub .hr{font-size:10.5px;opacity:.65;justify-self:end}
+.bub .del{border:0;background:none;color:inherit;font:inherit;text-decoration:underline;padding:0;cursor:pointer}
+.chat-ref{background:var(--bg);color:var(--fg);border-radius:12px;padding:8px 10px;display:grid;gap:2px;border-left:3px solid var(--accent)}
+.chat-ref b{font-size:12.5px}.chat-ref span{font-size:12px;color:var(--muted)}
+.chat-ref,.chat-ref b,.chat-ref span{overflow-wrap:anywhere;min-width:0}
+.msg{min-width:0}.bub{max-width:100%;overflow:hidden}
+.chat-ref-b{display:flex;gap:8px;margin-top:4px}
+.chat-ref-b button,.chat-ref-b a{border:0;background:var(--surface);color:var(--fg);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:600;text-decoration:none}
+.chat-adj{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 12px;background:var(--surface);border-radius:12px;padding:6px 10px;font-size:12.5px}
+.chat-adj[hidden]{display:none}.chat-adj button{border:0;background:none;color:var(--muted)}
+.chat-f{display:flex;align-items:flex-end;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+.chat-f textarea{flex:1;resize:none;min-height:42px;max-height:120px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:21px;padding:10px 16px;font:inherit;font-size:15px;line-height:1.35}
+.chat-f textarea:focus{outline:0;border-color:var(--accent-fg)}
+.chat-clip,.chat-send{flex:none;width:42px;height:42px;border-radius:50%;border:0;display:flex;align-items:center;justify-content:center}
+.chat-clip{background:var(--surface);color:var(--muted)}
+.chat-send{background:var(--accent);color:var(--accent-ink)}
+.chat-clip svg,.chat-send svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chat-pick{position:absolute;left:12px;right:12px;bottom:calc(66px + env(safe-area-inset-bottom,0px));max-height:50%;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:8px;display:grid;gap:4px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.chat-pick[hidden]{display:none}
+.chat-pick>b{font-size:12.5px;color:var(--muted);padding:4px 6px}
+.chat-pick>small{padding:0 6px 6px;color:var(--muted)}
+.chat-pick button{border:0;background:var(--bg);color:var(--fg);border-radius:10px;padding:8px 10px;text-align:left;display:grid;gap:2px}
+.chat-pick button small{color:var(--muted);font-size:11.5px}
+@media (min-width:980px){
+  .chat-fab{bottom:24px;right:24px}
+  .chat{inset:auto 24px 24px auto;width:400px;height:min(640px,calc(100vh - 48px));border:1px solid var(--line);border-radius:20px;box-shadow:0 20px 50px rgba(0,0,0,.45);overflow:hidden}
+  .chat-h{padding-top:12px}
+  html.lock-chat,html.lock-chat body{overflow:auto}
+  .installbar{bottom:96px!important}
+}
 /* Favoritos */
 .fav{flex:none;display:inline-flex;align-items:center;gap:3px;border:0;background:transparent;color:var(--muted);padding:4px;margin:-4px;border-radius:999px;cursor:pointer;min-width:32px;min-height:32px;justify-content:center}
 .fav svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round;transition:transform .15s}
@@ -2384,6 +2507,7 @@ html.lock,html.lock body{overflow:hidden}
       if(window.Apariencia){try{$g('cta-apariencia-slot').innerHTML=Apariencia.picker()}catch(e){}}
       try{Uso.start(fs,u,'radar')}catch(e){}
       try{if(window.Fav)Fav.start(fs,u,u.displayName)}catch(e){console.warn(e)}
+      try{if(window.Chat)Chat.start(fs,u)}catch(e){console.warn(e)}
       try{if(window.Apariencia) Apariencia.connect(fs,u.uid,function(){return Apariencia.local()})}catch(e){}
     });
   });

@@ -87,6 +87,14 @@ service cloud.firestore {
     match /radar_favoritos/{id} {
       allow read, write: if isAdmin() || ppRadar();
     }
+    // Chat del equipo del Radar: lo leen los miembros; cada quien escribe con su propia cuenta y solo borra sus mensajes
+    match /radar_chat/{id} {
+      allow read: if isAdmin() || ppRadar();
+      allow create: if (isAdmin() || ppRadar()) && request.resource.data.uid == request.auth.uid
+        && request.resource.data.t == request.time
+        && request.resource.data.txt is string && request.resource.data.txt.size() <= 2000;
+      allow delete: if isAdmin() || (ppRadar() && resource.data.uid == request.auth.uid);
+    }
 
     // Lista de administradores: cada quien puede ver si es administrador; solo un administrador da o quita el rol
     match /admins/{uid} {
