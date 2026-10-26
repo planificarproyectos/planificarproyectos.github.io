@@ -1516,6 +1516,27 @@ document.getElementById("clear").onclick=()=>{clearAll();sort={k:"score",dir:-1}
  bg.onclick=()=>abrir(false);
  addEventListener("keydown",e=>{if(e.key==="Escape"&&side.classList.contains("open"))abrir(false)});}
 document.getElementById("mas").onclick=()=>{render._lim=(render._lim||60)+60;render()};
+/* ── Filtros guardados en la cuenta (users/{uid}/radar/filtros): se mantienen al actualizar y en todos los dispositivos
+   hasta que se limpian. Copia local para aplicarlos al instante mientras carga la sesión. ── */
+const Filtros={KEY:"radar:filtros",DEV:(()=>{try{let d=localStorage.getItem("radar:dev");if(!d){d=Math.random().toString(36).slice(2,10);localStorage.setItem("radar:dev",d)}return d}catch(e){return"x"}})(),
+  ref:null,ult:"",t:0,_tm:null,
+  ser(){return JSON.stringify({k:Object.fromEntries(KEYS.map(k=>[k,[...F[k]]]).filter(([,v])=>v.length)),p:F.p||null,q:F.q||"",fav:F.fav||null,preset,sort})},
+  apl(j){let o;try{o=JSON.parse(j)}catch(e){return}if(!o)return;
+    KEYS.forEach(k=>{F[k].clear();((o.k||{})[k]||[]).forEach(v=>F[k].add(v))});
+    F.p=o.p||null;F.q=o.q||"";F.fav=o.fav||null;preset=Number.isInteger(o.preset)?o.preset:null;sort=o.sort&&o.sort.k?o.sort:{k:"score",dir:-1};
+    const qi=document.getElementById("q");if(qi)qi.value=F.q;this.ult=this.ser()},
+  local(){try{return JSON.parse(localStorage.getItem(this.KEY)||"null")}catch(e){return null}},
+  guardar(){const j=this.ser();if(j===this.ult)return;this.ult=j;this.t=Date.now();
+    try{localStorage.setItem(this.KEY,JSON.stringify({j,t:this.t}))}catch(e){}
+    clearTimeout(this._tm);if(this.ref)this._tm=setTimeout(()=>{this.ref.set({j:this.ult,t:this.t,dev:this.DEV}).catch(e=>console.warn("Filtros:",e&&e.code))},800)},
+  start(fs,u){if(this.unsub)this.unsub();this.ref=fs.collection("users").doc(u.uid).collection("radar").doc("filtros");let primero=true;
+    this.unsub=this.ref.onSnapshot(sn=>{if(sn.metadata&&sn.metadata.hasPendingWrites)return;const r=sn.exists?sn.data():null;
+      if(r&&r.j&&(r.dev!==this.DEV||primero)&&(r.t||0)>(this.t||0)){this.apl(r.j);this.t=r.t;try{localStorage.setItem(this.KEY,JSON.stringify({j:r.j,t:r.t}))}catch(e){}render()}
+      else if(primero&&(!r||(r.t||0)<(this.t||0))&&this.t)this.ref.set({j:this.ult,t:this.t,dev:this.DEV}).catch(()=>{});
+      primero=false},e=>console.warn("Filtros:",e&&e.code))}
+};
+window.Filtros=Filtros;
+{const l=Filtros.local();if(l&&l.j){Filtros.apl(l.j);Filtros.t=l.t||0}}
 queueMicrotask(render);
 
 /* ── Carga desde API SECOP II (datos.gov.co) ── */
@@ -2344,6 +2365,7 @@ addEventListener("keydown",e=>{if(e.key==="Escape"&&Det.d)Det.cerrar()});
 addEventListener("popstate",()=>{if(Det.d)Det.cerrar(true)});
 /* El corazón del detalle se actualiza con los favoritos */
 {const r1=render;window.render=render=function(){r1.apply(this,arguments);if(Det.d)Det.pintaPie()}}
+{const r2=render;window.render=render=function(){r2.apply(this,arguments);try{Filtros.guardar()}catch(e){}}}
 /* Escritorio: tocar fuera del chat lo minimiza al ícono */
 document.addEventListener("pointerdown",e=>{if(!window.Chat||!Chat.abierto||!matchMedia("(min-width:980px)").matches)return;
   if(e.target.closest("#chat,#chat-fab,#det,#det-bg,.aviso"))return;Chat.abrir(false)},true);
@@ -2756,6 +2778,7 @@ html.lock-chat,html.lock-chat body{overflow:hidden}
       try{Uso.start(fs,u,'radar')}catch(e){}
       try{if(window.Fav)Fav.start(fs,u,u.displayName)}catch(e){console.warn(e)}
       try{if(window.Chat)Chat.start(fs,u)}catch(e){console.warn(e)}
+      try{if(window.Filtros)Filtros.start(fs,u)}catch(e){console.warn(e)}
       try{if(window.Apariencia) Apariencia.connect(fs,u.uid,function(){return Apariencia.local()})}catch(e){}
     });
   });
