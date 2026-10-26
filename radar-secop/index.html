@@ -1049,6 +1049,12 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
   </section>
 </div>
 <div id="tip" role="tooltip"></div>
+<div class="det-bg" id="det-bg" hidden></div>
+<section class="det" id="det" role="dialog" aria-modal="true" aria-labelledby="det-t" hidden>
+  <header class="det-h"><span class="det-k" id="det-k"></span><button class="side-x" id="det-x" type="button" aria-label="Cerrar detalle">✕</button></header>
+  <div class="det-b" id="det-b"></div>
+  <footer class="det-f" id="det-f"></footer>
+</section>
 <button class="chat-fab" id="chat-fab" type="button" aria-label="Chat del equipo" aria-controls="chat" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.7A8 8 0 1 1 21 12z"/><path d="M8.5 10.5h7M8.5 14h4.5"/></svg><b id="chat-n" hidden></b></button>
 <section class="chat" id="chat" role="dialog" aria-label="Chat del equipo" hidden>
   <header class="chat-h"><div><b>Chat del equipo</b><span>Planificar Proyectos SAS</span></div><button class="side-x" id="chat-x" type="button" aria-label="Cerrar chat">✕</button></header>
@@ -1175,7 +1181,8 @@ function apiToRow(r){
     r.referencia_del_proceso||"",
     obj.slice(0,200), mod, val, pub, fase, unspsc, plazo, uid, rup,
     (r.fecha_de_recepcion_de||"").slice(0,10),
-    [+r.proveedores_que_manifestaron||0, +r.respuestas_al_procedimiento||0, +r.visualizaciones_del||0, +r.proveedores_invitados||0]];
+    [+r.proveedores_que_manifestaron||0, +r.respuestas_al_procedimiento||0, +r.visualizaciones_del||0, +r.proveedores_invitados||0],
+    r.id_del_proceso||""];
 }
 
 /* Modalidades en las que una empresa puede presentar oferta (se excluyen contratación directa y régimen especial
@@ -1188,7 +1195,7 @@ const MODS_API=[
   "Solicitud de información a los Proveedores","Enajenación de bienes con subasta","Enajenación de bienes con sobre cerrado"
 ];
 const DIAS_ATRAS=60;
-const CAMPOS="entidad,departamento_entidad,ciudad_entidad,referencia_del_proceso,descripci_n_del_procedimiento,modalidad_de_contratacion,precio_base,fecha_de_publicacion_del,fase,codigo_principal_de_categoria,duracion,unidad_de_duracion,urlproceso,fecha_de_recepcion_de,proveedores_que_manifestaron,respuestas_al_procedimiento,visualizaciones_del,proveedores_invitados";
+const CAMPOS="entidad,departamento_entidad,ciudad_entidad,referencia_del_proceso,descripci_n_del_procedimiento,modalidad_de_contratacion,precio_base,fecha_de_publicacion_del,fase,codigo_principal_de_categoria,duracion,unidad_de_duracion,urlproceso,fecha_de_recepcion_de,proveedores_que_manifestaron,respuestas_al_procedimiento,visualizaciones_del,proveedores_invitados,id_del_proceso";
 
 async function cargarDesdeAPI(){
   const base="https://www.datos.gov.co/resource/p6dx-8zbt.json";
@@ -1250,7 +1257,7 @@ function enriquecer(r){
   s+=d.fz?20:d.zona!=="Resto del país"?10:0;
   s+=LW[d.tipo]||10;s+=d.dias<=7?10:d.dias<=15?5:0;
   // Cierre (recepción de ofertas): días que faltan, sin hora (la hora exacta está en SECOP)
-  d.cierre=r[14]||"";d.comp=Array.isArray(r[15])?r[15]:[0,0,0,0];
+  d.pid=r[16]||"";d.cierre=r[14]||"";d.comp=Array.isArray(r[15])?r[15]:[0,0,0,0];
   d.dc=d.cierre?Math.round((new Date(d.cierre+"T12:00:00")-new Date(HOY.toISOString().slice(0,10)+"T12:00:00"))/864e5):null;
   d.dcs=d.dc==null?5000:d.dc<0?9000-d.dc:d.dc;
   d.cierreG=d.dc==null?"Sin fecha":d.dc<0?"Ya cerrado":d.dc===0?"Hoy":d.dc<=3?"1 a 3 días":d.dc<=7?"4 a 7 días":d.dc<=15?"8 a 15 días":"Más de 15 días";
@@ -1303,7 +1310,7 @@ const Fav={map:new Map(),uid:null,yo:null,fs:null,ok:false,err:null,_idx:null,_n
   quien(d){const f=this.doc(d);return f&&f.por?Object.values(f.por).sort((a,b)=>(a.t||0)-(b.t||0)):[]},
   mio(d){const f=this.doc(d);return!!(f&&f.por&&this.uid&&f.por[this.uid])},
   n(d){return this.quien(d).length},
-  fila(d){return[d.tipo,d.dep,d.ciu,d.ent,d.ref,d.obj,d.mod,d.val,d.pub,d.fase,d.un,d.plazo,d.url,d.rup,d.cierre||"",d.comp||[0,0,0,0]]},
+  fila(d){return[d.tipo,d.dep,d.ciu,d.ent,d.ref,d.obj,d.mod,d.val,d.pub,d.fase,d.un,d.plazo,d.url,d.rup,d.cierre||"",d.comp||[0,0,0,0],d.pid||""]},
   toggle(d){if(!this.ok||!this.fs)return aviso(this.err?"Los favoritos aún no están habilitados.":"Inicia sesión para usar favoritos.");
     const ref=this.fs.collection("radar_favoritos").doc(this.id(d)),FV=firebase.firestore.FieldValue;
     if(this.mio(d)){const otros=this.quien(d).length-1;
@@ -1475,13 +1482,13 @@ function render(){
   const masEl=document.getElementById("mas");if(masEl){masEl.hidden=mas<=0;masEl.textContent=`Ver ${Math.min(60,mas)} más · faltan ${mas}`}
   window._simRows=Sx;document.getElementById("tb").innerHTML=V.length?V.map((d,i)=>`<tr>
     <td class="${d.fz?"fz":""}"><div class="c1"><span class="chip p-${d.p}">${d.p}</span>${corazon(d,i)}</div><div style="margin-top:5px">${meter(d)}</div>${d.fz?`<div style="margin-top:4px"><span class="chip fz">★ Foco</span></div>`:""}</td>
-    <td class="obj">${tipoTag(d)}<b>${esc(d.ent)}</b>${esc(cap(d.obj))}<div style="margin-top:3px;font-size:11.5px;color:var(--muted);font-family:var(--mono)">${esc(d.ref)} · ${esc(d.etapa)}</div>${favPor(d)}</td>
+    <td class="obj det-go" data-det="${i}" title="Ver detalle">${tipoTag(d)}<b>${esc(d.ent)}</b>${esc(cap(d.obj))}<div style="margin-top:3px;font-size:11.5px;color:var(--muted);font-family:var(--mono)">${esc(d.ref)} · ${esc(d.etapa)}</div>${favPor(d)}</td>
     <td>${lugar(d)}<div class="sub2">${esc(d.modG)}</div></td><td>${rupChip(d)}</td>
     <td class="num">${cop(d.val)}<div class="qmini">${d.vmes?cop(d.vmes)+"/mes<br>":""}inv. ${cop(quick(d).inv)}<br>gana ${(quick(d).gan<0?"−":"")+cop(Math.abs(quick(d).gan))}</div></td><td>${cierreTag(d)}<div class="sub2">${d.cierre?fecha(d.cierre)+" · ":""}pub. ${fecha(d.pub)}</div></td>
     <td><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a><button class="simb" type="button" onclick="simContract(${i})">Simular</button></td></tr>`).join(""):`<tr><td colspan="7" class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</td></tr>`;
   document.getElementById("cards").innerHTML=V.length?V.map((d,i)=>`<article class="card${d.fz?" fz":""}">
     <div class="row"><span class="chip p-${d.p}">${d.p} ${d.score}</span>${rupChip(d)}${tipoTag(d)}${corazon(d,i)}</div>
-    <h3>${esc(cap(d.obj))}</h3><div class="meta">${esc(d.ent)} · ${lugar(d)} · ${esc(d.modG)}</div><div class="row">${cierreTag(d)}<span class="sub2">${d.cierre?"cierre "+fecha(d.cierre)+" · ":""}pub. ${fecha(d.pub)}</span></div>${favPor(d)}
+    <h3 class="det-go" data-det="${i}">${esc(cap(d.obj))}</h3><div class="meta det-go" data-det="${i}">${esc(d.ent)} · ${lugar(d)} · ${esc(d.modG)}</div><div class="row">${cierreTag(d)}<span class="sub2">${d.cierre?"cierre "+fecha(d.cierre)+" · ":""}pub. ${fecha(d.pub)}</span></div>${favPor(d)}
     ${quickHtml(d)}<div class="row ft"><span class="v">${cop(d.val)}</span><button class="simb inl" type="button" onclick="simContract(${i})">Simular</button><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a></div></article>`).join(""):`<div class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</div>`;
   document.querySelectorAll("th button").forEach(b=>b.textContent=b.textContent.replace(/ [↑↓]$/,"")+(sort.k===b.dataset.s?(sort.dir>0?" ↑":" ↓"):""));
 }
@@ -2064,7 +2071,7 @@ function renderComp(){
   const alerta=top.o.tiempo===0?`<p class="cp-alerta">⚠ Este proceso ya cerró: elige otro o quítalo de la comparación.</p>`:top.o.rup<=.15?`<p class="cp-alerta">⚠ Exige RUP: solo se puede ofertar cuando el RUP de la empresa quede en firme.</p>`:"";
   const ganador=`<article class="cp-win">
     <div class="cp-wh"><span class="cp-badge">Más conveniente para ofertar</span><span class="cp-idx"><b>${top.o.idx}</b>/100</span></div>
-    <h3>${esc(cap(top.d.obj))}</h3>
+    <h3 class="det-go" data-det-id="${top.id}">${esc(cap(top.d.obj))}</h3>
     <div class="meta">${esc(top.d.ent)} · ${esc(top.d.ciu&&top.d.ciu!==top.d.dep?top.d.ciu+", ":"")}${esc(top.d.dep)} · ${cop(top.d.val)} · ${cierreTag(top.d)}</div>
     <h4>Por qué</h4><ul class="cp-ok">${ventajas(top).map(z=>`<li><b>${z.cr.n}:</b> ${esc(frase(top,z.cr.k))}</li>`).join("")||"<li>Es el de mejor puntaje con los pesos actuales.</li>"}</ul>
     ${riesgos(top).length?`<h4>A tener en cuenta</h4><ul class="cp-ko">${riesgos(top).map(z=>`<li><b>${z.cr.n}:</b> ${esc(frase(top,z.cr.k))}</li>`).join("")}</ul>`:""}
@@ -2073,7 +2080,7 @@ function renderComp(){
   </article>`;
   const ranking=`<h3 class="cp-t">Ranking</h3><ol class="cp-rank">${S.map((x,i)=>`<li class="${i===0?"top":""}">
     <span class="cp-n">${i+1}</span>
-    <div class="cp-rb"><b>${esc(x.d.ent)}</b><span>${esc(cap(x.d.obj).slice(0,90))}${x.d.obj.length>90?"…":""}</span>
+    <div class="cp-rb det-go" data-det-id="${x.id}"><b>${esc(x.d.ent)}</b><span>${esc(cap(x.d.obj).slice(0,90))}${x.d.obj.length>90?"…":""}</span>
       <div class="cp-bar"><i style="width:${x.o.idx}%"></i></div>
       <span class="cp-tags">${ventajas(x).slice(0,2).map(z=>`<em class="ok">${z.cr.n}</em>`).join("")}${riesgos(x).slice(0,2).map(z=>`<em class="ko">${z.cr.n}</em>`).join("")}</span></div>
     <span class="cp-ix">${x.o.idx}</span></li>`).join("")}</ol>`;
@@ -2151,7 +2158,7 @@ const Chat={fs:null,uid:null,ms:[],ok:false,err:null,adj:null,abierto:false,KEY:
       if(ds!==dia){dia=ds;prev=null;html+=`<div class="chat-dia">${ds===hoy?"Hoy":ds===ayer?"Ayer":f.toLocaleDateString("es-CO",{weekday:"long",day:"numeric",month:"short"})}</div>`}
       const mio=m.uid===this.uid,seguido=prev&&prev.uid===m.uid&&m.t-prev.t<5*6e4;prev=m;
       const ini=String(m.n||"?").split(/\s+/).map(x=>x[0]).slice(0,2).join("").toUpperCase(),hue=[...String(m.uid||"")].reduce((a,c)=>a+c.charCodeAt(0),0)%360;
-      const r=m.ref?`<div class="chat-ref"><b>${esc(m.ref.ent)}</b><span>${esc(cap(m.ref.obj).slice(0,120))}</span><span class="chat-ref-m">${m.ref.val?cop(m.ref.val):""}${m.ref.cierre?" · cierre "+fecha(m.ref.cierre):""}</span><span class="chat-ref-b"><button type="button" data-chat-ver="${esc(m.ref.ref||m.ref.ent)}">Ver en Radar</button>${m.ref.url?`<a href="${esc(m.ref.url)}" target="_blank" rel="noopener">SECOP ↗</a>`:""}</span></div>`:"";
+      const r=m.ref?`<div class="chat-ref"><b>${esc(m.ref.ent)}</b><span>${esc(cap(m.ref.obj).slice(0,120))}</span><span class="chat-ref-m">${m.ref.val?cop(m.ref.val):""}${m.ref.cierre?" · cierre "+fecha(m.ref.cierre):""}</span><span class="chat-ref-b"><button type="button" data-det-id="${esc(m.ref.id||"")}">Detalle</button><button type="button" data-chat-ver="${esc(m.ref.ref||m.ref.ent)}">Ver en Radar</button>${m.ref.url?`<a href="${esc(m.ref.url)}" target="_blank" rel="noopener">SECOP ↗</a>`:""}</span></div>`:"";
       html+=`<div class="msg${mio?" mio":""}${seguido?" seg":""}">${mio||seguido?"":`<span class="av" style="--h:${hue}">${esc(ini)}</span>`}<div class="bub">${mio||seguido?"":`<b class="who">${esc(m.n||"")}</b>`}${m.txt?`<p>${esc(m.txt).replace(/\n/g,"<br>")}</p>`:""}${r}<span class="hr">${f.toLocaleTimeString("es-CO",{hour:"numeric",minute:"2-digit"})}${mio?` · <button type="button" class="del" data-chat-del="${m.id}">Eliminar</button>`:""}</span></div></div>`});
     l.innerHTML=html;if(abajo||this._prim!==true){l.scrollTop=l.scrollHeight;this._prim=true}
   }
@@ -2173,6 +2180,110 @@ function confirmarBorrado(id){const b=document.querySelector(`[data-chat-del="${
    const v=e.target.closest("[data-chat-ver]");if(v){Chat.abrir(false);clearAll();F.q=v.dataset.chatVer;document.getElementById("q").value=F.q;render();history.replaceState(null,"","#radar");showTab("radar")}});
  const g=document.getElementById("gate");if(g&&window.MutationObserver)new MutationObserver(()=>Chat.pinta()).observe(g,{attributes:true,attributeFilter:["hidden"]});
  setInterval(()=>{if(Chat.abierto)Chat.pinta()},60000);}
+</script>
+<script>
+/* ═════════ Detalle de un proceso: datos completos consultados a SECOP solo para ese proceso ═════════ */
+/* Si el texto viene en mayúsculas se pasa a tipo oración; si no, se respeta como lo escribió la entidad */
+const capS=t=>{t=String(t||"");const M=(t.match(/[A-ZÁÉÍÓÚÑ]/g)||[]).length,m=(t.match(/[a-záéíóúñ]/g)||[]).length;return M>m?cap(t):t};
+const Det={d:null,cache:new Map(),hist:false,_idx:null,_n:-1,
+  porId(id){if(this._n!==D.length){this._idx=new Map(D.map(d=>[Fav.id(d),d]));this._n=D.length}
+    return this._idx.get(id)||(Fav.ok?Fav.rows("todos").find(d=>Fav.id(d)===id):null)},
+  async datos(d){const k=Fav.id(d);if(this.cache.has(k))return this.cache.get(k);
+    const lit=v=>"'"+String(v).replace(/'/g,"''")+"'";
+    const w=d.pid?`id_del_proceso=${lit(d.pid)}`:`referencia_del_proceso=${lit(d.ref)} AND entidad=${lit(d.ent)}`;
+    const r=await fetch("https://www.datos.gov.co/resource/p6dx-8zbt.json?"+new URLSearchParams({"$where":w,"$limit":"1","$order":"fecha_de_publicacion_del DESC"}),{signal:AbortSignal.timeout(15000)});
+    if(!r.ok)throw new Error("HTTP "+r.status);const x=(await r.json())[0]||null;this.cache.set(k,x);return x},
+  abrir(d){if(!d)return;this.d=d;const el=document.getElementById("det");el.hidden=false;document.getElementById("det-bg").hidden=false;
+    document.documentElement.classList.add("lock-det");if(!this.hist){history.pushState({det:1},"");this.hist=true}
+    this.pinta(null,true);document.getElementById("det-b").scrollTop=0;
+    this.datos(d).then(x=>{if(this.d===d)this.pinta(x,false)}).catch(e=>{if(this.d===d)this.pinta(null,false,e.message)})},
+  cerrar(desdeHist){if(!this.d)return;this.d=null;document.getElementById("det").hidden=true;document.getElementById("det-bg").hidden=true;
+    document.documentElement.classList.remove("lock-det");if(this.hist){this.hist=false;if(!desdeHist)history.back()}},
+  partes(d){const p=[];
+    p.push(["RUP",d.rup==="No"?30:d.rup==="Sí"?0:15,d.rup==="No"?"no exige":d.rup==="Sí"?"exige":"por verificar"]);
+    p.push(["Valor",d.val<1.5e7?5:d.val<5e7?18:d.val<3e8?25:d.val<=1e9?12:0,d.rng]);
+    p.push(["Región",d.fz?20:d.zona!=="Resto del país"?10:0,d.zona]);
+    p.push(["Línea de la empresa",LW[d.tipo]||10,d.tipo]);
+    p.push(["Publicado",d.dias<=7?10:d.dias<=15?5:0,"hace "+d.dias+" días"]);
+    if(d.dc!=null&&d.dc<=1)p.push(["Cierre",d.dc<0?"tope 30":-10,cierreTxt(d)]);return p},
+  pinta(x,cargando,err){const d=this.d;if(!d)return;const q=quick(d),c=d.comp||[0,0,0,0];
+    const tit=x&&x.nombre_del_procedimiento?x.nombre_del_procedimiento:d.obj;
+    const desc=x&&x.descripci_n_del_procedimiento?x.descripci_n_del_procedimiento:d.obj;
+    const v=(k,f)=>x&&x[k]&&x[k]!=="No Definido"&&x[k]!=="No definido"?(f?f(x[k]):esc(x[k])):"—";
+    const fila=(l,val)=>`<div class="det-r"><span>${l}</span><b>${val}</b></div>`;
+    document.getElementById("det-k").innerHTML=`<span class="chip p-${d.p}">${d.p} ${d.score}</span>${cierreTag(d)}${d.nv?'<span class="chip">Ya no vigente</span>':""}`;
+    const quien=Fav.ok?Fav.quien(d):[];
+    document.getElementById("det-b").innerHTML=`
+      <div class="det-tipo"><span class="tipo"><span class="sw" style="--c:${COL[d.tipo]||"var(--muted)"};display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--c);margin-right:5px"></span>${esc(d.tipo)} · ${esc(d.sec||"")}</span></div>
+      <h2 id="det-t">${esc(capS(tit))}</h2>
+      <p class="det-ent">${esc(d.ent)}${x&&x.nombre_de_la_unidad_de&&x.nombre_de_la_unidad_de!=="No Definido"?` · ${esc(x.nombre_de_la_unidad_de)}`:""}</p>
+      <div class="det-sec"><div class="det-st"><h3>Descripción</h3><button type="button" class="det-copy" id="det-copy">Copiar</button></div>
+        <p class="det-desc">${cargando?'<span class="det-load">Cargando la descripción completa…</span><br>':""}${esc(capS(desc)).replace(/\n/g,"<br>")}</p>
+        ${err?`<p class="det-err">No se pudo consultar SECOP (${esc(err)}). Se muestra el texto resumido.</p>`:""}</div>
+      <div class="det-grid">
+        <div class="det-card"><h3>Valor y plazos</h3>
+          ${fila("Valor",d.val?cop(d.val):"Sin valor")}
+          ${fila("Plazo",esc(d.plazo&&!/^0 /.test(d.plazo)?d.plazo:"—"))}
+          ${fila("Valor por mes",d.vmes?cop(d.vmes):"—")}
+          ${fila("Publicado",fecha(d.pub)+" · hace "+d.dias+" d")}
+          ${fila("Cierre de ofertas",d.cierre?fecha(d.cierre)+" · "+esc(cierreTxt(d)):"—")}
+          ${x&&x.fecha_de_apertura_de_respuesta?fila("Apertura de ofertas",fecha(x.fecha_de_apertura_de_respuesta.slice(0,10))):""}</div>
+        <div class="det-card"><h3>Proceso</h3>
+          ${fila("Referencia",esc(d.ref||"—"))}
+          ${fila("Modalidad",esc(d.mod))}
+          ${x&&x.justificaci_n_modalidad_de&&x.justificaci_n_modalidad_de!=="No Definido"?fila("Justificación",esc(x.justificaci_n_modalidad_de)):""}
+          ${fila("Fase",esc(x&&x.fase||d.fase||"—"))}
+          ${fila("Estado",v("estado_del_procedimiento"))}
+          ${fila("Tipo de contrato",v("tipo_de_contrato"))}
+          ${fila("Código UNSPSC",esc(d.un||"—"))}</div>
+        <div class="det-card"><h3>Entidad y lugar</h3>
+          ${fila("Entidad",esc(d.ent))}
+          ${fila("NIT",v("nit_entidad"))}
+          ${fila("Orden",v("ordenentidad"))}
+          ${fila("Lugar",esc(d.ciu&&d.ciu!==d.dep?d.ciu+", "+d.dep:d.dep))}
+          ${fila("Ciudad de la unidad",v("ciudad_de_la_unidad_de"))}</div>
+        <div class="det-card"><h3>Competencia</h3>
+          ${fila("Proveedores invitados",String(x?+x.proveedores_invitados||0:c[3]))}
+          ${fila("Interesados",String(x?+x.proveedores_que_manifestaron||0:c[0]))}
+          ${fila("Respuestas",String(x?+x.respuestas_al_procedimiento||0:c[1]))}
+          ${fila("Visualizaciones",String(x?+x.visualizaciones_del||0:c[2]))}</div>
+        <div class="det-card"><h3>Caja estimada</h3>
+          ${fila("Inversión máxima",cop(q.inv))}
+          ${fila("Ganancia neta",(q.gan<0?"−":"")+cop(Math.abs(q.gan)))}
+          ${fila("Margen",q.margen.toFixed(0)+" %")}
+          ${fila("Recuperas",q.be?q.be.toLocaleDateString("es-CO",{month:"short",year:"numeric"}):"—")}
+          <p class="det-nota">Valores típicos por tipología; ajústalos en Simulación.</p></div>
+        <div class="det-card"><h3>Conveniencia ${d.score}/100</h3>
+          ${this.partes(d).map(([l,pt,t])=>fila(esc(l)+` <small>${esc(t)}</small>`,typeof pt==="number"?(pt>0?"+":"")+pt:pt)).join("")}</div>
+      </div>
+      ${quien.length?`<p class="favby">♥ Favorito de ${esc(quien.map(z=>z.n).join(", "))}</p>`:""}`;
+    document.getElementById("det-copy").onclick=()=>{const t=capS(tit)+"\n\n"+capS(desc)+"\n\n"+d.ent+(d.url?"\n"+d.url:"");
+      (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>aviso("Descripción copiada")).catch(()=>aviso("No se pudo copiar"))};
+    this.pintaPie()},
+  pintaPie(){const d=this.d;if(!d)return;const on=Fav.ok&&Fav.mio(d);
+    document.getElementById("det-f").innerHTML=`${Fav.err?"":`<button class="btn det-fav${on?" on":""}" type="button" id="det-fav" aria-pressed="${on}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-9.3-9.2C1.5 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.7 3.5 4.5 6.8-1.8 4.8-9.3 9.2-9.3 9.2z"/></svg>${on?"Favorito":"Favorito"}</button>`}
+      <button class="btn" type="button" id="det-sim">Simular caja</button>
+      ${window.Chat&&Chat.ok?'<button class="btn" type="button" id="det-chat">Compartir en el chat</button>':""}
+      ${d.url?`<a class="btn primary" href="${d.url}" target="_blank" rel="noopener">Abrir en SECOP ↗</a>`:""}`;
+    const f=document.getElementById("det-fav");if(f)f.onclick=()=>Fav.toggle(d);
+    document.getElementById("det-sim").onclick=()=>{this.cerrar();window._simRows=[d];simContract(0)};
+    const ch=document.getElementById("det-chat");if(ch)ch.onclick=()=>{this.cerrar();Chat.adj=d;Chat.abrir(true);Chat.pintaAdj();setTimeout(()=>document.getElementById("chat-t").focus(),60)}}
+};
+window.Det=Det;
+document.addEventListener("click",e=>{
+  if(e.target.closest("button,a,input,select,label,textarea"))return;
+  const t=e.target.closest("[data-det]");if(t){const d=(window._simRows||[])[+t.dataset.det];if(d)Det.abrir(d);return}},true);
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-det-id]");if(!t)return;
+  if(t.tagName!=="BUTTON"&&e.target.closest("button,a"))return;const d=Det.porId(t.dataset.detId);if(d){e.preventDefault();Det.abrir(d)}else aviso("Ese proceso ya no está en el radar")});
+document.getElementById("det-x").onclick=()=>Det.cerrar();
+document.getElementById("det-bg").onclick=()=>Det.cerrar();
+addEventListener("keydown",e=>{if(e.key==="Escape"&&Det.d)Det.cerrar()});
+addEventListener("popstate",()=>{if(Det.d)Det.cerrar(true)});
+/* El corazón del detalle se actualiza con los favoritos */
+{const r1=render;window.render=render=function(){r1.apply(this,arguments);if(Det.d)Det.pintaPie()}}
+/* Escritorio: tocar fuera del chat lo minimiza al ícono */
+document.addEventListener("pointerdown",e=>{if(!window.Chat||!Chat.abierto||!matchMedia("(min-width:980px)").matches)return;
+  if(e.target.closest("#chat,#chat-fab,#det,#det-bg,.aviso"))return;Chat.abrir(false)},true);
 </script>
 <script>
 /* ---------- Instalar como app (mismo aviso que PowerFit, Mind Focus y Lumen) ---------- */
@@ -2335,6 +2446,48 @@ html.lock,html.lock body{overflow:hidden}
 .cp-chk{display:flex;align-items:center;gap:8px;font-size:13.5px}
 .cp-chk input{width:18px;height:18px;accent-color:var(--accent)}
 #cp-reset{justify-self:start;min-height:38px}
+/* Detalle del proceso */
+.det-go{cursor:pointer}
+.card h3.det-go:hover,.tbl td.det-go:hover{color:var(--accent-fg)}
+.det-bg{position:fixed;inset:0;z-index:66;background:rgba(0,0,0,.5)}
+.det-bg[hidden]{display:none}
+.det{position:fixed;inset:0;z-index:67;background:var(--bg);display:flex;flex-direction:column}
+.det[hidden]{display:none}
+html.lock-det,html.lock-det body{overflow:hidden}
+.det-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;border-bottom:1px solid var(--line)}
+.det-k{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.det-b{flex:1;min-height:0;overflow:auto;padding:14px 16px 20px;display:grid;gap:12px;align-content:start;overscroll-behavior:contain}
+.det-b h2{margin:0;font-family:var(--body);font-size:20px;font-weight:700;line-height:1.3;text-transform:none;letter-spacing:0}
+.det-ent{margin:-4px 0 0;color:var(--muted);font-size:14px}
+.det-sec{background:var(--surface);border-radius:16px;padding:12px 14px}
+.det-st{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.det-b h3{margin:0 0 6px;font-family:var(--display);font-size:15px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.det-copy{border:0;background:var(--surface-2);color:var(--fg);border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:600}
+.det-desc{margin:0;font-size:16px;line-height:1.55;white-space:normal;overflow-wrap:anywhere}
+.det-load{color:var(--muted);font-size:13px}
+.det-err{margin:6px 0 0;color:#FF7A7E;font-size:13px}
+.det-grid{display:grid;gap:10px}
+.det-card{background:var(--surface);border-radius:16px;padding:12px 14px;display:grid;gap:2px;align-content:start}
+.det-r{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid var(--line);font-size:14px}
+.det-r:last-of-type{border-bottom:0}
+.det-r span{color:var(--muted)}.det-r span small{display:block;font-size:11.5px}
+.det-r b{text-align:right;font-weight:600;overflow-wrap:anywhere}
+.det-nota{margin:6px 0 0;font-size:12px;color:var(--muted)}
+.det-f{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--bg)}
+.det-f .btn{min-height:44px;justify-content:center;text-decoration:none;color:var(--fg)}
+.det-f .btn.primary{color:var(--accent-ink)}
+.det-fav{display:inline-flex;align-items:center;gap:6px}
+.det-fav svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2}
+.det-fav.on{color:#FF4F6D!important;border-color:#FF4F6D}.det-fav.on svg{fill:currentColor}
+.det-f .btn.primary{grid-column:1/-1}
+@media (min-width:700px){.det-f .btn.primary{grid-column:auto}.det-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.det-f{grid-template-columns:repeat(4,auto);justify-content:end}}
+@media (min-width:980px){
+  .det{inset:0 0 0 auto;width:min(760px,92vw);border-left:1px solid var(--line);box-shadow:-20px 0 50px rgba(0,0,0,.4)}
+  html.lock-det,html.lock-det body{overflow:auto}
+  .det-b{padding:18px 22px 24px}
+  .det-b h2{font-size:22px}
+}
+.det .side-x,.chat .side-x{display:inline-flex!important;align-items:center;justify-content:center;flex:none}
 /* Chat del equipo */
 .chat-fab{position:fixed;right:16px;bottom:calc(56px + 16px + env(safe-area-inset-bottom,0px));z-index:38;width:56px;height:56px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.35)}
 .chat-fab[hidden]{display:none}
