@@ -621,7 +621,8 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
     <button class="tab" role="tab" id="t-radar" aria-controls="v-radar" data-v="radar">Radar</button>
     <button class="tab" role="tab" id="t-comp" aria-controls="v-comp" data-v="comp">Comparar</button>
     <button class="tab" role="tab" id="t-ruta" aria-controls="v-ruta" data-v="ruta">Ruta</button>
-    <button class="tab" role="tab" id="t-sim" aria-controls="v-sim" data-v="sim">Simulación</button>
+    <button class="tab" role="tab" id="t-sim" aria-controls="v-sim" data-v="sim">Simulador caja</button>
+    <button class="tab" role="tab" id="t-rad" aria-controls="v-rad" data-v="rad">Simulador radicación</button>
     <button class="tab" role="tab" id="t-cuenta" aria-controls="v-cuenta" data-v="cuenta">Cuenta</button>
   </nav>
 
@@ -1022,6 +1023,19 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
   #v-cuenta .cta-salir{margin-top:4px;padding:12px;border:1px solid var(--line);border-radius:12px;background:transparent;color:var(--focus);font:inherit;font-weight:600;cursor:pointer}
   #v-cuenta .cta-salir:hover{border-color:var(--focus)}
   </style>
+  <section class="view" id="v-rad" role="tabpanel" aria-labelledby="t-rad" hidden>
+    <div class="cp-head"><h2>Simulador radicación</h2><span class="rd-pill" id="rd-pill"></span></div>
+    <label class="rd-pick">Proceso a radicar<select id="rd-sel"></select></label>
+    <div class="rd-grid">
+      <div class="rd-main">
+        <ol class="rd-steps" id="rd-steps"></ol>
+        <div class="rd-body" id="rd-body"></div>
+        <div class="rd-nav"><button class="btn" type="button" id="rd-prev">← Anterior</button><button class="btn primary" type="button" id="rd-next">Siguiente →</button></div>
+      </div>
+      <aside class="rd-eval" id="rd-eval" aria-live="polite"></aside>
+    </div>
+  </section>
+
   <section class="view" id="v-cuenta" role="tabpanel" aria-labelledby="t-cuenta" hidden>
     <div class="cta-wrap">
       <div class="cta-card">
@@ -1496,11 +1510,11 @@ function render(){
     <td class="obj det-go" data-det="${i}" title="Ver detalle">${tipoTag(d)}<b>${esc(d.ent)}</b>${esc(cap(d.obj))}<div style="margin-top:3px;font-size:11.5px;color:var(--muted);font-family:var(--mono)">${esc(d.ref)} · ${esc(d.etapa)}</div>${favPor(d)}</td>
     <td><b class="lugar">${lugar(d)}</b><div><span class="modal">${esc(d.modG)}</span></div></td><td>${rupChip(d)}</td>
     <td class="num">${cop(d.val)}<div class="qmini">${d.vmes?cop(d.vmes)+"/mes<br>":""}inv. ${cop(quick(d).inv)}<br>gana ${(quick(d).gan<0?"−":"")+cop(Math.abs(quick(d).gan))}</div></td><td>${cierreTag(d)}<div class="sub2">${d.cierre?fecha(d.cierre)+" · ":""}pub. ${fecha(d.pub)}</div></td>
-    <td><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a><button class="simb" type="button" onclick="simContract(${i})">Simular</button></td></tr>`).join(""):`<tr><td colspan="7" class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</td></tr>`;
+    <td><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a><button class="simb" type="button" onclick="simContract(${i})" title="Simular caja">Sim. caja</button></td></tr>`).join(""):`<tr><td colspan="7" class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</td></tr>`;
   document.getElementById("cards").innerHTML=V.length?V.map((d,i)=>`<article class="card${d.fz?" fz":""}">
     <div class="row"><span class="chip p-${d.p}">${d.p} ${d.score}</span>${rupChip(d)}${tipoTag(d)}${corazon(d,i)}</div>
     <h3 class="det-go" data-det="${i}">${esc(cap(d.obj))}</h3><div class="meta det-go" data-det="${i}">${esc(d.ent)}</div><div class="row lm"><span class="lugar-c">${lugar(d)}</span><span class="modal">${esc(d.modG)}</span></div><div class="row">${cierreTag(d)}<span class="sub2">${d.cierre?"cierre "+fecha(d.cierre)+" · ":""}pub. ${fecha(d.pub)}</span></div>${favPor(d)}
-    ${quickHtml(d)}<div class="row ft"><span class="v">${cop(d.val)}</span><button class="simb inl" type="button" onclick="simContract(${i})">Simular</button><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a></div></article>`).join(""):`<div class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</div>`;
+    ${quickHtml(d)}<div class="row ft"><span class="v">${cop(d.val)}</span><button class="simb inl" type="button" onclick="simContract(${i})" title="Simular caja">Sim. caja</button><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a></div></article>`).join(""):`<div class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</div>`;
   document.querySelectorAll("th button").forEach(b=>b.textContent=b.textContent.replace(/ [↑↓]$/,"")+(sort.k===b.dataset.s?(sort.dir>0?" ↑":" ↓"):""));
 }
 document.querySelectorAll("th button").forEach(b=>b.onclick=()=>{const k=b.dataset.s;sort=sort.k===k?{k,dir:-sort.dir}:{k,dir:["val","vmes","pub","score"].includes(k)?-1:1};render()});
@@ -1625,7 +1639,7 @@ function showTab(v,anchor){
 }
 /* Delegación: funciona aunque la barra inferior se declare en el HTML después de este script */
 document.addEventListener("click",e=>{const b=e.target.closest(".tab,.bn-btn");if(!b)return;history.replaceState(null,"","#"+b.dataset.v);showTab(b.dataset.v)});
-function fromHash(){const h=location.hash.slice(1);if(["ruta","radar","comp","sim","cuenta"].includes(h))return showTab(h);
+function fromHash(){const h=location.hash.slice(1);if(["ruta","radar","comp","sim","rad","cuenta"].includes(h))return showTab(h);
   const el=h&&document.getElementById(h);if(el&&el.closest("#v-ruta"))showTab("ruta",h);else showTab("radar")}
 addEventListener("hashchange",fromHash);fromHash();
 document.querySelectorAll("#v-ruta .golink").forEach(b=>b.onclick=()=>{
@@ -1873,9 +1887,13 @@ function simContract(i){const d=typeof i==="object"?i:(window._radarRows||[])[i]
     <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
     Ruta
   </button>
-  <button class="bn-btn" role="tab" data-v="sim" aria-selected="false">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-    Simulación
+  <button class="bn-btn" role="tab" data-v="sim" aria-selected="false" aria-label="Simulador caja">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 10v4M18 10v4"/></svg>
+    Caja
+  </button>
+  <button class="bn-btn" role="tab" data-v="rad" aria-selected="false" aria-label="Simulador radicación">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14 3 14 8 19 8"/><polyline points="9 14.5 11.3 16.8 15.5 12.3"/></svg>
+    Radicación
   </button>
   <button class="bn-btn" role="tab" data-v="cuenta" aria-selected="false">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -1884,6 +1902,311 @@ function simContract(i){const d=typeof i==="object"?i:(window._radarRows||[])[i]
 </nav>
 
 
+<style>
+/* ═════════ Simulador radicación ═════════ */
+#v-rad{display:grid;gap:10px}
+#v-rad[hidden]{display:none}
+.rd-pick{min-width:0;display:grid;gap:3px;font-size:12px;color:var(--muted);font-weight:600}
+.rd-pick select{width:100%;min-width:0;max-width:100%;min-height:42px;padding:6px 10px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit;font-size:14px;font-weight:500}
+.rd-pill{cursor:pointer;border-radius:999px;padding:5px 12px;font-weight:700;font-size:12.5px;background:var(--surface);color:var(--muted)}
+.rd-pill.v-ok{background:var(--accent);color:var(--accent-ink)}.rd-pill.v-sub{background:#FFB547;color:#1a1300}.rd-pill.v-rech{background:#FF5A5F;color:#fff}
+.rd-grid{display:grid;gap:12px;min-width:0}
+.rd-main{display:grid;gap:10px;align-content:start;min-width:0}
+.rd-steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.rd-steps button{width:100%;border:0;background:var(--surface);color:var(--muted);border-radius:12px;padding:7px 2px;display:grid;justify-items:center;gap:2px;font-size:11.5px;font-weight:600;line-height:1.15}
+.rd-steps button i{font-style:normal;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--surface-2);color:var(--fg)}
+.rd-steps button.hecho i{background:var(--accent-2);color:var(--accent-fg)}
+.rd-steps button[aria-current="step"]{color:var(--fg);outline:2px solid var(--accent)}
+.rd-steps button[aria-current="step"] i{background:var(--accent);color:var(--accent-ink)}
+.rd-body{background:var(--surface);border-radius:18px;padding:14px;display:grid;gap:10px;min-width:0;overflow-wrap:anywhere}
+.rd-body h3{margin:0;font-family:var(--display);font-size:18px;text-transform:uppercase;letter-spacing:.5px}
+.rd-body p{margin:0}
+.rd-sec{font-size:13px;color:var(--muted)}
+.rd-kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(170px,44%),1fr));gap:6px 12px;font-size:13.5px}
+.rd-kv div{display:grid;gap:1px}.rd-kv span{font-size:11.5px;color:var(--muted)}
+.rd-kv .ac{color:var(--accent-fg);font-weight:700}
+.rd-obj{font-size:13.5px;line-height:1.4;color:var(--fg)}
+.rd-ck{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.rd-ck label{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:8px 10px;border-radius:12px;background:var(--surface-2);cursor:pointer}
+.rd-ck input{width:20px;height:20px;flex:none;accent-color:var(--accent);margin:0}
+.rd-ck small{display:block;color:var(--muted);font-size:12px}
+.rd-f{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(160px,100%),1fr));gap:8px}
+.rd-f label{display:grid;gap:3px;font-size:12px;color:var(--muted)}
+.rd-f input,.rd-f select{min-height:40px;padding:6px 10px;font-size:14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);width:100%;box-sizing:border-box}
+.rd-tot{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;font-size:13.5px}
+.rd-tot b{font-family:var(--display);font-size:26px;color:var(--accent-fg)}
+.rd-docs{display:grid;gap:12px}
+.rd-cat{display:grid;gap:6px}
+.rd-cat>h4{margin:0;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+.rd-doc{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:start;background:var(--surface-2);border-radius:12px;padding:9px 10px}
+.rd-doc>input[type=checkbox]{width:20px;height:20px;margin:1px 0 0;accent-color:var(--accent)}
+.rd-doc .t{font-size:13.5px;font-weight:600;line-height:1.3}
+.rd-doc .t em{font-style:normal;font-weight:700;font-size:10.5px;border-radius:999px;padding:1px 7px;margin-left:6px;vertical-align:1px;background:var(--surface);color:var(--muted);white-space:nowrap}
+.rd-doc .t em.req{color:var(--accent-fg)}.rd-doc .t em.ns{color:#FF7A7E}
+.rd-doc .x{grid-column:2;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:12px;color:var(--muted)}
+.rd-doc .x label{display:inline-flex;gap:6px;align-items:center}
+.rd-doc .x input[type=date]{min-height:32px;padding:2px 8px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font-size:12.5px}
+.rd-file{position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-weight:600;color:var(--fg);cursor:pointer}
+.rd-file input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.rd-fn{color:var(--fg);font-weight:600;word-break:break-all}
+.rd-warn{color:#FFB547;font-weight:600}
+.rd-nav{display:flex;justify-content:space-between;gap:8px}
+.rd-nav .btn{min-height:42px}
+.rd-nav .btn:disabled{opacity:.4}
+.rd-go{min-height:48px;justify-content:center;font-size:15px}
+.rd-go:disabled{opacity:.45}
+.rd-comp{border:2px dashed var(--accent);border-radius:16px;padding:14px;display:grid;gap:6px;font-size:13.5px}
+.rd-comp .n{font-family:var(--mono,monospace);font-size:15px;color:var(--accent-fg);font-weight:700}
+.rd-comp.no{border-color:#FF5A5F}.rd-comp.no .n{color:#FF7A7E}
+.rd-acc{display:flex;flex-wrap:wrap;gap:8px}
+/* Evaluador */
+.rd-eval{background:var(--surface);border-radius:18px;padding:14px;display:grid;gap:10px;align-content:start;min-width:0;overflow-wrap:anywhere}
+.rd-ev-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.rd-ev-h h3{margin:0;font-family:var(--display);font-size:18px;text-transform:uppercase;letter-spacing:.5px}
+.rd-sc{font-family:var(--display);color:var(--muted);font-size:14px;text-align:right}.rd-sc b{display:block;font-size:38px;line-height:1;color:var(--accent-fg)}
+.rd-ver{border-radius:14px;padding:10px 12px;font-weight:700;font-size:15px;display:grid;gap:2px}
+.rd-ver small{font-weight:500;font-size:12.5px;opacity:.9}
+.rd-ver.v-ok{background:var(--accent);color:var(--accent-ink)}.rd-ver.v-sub{background:#FFB547;color:#1a1300}.rd-ver.v-rech{background:#FF5A5F;color:#fff}
+.rd-bar{height:6px;border-radius:9px;background:var(--surface-2);overflow:hidden}.rd-bar i{display:block;height:100%;background:var(--accent)}
+.rd-ev{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.rd-ev li{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;font-size:13px;line-height:1.35}
+.rd-ev li>b{grid-row:span 2;font-size:10.5px;border-radius:999px;padding:2px 7px;align-self:start;white-space:nowrap;margin-top:1px}
+.rd-ev li span{color:var(--muted);font-size:12px}
+.rd-ev .e-rech>b{background:#FF5A5F;color:#fff}.rd-ev .e-sub>b{background:#FFB547;color:#1a1300}.rd-ev .e-av>b{background:var(--surface-2);color:#FFB547}.rd-ev .e-ok>b{background:var(--accent-2);color:var(--accent-fg)}.rd-ev .e-pts>b{background:var(--surface-2);color:var(--muted)}
+.rd-ev-g{margin:4px 0 0;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+.rd-nota{font-size:11.5px;color:var(--muted);margin:0}
+@media (min-width:980px){
+  .rd-grid{grid-template-columns:minmax(0,1fr) minmax(300px,380px);align-items:start}
+  .rd-eval{position:sticky;top:calc(var(--tabs-h,56px) + 10px);max-height:calc(100vh - var(--tabs-h,56px) - 24px);overflow:auto}
+  .rd-steps button{grid-template-columns:auto auto;justify-content:center;align-items:center;gap:6px;font-size:13px;padding:8px 4px}
+}
+</style>
+<script>
+/* ═════════ Simulador radicación: emula la presentación de la oferta en SECOP II y la evalúa como lo haría la entidad.
+   Los archivos NO se suben: solo se leen su nombre, tipo y tamaño en este dispositivo. El avance se guarda en la cuenta
+   (users/{uid}/radar/radicacion) para seguir en cualquier dispositivo. ═════════ */
+const RAD_PASOS=["Proceso","Registro","Precio","Documentos","Presentar"];
+const RAD_REG=[
+  {k:"usuario",t:"Usuario de proveedor activo en SECOP II",h:"Sin usuario la plataforma no deja crear la oferta",def:true},
+  {k:"empresa",t:"Formulario de la empresa completo en SECOP II",h:"Cifras 2025 y documentos de la empresa cargados",def:false},
+  {k:"rl",t:"Representante legal vigente en el certificado de Cámara",h:"Quien firma la oferta debe aparecer con facultades",def:false},
+  {k:"matricula",t:"Matrícula mercantil renovada 2026",def:false},
+  {k:"rut",t:"RUT actualizado con CIIU 7112, 4330 y 4322",def:false},
+  {k:"rup",t:"RUP inscrito y en firme antes del cierre",h:"Queda en firme ~10 días hábiles después de publicado",def:false},
+  {k:"factura",t:"Facturación electrónica DIAN habilitada",h:"No impide radicar, pero sin ella no se puede cobrar",def:false}
+];
+function radTipo(d){const m=d.mod||"";return{mc:/M[ií]nima/.test(m),conc:/Concurso/.test(m),lic:/Licitaci/.test(m),sa:/Selecci|subasta/i.test(m),esp:/con ofertas|especial/i.test(m),
+  consult:/Concurso/.test(m)||/Diseño|Estudios|Interventor|BIM/.test(d.tipo||"")}}
+/* Documentos según la modalidad. a: "emp" = de la empresa (sirven para todos los procesos) · "proc" = propios de esta oferta.
+   r: req (obligatorio) · opc (según pliego) · pts (da puntaje). ns: no subsanable (Ley 1882 de 2018). vig: días de vigencia. */
+function radDocs(d){const T=radTipo(d),full=T.lic||T.sa||T.conc,rup=d.rup==="Sí"||(full&&!T.esp);
+  const L=[
+    {k:"carta",c:"Jurídicos",t:"Carta de presentación firmada por el representante legal",a:"proc",r:"req"},
+    {k:"camara",c:"Jurídicos",t:"Certificado de existencia y representación legal",a:"emp",r:"req",vig:30},
+    {k:"rutd",c:"Jurídicos",t:"RUT actualizado",a:"emp",r:"req"},
+    {k:"cedula",c:"Jurídicos",t:"Cédula del representante legal",a:"emp",r:"req"},
+    {k:"aportes",c:"Jurídicos",t:"Certificación de aportes a seguridad social y parafiscales (art. 50 Ley 789)",a:"emp",r:"req",vig:30},
+    {k:"antec",c:"Jurídicos",t:"Antecedentes fiscales, disciplinarios, judiciales y de medidas correctivas",a:"emp",r:"req",vig:30},
+    {k:"inhab",c:"Jurídicos",t:"Declaración de no estar incurso en inhabilidades",a:"proc",r:"req"},
+    {k:"anticorr",c:"Jurídicos",t:"Compromiso anticorrupción",a:"proc",r:full?"req":"opc"},
+    {k:"garantia",c:"Jurídicos",t:"Garantía de seriedad de la oferta (póliza)",a:"proc",r:full?"req":"opc",ns:true},
+    {k:"rupd",c:"Financieros y experiencia",t:"Certificado RUP en firme",a:"emp",r:rup?"req":"opc",vig:30},
+    {k:"eeff",c:"Financieros y experiencia",t:"Estados financieros 2025 e indicadores",a:"emp",r:full?"req":"opc"},
+    {k:"exp",c:"Financieros y experiencia",t:"Certificados de experiencia (contratos y actas de liquidación)",a:"emp",r:"req"},
+    {k:"personal",c:"Técnicos",t:"Hojas de vida, títulos y matrícula profesional del equipo",a:"proc",r:T.consult?"req":"opc"},
+    {k:"tecnica",c:"Técnicos",t:"Propuesta técnica / cumplimiento de especificaciones",a:"proc",r:"req",ns:true},
+    {k:"economica",c:"Económicos",t:"Oferta económica (formulario de precios)",a:"proc",r:"req",ns:true}];
+  if(!T.mc)L.push(
+    {k:"nacional",c:"Puntaje",t:"Apoyo a la industria nacional (Ley 816 de 2003)",a:"proc",r:"pts"},
+    {k:"mipyme",c:"Puntaje",t:"Certificado Mipyme o emprendimiento de mujeres",a:"emp",r:"pts"},
+    {k:"discap",c:"Puntaje",t:"Trabajadores con discapacidad (Decreto 392 de 2018)",a:"emp",r:"pts"});
+  return L}
+const Rad={st:{sel:null,reg:null,emp:{},p:{}},d:null,paso:1,ref:null,t:0,ult:"",DEV:(window.Filtros&&Filtros.DEV)||"x",_tm:null,
+  KEY:"radar:radic",
+  /* ── Estado ── */
+  reg(){if(!this.st.reg)this.st.reg=Object.fromEntries(RAD_REG.map(x=>[x.k,x.def]));return this.st.reg},
+  pe(){const id=this.d?Fav.id(this.d):"_";let o=this.st.p[id];if(!o)o=this.st.p[id]={base:null,iva:19,hora:"",docs:{},decl:false,env:null,paso:1};o.u=Date.now();return o},
+  doc(x){const box=x.a==="emp"?this.st.emp:this.pe().docs;return box[x.k]||(box[x.k]={})},
+  ser(){const ks=Object.entries(this.st.p).sort((a,b)=>(b[1].u||0)-(a[1].u||0)).slice(0,40);return JSON.stringify({...this.st,p:Object.fromEntries(ks)})},
+  apl(j){try{const o=JSON.parse(j);if(o&&typeof o==="object")this.st={sel:o.sel||null,reg:o.reg||null,emp:o.emp||{},p:o.p||{}};this.ult=j}catch(e){}},
+  guardar(){const j=this.ser();if(j===this.ult)return;this.ult=j;this.t=Date.now();
+    try{localStorage.setItem(this.KEY,JSON.stringify({j,t:this.t}))}catch(e){}
+    clearTimeout(this._tm);if(this.ref)this._tm=setTimeout(()=>this.ref.set({j:this.ult,t:this.t,dev:this.DEV}).catch(e=>console.warn("Radicación:",e&&e.code)),900)},
+  start(fs,u){if(this.unsub)this.unsub();this.ref=fs.collection("users").doc(u.uid).collection("radar").doc("radicacion");let primero=true;
+    this.unsub=this.ref.onSnapshot(sn=>{if(sn.metadata&&sn.metadata.hasPendingWrites)return;const r=sn.exists?sn.data():null;
+      if(r&&r.j&&(r.dev!==this.DEV||primero)&&(r.t||0)>(this.t||0)){this.apl(r.j);this.t=r.t;try{localStorage.setItem(this.KEY,JSON.stringify({j:r.j,t:r.t}))}catch(e){}this.d=null;if(this.vis())this.pinta()}
+      else if(primero&&this.t&&(!r||(r.t||0)<this.t))this.ref.set({j:this.ult||this.ser(),t:this.t,dev:this.DEV}).catch(()=>{});
+      primero=false},e=>console.warn("Radicación:",e&&e.code))},
+  /* ── Procesos disponibles: favoritos primero y luego los más convenientes del radar ── */
+  lista(){const fav=Fav.ok?Fav.rows("todos"):[],ids=new Set(fav.map(d=>Fav.id(d)));
+    const favS=fav.map(d=>[d,cpEval(d).idx]).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
+    const top=[...D].filter(d=>!ids.has(Fav.id(d))&&(d.dc==null||d.dc>=0)).sort((a,b)=>b.score-a.score).slice(0,150);
+    if(this.d&&!ids.has(Fav.id(this.d))&&!top.includes(this.d))top.unshift(this.d);
+    return{fav:favS,top}},
+  vis(){const v=document.getElementById("v-rad");return v&&!v.hidden},
+  abrir(d){this.d=d;this.st.sel=Fav.id(d);this.paso=this.pe().paso||1;this.guardar();history.replaceState(null,"","#rad");showTab("rad");window.scrollTo(0,0)},
+  /* ── Evaluador: revisa la oferta como el comité evaluador ── */
+  evalua(){const d=this.d,o=this.pe(),R=this.reg(),T=radTipo(d),out=[];const add=(s,g,t,h,w)=>out.push({s,g,t,h:h||"",w:w==null?1:w});
+    const ci=d.cierre?new Date(d.cierre+"T12:00:00"):null;
+    // Plazo
+    if(d.dc==null)add("av","Plazo","Sin fecha de cierre en los datos","Confírmala en el cronograma del proceso",2);
+    else if(d.dc<0)add("rech","Plazo","La recepción de ofertas ya cerró","Una oferta fuera de plazo es extemporánea y se rechaza",3);
+    else if(d.dc===0)add(o.hora?"av":"sub","Plazo","Cierra hoy"+(o.hora?` a las ${o.hora}`:""),o.hora?"Radica con al menos 2 horas de margen: la plataforma puede ir lenta":"Indica la hora de cierre del cronograma",3);
+    else if(d.dc<=2)add("av","Plazo",`Cierra en ${d.dc} día${d.dc>1?"s":""}`,"Muy poco margen para conseguir pólizas y firmas",3);
+    else add("ok","Plazo",`Quedan ${d.dc} días para el cierre`,"",3);
+    // Registro de la empresa
+    if(!R.usuario)add("rech","Registro","Sin usuario de proveedor en SECOP II","No es posible presentar la oferta",3);else add("ok","Registro","Usuario de SECOP II activo","",1);
+    if(!R.empresa)add("av","Registro","Formulario de la empresa incompleto","Complétalo antes de crear la oferta",1);
+    if(!R.rl)add("sub","Registro","Representante legal por confirmar","Si quien firma no tiene facultades, la oferta queda sin validez",2);
+    if(!R.matricula)add("sub","Registro","Matrícula mercantil sin renovar","Renuévala antes del cierre",1);
+    if(!R.rut)add("av","Registro","RUT sin las actividades CIIU del objeto","Actualízalo en la DIAN",1);
+    const rupReq=radDocs(d).find(x=>x.k==="rupd").r==="req";
+    if(rupReq&&!R.rup)add("rech","Registro","El proceso exige RUP y la empresa no lo tiene en firme","El RUP debe estar en firme a la fecha de cierre: no se puede subsanar después",3);
+    else if(rupReq)add("ok","Registro","RUP en firme","",2);
+    else add("ok","Registro","No exige RUP"+(T.mc?" (mínima cuantía)":""),"",1);
+    if(!R.factura)add("av","Registro","Sin facturación electrónica","No impide radicar, pero no podrás cobrar el contrato",0.5);
+    // Precio
+    const base=+o.base||0,tot=Math.round(base*(1+(+o.iva||0)/100)),pres=+d.val||0;
+    if(!base)add("rech","Precio","Sin valor de oferta","La oferta económica no se puede subsanar",3);
+    else if(pres&&tot>pres)add("rech","Precio",`La oferta (${cop(tot)}) supera el presupuesto oficial (${cop(pres)})`,"Causal de rechazo: ajusta el precio",3);
+    else if(pres&&tot<pres*.8)add("av","Precio",`Oferta ${Math.round((1-tot/pres)*100)} % por debajo del presupuesto`,"La entidad puede pedir que justifiques un precio artificialmente bajo",2);
+    else if(pres)add("ok","Precio",`Oferta ${cop(tot)} · ${Math.round(tot/pres*100)} % del presupuesto`,T.mc?"En mínima cuantía gana el menor precio que cumpla":"",3);
+    else add("av","Precio","Sin presupuesto publicado para comparar","Verifícalo en el pliego",2);
+    // Documentos
+    const docs=radDocs(d);let nf=0;
+    docs.forEach(x=>{const z=this.doc(x),ok=!!z.ok;
+      if(x.r==="pts"){if(!ok)add("pts","Puntaje",x.t,"Sin este documento pierdes el puntaje (no es subsanable)",0.5);else add("ok","Puntaje",x.t,"Suma puntaje",0.5);return}
+      if(!ok){if(x.r==="req")add(x.ns?"rech":"sub","Documentos",`Falta: ${x.t}`,x.ns?"No se puede subsanar: debe ir con la oferta":"Subsanable hasta el traslado del informe de evaluación",x.ns?3:2);return}
+      nf++;
+      if(x.vig){if(!z.f)add("av","Documentos",`${x.t}: sin fecha de expedición`,`Debe tener máximo ${x.vig} días al cierre`,1);
+        else if(ci){const dias=Math.round((ci-new Date(z.f+"T12:00:00"))/864e5);
+          if(dias>x.vig)add("sub","Documentos",`${x.t}: vencido (${dias} días al cierre)`,`Expide uno nuevo: máximo ${x.vig} días`,2);
+          else if(dias<-1)add("av","Documentos",`${x.t}: fecha posterior al cierre`,"Revisa la fecha de expedición",1)}}
+      if(z.n){if(!/\.pdf$/i.test(z.n)&&!(x.k==="economica"&&/\.(xlsx?|pdf)$/i.test(z.n)))add("av","Formato",`${z.n}: no es PDF`,"Convierte el documento a PDF",1);
+        if(z.s>25*1048576)add("av","Formato",`${z.n}: pesa ${(z.s/1048576).toFixed(0)} MB`,"Archivos grandes pueden fallar al cargar: comprímelo o divídelo",1);
+        if(/[^A-Za-z0-9 ._()\-]/.test(z.n)||z.n.length>80)add("av","Formato",`${z.n}: nombre con tildes, símbolos o muy largo`,"Renómbralo (ej. 01_Carta_presentacion.pdf)",0.5)}});
+    const req=docs.filter(x=>x.r==="req"),reqOk=req.filter(x=>this.doc(x).ok).length;
+    if(reqOk===req.length)add("ok","Documentos",`Documentos obligatorios completos (${reqOk}/${req.length})`,"",1);
+    if(!o.decl)add("av","Presentación","Falta confirmar que la información es veraz","",0.5);
+    // Resultado
+    const V={ok:1,av:.75,pts:.6,sub:.35,rech:0};let sw=0,sv=0;out.forEach(c=>{sw+=c.w;sv+=c.w*V[c.s]});
+    const n=k=>out.filter(c=>c.s===k).length,ver=n("rech")?"rech":n("sub")?"sub":"ok";
+    return{out,score:sw?Math.round(sv/sw*100):0,ver,nr:n("rech"),ns:n("sub"),na:n("av"),tot,base,pres,reqOk,nreq:req.length}},
+  /* ── Interfaz ── */
+  pinta(){const sel=document.getElementById("rd-sel");if(!sel)return;
+    if(this.d){const k=Fav.id(this.d),n=D.find(x=>Fav.id(x)===k);if(n)this.d=n}
+    const L=this.lista();
+    if(!this.d){const all=[...L.fav,...L.top];this.d=all.find(d=>Fav.id(d)===this.st.sel)||L.fav[0]||L.top[0]||null;if(this.d)this.paso=this.pe().paso||1}
+    const opt=d=>`<option value="${esc(Fav.id(d))}">${esc((d.ref||"").slice(0,28))} · ${esc(cop(d.val))} · ${esc((d.ent||"").slice(0,38))}</option>`;
+    sel.innerHTML=(L.fav.length?`<optgroup label="♥ Favoritos">${L.fav.map(opt).join("")}</optgroup>`:"")+`<optgroup label="Más convenientes del radar">${L.top.map(opt).join("")}</optgroup>`;
+    this._L=[...L.fav,...L.top];
+    if(!this.d){document.getElementById("rd-body").innerHTML=`<p class="rd-sec">Aún no hay procesos cargados.</p>`;return}
+    sel.value=Fav.id(this.d);this.cuerpo();this.eval()},
+  cuerpo(){const d=this.d,o=this.pe(),b=document.getElementById("rd-body"),P=this.paso,R=this.reg();
+    document.getElementById("rd-steps").innerHTML=RAD_PASOS.map((t,i)=>`<li><button type="button" data-rp="${i+1}" class="${this.hecho(i+1)?"hecho":""}" ${P===i+1?'aria-current="step"':""}><i>${this.hecho(i+1)&&P!==i+1?"✓":i+1}</i>${t}</button></li>`).join("");
+    let h="";
+    if(P===1){h=`<h3>1 · Proceso</h3><p class="rd-sec">Así lo verías en SECOP II al buscarlo por su número de proceso.</p>
+      <div class="rd-kv"><div><span>Entidad</span>${esc(d.ent)}</div><div><span>Número del proceso</span>${esc(d.ref)}</div>
+        <div><span>Modalidad</span><b class="ac">${esc(d.modG||d.mod)}</b></div><div><span>Lugar</span><b class="ac">${esc([d.ciu,d.dep].filter(Boolean).join(", "))}</b></div>
+        <div><span>Presupuesto oficial</span><b>${cop(d.val)}</b></div><div><span>Cierre (recepción de ofertas)</span>${d.cierre?fecha(d.cierre):"—"} · ${cierreTxt(d)}</div>
+        <div><span>RUP</span>${esc(d.rup||"Por verificar")}</div><div><span>Plazo de ejecución</span>${esc(d.plazo||"—")}</div></div>
+      <p class="rd-obj">${esc(d.obj)}</p>
+      <div class="rd-f"><label>Hora de cierre (del cronograma)<input type="time" id="rd-hora" value="${esc(o.hora||"")}"></label></div>
+      <div class="rd-acc"><button class="btn" type="button" id="rd-det">Ver detalle</button>${d.url?`<a class="btn" href="${d.url}" target="_blank" rel="noopener">Abrir en SECOP ↗</a>`:""}</div>`}
+    else if(P===2){h=`<h3>2 · Registro de la empresa</h3><p class="rd-sec">Aplica a todos los procesos. Márcalo a medida que lo tengas listo (Fase 0 de la Ruta).</p>
+      <ul class="rd-ck">${RAD_REG.map(x=>`<li><label><input type="checkbox" data-rg="${x.k}" ${R[x.k]?"checked":""}><span>${x.t}${x.h?`<small>${x.h}</small>`:""}</span></label></li>`).join("")}</ul>`}
+    else if(P===3){h=`<h3>3 · Precio (cuestionario)</h3><p class="rd-sec">En SECOP II el precio se escribe en el cuestionario de la oferta y debe coincidir con el formulario económico.</p>
+      <div class="rd-f"><label>Valor antes de IVA (COP)<input type="number" id="rd-base" min="0" step="1000" inputmode="numeric" value="${o.base||""}" placeholder="Ej. 15462185"></label>
+        <label>IVA<select id="rd-iva">${[19,5,0].map(v=>`<option value="${v}" ${+o.iva===v?"selected":""}>${v} %</option>`).join("")}</select></label></div>
+      <div class="rd-tot" id="rd-tot"></div>
+      <div class="rd-acc"><button class="btn" type="button" data-sug=".97">Sugerir 97 % del presupuesto</button><button class="btn" type="button" data-sug=".9">90 %</button></div>`}
+    else if(P===4){const docs=radDocs(d),cats=[...new Set(docs.map(x=>x.c))];
+      h=`<h3>4 · Documentos</h3><p class="rd-sec">Carga cada PDF para revisarlo o márcalo como listo. Los archivos no salen de tu dispositivo. Los marcados «empresa» sirven para todos los procesos.</p>
+      <div class="rd-docs">${cats.map(c=>`<div class="rd-cat"><h4>${c}</h4>${docs.filter(x=>x.c===c).map(x=>this.filaDoc(x)).join("")}</div>`).join("")}</div>`}
+    else{const E=this.evalua(),env=o.env;
+      h=`<h3>5 · Presentar oferta</h3>
+      <div class="rd-kv"><div><span>Valor total</span><b>${E.tot?cop(E.tot):"—"}</b></div><div><span>Obligatorios cargados</span><b>${E.reqOk}/${E.nreq}</b></div>
+        <div><span>Resultado previsto</span><b>${E.ver==="ok"?"Habilitada":E.ver==="sub"?"Subsanable":"Rechazo"}</b></div><div><span>Preparación</span><b>${E.score}/100</b></div></div>
+      ${env?this.comprobante(env,E):`<ul class="rd-ck"><li><label><input type="checkbox" id="rd-decl" ${o.decl?"checked":""}><span>Declaro que la información de la oferta es veraz (como lo pide SECOP II al presentar)</span></label></li></ul>
+      <button class="btn primary rd-go" type="button" id="rd-go">Presentar oferta (simulación)</button>
+      <p class="rd-nota">Es un simulacro: no se envía nada a SECOP II.</p>`}`}
+    b.innerHTML=h;
+    document.getElementById("rd-prev").disabled=P===1;const nx=document.getElementById("rd-next");nx.disabled=P===5;nx.hidden=P===5;
+    this.enlaza()},
+  filaDoc(x){const z=this.doc(x),tag=x.r==="req"?`<em class="req">Obligatorio</em>`:x.r==="pts"?`<em>Puntaje</em>`:`<em>Según pliego</em>`;
+    return `<div class="rd-doc"><input type="checkbox" data-dk="${x.k}" ${z.ok?"checked":""} aria-label="${esc(x.t)} listo">
+      <div class="t">${esc(x.t)}${tag}${x.ns?`<em class="ns">No subsanable</em>`:""}${x.a==="emp"?`<em>Empresa</em>`:""}</div>
+      <div class="x"><span class="rd-file">${z.n?"Cambiar":"Cargar PDF"}<input type="file" data-df="${x.k}" accept=".pdf,application/pdf${x.k==="economica"?",.xls,.xlsx":""}"></span>
+        ${z.n?`<span class="rd-fn">${esc(z.n)}</span><span>${z.s<1048576?Math.max(1,Math.round(z.s/1024))+" KB":(z.s/1048576).toFixed(1)+" MB"}</span>`:""}
+        ${x.vig?`<label>Expedido<input type="date" data-dv="${x.k}" value="${esc(z.f||"")}"></label><span>máx. ${x.vig} días</span>`:""}</div></div>`},
+  comprobante(env,E){const no=env.no;
+    return `<div class="rd-comp${no?" no":""}"><b>${no?"SECOP II no recibió la oferta":"Oferta presentada · acuse de recibo (simulado)"}</b>
+      <span class="n">${esc(env.n)}</span>
+      <span>${esc(this.d.ent)} · ${esc(this.d.ref)}</span>
+      <span>${new Date(env.t).toLocaleString("es-CO",{dateStyle:"long",timeStyle:"short"})}</span>
+      ${no?`<span>${esc(no)}</span>`:`<span>Valor ${cop(env.tot)} · ${env.docs} documentos · resultado previsto: <b>${E.ver==="ok"?"habilitada":E.ver==="sub"?"subsanable":"rechazo"}</b></span>`}
+      <div class="rd-acc"><button class="btn" type="button" id="rd-ret">${no?"Volver a intentar":"Retirar oferta y corregir"}</button></div></div>`},
+  hecho(i){const d=this.d;if(!d)return false;const o=this.pe(),R=this.reg();
+    if(i===1)return true;if(i===2)return RAD_REG.every(x=>R[x.k]||x.k==="factura"||(x.k==="rup"&&radDocs(d).find(y=>y.k==="rupd").r!=="req"));
+    if(i===3)return+o.base>0&&(!d.val||Math.round(o.base*(1+o.iva/100))<=d.val);
+    if(i===4)return radDocs(d).filter(x=>x.r==="req").every(x=>this.doc(x).ok);return!!(o.env&&!o.env.no)},
+  tot(){const o=this.pe(),el=document.getElementById("rd-tot");if(!el)return;const base=+o.base||0,iva=Math.round(base*(+o.iva||0)/100),t=base+iva,p=+this.d.val||0;
+    el.innerHTML=`<span>IVA ${cop(iva)}</span><span>Total <b>${cop(t)}</b></span>${p?`<span class="${t>p?"rd-warn":""}">${Math.round(t/p*100)} % del presupuesto (${cop(p)})</span>`:""}`},
+  cambio(cuerpo){this.guardar();if(cuerpo)this.cuerpo();else this.pasos();this.eval()},
+  pasos(){document.querySelectorAll("#rd-steps [data-rp]").forEach(b=>{const i=+b.dataset.rp,h=this.hecho(i);b.classList.toggle("hecho",h);b.querySelector("i").textContent=h&&i!==this.paso?"✓":i})},
+  enlaza(){const o=this.pe(),R=this.reg(),$q=s=>document.querySelector("#v-rad "+s);
+    document.querySelectorAll("#rd-steps [data-rp]").forEach(b=>b.onclick=()=>this.ir(+b.dataset.rp));
+    const hr=$q("#rd-hora");if(hr)hr.onchange=()=>{o.hora=hr.value;this.cambio()};
+    const dt=$q("#rd-det");if(dt)dt.onclick=()=>Det.abrir(this.d);
+    document.querySelectorAll("#v-rad [data-rg]").forEach(c=>c.onchange=()=>{R[c.dataset.rg]=c.checked;this.cambio()});
+    const bs=$q("#rd-base"),iv=$q("#rd-iva");
+    if(bs){this.tot();bs.oninput=()=>{o.base=Math.max(0,Math.round(+bs.value||0))||null;this.tot();this.cambio()};
+      iv.onchange=()=>{o.iva=+iv.value;this.tot();this.cambio()};
+      document.querySelectorAll("#v-rad [data-sug]").forEach(b=>b.onclick=()=>{if(!this.d.val)return aviso("El proceso no tiene presupuesto publicado");
+        o.base=Math.floor(this.d.val*+b.dataset.sug/(1+o.iva/100));bs.value=o.base;this.tot();this.cambio()})}
+    const docs=radDocs(this.d),X=k=>docs.find(x=>x.k===k);
+    document.querySelectorAll("#v-rad [data-dk]").forEach(c=>c.onchange=()=>{this.doc(X(c.dataset.dk)).ok=c.checked;this.cambio()});
+    document.querySelectorAll("#v-rad [data-dv]").forEach(c=>c.onchange=()=>{this.doc(X(c.dataset.dv)).f=c.value;this.cambio()});
+    document.querySelectorAll("#v-rad [data-df]").forEach(c=>c.onchange=()=>{const f=c.files&&c.files[0];if(!f)return;const z=this.doc(X(c.dataset.df));
+      Object.assign(z,{ok:true,n:f.name,s:f.size,ty:f.type});this.cambio(true)});
+    const dc=$q("#rd-decl");if(dc)dc.onchange=()=>{o.decl=dc.checked;this.cambio()};
+    const go=$q("#rd-go");if(go)go.onclick=()=>this.presentar();
+    const rt=$q("#rd-ret");if(rt)rt.onclick=()=>{o.env=null;this.cambio(true)}},
+  ir(i){this.paso=Math.max(1,Math.min(5,i));this.pe().paso=this.paso;this.guardar();this.cuerpo();const s=document.getElementById("rd-steps");if(s&&s.getBoundingClientRect().top<0)s.scrollIntoView({block:"start"})},
+  presentar(){const d=this.d,o=this.pe(),R=this.reg(),E=this.evalua();let no="";
+    if(!R.usuario)no="No tienes usuario de proveedor activo.";
+    else if(d.dc!=null&&d.dc<0)no="El plazo para presentar ofertas venció.";
+    else if(d.dc===0&&o.hora){const [hh,mm]=o.hora.split(":").map(Number),n=new Date();if(n.getHours()*60+n.getMinutes()>=hh*60+mm)no=`Ya pasó la hora de cierre (${o.hora}).`}
+    if(!no&&!E.base)no="El cuestionario no tiene precio: SECOP II no deja presentar la oferta.";
+    if(!no&&!o.decl)return aviso("Confirma la declaración de veracidad para presentar");
+    const docs=radDocs(d).filter(x=>this.doc(x).ok).length;
+    o.env={n:"SIM-"+(d.ref||"").replace(/[^A-Za-z0-9]/g,"").slice(0,14).toUpperCase()+"-"+Date.now().toString(36).toUpperCase().slice(-5),t:Date.now(),tot:E.tot,docs,no:no||null};
+    aviso(no?"La oferta no se pudo presentar (simulación)":"Oferta presentada (simulación)");this.cambio(true)},
+  eval(){const el=document.getElementById("rd-eval"),pill=document.getElementById("rd-pill");if(!this.d){el.innerHTML="";pill.textContent="";return}
+    const E=this.evalua(),VT={ok:["Habilitada","Cumple lo revisado; lista para radicar"],sub:["Subsanable",`${E.ns} punto${E.ns>1?"s":""} por corregir antes del informe de evaluación`],rech:["Rechazo",`${E.nr} causal${E.nr>1?"es":""} de rechazo`]}[E.ver];
+    pill.className="rd-pill v-"+E.ver;pill.title="Ver el evaluador";pill.onclick=()=>el.scrollIntoView({behavior:"smooth",block:"start"});pill.textContent=`${VT[0]} · ${E.score}/100`;
+    const ord={rech:0,sub:1,av:2,pts:3,ok:4},TAG={rech:"Rechazo",sub:"Subsanable",av:"Revisar",pts:"Puntaje",ok:"Cumple"};
+    const L=[...E.out].sort((a,b)=>ord[a.s]-ord[b.s]),pend=L.filter(c=>c.s!=="ok"),ok=L.filter(c=>c.s==="ok");
+    const li=c=>`<li class="e-${c.s}"><b>${TAG[c.s]}</b>${esc(c.t)}${c.h?`<span>${esc(c.h)}</span>`:""}</li>`;
+    el.innerHTML=`<div class="rd-ev-h"><h3>Evaluador</h3><div class="rd-sc"><b>${E.score}</b>preparación</div></div>
+      <div class="rd-bar"><i style="width:${E.score}%"></i></div>
+      <div class="rd-ver v-${E.ver}">${o_(E.ver)}${VT[0]}<small>${VT[1]}</small></div>
+      ${pend.length?`<p class="rd-ev-g">Qué corregir (${pend.length})</p><ul class="rd-ev">${pend.map(li).join("")}</ul>`:""}
+      ${ok.length?`<details class="fold mini"><summary>Cumple (${ok.length})</summary><ul class="rd-ev">${ok.map(li).join("")}</ul></details>`:""}
+      <p class="rd-nota">Criterios generales de la Ley 1150 de 2007, el Decreto 1082 de 2015 y la Ley 1882 de 2018. El pliego de cada proceso manda: confirma requisitos, vigencias y causales de rechazo.</p>`;
+    function o_(v){return v==="ok"?"✓ ":v==="sub"?"! ":"✕ "}}
+};
+window.Rad=Rad;
+{try{const l=JSON.parse(localStorage.getItem(Rad.KEY)||"null");if(l&&l.j){Rad.apl(l.j);Rad.t=l.t||0}}catch(e){}}
+document.getElementById("rd-sel").onchange=e=>{const d=(Rad._L||[]).find(x=>Fav.id(x)===e.target.value);if(!d)return;Rad.d=d;Rad.st.sel=Fav.id(d);Rad.paso=Rad.pe().paso||1;Rad.guardar();Rad.cuerpo();Rad.eval()};
+document.getElementById("rd-prev").onclick=()=>Rad.ir(Rad.paso-1);
+document.getElementById("rd-next").onclick=()=>Rad.ir(Rad.paso+1);
+{const st0=showTab;showTab=function(v){st0.apply(this,arguments);if(v==="rad")try{Rad.pinta()}catch(e){console.warn(e)}}}
+{const r0=render;window.render=render=function(){r0.apply(this,arguments);if(Rad.vis()&&!document.querySelector("#v-rad :focus"))try{Rad.pinta()}catch(e){console.warn(e)}}}
+if(location.hash==="#rad")queueMicrotask(()=>Rad.pinta());
+/* La barra inferior se declara después del primer showTab: sincroniza la pestaña activa */
+{const v=(document.querySelector(".view:not([hidden])")||{id:"v-radar"}).id.slice(2);document.querySelectorAll(".bn-btn").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v))}
+</script>
 <!-- Acceso: solo miembros de Planificar Proyectos SAS (no plan familiar) -->
 <style>
 .pp-gate{position:fixed;inset:0;z-index:50;background:#111315;color:#F2F2EE;display:flex;align-items:center;justify-content:center;padding:20px;font-family:var(--body,"Public Sans",system-ui,sans-serif)}
@@ -2108,7 +2431,7 @@ function renderComp(){
     <h4>Por qué</h4><ul class="cp-ok">${ventajas(top).map(z=>`<li><b>${z.cr.n}:</b> ${esc(frase(top,z.cr.k))}</li>`).join("")||"<li>Es el de mejor puntaje con los pesos actuales.</li>"}</ul>
     ${riesgos(top).length?`<h4>A tener en cuenta</h4><ul class="cp-ko">${riesgos(top).map(z=>`<li><b>${z.cr.n}:</b> ${esc(frase(top,z.cr.k))}</li>`).join("")}</ul>`:""}
     ${porque}${alerta}
-    <div class="cp-acc"><button class="btn primary" type="button" data-cp-sim="${top.id}">Simular caja</button><a class="btn" href="${top.d.url}" target="_blank" rel="noopener">Abrir en SECOP ↗</a></div>
+    <div class="cp-acc"><button class="btn primary" type="button" data-cp-rad="${top.id}">Simular radicación</button><button class="btn" type="button" data-cp-sim="${top.id}">Simular caja</button><a class="btn" href="${top.d.url}" target="_blank" rel="noopener">Abrir en SECOP ↗</a></div>
   </article>`;
   const ranking=`<h3 class="cp-t">Ranking</h3><ol class="cp-rank">${S.map((x,i)=>`<li class="${i===0?"top":""}">
     <span class="cp-n">${i+1}</span>
@@ -2133,13 +2456,14 @@ function renderComp(){
   ];
   const tabla=`<h3 class="cp-t">Lado a lado</h3><div class="cp-tw"><table class="cp-tab${S.length>8?" mucho":""}" style="--minw:${130+130*S.length}px"><thead><tr><th></th>${S.map((x,i)=>`<th><span class="cp-n">${i+1}</span>${esc(x.d.ent.slice(0,34))}</th>`).join("")}</tr></thead><tbody>${
     fil.map(([n,val,show,hl],ri)=>{const vs=S.map(val),mx=Math.max(...vs);return `<tr class="${ri===11?"sep":""}"><th>${n}</th>${S.map((x,i)=>`<td class="${S.length>1&&vs[i]===mx&&vs.filter(v=>v===mx).length<S.length?"best":""}">${show(x)}</td>`).join("")}</tr>`}).join("")}</tbody></table></div>`;
-  box.innerHTML=chips+ganador+ranking+tabla+`<p class="note">Índice = promedio ponderado de los 7 criterios (0 a 1) × 100. La rentabilidad sale del modelo de la Simulación con valores típicos por tipología; ajústalos ahí para cada contrato. «Interesados» son los proveedores que SECOP registra como interesados o con respuesta.</p>`;
+  box.innerHTML=chips+ganador+ranking+tabla+`<p class="note">Índice = promedio ponderado de los 7 criterios (0 a 1) × 100. La rentabilidad sale del Simulador caja con valores típicos por tipología; ajústalos ahí para cada contrato. «Interesados» son los proveedores que SECOP registra como interesados o con respuesta.</p>`;
   cpBind();
 }
 function cpBind(){
   document.querySelectorAll("#cp-body [data-cs]").forEach(b=>b.onclick=()=>{const i=b.dataset.cs;CP.sel.has(i)?CP.sel.delete(i):CP.sel.add(i);renderComp()});
   document.querySelectorAll("#cp-body [data-cp-sim]").forEach(b=>b.onclick=()=>{const d=cpLista().find(x=>Fav.id(x)===b.dataset.cpSim);if(!d)return;
     simContract(d)});
+  document.querySelectorAll("#cp-body [data-cp-rad]").forEach(b=>b.onclick=()=>{const d=cpLista().find(x=>Fav.id(x)===b.dataset.cpRad);if(d)Rad.abrir(d)});
 }
 function cpPesos(){
   const el=document.getElementById("cp-pesos");if(!el)return;const NV=["Nada","Poco","Normal","Mucho"];
@@ -2336,7 +2660,7 @@ const Det={d:null,cache:new Map(),hist:false,_idx:null,_n:-1,
           ${fila("Ganancia neta",(q.gan<0?"−":"")+cop(Math.abs(q.gan)))}
           ${fila("Margen",q.margen.toFixed(0)+" %")}
           ${fila("Recuperas",q.be?q.be.toLocaleDateString("es-CO",{month:"short",year:"numeric"}):"—")}
-          <p class="det-nota">Valores típicos por tipología; ajústalos en Simulación.</p></div>
+          <p class="det-nota">Valores típicos por tipología; ajústalos en Simulador caja.</p></div>
         <div class="det-card"><h3>Conveniencia ${d.score}/100</h3>
           ${this.partes(d).map(([l,pt,t])=>fila(esc(l)+` <small>${esc(t)}</small>`,typeof pt==="number"?(pt>0?"+":"")+pt:pt)).join("")}</div>
       </div>
@@ -2346,11 +2670,12 @@ const Det={d:null,cache:new Map(),hist:false,_idx:null,_n:-1,
     this.pintaPie()},
   pintaPie(){const d=this.d;if(!d)return;const on=Fav.ok&&Fav.mio(d);
     document.getElementById("det-f").innerHTML=`${Fav.err?"":`<button class="btn det-fav${on?" on":""}" type="button" id="det-fav" aria-pressed="${on}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-9.3-9.2C1.5 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.7 3.5 4.5 6.8-1.8 4.8-9.3 9.2-9.3 9.2z"/></svg>${on?"Favorito":"Favorito"}</button>`}
-      <button class="btn" type="button" id="det-sim">Simular</button>
+      <button class="btn" type="button" id="det-sim">Simular caja</button><button class="btn" type="button" id="det-rad">Radicar</button>
       ${window.Chat&&Chat.ok?'<button class="btn" type="button" id="det-chat" title="Compartir en el chat del equipo">Al chat</button>':""}
       ${d.url?`<a class="btn primary" href="${d.url}" target="_blank" rel="noopener">Abrir en SECOP ↗</a>`:""}`;
     const f=document.getElementById("det-fav");if(f)f.onclick=()=>Fav.toggle(d);
     document.getElementById("det-sim").onclick=()=>{this.cerrar();simContract(d)};
+    document.getElementById("det-rad").onclick=()=>{this.cerrar();Rad.abrir(d)};
     const ch=document.getElementById("det-chat");if(ch)ch.onclick=()=>{this.cerrar();Chat.adj=d;Chat.abrir(true);Chat.pintaAdj();setTimeout(()=>document.getElementById("chat-t").focus(),60)}}
 };
 window.Det=Det;
@@ -2787,6 +3112,7 @@ html.lock-chat,html.lock-chat body{overflow:hidden}
       try{if(window.Fav)Fav.start(fs,u,u.displayName)}catch(e){console.warn(e)}
       try{if(window.Chat)Chat.start(fs,u)}catch(e){console.warn(e)}
       try{if(window.Filtros)Filtros.start(fs,u)}catch(e){console.warn(e)}
+      try{if(window.Rad)Rad.start(fs,u)}catch(e){console.warn(e)}
       try{if(window.Apariencia) Apariencia.connect(fs,u.uid,function(){return Apariencia.local()})}catch(e){}
     });
   });
