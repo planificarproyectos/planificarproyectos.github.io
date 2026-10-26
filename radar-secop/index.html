@@ -1060,7 +1060,13 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
 </section>
 <button class="chat-fab" id="chat-fab" type="button" aria-label="Chat del equipo" aria-controls="chat" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.7A8 8 0 1 1 21 12z"/><path d="M8.5 10.5h7M8.5 14h4.5"/></svg><b id="chat-n" hidden></b></button>
 <section class="chat" id="chat" role="dialog" aria-label="Chat del equipo" hidden>
-  <header class="chat-h"><div><b>Chat del equipo</b><span>Planificar Proyectos SAS</span></div><button class="side-x" id="chat-x" type="button" aria-label="Cerrar chat">✕</button></header>
+  <header class="chat-h"><div><b>Chat del equipo</b><span>Planificar Proyectos SAS</span></div>
+    <div class="chat-ops">
+      <button class="chat-op" id="chat-snd" type="button" aria-pressed="true" title="Sonido de mensajes" aria-label="Sonido de mensajes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="on" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/><path class="off" d="M17 9l5 6M22 9l-5 6"/></svg></button>
+      <button class="chat-op" id="chat-vib" type="button" aria-pressed="true" title="Vibración (Android)" aria-label="Vibración"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2"/><path class="on" d="M3 8v8M21 8v8"/><path class="off" d="M3 3l18 18"/></svg></button>
+      <button class="chat-op buzz" id="chat-buzz" type="button" title="Enviar un zumbido al equipo" aria-label="Enviar un zumbido"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span id="chat-buzz-t"></span></button>
+      <button class="side-x" id="chat-x" type="button" aria-label="Cerrar chat">✕</button>
+    </div></header>
   <div class="chat-l" id="chat-l" aria-live="polite"></div>
   <div class="chat-adj" id="chat-adj" hidden></div>
   <form class="chat-f" id="chat-f" autocomplete="off">
@@ -2128,15 +2134,52 @@ cpPesos();
 </script>
 <script>
 /* ═════════ Chat del equipo: colección radar_chat (miembros de Planificar Proyectos SAS con acceso al Radar) ═════════ */
+/* Sonido (Web Audio, sin archivos), vibración y título parpadeante cuando llega un mensaje de otra persona */
+const Aviso={ctx:null,
+  pref(k,v){const K="radar:chat"+k;if(v===undefined){try{const x=localStorage.getItem(K);return x===null?true:x==="1"}catch(e){return true}}try{localStorage.setItem(K,v?"1":"0")}catch(e){}},
+  audio(){try{if(!this.ctx){const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;this.ctx=new A()}if(this.ctx.state==="suspended")this.ctx.resume();return this.ctx}catch(e){return null}},
+  nota(f,ini,dur,vol,tipo){const c=this.audio();if(!c)return;const o=c.createOscillator(),g=c.createGain(),t=c.currentTime+ini;
+    o.type=tipo||"sine";o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.015);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g).connect(c.destination);o.start(t);o.stop(t+dur+.02)},
+  tono(){if(!this.pref("Sonido"))return;this.nota(880,0,.16,.18);this.nota(1318.5,.12,.22,.16)},
+  buzz(){if(!this.pref("Sonido"))return;for(let i=0;i<6;i++)this.nota(i%2?150:110,i*.1,.12,.32,"square");this.nota(660,.65,.18,.2);this.nota(990,.78,.25,.2)},
+  vibra(p){if(!this.pref("Vibra")||!navigator.vibrate)return;try{navigator.vibrate(p)}catch(e){}},
+  _tt:null,_t0:document.title,_n:0,
+  titulo(n){if(!document.hidden)return;this._n+=n;clearInterval(this._tt);let on=false;
+    this._tt=setInterval(()=>{on=!on;document.title=on?`(${this._n}) Nuevo mensaje`:this._t0},1000)},
+  paraTitulo(){clearInterval(this._tt);this._tt=null;this._n=0;document.title=this._t0}
+};
+window.Aviso=Aviso;
+/* El navegador solo deja sonar después de un toque: se prepara el audio con la primera interacción */
+["pointerdown","keydown","touchstart"].forEach(ev=>addEventListener(ev,()=>{Aviso.audio()},{once:true,passive:true}));
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)Aviso.paraTitulo()});
 const Chat={fs:null,uid:null,ms:[],ok:false,err:null,adj:null,abierto:false,KEY:"radar:chatLeido",
   start(fs,u){this.fs=fs;this.uid=u.uid;if(this.unsub)this.unsub();
     this.unsub=fs.collection("radar_chat").orderBy("t","desc").limit(200).onSnapshot(sn=>{
       this.ms=sn.docs.map(x=>{const d=x.data({serverTimestamps:"estimate"});const t=d.t&&d.t.toMillis?d.t.toMillis():Date.now();return{id:x.id,...d,t}}).sort((a,b)=>a.t-b.t);
+      if(this._carga){const nuevos=sn.docChanges().filter(ch=>ch.type==="added"&&!ch.doc.metadata.hasPendingWrites).map(ch=>ch.doc.data({serverTimestamps:"estimate"})).filter(m=>m.uid!==this.uid);
+        if(nuevos.length)this.llega(nuevos)}
+      this._carga=true;
       this.ok=true;this.err=null;if(this.abierto)this.leido();this.pinta()},
       e=>{console.warn("Chat:",e&&e.code);this.err=e&&e.code||"error";this.ok=false;this.pinta()})},
   leidoT(){try{return+localStorage.getItem(this.KEY)||0}catch(e){return 0}},
   leido(){const t=this.ms.length?this.ms[this.ms.length-1].t:Date.now();try{localStorage.setItem(this.KEY,String(Math.max(t,this.leidoT())))}catch(e){}},
   sinLeer(){const t=this.leidoT();return this.ms.filter(m=>m.uid!==this.uid&&m.t>t).length},
+  llega(ms){const z=ms.find(m=>m.tipo==="zumbido");
+    if(z){Aviso.buzz();Aviso.vibra([220,90,220,90,420]);document.documentElement.classList.remove("sacude");void document.documentElement.offsetWidth;document.documentElement.classList.add("sacude");
+      setTimeout(()=>document.documentElement.classList.remove("sacude"),900);aviso(`⚡ ${z.n||"Alguien"} te envió un zumbido`);if(!this.abierto)this.abrir(true)}
+    else{Aviso.tono();Aviso.vibra(90)}
+    Aviso.titulo(ms.length)},
+  ESPERA:30000,
+  zumbido(){if(!this.ok)return aviso("El chat aún no está habilitado.");const falta=this.ESPERA-(Date.now()-this.ultBuzz());
+    if(falta>0)return aviso(`Espera ${Math.ceil(falta/1000)} s para otro zumbido`);
+    try{localStorage.setItem("radar:chatBuzz",String(Date.now()))}catch(e){}this.pintaBuzz();
+    const yo=Fav.yo||{n:"",e:""};
+    return this.fs.collection("radar_chat").add({uid:this.uid,n:yo.n||yo.e.split("@")[0],e:yo.e,txt:"",tipo:"zumbido",t:firebase.firestore.FieldValue.serverTimestamp()})
+      .then(()=>aviso("⚡ Zumbido enviado al equipo")).catch(e=>aviso("No se pudo enviar ("+(e.code||"error")+")"))},
+  ultBuzz(){try{return+localStorage.getItem("radar:chatBuzz")||0}catch(e){return 0}},
+  pintaBuzz(){const b=document.getElementById("chat-buzz"),t=document.getElementById("chat-buzz-t");if(!b)return;const falta=Math.ceil((this.ESPERA-(Date.now()-this.ultBuzz()))/1000);
+    b.disabled=falta>0;t.textContent=falta>0?falta+" s":"";clearTimeout(this._bt);if(falta>0)this._bt=setTimeout(()=>this.pintaBuzz(),1000)},
   enviar(txt){txt=String(txt||"").trim();if(!txt&&!this.adj)return;if(!this.ok)return aviso("El chat aún no está habilitado.");
     const yo=Fav.yo||{n:"",e:""},doc={uid:this.uid,n:yo.n||yo.e.split("@")[0],e:yo.e,txt:txt.slice(0,2000),t:firebase.firestore.FieldValue.serverTimestamp()};
     if(this.adj){const d=this.adj;doc.ref={id:Fav.id(d),ent:String(d.ent||"").slice(0,120),obj:String(d.obj||"").slice(0,200),val:+d.val||0,cierre:d.cierre||"",url:d.url||"",ref:d.ref||""}}
@@ -2159,6 +2202,7 @@ const Chat={fs:null,uid:null,ms:[],ok:false,err:null,adj:null,abierto:false,KEY:
     let dia="",prev=null,html="";
     this.ms.forEach(m=>{const f=new Date(m.t),ds=f.toDateString();
       if(ds!==dia){dia=ds;prev=null;html+=`<div class="chat-dia">${ds===hoy?"Hoy":ds===ayer?"Ayer":f.toLocaleDateString("es-CO",{weekday:"long",day:"numeric",month:"short"})}</div>`}
+      if(m.tipo==="zumbido"){prev=null;html+=`<div class="chat-buzz-m">⚡ ${esc(m.uid===this.uid?"Enviaste":(m.n||"Alguien")+" envió")} un zumbido · ${f.toLocaleTimeString("es-CO",{hour:"numeric",minute:"2-digit"})}</div>`;return}
       const mio=m.uid===this.uid,seguido=prev&&prev.uid===m.uid&&m.t-prev.t<5*6e4;prev=m;
       const ini=String(m.n||"?").split(/\s+/).map(x=>x[0]).slice(0,2).join("").toUpperCase(),hue=[...String(m.uid||"")].reduce((a,c)=>a+c.charCodeAt(0),0)%360;
       const r=m.ref?`<div class="chat-ref"><b>${esc(m.ref.ent)}</b><span>${esc(cap(m.ref.obj).slice(0,120))}</span><span class="chat-ref-m">${m.ref.val?cop(m.ref.val):""}${m.ref.cierre?" · cierre "+fecha(m.ref.cierre):""}</span><span class="chat-ref-b"><button type="button" data-det-id="${esc(m.ref.id||"")}">Detalle</button><button type="button" data-chat-ver="${esc(m.ref.ref||m.ref.ent)}">Ver en Radar</button>${m.ref.url?`<a href="${esc(m.ref.url)}" target="_blank" rel="noopener">SECOP ↗</a>`:""}</span></div>`:"";
@@ -2171,6 +2215,10 @@ function confirmarBorrado(id){const b=document.querySelector(`[data-chat-del="${
   b.dataset.ok="1";b.textContent="¿Eliminar? toca otra vez";setTimeout(()=>{if(b.isConnected){b.dataset.ok="";b.textContent="Eliminar"}},3000);return false}
 {const fab=document.getElementById("chat-fab"),t=document.getElementById("chat-t");
  fab.onclick=()=>Chat.abrir(true);document.getElementById("chat-x").onclick=()=>Chat.abrir(false);
+ const tg=(id,k)=>{const b=document.getElementById(id);const p=()=>b.setAttribute("aria-pressed",Aviso.pref(k));p();b.onclick=()=>{Aviso.pref(k,!Aviso.pref(k));p();if(k==="Sonido"&&Aviso.pref(k))Aviso.tono();if(k==="Vibra"&&Aviso.pref(k))Aviso.vibra(60)}};
+ tg("chat-snd","Sonido");tg("chat-vib","Vibra");
+ if(!navigator.vibrate)document.getElementById("chat-vib").hidden=true;
+ document.getElementById("chat-buzz").onclick=()=>Chat.zumbido();Chat.pintaBuzz();
  addEventListener("keydown",e=>{if(e.key==="Escape"&&Chat.abierto)Chat.abrir(false)});
  const auto=()=>{t.style.height="auto";t.style.height=Math.min(120,t.scrollHeight)+"px"};t.addEventListener("input",auto);
  t.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();document.getElementById("chat-f").requestSubmit()}});
@@ -2504,6 +2552,23 @@ html.lock-det,html.lock-det body{overflow:hidden}
   .det-b h2{font-size:22px}
 }
 .det .side-x,.chat .side-x{display:inline-flex!important;align-items:center;justify-content:center;flex:none}
+/* Sonido, vibración y zumbido */
+.chat-ops{display:flex;align-items:center;gap:6px}
+.chat-op{flex:none;height:36px;min-width:36px;border:0;border-radius:999px;background:var(--surface);color:var(--muted);display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:0 8px}
+.chat-op[hidden]{display:none}
+.chat-op svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chat-op[aria-pressed="true"]{color:var(--fg)}
+.chat-op[aria-pressed="true"] .off,.chat-op[aria-pressed="false"] .on{display:none}
+.chat-op.buzz{background:var(--accent);color:var(--accent-ink)}
+.chat-op.buzz svg{fill:currentColor;stroke:none}
+.chat-op.buzz:disabled{background:var(--surface);color:var(--muted)}
+.chat-op.buzz span{font-size:12px;font-weight:700}.chat-op.buzz span:empty{display:none}
+.chat-h>div:first-child{min-width:0}
+@media (max-width:420px){.chat-h b{font-size:17px;white-space:nowrap}.chat-h span{display:none}}
+.chat-buzz-m{align-self:center;font-size:12.5px;font-weight:700;color:var(--accent-fg);background:var(--accent-2);border-radius:999px;padding:4px 12px;margin:8px 0}
+@keyframes sacude{0%,100%{transform:none}10%,50%,90%{transform:translate(-9px,2px) rotate(-1deg)}30%,70%{transform:translate(9px,-2px) rotate(1deg)}}
+html.sacude body{animation:sacude .7s cubic-bezier(.36,.07,.19,.97) both}
+@media (prefers-reduced-motion:reduce){html.sacude body{animation:none}}
 /* Chat del equipo */
 .chat-fab{position:fixed;right:16px;bottom:calc(56px + 16px + env(safe-area-inset-bottom,0px));z-index:38;width:56px;height:56px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.35)}
 .chat-fab[hidden]{display:none}
