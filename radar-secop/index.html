@@ -1341,10 +1341,9 @@ const Fav={map:new Map(),uid:null,yo:null,fs:null,ok:false,err:null,_idx:null,_n
   fila(d){return[d.tipo,d.dep,d.ciu,d.ent,d.ref,d.obj,d.mod,d.val,d.pub,d.fase,d.un,d.plazo,d.url,d.rup,d.cierre||"",(d.comp||[0,0,0,0]).join(","),d.pid||""].map(v=>v===undefined||v===null||(typeof v==="number"&&!isFinite(v))?"":v)},
   toggle(d){if(!this.ok||!this.fs)return aviso(this.err?"Los favoritos aún no están habilitados.":"Inicia sesión para usar favoritos.");
     const ref=this.fs.collection("radar_favoritos").doc(this.id(d)),FV=firebase.firestore.FieldValue;
-    if(this.mio(d)){const otros=this.quien(d).length-1;
-      (otros>0?ref.update({["por."+this.uid]:FV.delete(),act:Date.now()}):ref.delete()).catch(e=>aviso("No se pudo quitar ("+(e.code||"error")+")"));}
+    if(this.doc(d)){ref.delete().then(()=>aviso("Quitado de favoritos del equipo")).catch(e=>aviso("No se pudo quitar ("+(e.code||"error")+")"));}
     else ref.set({fila:this.fila(d),act:Date.now(),por:{[this.uid]:{n:this.yo.n,e:this.yo.e,t:Date.now()}}},{merge:true})
-      .then(()=>aviso("♥ Guardado en favoritos")).catch(e=>{console.warn("Favorito no guardado:",this.id(d),e);aviso("No se pudo guardar el favorito: "+(e.code==="permission-denied"?"tu cuenta no tiene permiso":(e.message||e.code||"error")))});},
+      .then(()=>aviso("♥ Guardado en favoritos del equipo")).catch(e=>{console.warn("Favorito no guardado:",this.id(d),e);aviso("No se pudo guardar el favorito: "+(e.code==="permission-denied"?"tu cuenta no tiene permiso":(e.message||e.code||"error")))});},
   /* Procesos de la lista: los vigentes salen del radar; los que ya no están se arman con la copia guardada */
   rows(modo){if(this._n!==D.length){this._idx=new Map(D.map(d=>[this.id(d),d]));this._n=D.length}
     const out=[];this.map.forEach((f,id)=>{if(modo==="mios"&&!(f.por&&f.por[this.uid]))return;
@@ -1357,8 +1356,8 @@ function aviso(t){let el=document.getElementById("aviso");if(!el){el=document.cr
   el.textContent=t;el.classList.add("on");clearTimeout(aviso._t);aviso._t=setTimeout(()=>el.classList.remove("on"),2200)}
 const cierreTxt=d=>d.dc==null?"Sin fecha de cierre":d.dc<0?"Cerrado":d.dc===0?"Cierra hoy":d.dc===1?"Cierra mañana":`Cierra en ${d.dc} días`;
 const cierreTag=d=>`<span class="cierre ${d.dc==null?"cx":d.dc<0?"c0":d.dc<=1?"c1":d.dc<=3?"c2":d.dc<=7?"c3":"c4"}" title="${d.cierre?"Recepción de ofertas: "+fecha(d.cierre)+" (confirma la hora en SECOP)":""}">${cierreTxt(d)}</span>`;
-const corazon=(d,i)=>{if(Fav.err)return"";const on=Fav.mio(d),n=Fav.n(d),q=Fav.quien(d).map(x=>x.n).join(", ");
-  return `<button class="fav${on?" on":""}" type="button" data-fav="${i}" aria-pressed="${on}" aria-label="${on?"Quitar de favoritos":"Agregar a favoritos"}" title="${esc(q?"Favorito de: "+q:"Agregar a favoritos")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-9.3-9.2C1.5 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.7 3.5 4.5 6.8-1.8 4.8-9.3 9.2-9.3 9.2z"/></svg>${n>1?`<b>${n}</b>`:""}</button>`};
+const corazon=(d,i)=>{if(Fav.err)return"";const on=!!Fav.doc(d),n=0,q=Fav.quien(d).map(x=>x.n).join(", ");
+  return `<button class="fav${on?" on":""}" type="button" data-fav="${i}" aria-pressed="${on}" aria-label="${on?"Quitar de favoritos del equipo":"Agregar a favoritos del equipo"}" title="${esc(on?"Favorito del equipo"+(q?" · lo agregó "+q:"")+" · clic para quitar":"Agregar a favoritos del equipo")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-9.3-9.2C1.5 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.7 3.5 4.5 6.8-1.8 4.8-9.3 9.2-9.3 9.2z"/></svg>${n>1?`<b>${n}</b>`:""}</button>`};
 const favPor=d=>{if(!F.fav)return"";const q=Fav.quien(d);if(!q.length)return"";
   return `<div class="favby">♥ ${esc(q.map(x=>x.n).join(", "))}${d.nv?' · <span class="nv">Ya no vigente</span>':""}</div>`};
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-fav]");if(!b)return;e.preventDefault();
@@ -2807,15 +2806,17 @@ const Det={d:null,cache:new Map(),hist:false,_idx:null,_n:-1,
     document.getElementById("det-copy").onclick=()=>{const t=capS(tit)+"\n\n"+capS(desc)+"\n\n"+d.ent+(d.url?"\n"+d.url:"");
       (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>aviso("Descripción copiada")).catch(()=>aviso("No se pudo copiar"))};
     this.pintaPie()},
-  pintaPie(){const d=this.d;if(!d)return;const on=Fav.ok&&Fav.mio(d);
+  pintaPie(){const d=this.d;if(!d)return;const on=Fav.ok&&!!Fav.doc(d);
     document.getElementById("det-f").innerHTML=`${Fav.err?"":`<button class="btn det-fav${on?" on":""}" type="button" id="det-fav" aria-pressed="${on}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-9.3-9.2C1.5 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.7 3.5 4.5 6.8-1.8 4.8-9.3 9.2-9.3 9.2z"/></svg>${on?"Favorito":"Favorito"}</button>`}
       <button class="btn" type="button" id="det-sim">Simular caja</button><button class="btn" type="button" id="det-rad">Radicar</button>
       ${window.Chat&&Chat.ok?'<button class="btn" type="button" id="det-chat" title="Compartir en el chat del equipo">Al chat</button>':""}
       ${d.url?`<a class="btn primary" href="${d.url}" target="_blank" rel="noopener">Abrir en SECOP ↗</a>`:""}`;
     const f=document.getElementById("det-fav");if(f)f.onclick=()=>Fav.toggle(d);
-    document.getElementById("det-sim").onclick=()=>{this.cerrar();simContract(d)};
-    document.getElementById("det-rad").onclick=()=>{this.cerrar();Rad.abrir(d)};
-    const ch=document.getElementById("det-chat");if(ch)ch.onclick=()=>{this.cerrar();Chat.adj=d;Chat.abrir(true);Chat.pintaAdj();setTimeout(()=>document.getElementById("chat-t").focus(),60)}}
+    document.getElementById("det-sim").onclick=()=>this.luego(()=>simContract(d));
+    document.getElementById("det-rad").onclick=()=>this.luego(()=>Rad.abrir(d));
+    const ch=document.getElementById("det-chat");if(ch)ch.onclick=()=>this.luego(()=>{Chat.adj=d;Chat.abrir(true);Chat.pintaAdj();setTimeout(()=>document.getElementById("chat-t").focus(),60)})},
+  luego(fn){const h=this.hist;this.cerrar();if(!h)return fn();let ok=false;
+    const go=()=>{if(ok)return;ok=true;removeEventListener("popstate",go);setTimeout(fn,0)};addEventListener("popstate",go);setTimeout(go,600)}
 };
 window.Det=Det;
 document.addEventListener("click",e=>{
