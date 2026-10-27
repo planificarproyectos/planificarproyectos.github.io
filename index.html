@@ -28,7 +28,6 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
-<link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -753,7 +752,7 @@ document.querySelectorAll('.hero,.lead2-grid').forEach(el=>{let tx=null,ty=null,
  const show=()=>{box.classList.add('show');box.setAttribute('aria-hidden','false')};
  const hide=()=>{box.classList.remove('show');box.setAttribute('aria-hidden','true')};
  addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;setTimeout(show,1500)});
- if(ios&&safari){box.classList.add('is-ios');setTimeout(show,2500)}
+ /* Sin manifiesto: el sitio ya no se instala como app (las apps de /…/ sí) */
  box.querySelector('.yes').addEventListener('click',async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice.catch(()=>{});deferred=null;hide()});
  box.querySelector('.no').addEventListener('click',()=>{try{localStorage.setItem('pp-install-later',Date.now()+12*36e5)}catch(e){}hide()});
  addEventListener('appinstalled',hide);

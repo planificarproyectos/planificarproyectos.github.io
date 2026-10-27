@@ -3,7 +3,7 @@
   "short_name": "Wellness",
   "id": "/planificar-proyectos-apps/",
   "start_url": "/planificar-proyectos-apps/",
-  "scope": "/",
+  "scope": "/planificar-proyectos-apps/",
   "display": "standalone",
   "background_color": "#111315",
   "theme_color": "#111315",

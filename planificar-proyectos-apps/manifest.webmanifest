@@ -3,7 +3,7 @@
   "short_name": "PP Apps",
   "id": "/planificar-proyectos-apps/",
   "start_url": "/planificar-proyectos-apps/",
-  "scope": "/",
+  "scope": "/planificar-proyectos-apps/",
   "display": "standalone",
   "background_color": "#04141b",
   "theme_color": "#111315",

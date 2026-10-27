@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
 <style id="splash-css">
 /* Pantalla de entrada: el radar se dibuja, barre una vuelta y el punto late; luego entra el nombre (≈2,2 s) */
 #splash{position:fixed;inset:0;z-index:100;background:var(--bg,#111315);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .45s ease,visibility .45s;animation:sp-auto .01s linear 6s forwards;color:var(--accent-fg,#C6F432)}
@@ -24,18 +24,6 @@
 @keyframes sp-auto{to{opacity:0;visibility:hidden}}
 @media (prefers-reduced-motion:reduce){#splash *{animation:none!important;stroke-dashoffset:0!important;opacity:1!important}#splash .ping,#splash .sweep{opacity:0!important}}
 </style>
-<div id="splash" role="img" aria-label="Radar SECOP">
-  <svg viewBox="0 0 200 200" aria-hidden="true">
-    <defs><linearGradient id="sw-g" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="currentColor" stop-opacity="0"/><stop offset="1" stop-color="currentColor" stop-opacity=".55"/></linearGradient></defs>
-    <circle class="ping" cx="100" cy="100" r="10"/>
-    <g class="sweep"><path d="M100 100 L100 44 A56 56 0 0 1 148.5 72 Z" fill="url(#sw-g)"/></g>
-    <circle class="ring r1" cx="100" cy="100" r="56" pathLength="1"/>
-    <circle class="ring r2" cx="100" cy="100" r="31" pathLength="1"/>
-    <path class="tick t1" d="M100 44V31"/><path class="tick t2" d="M156 100h13"/><path class="tick t3" d="M100 156v13"/><path class="tick t4" d="M44 100H31"/>
-    <circle class="dot" cx="100" cy="100" r="10"/>
-  </svg>
-  <div class="word">RADAR<span>SECOP</span></div>
-</div>
 <script>
 /* Se oculta al cargar (mínimo 2,2 s) y se repite al iniciar sesión, igual que en PowerFit y Proyecta */
 var splashT0=Date.now(),splashTm=null;
@@ -601,6 +589,20 @@ body .pp-card p{color:var(--muted)}
 body .pp-card input{background:var(--bg);color:var(--fg);border-color:var(--line);border-radius:999px;padding:12px 18px}
 body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);border-radius:999px;min-height:48px}
 </style>
+</head>
+<body>
+<div id="splash" role="img" aria-label="Radar SECOP">
+  <svg viewBox="0 0 200 200" aria-hidden="true">
+    <defs><linearGradient id="sw-g" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="currentColor" stop-opacity="0"/><stop offset="1" stop-color="currentColor" stop-opacity=".55"/></linearGradient></defs>
+    <circle class="ping" cx="100" cy="100" r="10"/>
+    <g class="sweep"><path d="M100 100 L100 44 A56 56 0 0 1 148.5 72 Z" fill="url(#sw-g)"/></g>
+    <circle class="ring r1" cx="100" cy="100" r="56" pathLength="1"/>
+    <circle class="ring r2" cx="100" cy="100" r="31" pathLength="1"/>
+    <path class="tick t1" d="M100 44V31"/><path class="tick t2" d="M156 100h13"/><path class="tick t3" d="M100 156v13"/><path class="tick t4" d="M44 100H31"/>
+    <circle class="dot" cx="100" cy="100" r="10"/>
+  </svg>
+  <div class="word">RADAR<span>SECOP</span></div>
+</div>
 <div class="wrap">
   <div class="top">
     <div>
@@ -2857,7 +2859,9 @@ var Inst={prompt:null,KEY:'radar:installDismiss',
     var c=document.getElementById('cta-instalar'); if(c){
       if(this.standalone()){ c.innerHTML='<div class="cta-body"><div class="ib-row"><img src="icon-192.png" alt="" width="40" height="40"><div class="ib-txt"><b>App instalada</b><span>Estás usando Radar SECOP como app</span></div></div></div>'; c.hidden=false; }
       else if(this.can()){ c.innerHTML='<div class="cta-body">'+this.body(false)+'</div>'; c.hidden=false; }
-      else c.hidden=true; } },
+      else{ c.innerHTML='<div class="cta-body"><div class="ib-row"><img src="icon-192.png" alt="" width="40" height="40"><div class="ib-txt"><b>Instala Radar SECOP</b><span>Desde el menú de Chrome:</span></div></div>'+
+        '<ol><li>Toca el menú <b>⋮</b> (arriba a la derecha).</li><li>Elige <b>Instalar app</b> o <b>Agregar a la pantalla principal</b> → <b>Instalar</b>.</li></ol>'+
+        '<p class="note">Si solo aparece «Abrir en la app» o el ícono sale con una letra, desinstala la app «PP Apps» antigua, instálala de nuevo y luego instala el Radar.</p></div>'; c.hidden=false; } } },
   go:function(){ var pr=this.prompt,self=this; if(!pr) return; pr.prompt(); (pr.userChoice||Promise.resolve({})).then(function(ch){
     if(ch&&ch.outcome==='accepted') self.prompt=null; else { try{ localStorage.setItem(self.KEY,Date.now()); }catch(e){} } self.show(); }); },
   no:function(){ try{ localStorage.setItem(this.KEY,Date.now()); }catch(e){} this.show(); }
