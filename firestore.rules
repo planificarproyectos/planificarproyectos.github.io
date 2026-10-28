@@ -96,6 +96,41 @@ service cloud.firestore {
       allow delete: if isAdmin() || (ppRadar() && resource.data.uid == request.auth.uid);
     }
 
+    // Chat de Proyecta: conversaciones privadas entre dos personas de la misma empresa (empresas/{empresaId}/...).
+    // Miembro = cuenta con esa empresaId y Proyecta aprobado. El administrador ve todas las conversaciones.
+    function invData() { return get(invitePath()).data; }
+    function pyMember(eid) {
+      return invited() && invData().get('empresaId', '') == eid
+        && invData().get('proyecta', '') == 'aprobado' && invData().get('apps', {}).get('proyecta', true) != false;
+    }
+    function pyChat(eid) { return isAdmin() || pyMember(eid); }
+    function miembroPath(eid, uid) { return /databases/$(database)/documents/empresas/$(eid)/miembros/$(uid); }
+    function chatPath(eid, cid) { return /databases/$(database)/documents/empresas/$(eid)/chats/$(cid); }
+    function enChat(eid, cid) { return request.auth.uid in get(chatPath(eid, cid)).data.u; }
+
+    // Directorio de la empresa: cada miembro publica su nombre y correo; lo ven solo los de su empresa
+    match /empresas/{eid}/miembros/{uid} {
+      allow read: if pyChat(eid);
+      allow create, update: if pyChat(eid) && uid == request.auth.uid && request.resource.data.uid == uid;
+      allow delete: if isAdmin() || (signedIn() && uid == request.auth.uid);
+    }
+    // Conversación: id = uidA_uidB (ordenados); solo sus dos participantes la leen y la actualizan
+    match /empresas/{eid}/chats/{cid} {
+      allow read: if isAdmin() || (pyMember(eid) && request.auth.uid in resource.data.u);
+      allow create: if pyChat(eid) && request.resource.data.u is list && request.resource.data.u.size() == 2
+        && request.auth.uid in request.resource.data.u && cid == request.resource.data.u[0] + '_' + request.resource.data.u[1]
+        && (isAdmin() || (exists(miembroPath(eid, request.resource.data.u[0])) && exists(miembroPath(eid, request.resource.data.u[1]))));
+      allow update: if pyChat(eid) && request.auth.uid in resource.data.u && request.resource.data.u == resource.data.u;
+      allow delete: if isAdmin();
+    }
+    match /empresas/{eid}/chats/{cid}/mensajes/{mid} {
+      allow read: if isAdmin() || (pyMember(eid) && enChat(eid, cid));
+      allow create: if pyChat(eid) && enChat(eid, cid) && request.resource.data.uid == request.auth.uid
+        && request.resource.data.t == request.time
+        && request.resource.data.txt is string && request.resource.data.txt.size() <= 2000;
+      allow delete: if isAdmin() || (pyChat(eid) && enChat(eid, cid) && resource.data.uid == request.auth.uid);
+    }
+
     // Lista de administradores: cada quien puede ver si es administrador; solo un administrador da o quita el rol
     match /admins/{uid} {
       allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);

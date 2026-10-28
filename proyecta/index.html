@@ -800,6 +800,108 @@ body.desk .dtabs{display:block}
 <div class="toast" id="toast" role="status" hidden></div>
 <div class="instbar" id="instbar" role="dialog" aria-label="Instalar Proyecta" hidden></div>
 <button class="fab" id="fab" data-act="wz-open" aria-label="Crear un proyecto nuevo paso a paso" title="Nuevo proyecto paso a paso" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+<button class="chat-fab" id="chat-fab" type="button" aria-label="Chat de la empresa" aria-controls="chat" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.7A8 8 0 1 1 21 12z"/><path d="M8.5 10.5h7M8.5 14h4.5"/></svg><b id="chat-n" hidden></b></button>
+<section class="chat" id="chat" role="dialog" aria-label="Chat de la empresa" hidden>
+  <header class="chat-h">
+    <button class="chat-op" id="chat-back" type="button" aria-label="Volver a las conversaciones" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
+    <div class="chat-tt"><b id="chat-tit">Chat</b><span id="chat-sub"></span></div>
+    <div class="chat-ops">
+      <button class="chat-op" id="chat-snd" type="button" aria-pressed="true" title="Sonido de mensajes" aria-label="Sonido de mensajes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="on" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/><path class="off" d="M17 9l5 6M22 9l-5 6"/></svg></button>
+      <button class="chat-op" id="chat-vib" type="button" aria-pressed="true" title="Vibración (Android)" aria-label="Vibración"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2"/><path class="on" d="M3 8v8M21 8v8"/><path class="off" d="M3 3l18 18"/></svg></button>
+      <button class="chat-op buzz" id="chat-buzz" type="button" title="Enviar un zumbido" aria-label="Enviar un zumbido" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span id="chat-buzz-t"></span></button>
+      <button class="chat-op chat-x" id="chat-x" type="button" aria-label="Cerrar chat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+  </header>
+  <p class="chat-ios" id="chat-ios" hidden>En iPhone: quita el modo silencio para oír los avisos. La vibración no está disponible.</p>
+  <div class="chat-emp" id="chat-emp" hidden></div>
+  <div class="chat-l" id="chat-l" aria-live="polite"></div>
+  <div class="chat-adj" id="chat-adj" hidden></div>
+  <form class="chat-f" id="chat-f" autocomplete="off" hidden>
+    <button class="chat-clip" id="chat-clip" type="button" aria-label="Adjuntar un proyecto" title="Adjuntar un proyecto"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5 12.6 20a5.5 5.5 0 0 1-7.8-7.8l8.8-8.8a3.7 3.7 0 0 1 5.2 5.2l-8.8 8.8a1.8 1.8 0 0 1-2.6-2.6l8-8"/></svg></button>
+    <textarea id="chat-t" rows="1" maxlength="2000" placeholder="Escribe un mensaje…" aria-label="Mensaje"></textarea>
+    <button class="chat-send" type="submit" aria-label="Enviar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12 20 4l-6 16-3-7z"/></svg></button>
+  </form>
+  <p class="chat-ro" id="chat-ro" hidden>Vista de administrador: solo lectura.</p>
+  <div class="chat-pick" id="chat-pick" hidden></div>
+</section>
+<style>
+/* Chat privado de la empresa (mismo diseño que el chat de Radar SECOP) */
+.chat-fab{position:fixed;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 88px);z-index:26;width:52px;height:52px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--acc-ink);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.3);cursor:pointer}
+.chat-fab.solo{bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 18px)}
+.chat-fab svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chat-fab b{position:absolute;top:-3px;right:-3px;min-width:22px;height:22px;border-radius:11px;background:#FF4F6D;color:#fff;font-size:11.5px;display:flex;align-items:center;justify-content:center;padding:0 6px;border:2px solid var(--bg)}
+.chat{position:fixed;inset:0;z-index:40;background:var(--bg);color:var(--ink);display:flex;flex-direction:column}
+html.lock-chat,html.lock-chat body{overflow:hidden}
+.chat-h{display:flex;align-items:center;gap:8px;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px;border-bottom:1px solid var(--line)}
+.chat-tt{flex:1;min-width:0;display:grid}
+.chat-tt b{font-size:17px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-tt span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-ops{display:flex;align-items:center;gap:6px;flex:none}
+.chat-op{flex:none;height:36px;min-width:36px;border:0;border-radius:999px;background:var(--sunk);color:var(--muted);display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:0 8px;cursor:pointer}
+.chat-op svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chat-op[aria-pressed="true"]{color:var(--ink)}
+.chat-op[aria-pressed="true"] .off,.chat-op[aria-pressed="false"] .on{display:none}
+.chat-op.chat-x{color:var(--ink)}
+.chat-op.buzz{background:var(--acc);color:var(--on-acc)}
+.chat-op.buzz svg{fill:currentColor;stroke:none}
+.chat-op.buzz:disabled{background:var(--sunk);color:var(--muted)}
+.chat-op.buzz span{font-size:12px;font-weight:700}.chat-op.buzz span:empty{display:none}
+.chat-ios,.chat-ro{margin:0;padding:6px 14px;font-size:12px;color:var(--muted);background:var(--sunk);border-bottom:1px solid var(--line)}
+.chat-ro{border:0;border-top:1px solid var(--line);text-align:center;padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px))}
+.chat-emp{padding:8px 12px;border-bottom:1px solid var(--line)}
+.chat-emp select{width:100%;font:inherit;font-size:14px;padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:var(--sunk);color:var(--ink)}
+.chat-l{flex:1;min-height:0;overflow:auto;padding:10px 12px;display:flex;flex-direction:column;gap:2px;overscroll-behavior:contain}
+.chat-v{margin:auto;text-align:center;display:grid;gap:6px;color:var(--muted);padding:20px}.chat-v b{color:var(--ink)}
+.chat-sec{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--muted);margin:10px 4px 4px}
+.chat-c{display:flex;align-items:center;gap:10px;border:0;background:transparent;color:var(--ink);text-align:left;padding:9px 8px;border-radius:14px;width:100%;cursor:pointer}
+.chat-c:hover{background:var(--sunk)}
+.chat-c .av{width:40px;height:40px;font-size:14px}
+.chat-c .cx{flex:1;min-width:0;display:grid;gap:1px}
+.chat-c .cx b{font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-c .cx span{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-c .cm{flex:none;display:grid;justify-items:end;gap:4px;font-size:11px;color:var(--muted)}
+.chat-c .dot{width:10px;height:10px;border-radius:50%;background:#FF4F6D}
+.chat-c.nl .cx b,.chat-c.nl .cx span{color:var(--ink);font-weight:800}
+.chat-dia{align-self:center;font-size:11.5px;color:var(--muted);background:var(--sunk);border-radius:999px;padding:3px 10px;margin:10px 0 6px;text-transform:capitalize}
+.chat-buzz-m{align-self:center;font-size:12.5px;font-weight:700;color:var(--acc-ink);background:var(--acc-soft);border-radius:999px;padding:4px 12px;margin:8px 0}
+.msg{display:flex;align-items:flex-end;gap:8px;max-width:86%;margin-top:6px;min-width:0}
+.msg.seg{margin-top:2px;padding-left:36px}
+.msg.mio{align-self:flex-end;flex-direction:row-reverse;padding-left:0}
+.av{flex:none;width:28px;height:28px;border-radius:50%;background:hsl(var(--h) 55% 45%);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.bub{background:var(--sunk);border-radius:16px 16px 16px 4px;padding:7px 11px;display:grid;gap:3px;min-width:0;max-width:100%;overflow:hidden}
+.msg.mio .bub{background:var(--acc);color:var(--on-acc);border-radius:16px 16px 4px 16px}
+.bub .who{font-size:12px;color:var(--acc-ink)}
+.bub p{margin:0;font-size:14.5px;line-height:1.4;overflow-wrap:anywhere}
+.bub .hr{font-size:10.5px;opacity:.65;justify-self:end}
+.bub .del{border:0;background:none;color:inherit;font:inherit;text-decoration:underline;padding:0;cursor:pointer}
+.chat-ref{background:var(--bg);color:var(--ink);border-radius:12px;padding:8px 10px;display:grid;gap:2px;border-left:3px solid var(--acc);min-width:0}
+.chat-ref b{font-size:12.5px;overflow-wrap:anywhere}.chat-ref span{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.chat-ref button{justify-self:start;margin-top:4px;border:0;background:var(--sunk);color:var(--ink);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer}
+.chat-adj{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 12px;background:var(--sunk);border-radius:12px;padding:6px 10px;font-size:12.5px}
+.chat-adj button{border:0;background:none;color:var(--muted);cursor:pointer}
+.chat-f{display:flex;align-items:flex-end;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+.chat-f textarea{flex:1;resize:none;min-height:42px;max-height:120px;border:1px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:21px;padding:10px 16px;font:inherit;font-size:15px;line-height:1.35}
+.chat-f textarea:focus{outline:0;border-color:var(--acc-ink)}
+.chat-clip,.chat-send{flex:none;width:42px;height:42px;border-radius:50%;border:0;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.chat-clip{background:var(--sunk);color:var(--muted)}
+.chat-send{background:var(--acc);color:var(--on-acc)}
+.chat-clip svg,.chat-send svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chat-pick{position:absolute;left:12px;right:12px;bottom:calc(66px + env(safe-area-inset-bottom,0px));max-height:50%;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px;display:grid;gap:4px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.chat-pick>b{font-size:12.5px;color:var(--muted);padding:4px 6px}
+.chat-pick>small{padding:0 6px 6px;color:var(--muted)}
+.chat-pick button{border:0;background:var(--sunk);color:var(--ink);border-radius:10px;padding:8px 10px;text-align:left;display:grid;gap:2px;cursor:pointer}
+.chat-pick button small{color:var(--muted);font-size:11.5px}
+@keyframes sacude{0%,100%{transform:none}10%,50%,90%{transform:translate(-9px,2px) rotate(-1deg)}30%,70%{transform:translate(9px,-2px) rotate(1deg)}}
+html.sacude body{animation:sacude .7s cubic-bezier(.36,.07,.19,.97) both}
+@media (prefers-reduced-motion:reduce){html.sacude body{animation:none}}
+body.desk .chat-fab{bottom:94px;right:28px}
+body.desk .chat-fab.solo{bottom:24px}
+@media (min-width:980px){
+  .chat{inset:auto 24px 24px auto;width:400px;height:min(640px,calc(100vh - 48px));border:1px solid var(--line);border-radius:20px;box-shadow:0 20px 50px rgba(0,0,0,.45);overflow:hidden}
+  .chat-h{padding-top:12px}
+  html.lock-chat,html.lock-chat body{overflow:auto}
+}
+</style>
 <div class="wiz" id="wiz" role="dialog" aria-modal="true" aria-label="Asistente de proyecto nuevo" hidden></div>
 
 <script>
@@ -2691,7 +2793,7 @@ document.addEventListener('change',e=>{if(e.target.type==='checkbox'&&e.target.c
 document.addEventListener('keydown',e=>{const w=$('#wiz');if(!w||w.hidden)return;
   if(e.key==='Escape'){e.stopPropagation();wzClose();return}
   if(e.key==='Enter'&&e.target.tagName==='INPUT'&&e.target.closest('#wiz')){e.preventDefault();if(WZ.i<WZ_STEPS.length-1)wzNext()}},true);
-function fabSync(){const f=$('#fab');if(f)f.hidden=!(ST.ready&&!ST.readOnly)}
+function fabSync(){const f=$('#fab');if(f)f.hidden=!(ST.ready&&!ST.readOnly);if(window.Chat)Chat.pinta()}
 async function wzSave(){const P=wzBuild(WZ.a);wzClose(true);
   if(await createProject(null,P,{keepName:true,goTo:'inicio',msg:'Proyecto guardado. Revisa el detalle en Inicio y afínalo en Modelo.'})&&window.Uso)Uso.ev('asistente')}
 
@@ -3204,7 +3306,7 @@ function startFirebase(){
   FB.auth.onAuthStateChanged(async u=>{
     if(FB.unsub){FB.unsub();FB.unsub=null}if(FB.unsubP){FB.unsubP();FB.unsubP=null}
     if(FB.unsubA){FB.unsubA();FB.unsubA=null}if(window.Uso)Uso.stop();
-    if(!u){stopShared();ST.ready=false;ST.pid=null;ST.P=null;ST.R=null;ST.projects={};ST.mode='local';closeSheet();showAuth('login');return}
+    if(!u){Chat.stop();stopShared();ST.ready=false;ST.pid=null;ST.P=null;ST.R=null;ST.projects={};ST.mode='local';closeSheet();showAuth('login');return}
     hideAuth();
     const ok=await ensureAccess(u);
     if(!ok){showNoAccess(u);return}
@@ -3226,7 +3328,7 @@ function watchApproval(u){
     if(ST.mode==='fb')stopFb();
     showApproval(u,st,d)},e=>{console.warn('aprobación',e);showApproval(u,'error')});
 }
-function stopFb(){stopShared();if(window.Apariencia)Apariencia.disconnect();if(window.Uso)Uso.stop();const fb=$('#fab');if(fb)fb.hidden=true;if(FB.unsub){FB.unsub();FB.unsub=null}if(FB.unsubP){FB.unsubP();FB.unsubP=null}
+function stopFb(){Chat.stop();stopShared();if(window.Apariencia)Apariencia.disconnect();if(window.Uso)Uso.stop();const fb=$('#fab');if(fb)fb.hidden=true;if(FB.unsub){FB.unsub();FB.unsub=null}if(FB.unsubP){FB.unsubP();FB.unsubP=null}
   ST.ready=false;ST.mode='local';ST.pid=null;ST.P=null;ST.R=null;ST.projects={};closeSheet()}
 function showApproval(u,st,d){hideSplash();const a=$('#auth');a.hidden=false;document.body.classList.add('authing');$('#s-loading').hidden=true;
   const em=esc(u&&u.email||'tu cuenta'),f=d&&d.proyectaSol?fDate(d.proyectaSol).split(' · ')[0]:'';
@@ -3281,7 +3383,7 @@ function startFb(u){
         ST.fbCol.doc('p_'+id).set(doc).catch(()=>{});ST.projects={[id]:doc}}
       const ids=Object.keys(ST.projects);
       selectProject(prefs.last&&ST.projects[prefs.last]?prefs.last:ids.sort((a,b)=>(ST.projects[b].actualizado||0)-(ST.projects[a].actualizado||0))[0]);
-      ready();watchShared();return}
+      ready();watchShared();Chat.start(u);return}
     // Ajustes cambiados en otro dispositivo (tema, color, Modo Escritorio, columnas, periodicidad)
     if(ajustes&&!snap.metadata.hasPendingWrites&&applyRemotePrefs(ajustes,false)){applyTheme();applyDesk();if(ST.ready)renderScreen()}
     // Supuestos macro cambiados en otro dispositivo: se recalculan todos los resultados
@@ -3337,6 +3439,178 @@ document.addEventListener('submit',e=>{if(e.target.id!=='authForm')return;e.prev
   job.then(()=>{if(m!=='reset')loginPending=true;if(m==='reset'){show('Te enviamos un correo para restablecer tu contraseña.',true);btn.disabled=false;btn.textContent=label}})
      .catch(err=>{show(authErr(err));btn.disabled=false;btn.textContent=label});
 });
+/* ---------- Chat privado de la empresa ----------
+   Conversaciones uno a uno entre personas de la misma empresa: empresas/{empresaId}/miembros (directorio),
+   empresas/{empresaId}/chats/{uidA_uidB} (participantes, último mensaje y lectura) y .../mensajes.
+   El administrador ve todas las conversaciones de cualquier empresa (en las ajenas, solo lectura). */
+const Aviso={ctx:null,
+  pref(k,v){const K='chat'+k;if(v===undefined)return prefs[K]!==false;prefs[K]=!!v;savePrefs()},
+  audio(){try{if(!this.ctx){const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;this.ctx=new A()}if(this.ctx.state==='suspended')this.ctx.resume();return this.ctx}catch(e){return null}},
+  nota(f,ini,dur,vol,tipo){const c=this.audio();if(!c)return;const o=c.createOscillator(),g=c.createGain(),t=c.currentTime+ini;
+    o.type=tipo||'sine';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.015);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g).connect(c.destination);o.start(t);o.stop(t+dur+.02)},
+  tono(){if(!this.pref('Snd'))return;this.nota(880,0,.16,.18);this.nota(1318.5,.12,.22,.16)},
+  buzz(){if(!this.pref('Snd'))return;for(let i=0;i<6;i++)this.nota(i%2?150:110,i*.1,.12,.32,'square');this.nota(660,.65,.18,.2);this.nota(990,.78,.25,.2)},
+  vibra(p){if(!this.pref('Vib')||!navigator.vibrate)return;try{navigator.vibrate(p)}catch(e){}},
+  _tt:null,_t0:document.title,_n:0,
+  titulo(n){if(!document.hidden)return;this._n+=n;clearInterval(this._tt);let on=false;
+    this._tt=setInterval(()=>{on=!on;document.title=on?`(${this._n}) Nuevo mensaje`:this._t0},1000)},
+  paraTitulo(){if(!this._tt)return;clearInterval(this._tt);this._tt=null;this._n=0;document.title=this._t0},
+  pend:null};
+Aviso.ios=/iphone|ipad|ipod/i.test(navigator.userAgent||'')||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+Aviso.desbloquear=function(){const c=this.audio();if(!c)return;
+  try{if(c.state!=='running')c.resume();const b=c.createBuffer(1,1,22050),src=c.createBufferSource();src.buffer=b;src.connect(c.destination);src.start(0)}catch(e){}};
+['touchend','click','keydown'].forEach(ev=>addEventListener(ev,()=>{if(!Aviso.ctx||Aviso.ctx.state!=='running')Aviso.desbloquear()},{passive:true,capture:true}));
+document.addEventListener('visibilitychange',()=>{if(document.hidden)return;Aviso.paraTitulo();
+  if(Aviso.ctx&&Aviso.ctx.state!=='running'){try{Aviso.ctx.resume()}catch(e){}}
+  const p=Aviso.pend;Aviso.pend=null;if(p)setTimeout(()=>{p==='zumbido'?Aviso.buzz():Aviso.tono()},250)});
+
+const Chat={uid:null,admin:false,miEid:'',eid:'',ename:'',emps:[],mbrs:{},chats:{},cur:null,ms:[],adj:null,abierto:false,vista:'lista',ok:false,
+  ESPERA:30000,_buzzT:{},
+  col(){return FB.db.collection('empresas').doc(this.eid)},
+  yo(){return (ST.me&&ST.me.name)||String(ST.fbEmail||'').split('@')[0]},
+  async start(u){this.stop();this.uid=u.uid;
+    try{const sn=await FB.db.collection('invitaciones').doc((u.email||'').toLowerCase()).get(),d=sn.exists?sn.data():{};
+      this.miEid=String(d.empresaId||'');this.ename=String(d.empresa||'');
+      this.admin=u.uid===ADMIN_UID||!!(window.Uso&&await Uso.esAdmin(FB.db,u));
+      if(this.admin){const es=await FB.db.collection('empresas').get().catch(()=>null);
+        this.emps=es?es.docs.map(x=>({id:x.id,n:(x.data()||{}).nombre||x.id})).sort((a,b)=>a.n.localeCompare(b.n,'es')):[]}
+      const eid=this.miEid||(this.emps[0]&&this.emps[0].id)||'';
+      if(!eid||this.uid!==u.uid){this.pinta();return}
+      this.empresa(eid)}catch(e){console.warn('chat',e);this.pinta()}},
+  stop(){['_um','_uc','_ux'].forEach(k=>{if(this[k]){this[k]();this[k]=null}});
+    this.ok=false;this.eid='';this.mbrs={};this.chats={};this.cur=null;this.ms=[];this.adj=null;if(this.abierto)this.abrir(false);this.pinta()},
+  empresa(eid){['_um','_uc','_ux'].forEach(k=>{if(this[k]){this[k]();this[k]=null}});
+    this.eid=eid;this.chats={};this.mbrs={};this.cur=null;this.ms=[];this.vista='lista';
+    const e=this.emps.find(x=>x.id===eid);if(e)this.ename=e.n;else if(eid===this.miEid&&!this.ename)this.ename='';
+    const c=this.col();
+    // Me publico en el directorio de mi empresa para que mis compañeros me encuentren
+    if(eid===this.miEid)c.collection('miembros').doc(this.uid).set({uid:this.uid,n:this.yo(),e:String(ST.fbEmail||'').toLowerCase(),t:Date.now()},{merge:true}).catch(e=>console.warn('miembro',e&&e.code));
+    this._um=c.collection('miembros').onSnapshot(sn=>{const m={};sn.docs.forEach(x=>{const d=x.data()||{};m[x.id]={uid:x.id,n:d.n||String(d.e||'').split('@')[0],e:d.e||''}});this.mbrs=m;this.pinta()},
+      e=>console.warn('miembros',e&&e.code));
+    let first=true;const q=this.admin?c.collection('chats'):c.collection('chats').where('u','array-contains',this.uid);
+    this._uc=q.onSnapshot(sn=>{const prev=this.chats,nuevos=[];const m={};
+      sn.docs.forEach(x=>{const d=x.data()||{};m[x.id]=Object.assign({id:x.id},d);
+        const u=d.ult,p=prev[x.id]&&prev[x.id].ult;
+        if(!first&&u&&u.uid!==this.uid&&(d.u||[]).includes(this.uid)&&(!p||u.t>p.t))nuevos.push(Object.assign({cid:x.id},u))});
+      this.chats=m;first=false;this.ok=true;if(nuevos.length)this.llega(nuevos);
+      if(this.abierto&&this.vista==='conv'&&this.cur)this.leido(this.cur);this.pinta()},
+      e=>{console.warn('chats',e&&e.code);this.ok=false;this.pinta()});
+    this.pinta()},
+  otro(c){const o=(c.u||[]).find(x=>x!==this.uid)||'';return o},
+  nombre(uid,c){return (this.mbrs[uid]&&this.mbrs[uid].n)||(c&&c.n&&c.n[uid])||'Usuario'},
+  titulo(c){if((c.u||[]).includes(this.uid))return this.nombre(this.otro(c),c);return (c.u||[]).map(x=>this.nombre(x,c)).join(' · ')},
+  mia(c){return (c.u||[]).includes(this.uid)},
+  sinLeer(c){const u=c.ult;return !!u&&this.mia(c)&&u.uid!==this.uid&&u.t>((c.leido||{})[this.uid]||0)},
+  totalSinLeer(){return Object.values(this.chats).filter(c=>this.sinLeer(c)).length},
+  leido(cid){const c=this.chats[cid];if(!c||!this.sinLeer(c))return;
+    this.col().collection('chats').doc(cid).update({['leido.'+this.uid]:Date.now()}).catch(()=>{})},
+  llega(ns){const z=ns.find(m=>m.tipo==='zumbido'),viendo=this.abierto&&this.vista==='conv';
+    if(document.hidden){Aviso.pend=z?'zumbido':(Aviso.pend||'tono');Aviso.titulo(ns.length);if(z&&!viendo)this.abrirConv(z.cid);return}
+    if(z){Aviso.buzz();Aviso.vibra([220,90,220,90,420]);const h=document.documentElement;h.classList.remove('sacude');void h.offsetWidth;h.classList.add('sacude');
+      setTimeout(()=>h.classList.remove('sacude'),900);toast(`⚡ ${z.n||'Alguien'} te envió un zumbido`);if(!(viendo&&this.cur===z.cid)){this.abrir(true);this.abrirConv(z.cid)}}
+    else if(!(viendo&&ns.every(m=>m.cid===this.cur)&&!document.hidden)){Aviso.tono();Aviso.vibra(90)}},
+  async nueva(otro){const u=[this.uid,otro].sort(),cid=u.join('_'),ref=this.col().collection('chats').doc(cid);
+    if(!this.chats[cid]){const o=this.mbrs[otro]||{};
+      try{await ref.set({u,n:{[this.uid]:this.yo(),[otro]:o.n||''},t:Date.now()})}
+      catch(e){toast('No se pudo crear la conversación ('+(e.code||'error')+')');return}}
+    this.abrirConv(cid)},
+  abrirConv(cid){if(this._ux){this._ux();this._ux=null}this.cur=cid;this.ms=[];this.vista='conv';this._prim=false;this.adj=null;
+    const ref=this.col().collection('chats').doc(cid).collection('mensajes');
+    this._ux=ref.orderBy('t','desc').limit(200).onSnapshot(sn=>{
+      this.ms=sn.docs.map(x=>{const d=x.data({serverTimestamps:'estimate'});return Object.assign({id:x.id},d,{t:d.t&&d.t.toMillis?d.t.toMillis():Date.now()})}).sort((a,b)=>a.t-b.t);
+      this.leido(cid);this.pinta()},e=>{console.warn('mensajes',e&&e.code);toast('No se pudieron leer los mensajes');this.lista()});
+    this.leido(cid);this.pinta();
+    setTimeout(()=>{if(matchMedia('(min-width:980px)').matches&&this.mia(this.chats[cid]||{u:[this.uid]}))$('#chat-t').focus()},40)},
+  lista(){if(this._ux){this._ux();this._ux=null}this.cur=null;this.ms=[];this.vista='lista';this.adj=null;$('#chat-pick').hidden=true;this.pinta()},
+  async enviar(txt,tipo){txt=String(txt||'').trim();tipo=tipo||'txt';if(!this.cur||(!txt&&!this.adj&&tipo==='txt'))return;
+    const cid=this.cur,c=this.col().collection('chats').doc(cid),yo=this.yo(),now=Date.now();
+    const doc={uid:this.uid,n:yo,txt:txt.slice(0,2000),tipo,t:firebase.firestore.FieldValue.serverTimestamp()};
+    if(this.adj)doc.ref=this.adj;const prev=doc.ref?'📎 '+doc.ref.nombre:'';this.adj=null;this.pintaAdj();
+    try{await c.collection('mensajes').add(doc);
+      await c.update({ult:{uid:this.uid,n:yo,txt:tipo==='zumbido'?'⚡ Zumbido':(txt||prev).slice(0,120),tipo,t:now},['leido.'+this.uid]:now,['n.'+this.uid]:yo})}
+    catch(e){toast('No se pudo enviar ('+(e.code||'error')+')')}},
+  zumbido(){const falta=this.ESPERA-(Date.now()-(this._buzzT[this.cur]||0));
+    if(falta>0)return toast(`Espera ${Math.ceil(falta/1000)} s para otro zumbido`);
+    this._buzzT[this.cur]=Date.now();this.pintaBuzz();this.enviar('','zumbido').then(()=>toast('⚡ Zumbido enviado'))},
+  pintaBuzz(){const b=$('#chat-buzz'),t=$('#chat-buzz-t');const falta=Math.ceil((this.ESPERA-(Date.now()-(this._buzzT[this.cur]||0)))/1000);
+    b.disabled=falta>0;t.textContent=falta>0?falta+' s':'';clearTimeout(this._bt);if(falta>0)this._bt=setTimeout(()=>this.pintaBuzz(),1000)},
+  borrar(id){const b=document.querySelector(`[data-chat-del="${id}"]`);if(b&&b.dataset.ok!=='1'){b.dataset.ok='1';b.textContent='¿Eliminar? toca otra vez';
+      setTimeout(()=>{if(b.isConnected){b.dataset.ok='';b.textContent='Eliminar'}},3000);return}
+    this.col().collection('chats').doc(this.cur).collection('mensajes').doc(id).delete().catch(e=>toast('No se pudo eliminar ('+(e.code||'error')+')'))},
+  abrir(on){this.abierto=on;if(on){this._pSnd&&this._pSnd();this._pVib&&this._pVib()}$('#chat').hidden=!on;document.documentElement.classList.toggle('lock-chat',on);if(!on){$('#chat-pick').hidden=true;if(this.vista==='conv')this.lista()}this.pinta()},
+  pintaAdj(){const el=$('#chat-adj');if(!this.adj){el.hidden=true;el.innerHTML='';return}
+    el.hidden=false;el.innerHTML=`<span>📎 ${esc(this.adj.nombre)}</span><button type="button" aria-label="Quitar adjunto" id="chat-adj-x">✕</button>`;
+    $('#chat-adj-x').onclick=()=>{this.adj=null;this.pintaAdj()}},
+  av(uid,n,sz){const ini=String(n||'?').trim().split(/\s+/).map(x=>x[0]).slice(0,2).join('').toUpperCase(),hue=[...String(uid||'')].reduce((a,c)=>a+c.charCodeAt(0),0)%360;
+    return `<span class="av" style="--h:${hue}">${esc(ini)}</span>`},
+  hora(t){const f=new Date(t),hoy=new Date().toDateString();return f.toDateString()===hoy?f.toLocaleTimeString('es-CO',{hour:'numeric',minute:'2-digit'}):f.toLocaleDateString('es-CO',{day:'numeric',month:'short'})},
+  pinta(){
+    const fab=$('#chat-fab');if(!fab)return;
+    fab.hidden=!this.ok||!ST.ready||this.abierto;fab.classList.toggle('solo',!!($('#fab')||{}).hidden);
+    const n=this.totalSinLeer(),b=$('#chat-n');b.hidden=!n;b.textContent=n>99?'99+':n;
+    if(!this.abierto)return;
+    const conv=this.vista==='conv'&&this.cur,c=conv?(this.chats[this.cur]||{u:this.cur.split('_')}):null,mia=!conv||this.mia(c);
+    $('#chat-back').hidden=!conv;$('#chat-buzz').hidden=!conv||!mia;$('#chat-f').hidden=!conv||!mia;$('#chat-ro').hidden=!conv||mia;
+    $('#chat-tit').textContent=conv?this.titulo(c):'Chat';$('#chat-sub').textContent=conv?(mia?'Conversación privada':'Vista de administrador'):(this.ename||'Tu empresa');
+    const ep=$('#chat-emp');ep.hidden=conv||!this.admin||this.emps.length<2;
+    if(!ep.hidden)ep.innerHTML=`<select id="chat-emp-s" aria-label="Empresa">${this.emps.map(e=>`<option value="${esc(e.id)}"${e.id===this.eid?' selected':''}>${esc(e.n)}</option>`).join('')}</select>`;
+    if(conv)this.pintaBuzz();
+    const l=$('#chat-l');
+    if(!conv){
+      const cs=Object.values(this.chats).sort((a,b)=>((b.ult&&b.ult.t)||b.t||0)-((a.ult&&a.ult.t)||a.t||0));
+      const mias=cs.filter(x=>this.mia(x)),otras=cs.filter(x=>!this.mia(x)),con=new Set(mias.map(x=>this.otro(x)));
+      const fila=x=>{const nl=this.sinLeer(x),u=x.ult,o=this.mia(x)?this.otro(x):(x.u||[])[0];
+        return `<button type="button" class="chat-c${nl?' nl':''}" data-cid="${esc(x.id)}">${this.av(o,this.titulo(x))}<span class="cx"><b>${esc(this.titulo(x))}</b><span>${u?esc((u.uid===this.uid?'Tú: ':'')+u.txt):'Sin mensajes'}</span></span><span class="cm">${u?this.hora(u.t):''}${nl?'<i class="dot"></i>':''}</span></button>`};
+      const comp=Object.values(this.mbrs).filter(m=>m.uid!==this.uid&&!con.has(m.uid)).sort((a,b)=>a.n.localeCompare(b.n,'es'));
+      let h='';
+      if(mias.length)h+=`<div class="chat-sec">Conversaciones</div>`+mias.map(fila).join('');
+      if(comp.length)h+=`<div class="chat-sec">Escribir a un compañero</div>`+comp.map(m=>`<button type="button" class="chat-c" data-new="${esc(m.uid)}">${this.av(m.uid,m.n)}<span class="cx"><b>${esc(m.n)}</b><span>${esc(m.e)}</span></span></button>`).join('');
+      if(otras.length)h+=`<div class="chat-sec">Otras conversaciones de la empresa</div>`+otras.map(fila).join('');
+      l.innerHTML=h||`<div class="chat-v"><b>Aún no hay compañeros</b><span>Cuando otras personas de ${esc(this.ename||'tu empresa')} entren a Proyecta, aparecerán aquí para escribirles.</span></div>`;
+      l.scrollTop=0;return}
+    const abajo=l.scrollHeight-l.scrollTop-l.clientHeight<80;
+    if(!this.ms.length){l.innerHTML=`<div class="chat-v"><b>Aún no hay mensajes</b><span>${mia?'Escribe un mensaje o adjunta un proyecto con 📎.':'Esta conversación está vacía.'}</span></div>`;return}
+    const hoy=new Date().toDateString(),ayer=new Date(Date.now()-864e5).toDateString();let dia='',prev=null,h='';
+    this.ms.forEach(m=>{const f=new Date(m.t),ds=f.toDateString(),hr=f.toLocaleTimeString('es-CO',{hour:'numeric',minute:'2-digit'});
+      if(ds!==dia){dia=ds;prev=null;h+=`<div class="chat-dia">${ds===hoy?'Hoy':ds===ayer?'Ayer':f.toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'short'})}</div>`}
+      if(m.tipo==='zumbido'){prev=null;h+=`<div class="chat-buzz-m">⚡ ${esc(m.uid===this.uid?'Enviaste':(m.n||'Alguien')+' envió')} un zumbido · ${hr}</div>`;return}
+      const mio=m.uid===this.uid,seg=prev&&prev.uid===m.uid&&m.t-prev.t<3e5;prev=m;
+      const r=m.ref?`<div class="chat-ref"><b>${esc(m.ref.nombre||'Proyecto')}</b><span>${esc([m.ref.ciudad,m.ref.ventas?'Ventas '+fM(m.ref.ventas):'',m.ref.margen!=null?'Margen '+fP(m.ref.margen):''].filter(Boolean).join(' · '))}</span><button type="button" data-chat-pr="${esc(m.ref.owner+'~'+m.ref.pid)}">Abrir proyecto</button></div>`:'';
+      h+=`<div class="msg${mio?' mio':''}${seg?' seg':''}">${mio||seg?'':this.av(m.uid,m.n)}<div class="bub">${mio||seg?'':`<b class="who">${esc(m.n||'')}</b>`}${m.txt?`<p>${esc(m.txt).replace(/\n/g,'<br>')}</p>`:''}${r}<span class="hr">${hr}${mio?` · <button type="button" class="del" data-chat-del="${esc(m.id)}">Eliminar</button>`:''}</span></div></div>`});
+    l.innerHTML=h;if(abajo||!this._prim){l.scrollTop=l.scrollHeight;this._prim=true}
+  }};
+window.Chat=Chat;
+function chatAbrirProyecto(k){const i=k.indexOf('~'),owner=k.slice(0,i),pid=k.slice(i+1),key=owner===Chat.uid?pid:'s~'+owner+'~'+pid;
+  if(!ST.projects[key]){toast('No tienes acceso a ese proyecto. Pide que te lo compartan.',3600);return}
+  Chat.abrir(false);selectProject(key);toast('Abriste «'+(ST.projects[key].nombre||'el proyecto')+'»')}
+(function(){const t=$('#chat-t');
+  $('#chat-fab').onclick=()=>Chat.abrir(true);$('#chat-x').onclick=()=>Chat.abrir(false);$('#chat-back').onclick=()=>Chat.lista();
+  const tg=(id,k)=>{const b=$('#'+id),p=()=>b.setAttribute('aria-pressed',Aviso.pref(k));p();b.onclick=()=>{Aviso.pref(k,!Aviso.pref(k));p();if(k==='Snd'&&Aviso.pref(k))Aviso.tono();if(k==='Vib'&&Aviso.pref(k))Aviso.vibra(60)};Chat['_p'+k]=p};
+  tg('chat-snd','Snd');tg('chat-vib','Vib');
+  if(!navigator.vibrate||Aviso.ios)$('#chat-vib').hidden=true;
+  if(Aviso.ios)$('#chat-ios').hidden=false;
+  $('#chat-buzz').onclick=()=>Chat.zumbido();
+  addEventListener('keydown',e=>{if(e.key==='Escape'&&Chat.abierto){if(Chat.vista==='conv')Chat.lista();else Chat.abrir(false)}});
+  const auto=()=>{t.style.height='auto';t.style.height=Math.min(120,t.scrollHeight)+'px'};t.addEventListener('input',auto);
+  t.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#chat-f').requestSubmit()}});
+  $('#chat-f').onsubmit=e=>{e.preventDefault();const v=t.value;if(!v.trim()&&!Chat.adj)return;Chat.enviar(v);t.value='';auto()};
+  $('#chat-clip').onclick=()=>{const pk=$('#chat-pick');if(!pk.hidden){pk.hidden=true;return}
+    const L=Object.keys(ST.projects).map(id=>[id,ST.projects[id]]).filter(x=>x[1]).sort((a,b)=>(b[1].actualizado||0)-(a[1].actualizado||0));
+    pk.innerHTML=L.length?`<b>Adjuntar un proyecto</b>`+L.map(([id,d],i)=>`<button type="button" data-pk="${i}"><span>${esc(d.nombre||'Proyecto')}</span><small>${esc([d.ciudad,isShared(id)?'Compartido contigo':''].filter(Boolean).join(' · '))}</small></button>`).join('')+`<small>Tu compañero podrá abrirlo solo si se lo compartes.</small>`:`<b>No hay proyectos</b>`;
+    pk.hidden=false;pk.querySelectorAll('[data-pk]').forEach(b=>b.onclick=()=>{const [id,d]=L[+b.dataset.pk],s=isShared(id)?shInfo(id):{owner:Chat.uid,pid:id},k=d.kpis||{};
+      Chat.adj={owner:s.owner,pid:s.pid,nombre:String(d.nombre||'Proyecto').slice(0,120),ciudad:String(d.ciudad||'').slice(0,60),ventas:+k.ventas||0,margen:isFinite(+k.margen)?+k.margen:null};
+      pk.hidden=true;Chat.pintaAdj();t.focus()})};
+  $('#chat-l').addEventListener('click',e=>{const d=e.target.closest('[data-chat-del]');if(d){Chat.borrar(d.dataset.chatDel);return}
+    const p=e.target.closest('[data-chat-pr]');if(p){chatAbrirProyecto(p.dataset.chatPr);return}
+    const c=e.target.closest('[data-cid]');if(c){Chat.abrirConv(c.dataset.cid);return}
+    const n=e.target.closest('[data-new]');if(n)Chat.nueva(n.dataset.new)});
+  $('#chat-emp').addEventListener('change',e=>{if(e.target.id==='chat-emp-s')Chat.empresa(e.target.value)});
+  document.addEventListener('pointerdown',e=>{if(!Chat.abierto||!matchMedia('(min-width:980px)').matches)return;
+    if(e.target.closest('#chat,#chat-fab,.toast'))return;Chat.abrir(false)},true);
+  setInterval(()=>{if(Chat.abierto)Chat.pinta()},60000);
+})();
+
 init();
 
 </script>
