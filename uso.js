@@ -25,8 +25,10 @@
       compartir:'Imágenes compartidas',plan:'Días de planes de lectura',voz:'Lecturas en voz alta',recordatorio:'Recordatorios creados'},
     proyecta:{proyecto_creado:'Proyectos creados',asistente:'Proyectos con el asistente',version:'Versiones guardadas',
       comparar:'Comparador abierto',informe:'Informes generados',excel:'Exportaciones a Excel',compartir:'Proyectos compartidos'},
-    cotizador:{guardar:'Cotizaciones guardadas',pdf:'PDF de cotización',carpeta:'Carpetas completas',cobro:'Cuentas de cobro'}};
-  var APPS={mindfocus:'Mind Focus',powerfit:'PowerFit',lumen:'Lumen',proyecta:'Proyecta',cotizador:'Cotizador',radar:'Radar SECOP'};
+    cotizador:{guardar:'Cotizaciones guardadas',pdf:'PDF de cotización',carpeta:'Carpetas completas',cobro:'Cuentas de cobro'},
+    coordinabim:{abrir_ifc:'Modelos IFC abiertos',interferencias:'Pruebas de interferencias',reporte:'Reportes con imágenes',excel:'Exportaciones a Excel',
+      simulacion:'Simulaciones 4D',proyecto:'Proyectos guardados'}};
+  var APPS={mindfocus:'Mind Focus',powerfit:'PowerFit',lumen:'Lumen',proyecta:'Proyecta',cotizador:'Cotizador',radar:'Radar SECOP',coordinabim:'CoordinaBIM'};
   function hoy(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
   var U={EVENTOS:EVENTOS, APPS:APPS, db:null, uid:null, email:'', app:null, dia:null, pend:0};
   function inc(n){ return firebase.firestore.FieldValue.increment(n||1); }
@@ -77,9 +79,9 @@
   /* Tipos de cuenta (los asigna el administrador en el panel; invitaciones/{correo}.tipo y .empresa):
      familiar = Mind Focus, PowerFit, Lumen (marca Wellness Apps); empresarial = apps para empresas (Proyecta y las que
      se agreguen a U.EMP); mixto = todas (marca Planificar Proyectos Apps). Sin tipo guardado: mixto si tiene Proyecta aprobado. */
-  U.FAM=['mindfocus','powerfit','lumen']; U.EMP=['proyecta','cotizador','radar'];
-  // Apps empresariales exclusivas de una empresa (además del tipo de cuenta): el Cotizador es solo de Planificar Proyectos SAS
-  U.PP_EMP='planificar-proyectos-sas'; U.SOLO={cotizador:U.PP_EMP,radar:U.PP_EMP};
+  U.FAM=['mindfocus','powerfit','lumen']; U.EMP=['proyecta','cotizador','radar','coordinabim'];
+  // Apps empresariales exclusivas de una empresa (además del tipo de cuenta): Cotizador, Radar SECOP y CoordinaBIM son solo de Planificar Proyectos SAS
+  U.PP_EMP='planificar-proyectos-sas'; U.SOLO={cotizador:U.PP_EMP,radar:U.PP_EMP,coordinabim:U.PP_EMP};
   U.TIPOS={familiar:'Familiar',empresarial:'Empresarial',mixto:'Empresarial y familiar'};
   U.tipoDe=function(i){ return i&&U.TIPOS[i.tipo]?i.tipo:(i&&i.proyecta==='aprobado'?'mixto':'familiar'); };
   U.appsDeTipo=function(t){ return t==='familiar'?U.FAM:t==='empresarial'?U.EMP:U.FAM.concat(U.EMP); };
