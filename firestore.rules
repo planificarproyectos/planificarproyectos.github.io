@@ -41,7 +41,12 @@ service cloud.firestore {
       allow read, write: if isAdmin() || (signedIn() && request.auth.uid == uid && invited());
     }
     match /users/{uid}/{sub}/{rest=**} {
-      allow read, write: if isAdmin() || (signedIn() && request.auth.uid == uid && invited() && appOn(sub));
+      allow read, write: if sub != 'finanzas' && (isAdmin() || (signedIn() && request.auth.uid == uid && invited() && appOn(sub)));
+    }
+    // Planificar Finanzas: app personal. Solo planificarproyectos@gmail.com lee y escribe sus datos y la clave de la app;
+    // ningún administrador ni otra cuenta tiene acceso.
+    match /users/{uid}/finanzas/{rest=**} {
+      allow read, write: if signedIn() && request.auth.uid == uid && myEmail() == 'planificarproyectos@gmail.com';
     }
 
     // Proyectos de Proyecta compartidos: los correos de compartidoCon pueden leerlos; los de editores pueden editarlos,

@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /index-anterior.html
+Disallow: /finanzas/
 
 Sitemap: https://www.planificarproyectos.com/sitemap.xml

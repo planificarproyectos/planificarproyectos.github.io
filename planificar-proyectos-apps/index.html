@@ -328,6 +328,11 @@ svg.m-pp path{fill:var(--accent)}svg.m-w path{stroke:var(--accent)}
       <div><h2>CoordinaBIM</h2><p>Coordinación BIM: visor IFC federado, interferencias, 4D y cantidades.</p></div>
       <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
     </a>
+    <a class="app" data-app="finanzas" href="/finanzas/" hidden><span class="lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+      <svg width="72" height="72" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="15" fill="#111315"/><g fill="#F2F2EE"><rect x="14" y="36" width="8" height="14" rx="2"/><rect x="28" y="29" width="8" height="21" rx="2"/><rect x="42" y="22" width="8" height="28" rx="2"/></g><path d="M13 29 26 18l9 6 15-12M42 12h8v8" fill="none" style="stroke:var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><h2>Planificar Finanzas</h2><p>Plan de deudas, ingresos y gastos, hipotecario y compra de cartera. App personal.</p></div>
+      <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </a>
     <p class="noapps" id="noApps" hidden>Tu cuenta aún no tiene apps activas. Escríbele al administrador para que te dé acceso.</p>
   </nav>
   <div class="adm" id="adm" hidden></div>
@@ -381,7 +386,7 @@ function render(u){document.body.classList.remove('loading');try{if(window.Apari
    - Los demás: Mind Focus, PowerFit y Lumen salvo que el administrador se las quite (apps.{app} = false);
      Proyecta solo si está aprobado; ninguna si la cuenta está revocada.
    Quien crea su cuenta aquí queda registrado de una vez (activo y visible en el panel); Proyecta espera la aprobación. */
-var accUnsub=null,accUid=null;
+var accUnsub=null,accUid=null,FIN_OWNER='planificarproyectos@gmail.com';   // Planificar Finanzas: app personal de esta única cuenta
 function pintarApps(ver){var n=0;Array.prototype.forEach.call(document.querySelectorAll('.apps .app[data-app]'),function(a){var s=!!ver[a.getAttribute('data-app')];a.hidden=!s;if(s)n++});
  $('noApps').hidden=n>0;document.querySelector('.apps').classList.remove('acc-wait')}
 function accesoApps(u){if(accUnsub){accUnsub();accUnsub=null}accUid=u&&u.uid;
@@ -390,7 +395,7 @@ function accesoApps(u){if(accUnsub){accUnsub();accUnsub=null}accUid=u&&u.uid;
  try{var db=firebase.firestore(),em=u.email.toLowerCase(),ref=db.collection('invitaciones').doc(em),uid=u.uid,
    adm=window.Uso&&Uso.esAdmin?Uso.esAdmin(db,u):Promise.resolve(false);
   adm.then(function(esAdm){if(accUid!==uid)return;
-   if(esAdm){if(window.Uso&&Uso.setCuenta)Uso.setCuenta({},true);setMarca('pp');pintarApps({mindfocus:1,powerfit:1,lumen:1,proyecta:1,cotizador:1,radar:1,coordinabim:1});return}
+   if(esAdm){if(window.Uso&&Uso.setCuenta)Uso.setCuenta({},true);setMarca('pp');pintarApps({mindfocus:1,powerfit:1,lumen:1,proyecta:1,cotizador:1,radar:1,coordinabim:1,finanzas:em===FIN_OWNER});return}
    accUnsub=ref.onSnapshot(function(sn){if(accUid!==uid)return;var now=Date.now();
     if(!sn.exists){ref.set({email:em,estado:'activo',uid:uid,activado:now,ultimoUso:now,autoregistro:true}).catch(function(){});if(window.Uso&&Uso.setCuenta)Uso.setCuenta({},false);setMarca('w');pintarApps({mindfocus:1,powerfit:1,lumen:1});return}
     var d=sn.data()||{},ap=d.apps||{};if(window.Uso&&Uso.setCuenta)Uso.setCuenta(d,false);
@@ -398,7 +403,7 @@ function accesoApps(u){if(accUnsub){accUnsub();accUnsub=null}accUid=u&&u.uid;
     // Tipo de cuenta (familiar, empresarial o mixto): define la marca y qué apps se muestran; los interruptores por app afinan
     var U=window.Uso||{},t=U.tipoDe?U.tipoDe(d):(d.proyecta==='aprobado'?'mixto':'familiar'),del=U.appsDeTipo?U.appsDeTipo(t):['mindfocus','powerfit','lumen','proyecta'],v={};
     del.forEach(function(a){var so=(U.SOLO||{})[a];v[a]=a==='proyecta'?d.proyecta==='aprobado':ap[a]!==false&&(!so||d.empresaId===so)});
-    setMarca(t==='familiar'?'w':'pp');pintarApps(v)},
+    v.finanzas=em===FIN_OWNER;setMarca(t==='familiar'?'w':'pp');pintarApps(v)},
     function(){pintarApps({mindfocus:1,powerfit:1,lumen:1})})})}
  catch(e){pintarApps({mindfocus:1,powerfit:1,lumen:1})}}
 $('aSwitch').onclick=function(){setMode(mode==='login'?'register':'login')};

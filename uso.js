@@ -28,7 +28,7 @@
     cotizador:{guardar:'Cotizaciones guardadas',pdf:'PDF de cotización',carpeta:'Carpetas completas',cobro:'Cuentas de cobro'},
     coordinabim:{abrir_ifc:'Modelos IFC abiertos',interferencias:'Pruebas de interferencias',reporte:'Reportes con imágenes',excel:'Exportaciones a Excel',
       simulacion:'Simulaciones 4D',proyecto:'Proyectos guardados'}};
-  var APPS={mindfocus:'Mind Focus',powerfit:'PowerFit',lumen:'Lumen',proyecta:'Proyecta',cotizador:'Cotizador',radar:'Radar SECOP',coordinabim:'CoordinaBIM'};
+  var APPS={mindfocus:'Mind Focus',powerfit:'PowerFit',lumen:'Lumen',proyecta:'Proyecta',cotizador:'Cotizador',radar:'Radar SECOP',coordinabim:'CoordinaBIM',finanzas:'Planificar Finanzas'};
   function hoy(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
   var U={EVENTOS:EVENTOS, APPS:APPS, db:null, uid:null, email:'', app:null, dia:null, pend:0};
   function inc(n){ return firebase.firestore.FieldValue.increment(n||1); }
