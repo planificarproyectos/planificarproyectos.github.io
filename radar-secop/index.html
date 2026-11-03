@@ -621,18 +621,19 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
 
   <nav class="tabs" role="tablist" aria-label="Secciones">
     <button class="tab" role="tab" id="t-radar" aria-controls="v-radar" data-v="radar">Radar</button>
-    <button class="tab" role="tab" id="t-comp" aria-controls="v-comp" data-v="comp">Comparar</button>
-    <button class="tab" role="tab" id="t-ruta" aria-controls="v-ruta" data-v="ruta">Ruta</button>
-    <button class="tab" role="tab" id="t-sim" aria-controls="v-sim" data-v="sim">Simulador caja</button>
-    <button class="tab" role="tab" id="t-rad" aria-controls="v-rad" data-v="rad">Simulador radicación</button>
+    <button class="tab" role="tab" id="t-comp" aria-controls="v-comp" data-v="comp">Favoritos</button>
+    <button class="tab" role="tab" id="t-rad" aria-controls="v-rad" data-v="rad">Ofertar</button>
     <button class="tab" role="tab" id="t-cuenta" aria-controls="v-cuenta" data-v="cuenta">Cuenta</button>
   </nav>
+  <div class="of-wrap" id="of-seg" hidden><h2 class="of-title">Ofertar</h2>
+    <div class="of-seg" role="tablist" aria-label="Ofertar"><button type="button" data-ov="rad">Radicar</button><button type="button" data-ov="sim">Caja</button><button type="button" data-ov="ruta">Ruta</button></div></div>
 
   <section class="view" id="v-radar" role="tabpanel" aria-labelledby="t-radar">
   <div class="rlayout">
   <aside class="side" id="side" aria-label="Filtros">
     <div class="side-head"><b>Filtros</b><button class="side-x" id="side-x" type="button" aria-label="Cerrar filtros">✕</button></div>
     <div class="side-body">
+      <details class="fg" open><summary>Atajos</summary><div class="presets atajos" id="atajos"></div></details>
       <details class="fg" open><summary>Conveniencia</summary><div class="stack" id="chPri"></div></details>
       <details class="fg" open><summary>Cierra en</summary><div class="bars" id="ch-cierre"></div></details>
       <details class="fg" open><summary>Sector</summary><div class="bars" id="ch-sec"></div></details>
@@ -668,7 +669,7 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
   </table></div>
     <div class="cards" id="cards"></div>
     <button class="btn" id="mas" type="button" hidden>Ver más</button>
-    <details class="fold" data-fold="panorama"><summary>Panorama</summary><div class="fold-in">
+    <details class="fold" data-fold="panorama"><summary>Estadísticas</summary><div class="fold-in">
   <div class="tiles" id="tiles"></div>
 
   <div class="duo">
@@ -696,7 +697,7 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
     </div>
   </div>
     </div></details>
-  <details class="fold mini" data-fold="notas"><summary>Antes de ofertar · cómo se calcula</summary><div class="note">
+  <details class="fold mini" data-fold="notas"><summary>Cómo se calcula la conveniencia</summary><div class="note">
     <div><b>Antes de ofertar:</b> confirma en SECOP la hora exacta de cierre (los datos abiertos traen solo el día), si el proceso está limitado a Mipymes de la región y los requisitos habilitantes. Para presentar oferta, el registro de proveedor en SECOP II debe estar finalizado.</div>
     <div><b>Conveniencia:</b> sin RUP +30 (por verificar +15) · valor $50–300 M +25 (punto ideal), $15–50 M +18, $300–1.000 M +12, menos de $15 M +5 · zona foco +20, resto del Caribe o del centro +10 · diseños técnicos o BIM +20, arquitectura o estudios +18, interventoría +16, redes +14, adecuaciones o metálica +12, obra civil o vivienda +10 · publicado hace ≤ 7 días +10, ≤ 15 días +5. Alta ≥ 70, media 45–69, baja &lt; 45.</div>
     <div id="src"></div>
@@ -708,7 +709,7 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
 
   <section class="view" id="v-comp" role="tabpanel" aria-labelledby="t-comp" hidden>
     <div class="cp-head">
-      <h2>Comparar favoritos</h2>
+      <h2>Favoritos del equipo</h2>
       <span class="seg" id="cp-modo"><button type="button" data-cm="todos">Todos</button><button type="button" data-cm="mios">Míos</button></span>
     </div>
     <div id="cp-body"></div>
@@ -1057,6 +1058,7 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
           <div class="cta-pick" id="cta-apariencia-slot"></div>
         </div>
       </div>
+      <div class="cta-card"><div class="cta-body"><button class="cta-link bv-again" type="button" id="cta-bienv"><span>Ver la bienvenida</span><span class="cta-go">Abrir →</span></button></div></div>
       <div class="cta-card" id="cta-instalar" hidden></div>
       <div class="cta-card">
         <div class="cta-body">
@@ -1317,6 +1319,8 @@ const PRESETS=[
   ["Obras pequeñas","adecuaciones, redes, obra civil, metálica, vivienda",{tipo:["Redes y sistemas","Adecuaciones locativas","Obra civil menor","Mejoramiento de vivienda","Carpintería metálica y ventanería"]}],
   ["Zona foco","Bolívar · Cund. · Bogotá",{zona:["Zona foco"]}],
   ["Recién publicados","≤ 7 días",{edad:["Últimos 7 días"]}],
+  ["Sin RUP","no exigen RUP: se puede ofertar ya",{rupG:["No exige"]}],
+  ["Cierran pronto","cierran en los próximos 7 días",{cierreG:["Hoy","1 a 3 días","4 a 7 días"]}],
 ];
 const cop=v=>v>=1e9?"$"+(v/1e9).toLocaleString("es-CO",{maximumFractionDigits:1})+" mil M":"$"+(v/1e6).toLocaleString("es-CO",{maximumFractionDigits:v<1e7?1:0})+" M";
 const fecha=s=>new Date(s+"T12:00:00").toLocaleDateString("es-CO",{day:"numeric",month:"short"});
@@ -1401,6 +1405,10 @@ PRESETS.forEach(([n,h,cfg],i)=>{const b=document.createElement("button");b.class
 {const fb=document.createElement("button");fb.className="preset favp";fb.type="button";fb.id="favp";
   fb.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-9.3-9.2C1.5 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.7 3.5 4.5 6.8-1.8 4.8-9.3 9.2-9.3 9.2z"/></svg>Favoritos<b></b>';
   fb.onclick=()=>{const was=!!F.fav;clearAll();if(!was)F.fav="todos";render()};pres.prepend(fb)}
+/* Versión simple: arriba solo Favoritos, Abiertos, Sin RUP y Cierran pronto */
+{const at=document.getElementById("atajos"),RAP={0:"Abiertos",9:"Sin RUP",10:"Cierran pronto"};
+ pres.querySelectorAll(".preset[data-i]").forEach(b=>{const i=+b.dataset.i;if(RAP[i])b.textContent=RAP[i];else if(at)at.appendChild(b)});
+ [0,9,10].forEach(i=>{const b=pres.querySelector(`.preset[data-i="${i}"]`);if(b)pres.appendChild(b)})}
 function favUI(){const fb=document.getElementById("favp"),bar=document.getElementById("favbar");if(!fb||!bar)return;
   fb.hidden=!!Fav.err;fb.setAttribute("aria-pressed",!!F.fav);fb.querySelector("b").textContent=Fav.ok?Fav.total("todos"):"";
   bar.hidden=!F.fav||!!Fav.err;if(bar.hidden)return;
@@ -1414,12 +1422,12 @@ function render(){
   hideTip();
   const R=(F.fav&&!Fav.err?Fav.rows(F.fav):D).filter(d=>pass(d));
   favUI();
-  pres.querySelectorAll(".preset").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.i===preset));
+  document.querySelectorAll(".preset[data-i]").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.i===preset));
   // KPIs
   const k=[["",R.length.toLocaleString("es-CO"),"procesos"],["",cop(R.reduce((a,b)=>a+b.val,0)),"valor"],
     ["hi",R.filter(d=>d.p==="Alta").length.toLocaleString("es-CO"),"alta"],["",R.filter(d=>d.fz).length.toLocaleString("es-CO"),"★ foco"],
     ["",R.filter(d=>d.rup!=="Sí").length.toLocaleString("es-CO"),"sin RUP"]];
-  document.getElementById("kpis").innerHTML=k.map(([c,n,l])=>`<div class="kpi ${c}"><b>${n}</b><span>${l}</span></div>`).join("");
+  document.getElementById("kpis").innerHTML=`<p class="kline"><b>${R.length.toLocaleString("es-CO")}</b> procesos · ${R.filter(d=>d.rup!=="Sí").length.toLocaleString("es-CO")} sin RUP · ${R.filter(d=>d.p==="Alta").length.toLocaleString("es-CO")} de alta conveniencia</p>`;
 
   // Fichas por tipología
   const T=D.filter(d=>pass(d,["tipo"]));
@@ -1515,10 +1523,10 @@ function render(){
     <td><b class="lugar">${lugar(d)}</b><div><span class="modal">${esc(d.modG)}</span></div></td><td>${rupChip(d)}</td>
     <td class="num">${cop(d.val)}<div class="qmini">${d.vmes?cop(d.vmes)+"/mes<br>":""}inv. ${cop(quick(d).inv)}<br>gana ${(quick(d).gan<0?"−":"")+cop(Math.abs(quick(d).gan))}</div></td><td>${cierreTag(d)}<div class="sub2">${d.cierre?fecha(d.cierre)+" · ":""}pub. ${fecha(d.pub)}</div></td>
     <td><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a><button class="simb" type="button" onclick="simContract(${i})" title="Simular caja">Sim. caja</button></td></tr>`).join(""):`<tr><td colspan="7" class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</td></tr>`;
-  document.getElementById("cards").innerHTML=V.length?V.map((d,i)=>`<article class="card${d.fz?" fz":""}">
-    <div class="row"><span class="chip p-${d.p}">${d.p} ${d.score}</span>${rupChip(d)}${tipoTag(d)}${corazon(d,i)}</div>
-    <h3 class="det-go" data-det="${i}">${esc(cap(d.obj))}</h3><div class="meta det-go" data-det="${i}">${esc(d.ent)}</div><div class="row lm"><span class="lugar-c">${lugar(d)}</span><span class="modal">${esc(d.modG)}</span></div><div class="row">${cierreTag(d)}<span class="sub2">${d.cierre?"cierre "+fecha(d.cierre)+" · ":""}pub. ${fecha(d.pub)}</span></div>${favPor(d)}
-    ${quickHtml(d)}<div class="row ft"><span class="v">${cop(d.val)}</span><button class="simb inl" type="button" onclick="simContract(${i})" title="Simular caja">Sim. caja</button><a class="go" href="${d.url}" target="_blank" rel="noopener">Abrir ↗</a></div></article>`).join(""):`<div class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</div>`;
+  document.getElementById("cards").innerHTML=V.length?V.map((d,i)=>`<article class="card ios-card" data-det="${i}">
+    <div class="ic-top">${cierreTag(d)}${d.rup==="No"?'<span class="chip rno">Sin RUP</span>':""}<span class="chip p-${d.p}" title="Conveniencia ${d.score}/100">${d.p} ${d.score}</span>${corazon(d,i)}</div>
+    <h3>${esc(cap(d.obj))}</h3><div class="meta">${esc(d.ent)}</div>
+    <div class="ic-ft"><span class="ic-lug">${lugar(d)} · ${esc(d.modG)}</span><span class="v">${cop(d.val)}</span></div>${favPor(d)}</article>`).join(""):`<div class="empty">Ningún proceso coincide. Usa “Limpiar filtros”.</div>`;
   document.querySelectorAll("th button").forEach(b=>b.textContent=b.textContent.replace(/ [↑↓]$/,"")+(sort.k===b.dataset.s?(sort.dir>0?" ↑":" ↓"):""));
 }
 document.querySelectorAll("th button").forEach(b=>b.onclick=()=>{const k=b.dataset.s;sort=sort.k===k?{k,dir:-sort.dir}:{k,dir:["val","vmes","pub","score"].includes(k)?-1:1};render()});
@@ -1636,9 +1644,14 @@ document.getElementById('lanes').innerHTML = PH.map(p=>{
 /* Gantt */
 
 }
+/* Ofertar agrupa Radicar, Caja y Ruta: la pestaña queda activa en las tres */
+function navSel(v){const of=["rad","sim","ruta"].includes(v);
+  document.querySelectorAll(".tab,.bn-btn").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v||(of&&b.dataset.v==="rad")));
+  const w=document.getElementById("of-seg");if(w){w.hidden=!of;w.querySelectorAll("[data-ov]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.ov===v))}}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-ov]");if(!b)return;history.replaceState(null,"","#"+b.dataset.ov);showTab(b.dataset.ov)});
 function showTab(v,anchor){
   document.querySelectorAll(".view").forEach(s=>s.hidden=s.id!=="v-"+v);
-  document.querySelectorAll(".tab,.bn-btn").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v));
+  navSel(v);
   if(anchor){const el=document.getElementById(anchor);if(el)el.scrollIntoView({block:"start"})}else window.scrollTo(0,0);
 }
 /* Delegación: funciona aunque la barra inferior se declare en el HTML después de este script */
@@ -1878,26 +1891,46 @@ function cDraw(){
 function simContract(i){const d=typeof i==="object"?i:(window._radarRows||[])[i];if(!d)return;if(window.cOpciones&&!(window._cOpts||[]).includes(d))cOpciones(d);cLoad(d);const k=(window._cOpts||[]).indexOf(d);$("c-sel").value=k;history.replaceState(null,"","#sim");showTab("sim");window.scrollTo(0,0)}
 </script>
 
+<div class="bv" id="bv" role="dialog" aria-modal="true" aria-labelledby="bv-t" hidden>
+  <div class="bv-card"><div class="bv-ic" id="bv-ic"></div><h2 id="bv-t"></h2><p id="bv-p"></p><div class="bv-dots" id="bv-dots"></div>
+    <div class="bv-b" id="bv-b"></div><button class="bv-skip" type="button" id="bv-skip">Saltar</button></div>
+</div>
+<script>
+/* Bienvenida: 3 pantallas cortas la primera vez; se repite desde Cuenta */
+const Bienv={i:0,KEY:"radar:bienvenida",S:[
+  {ic:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/>',t:"Encuentra contratos públicos",p:"El Radar reúne los procesos abiertos de SECOP II y los ordena según qué tan conveniente es ofertar en ellos. Toca uno para ver todo el detalle."},
+  {ic:'<path d="M12 20.5s-7.5-4.4-9.3-9.2C1.5 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.7 3.5 4.5 6.8-1.8 4.8-9.3 9.2-9.3 9.2z"/>',t:"Guarda y compara",p:"Toca ♥ para guardar un proceso: todo el equipo lo verá. En Favoritos sabrás cuál conviene más y por qué."},
+  {ic:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14 3 14 8 19 8"/><polyline points="9 14.5 11.3 16.8 15.5 12.3"/>',t:"Aprende a ofertar",p:"En Ofertar practicas la radicación paso a paso, calculas cuánto invertir y ganar, y sigues la ruta del contrato. Empieza con un proceso de práctica."}],
+  el(id){return document.getElementById(id)},
+  abrir(){this.i=0;this.pinta();this.el("bv").hidden=false},
+  cerrar(){this.el("bv").hidden=true;try{localStorage.setItem(this.KEY,"1")}catch(e){}if(window.Inst)Inst.show()},
+  pinta(){const x=this.S[this.i],ult=this.i===this.S.length-1;
+    this.el("bv-ic").innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true">${x.ic}</svg>`;this.el("bv-t").textContent=x.t;this.el("bv-p").textContent=x.p;
+    this.el("bv-dots").innerHTML=this.S.map((_,k)=>`<i class="${k===this.i?"on":""}"></i>`).join("");
+    this.el("bv-b").innerHTML=ult?'<button class="btn primary" type="button" data-bv="fin">Empezar</button><button class="btn" type="button" data-bv="prac">Practicar una oferta</button>':'<button class="btn primary" type="button" data-bv="sig">Siguiente</button>';
+    this.el("bv-skip").hidden=ult}
+};
+window.Bienv=Bienv;
+document.getElementById("bv").addEventListener("click",e=>{const b=e.target.closest("[data-bv],#bv-skip");if(!b)return;const a=b.dataset.bv;
+  if(a==="sig"){Bienv.i++;Bienv.pinta();return}
+  Bienv.cerrar();if(a==="prac"&&window.Rad&&window.RAD_EJ)Rad.abrir(RAD_EJ[0]);else if(a==="fin"){history.replaceState(null,"","#radar");showTab("radar")}});
+document.getElementById("cta-bienv").onclick=()=>Bienv.abrir();
+(function espera(){let visto=false;try{visto=!!localStorage.getItem(Bienv.KEY)}catch(e){}if(visto)return;
+  const g=document.getElementById("gate"),sp=document.getElementById("splash");
+  if((!g||g.hidden)&&(!sp||sp.classList.contains("out")))Bienv.abrir();else setTimeout(espera,700)})();
+</script>
 <nav class="bottom-nav" role="tablist" aria-label="Navegación principal">
   <button class="bn-btn" role="tab" data-v="radar" aria-selected="true">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>
     Radar
   </button>
   <button class="bn-btn" role="tab" data-v="comp" aria-selected="false">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M5 21h14M6 7h12M6 7l-3 7a3 3 0 0 0 6 0zM18 7l-3 7a3 3 0 0 0 6 0z"/></svg>
-    Comparar
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-9.3-9.2C1.5 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.7 3.5 4.5 6.8-1.8 4.8-9.3 9.2-9.3 9.2z"/></svg>
+    Favoritos
   </button>
-  <button class="bn-btn" role="tab" data-v="ruta" aria-selected="false">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-    Ruta
-  </button>
-  <button class="bn-btn" role="tab" data-v="sim" aria-selected="false" aria-label="Simulador caja">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 10v4M18 10v4"/></svg>
-    Caja
-  </button>
-  <button class="bn-btn" role="tab" data-v="rad" aria-selected="false" aria-label="Simulador radicación">
+  <button class="bn-btn" role="tab" data-v="rad" aria-selected="false">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14 3 14 8 19 8"/><polyline points="9 14.5 11.3 16.8 15.5 12.3"/></svg>
-    Radicación
+    Ofertar
   </button>
   <button class="bn-btn" role="tab" data-v="cuenta" aria-selected="false">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -2083,15 +2116,15 @@ const RAD_LEARN={
 };
 const RAD_GUIA=[
   ["Habilita la empresa","Usuario de proveedor en SECOP II, RUT, Cámara de Comercio y facturación electrónica. El [[rup|RUP]] cuando vayas por procesos más grandes.",[["Ver la Ruta","#ruta"],["Mi registro","p2"]]],
-  ["Encuentra procesos","En el Radar usa «Abiertos para ofertar» y empieza por [[minima|mínima cuantía]]: no exige RUP.",[["Ir al Radar","#radar"]]],
-  ["Elige el mejor","Marca con ♥ los que te interesen y compáralos para saber cuál conviene.",[["Comparar","#comp"]]],
+  ["Encuentra procesos","En el Radar toca «Abiertos» o «Sin RUP» y empieza por [[minima|mínima cuantía]]: no exige RUP.",[["Ir al Radar","#radar"]]],
+  ["Elige el mejor","Marca con ♥ los que te interesen y compáralos para saber cuál conviene.",[["Favoritos","#comp"]]],
   ["Estudia el pliego","Lee el [[pliego]], sus [[adenda|adendas]] y el [[cronograma]]. Pregunta en [[observaciones]] si algo no es claro.",[["Paso 1 · Proceso","p1"]]],
   ["Calcula precio y caja","Cuánto invertirás, cuánto ganarás y cuándo te pagan.",[["Simulador caja","#sim"]]],
   ["Prepara y radica","Precio, documentos y presentación antes del [[cierre]]. Practica aquí con un proceso de ejemplo.",[["Practicar","ej"]]],
   ["Después del cierre","Revisa el [[informe|informe de evaluación]], [[subsanar|subsana]] si te lo piden y espera la [[adjudicacion|adjudicación]].",[]]
 ];
 /* Procesos de práctica: no son reales */
-const RAD_EJ=(()=>{const f=n=>{const x=new Date(HOY);x.setDate(x.getDate()+n);return x.toISOString().slice(0,10)};
+const RAD_EJ=window.RAD_EJ=(()=>{const f=n=>{const x=new Date(HOY);x.setDate(x.getDate()+n);return x.toISOString().slice(0,10)};
   const mk=o=>Object.assign({tipo:"Diseños técnicos",dep:"Cundinamarca",ciu:"Chía",url:"",fz:true,pid:"",comp:[0,0,0,0],score:0,un:"",fase:"Presentación de oferta",ej:true,dc:7,cierre:f(7),cierreG:"4 a 7 días",etapa:"Recibe ofertas"},o);
   return[mk({ent:"PRÁCTICA · Entidad de ejemplo",ref:"PRACTICA-MC-001",obj:"Ejemplo para practicar: diseño de redes hidrosanitarias para la adecuación de una sede administrativa.",mod:"Mínima cuantía",modG:"Mínima cuantía",val:45e6,rup:"No",plazo:"2 Mes(es)",meses:2}),
     Object.assign({},EJEMPLO,{ej:true,ent:"PRÁCTICA · "+EJEMPLO.ent,ref:"PRACTICA-CM-002",dc:12,cierre:f(12),plazo:"4 Mes(es)",comp:[0,0,0,0],pid:""})]})();
@@ -2345,7 +2378,7 @@ document.getElementById("rd-next").onclick=()=>Rad.ir(Rad.paso+1);
 {const r0=render;window.render=render=function(){r0.apply(this,arguments);if(Rad.vis()&&!document.querySelector("#v-rad :focus"))try{Rad.pinta()}catch(e){console.warn(e)}}}
 if(location.hash==="#rad")queueMicrotask(()=>Rad.pinta());
 /* La barra inferior se declara después del primer showTab: sincroniza la pestaña activa */
-{const v=(document.querySelector(".view:not([hidden])")||{id:"v-radar"}).id.slice(2);document.querySelectorAll(".bn-btn").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v))}
+{const v=(document.querySelector(".view:not([hidden])")||{id:"v-radar"}).id.slice(2);navSel(v)}
 </script>
 <!-- Acceso: solo miembros de Planificar Proyectos SAS (no plan familiar) -->
 <style>
@@ -3204,6 +3237,124 @@ html.lock-chat,html.lock-chat body{overflow:hidden}
   .c-top{grid-template-columns:minmax(0,1fr)}
   #v-cuenta .cta-wrap{padding-top:8px}
 }
+
+/* ═════════ Estilo iOS: tipografía del sistema (San Francisco), títulos grandes, materiales translúcidos ═════════ */
+:root{--display:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;--mono:var(--body);--f-display:var(--display);--f-body:var(--body);--f-mono:var(--body)}
+html:root:not([data-theme="light"]){color-scheme:dark;--bg:#000;--surface:#1C1C1E;--surface-2:#2C2C2E;--line:rgba(84,84,88,.5);--fg:#fff;--muted:rgba(235,235,245,.62);--dim:rgba(235,235,245,.3);
+  --fill:rgba(118,118,128,.24);--mat:rgba(22,22,24,.72);--sheet:rgba(30,30,32,.84);--seg-on:#636366}
+html:root[data-theme="light"]{--bg:#F2F2F7;--surface:#fff;--surface-2:#F2F2F7;--line:rgba(60,60,67,.16);--fg:#000;--muted:rgba(60,60,67,.62);--dim:rgba(60,60,67,.3);
+  --fill:rgba(118,118,128,.12);--mat:rgba(249,249,249,.78);--sheet:rgba(255,255,255,.86);--seg-on:#fff}
+html body{font-family:var(--body);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;letter-spacing:-.005em;background:var(--bg);font-size:15px}
+body h1,body h2,body h3,body h4,body .tab,body summary,body .brand b,body .cp-head h2,body .rd-body h3,body .rd-ev-h h3,body .rd-guia>summary b,body .side-head b,body .rd-cat>h4,body .rd-ev-g,body .cp-win h4,body .panel h2,body #splash .word{
+  text-transform:none!important;letter-spacing:-.01em!important;font-family:var(--display)!important}
+body #splash .word{letter-spacing:.02em!important;font-weight:700}
+body h1#saludo{font-size:34px;font-weight:700;line-height:1.12;margin:2px 0 2px;letter-spacing:.01em!important}
+body .sub{font-size:13px;color:var(--muted)}
+body .brand{margin-bottom:8px}body .brand b{font-size:19px!important;font-weight:700;letter-spacing:.03em!important}body .brand svg{width:24px;height:24px}
+body .fecha{font-size:13px;color:var(--muted)}
+body .cp-head h2{font-size:28px;font-weight:700}
+body .rd-body h3,body .rd-ev-h h3{font-size:19px;font-weight:700}
+body .cp-win h4,body .rd-cat>h4,body .rd-ev-g{font-size:13px;font-weight:600;color:var(--muted)}
+#v-rad .cp-head h2{display:none}
+#v-rad .cp-head{justify-content:flex-end}
+/* Ofertar: título grande + control segmentado */
+.of-wrap{margin:0 0 12px}.of-wrap[hidden]{display:none}
+.of-title{margin:2px 0 10px;font-size:34px;font-weight:700}
+.of-seg{display:flex;gap:2px;background:var(--fill);border-radius:10px;padding:2px;max-width:520px}
+.of-seg button{flex:1;border:0;background:transparent;color:var(--fg);font:inherit;font-size:14px;font-weight:600;padding:7px 6px;border-radius:8px;cursor:pointer;transition:background .2s}
+.of-seg button[aria-pressed="true"]{background:var(--seg-on);box-shadow:0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04)}
+.wrap:has(#v-radar[hidden]) .top h1{display:none}
+/* Barras translúcidas */
+.bottom-nav{background:var(--mat)!important;-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-top:.5px solid var(--line)!important;min-height:0!important}
+.bottom-nav button{font-size:10.5px!important;font-weight:500!important;gap:3px!important;padding:7px 2px 6px!important;min-height:50px!important;color:var(--muted)!important}
+.bottom-nav button svg{width:25px!important;height:25px!important}
+.bottom-nav button[aria-selected="true"]{color:var(--accent-fg)!important;font-weight:600!important}
+.bottom-nav button[aria-selected="true"] svg path[d^="M12 20.5"]{fill:currentColor}
+@media (min-width:980px){
+  .tabs{background:var(--mat)!important;-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-bottom:.5px solid var(--line)!important;gap:4px!important}
+  .tab{font-size:15px!important;font-weight:600!important;border-radius:10px!important;padding:7px 18px!important}
+  .tab[aria-selected="true"]{background:var(--accent)!important;color:var(--accent-ink)!important}
+}
+/* Búsqueda y accesos rápidos */
+.toolbar{gap:8px!important;align-items:center}
+body #q{border:0!important;border-radius:10px!important;min-height:38px;font-size:16px!important;color:var(--fg);padding:8px 10px 8px 34px!important;
+  background:var(--fill) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238e8e93' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") 11px 50%/16px no-repeat!important}
+body .fbtn{border:0!important;background:var(--fill)!important;border-radius:10px!important;min-height:38px!important;color:var(--accent-fg)!important;font-weight:600}
+#count{display:none!important}
+body .presets{background:transparent!important;padding:2px 0!important;gap:8px!important;display:flex!important;flex-wrap:nowrap!important;overflow-x:auto}
+body .preset{flex:none!important;width:auto!important;border:0!important;background:var(--fill)!important;color:var(--fg)!important;border-radius:999px!important;min-height:34px!important;padding:0 14px!important;font-size:14px!important;font-weight:600!important;flex-direction:row!important;box-shadow:none!important}
+body .preset[aria-pressed="true"]{background:var(--accent)!important;color:var(--accent-ink)!important}
+body .rmain,body .rlayout,body .toolbar{min-width:0;max-width:100%}body .toolbar #q{min-width:0;flex:1 1 auto;width:100%}body .presets{max-width:100%;scrollbar-width:none}
+body .presets.atajos{flex-wrap:wrap!important;overflow:visible}
+body .kpis{display:block!important;background:transparent!important;padding:0 2px!important}
+.kline{margin:0;font-size:13px;color:var(--muted)}.kline b{color:var(--fg);font-weight:700}
+/* Tarjetas */
+.tbl{display:none!important}
+body .cards{display:grid!important;gap:10px!important;grid-template-columns:minmax(0,1fr)}
+@media (min-width:700px){body .cards{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media (min-width:1200px){body .cards{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+body .card.ios-card{background:var(--surface)!important;border:0!important;border-radius:16px!important;box-shadow:none!important;padding:13px 14px 12px!important;display:flex!important;flex-direction:column;gap:5px!important;cursor:pointer;transition:transform .15s ease}
+body .card.ios-card:active{transform:scale(.985)}
+.ic-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-right:34px}
+body .card.ios-card .fav{position:absolute;top:9px;right:9px;margin:0}
+body .card.ios-card h3{font-size:16px!important;font-weight:600!important;line-height:1.3!important;margin:2px 0 0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-family:var(--body)!important}
+body .card.ios-card .meta{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ic-ft{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:auto;padding-top:3px}
+.ic-lug{font-size:13px;color:var(--accent-fg);font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ic-ft .v{font-size:19px;font-weight:700;color:var(--fg);flex:none;font-variant-numeric:tabular-nums}
+body .chip{border-radius:7px;font-weight:600}
+body #mas{border-radius:12px}
+/* Botones estilo iOS */
+body .btn{border:0!important;border-radius:12px!important;background:var(--fill)!important;color:var(--accent-fg)!important;font-weight:600!important;box-shadow:none!important}
+body .btn.primary{background:var(--accent)!important;color:var(--accent-ink)!important}
+body .btn:disabled{opacity:.4}
+/* Grupos plegables */
+body .fold>summary{background:var(--surface);border-radius:14px;font-family:var(--body)!important;font-size:15px!important;font-weight:600}
+/* Hoja de filtros (en todos los tamaños) */
+body .side{background:var(--sheet)!important;-webkit-backdrop-filter:saturate(180%) blur(30px);backdrop-filter:saturate(180%) blur(30px)}
+.side-bg:not([hidden]){display:block!important;position:fixed;inset:0;z-index:59;background:rgba(0,0,0,.35)}
+@media (max-width:979px){body .side{top:max(44px,env(safe-area-inset-top,0px))!important;border-radius:14px 14px 0 0}}
+@media (min-width:980px){
+  body .rlayout{display:block!important}
+  body .side{position:fixed!important;inset:16px 16px 16px auto!important;width:400px;max-height:none!important;z-index:60!important;border-radius:16px;
+    transform:translateX(110%)!important;visibility:hidden!important;transition:transform .3s cubic-bezier(.2,.8,.2,1),visibility 0s .3s!important;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+  body .side.open{transform:none!important;visibility:visible!important;transition:transform .3s cubic-bezier(.2,.8,.2,1)!important}
+  body .side-x,body .fbtn,body #side-ok{display:inline-flex!important}
+  body .side-head{padding:14px 16px 8px!important}body .side-body{padding:0 16px!important}
+  body .side-foot{grid-template-columns:1fr 1fr!important;padding:12px 16px!important}
+}
+/* Detalle: hoja que sube desde abajo */
+body .det-bg{background:rgba(0,0,0,.4)!important}
+body .det{background:var(--sheet)!important;-webkit-backdrop-filter:saturate(180%) blur(30px);backdrop-filter:saturate(180%) blur(30px)}
+body .det-h{position:relative;padding-top:20px!important;border-bottom:0!important}
+body .det-h::before{content:"";position:absolute;top:7px;left:50%;width:36px;height:5px;margin-left:-18px;border-radius:3px;background:var(--dim)}
+body .det-f{background:transparent!important;border-top:.5px solid var(--line)!important}
+body .det-sec,body .det-card{border-radius:14px}
+@media (max-width:979px){body .det{inset:max(44px,env(safe-area-inset-top,0px)) 0 0 0!important;border-radius:14px 14px 0 0;animation:det-up .32s cubic-bezier(.2,.8,.2,1)}}
+@keyframes det-up{from{transform:translateY(100%)}to{transform:none}}
+@media (min-width:980px){body .det{inset:5vh auto 5vh 50%!important;transform:translateX(-50%);width:min(760px,92vw)!important;border:0!important;border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.45)!important}}
+/* Chat, avisos e instalación con material translúcido */
+body .chat{background:var(--sheet)!important;-webkit-backdrop-filter:saturate(180%) blur(30px);backdrop-filter:saturate(180%) blur(30px)}
+body .aviso{background:var(--sheet)!important;color:var(--fg)!important;-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-radius:14px!important;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+body .installbar{background:var(--sheet)!important;-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
+body .rd-gpop{background:var(--sheet);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
+/* Cuenta */
+body .cta-card{border-radius:14px!important}
+.bv-again{width:100%;border:0;background:transparent;color:var(--fg);font:inherit;display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:0}
+/* Bienvenida */
+.bv{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.45);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);display:grid;place-items:center;padding:20px}
+.bv[hidden]{display:none}
+.bv-card{width:min(400px,100%);background:var(--sheet);-webkit-backdrop-filter:saturate(180%) blur(30px);backdrop-filter:saturate(180%) blur(30px);border-radius:22px;padding:28px 22px 14px;display:grid;gap:14px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.4);animation:bv-in .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes bv-in{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+.bv-ic{width:76px;height:76px;margin:0 auto;border-radius:20px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
+.bv-ic svg{width:42px;height:42px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.bv h2{margin:0;font-size:24px;font-weight:700}
+.bv p{margin:0;color:var(--muted);font-size:16px;line-height:1.45}
+.bv-dots{display:flex;gap:7px;justify-content:center}.bv-dots i{width:7px;height:7px;border-radius:50%;background:var(--dim)}.bv-dots i.on{background:var(--accent-fg)}
+.bv-b{display:grid;gap:8px}.bv-b .btn{min-height:50px!important;font-size:17px!important;justify-content:center}
+.bv-skip{border:0;background:none;color:var(--muted);font:inherit;font-size:15px;padding:6px;cursor:pointer}.bv-skip[hidden]{visibility:hidden;display:block}
+@media (prefers-reduced-motion:reduce){body .det,.bv-card{animation:none}body .card.ios-card{transition:none}}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
