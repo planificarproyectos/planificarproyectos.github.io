@@ -633,6 +633,7 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
   <aside class="side" id="side" aria-label="Filtros">
     <div class="side-head"><b>Filtros</b><button class="side-x" id="side-x" type="button" aria-label="Cerrar filtros">✕</button></div>
     <div class="side-body">
+      <label class="todo-sw" id="todo-sw" hidden><span><b>Ver todos los sectores</b><small>Incluye procesos fuera de las líneas de la empresa</small></span><input type="checkbox" id="todo-ck" role="switch"></label>
       <details class="fg" open><summary>Atajos</summary><div class="presets atajos" id="atajos"></div></details>
       <details class="fg" open><summary>Conveniencia</summary><div class="stack" id="chPri"></div></details>
       <details class="fg" open><summary>Cierra en</summary><div class="bars" id="ch-cierre"></div></details>
@@ -1048,6 +1049,14 @@ body .pp-card .pp-primary{background:var(--accent);color:var(--accent-ink);borde
         <div class="cta-name" id="cta-nombre">—</div>
         <div class="cta-line"><span class="cta-email" id="cta-email"></span><span data-cuenta-tipo hidden></span></div>
       </div>
+      <div class="cta-card" id="cta-emp">
+        <div class="cta-head">Empresa</div>
+        <div class="cta-body">
+          <div class="cta-row"><div class="cta-rl"><b id="emp-nom">—</b><span class="cta-sub" id="emp-sub"></span></div></div>
+          <label class="emp-pick" id="emp-pick" hidden>Ver el Radar como<select id="emp-sel"></select></label>
+          <button class="btn" type="button" id="emp-perf">Perfil de la empresa</button>
+        </div>
+      </div>
       <div class="cta-card">
         <div class="cta-head">Apariencia</div>
         <div class="cta-body">
@@ -1270,10 +1279,17 @@ const MODS=[["Mínima cuantía",m=>/M[ií]nima/.test(m)],["Régimen especial / d
 const RANGES=[["Sin valor publicado",0,1],["Menos de $15 M",1,1.5e7],["$15 – $50 M",1.5e7,5e7],["$50 – $300 M",5e7,3e8],["$300 – $1.000 M",3e8,1e9],["Más de $1.000 M",1e9,Infinity]];
 /* Mapa esquemático: [departamento, abreviatura, columna, fila] */
 const GEO=[["San Andrés, Providencia y Santa Catalina","SAI",0,0],["La Guajira","GUA",6,0],["Atlántico","ATL",4,1],["Magdalena","MAG",5,1],["Córdoba","COR",2,2],["Sucre","SUC",3,2],["Bolívar","BOL",4,2],["Cesar","CES",5,2],["Chocó","CHO",1,3],["Antioquia","ANT",2,3],["Santander","SAN",4,3],["Norte de Santander","NSA",5,3],["Arauca","ARA",6,3],["Risaralda","RIS",1,4],["Caldas","CAL",2,4],["Cundinamarca","CUN",3,4],["Boyacá","BOY",4,4],["Casanare","CAS",5,4],["Vichada","VIC",6,4],["Valle del Cauca","VAL",1,5],["Quindío","QUI",2,5],["Bogotá D.C.","BOG",3,5],["Meta","MET",4,5],["Guainía","GNA",6,5],["Cauca","CAU",1,6],["Tolima","TOL",2,6],["Huila","HUI",3,6],["Guaviare","GVR",4,6],["Vaupés","VAU",5,6],["Nariño","NAR",1,7],["Putumayo","PUT",2,7],["Caquetá","CAQ",3,7],["Amazonas","AMA",5,7]];
+/* ── Perfil de la empresa (multiempresa). Planificar Proyectos SAS usa su clasificación propia (base);
+   las demás empresas clasifican por sus líneas: palabras clave del objeto y códigos UNSPSC. ── */
+const PERF={gen:false,lineas:[],vmin:0,vmax:0,rup:false};
+const normT=x=>String(x||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+function clasPerfil(d){const t=normT(d.obj),u=String(d.un||"");
+  for(const l of PERF.lineas){if(l.un.some(c=>u.startsWith(c))||l.kw.some(k=>t.includes(k)))return l.n}return"Otros sectores"}
 function enriquecer(r){
   const d={tipo:r[0],dep:r[1],ciu:r[2],ent:r[3],ref:r[4],obj:r[5],mod:r[6],val:+r[7],pub:r[8],fase:r[9],un:r[10],plazo:r[11],url:/^https?:/.test(r[12])?r[12]:U+r[12],rup:r[13]};
+  if(PERF.gen)d.tipo=clasPerfil(d);
   d.fz=FOCUS.has(d.dep);
-  d.sec=sectorDe(d.tipo,d.un,d.obj);
+  d.sec=sectorDe(PERF.gen?"Otros sectores":d.tipo,d.un,d.obj);
   d.zona=d.fz?"Zona foco":CARIBE.has(d.dep)?"Resto del Caribe":CENTRO.has(d.dep)?"Resto del centro":"Resto del país";
   d.modG=(MODS.find(([,f])=>f(d.mod))||["Otra"])[0];
   d.rng=RANGES.find(([,a,b])=>d.val>=a&&d.val<b)||RANGES[RANGES.length-1];d.rng=d.rng[0];
@@ -1283,10 +1299,10 @@ function enriquecer(r){
   d.etapa=/oferta/i.test(d.fase)?"Recibe ofertas":/observaci|borrador|selecci|clarific|manifest|calific/i.test(d.fase)?"Observaciones / pliego":"Otra";
   d.rupG=d.rup==="No"?"No exige":d.rup==="Sí"?"Sí exige":"Por verificar";
   const w=new Date(d.pub+"T12:00:00");w.setDate(w.getDate()-((w.getDay()+6)%7));d.sem=w.toISOString().slice(0,10);
-  let s=d.rup==="No"?30:d.rup==="Sí"?0:15;
-  s+=d.val<1.5e7?5:d.val<5e7?18:d.val<3e8?25:d.val<=1e9?12:0;
-  s+=d.fz?20:d.zona!=="Resto del país"?10:0;
-  s+=LW[d.tipo]||10;s+=d.dias<=7?10:d.dias<=15?5:0;
+  let s=d.rup==="No"||PERF.rup?30:d.rup==="Sí"?0:15;
+  s+=PERF.vmax?(d.val>=PERF.vmin&&d.val<=PERF.vmax?25:d.val>=PERF.vmin/3&&d.val<=PERF.vmax*3?15:5):(d.val<1.5e7?5:d.val<5e7?18:d.val<3e8?25:d.val<=1e9?12:0);
+  s+=d.fz?20:(!PERF.gen&&d.zona!=="Resto del país")?10:0;
+  s+=LW[d.tipo]!=null?LW[d.tipo]:10;s+=d.dias<=7?10:d.dias<=15?5:0;
   // Cierre (recepción de ofertas): días que faltan, sin hora (la hora exacta está en SECOP)
   d.pid=r[16]||"";d.cierre=r[14]||"";d.comp=Array.isArray(r[15])?r[15]:typeof r[15]==="string"&&r[15]?r[15].split(",").map(n=>+n||0):[0,0,0,0];
   d.dc=d.cierre?Math.round((new Date(d.cierre+"T12:00:00")-new Date(HOY.toISOString().slice(0,10)+"T12:00:00"))/864e5):null;
@@ -1337,7 +1353,7 @@ const Fav={map:new Map(),uid:null,yo:null,fs:null,ok:false,err:null,_idx:null,_n
     let h=0;const t=(d.url||"")+"|"+d.ref+"|"+d.ent;for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))|0;return"u_"+(h>>>0).toString(36)},
   start(fs,u,nombre){this.fs=fs;this.uid=u.uid;this.yo={n:nombre||String(u.email||"").split("@")[0],e:String(u.email||"").toLowerCase()};
     if(this.unsub)this.unsub();
-    this.unsub=fs.collection("radar_favoritos").onSnapshot(sn=>{this.map=new Map(sn.docs.map(x=>[x.id,x.data()]));this.ok=true;this.err=null;render()},
+    this.unsub=fs.collection(colR("radar_favoritos")).onSnapshot(sn=>{this.map=new Map(sn.docs.map(x=>[x.id,x.data()]));this.ok=true;this.err=null;render()},
       e=>{console.warn("Favoritos:",e&&e.code);this.err=e&&e.code||"error";this.ok=false;render()})},
   nombre(n){if(this.yo&&n)this.yo.n=n},
   doc(d){return this.map.get(this.id(d))},
@@ -1346,7 +1362,7 @@ const Fav={map:new Map(),uid:null,yo:null,fs:null,ok:false,err:null,_idx:null,_n
   n(d){return this.quien(d).length},
   fila(d){return[d.tipo,d.dep,d.ciu,d.ent,d.ref,d.obj,d.mod,d.val,d.pub,d.fase,d.un,d.plazo,d.url,d.rup,d.cierre||"",(d.comp||[0,0,0,0]).join(","),d.pid||""].map(v=>v===undefined||v===null||(typeof v==="number"&&!isFinite(v))?"":v)},
   toggle(d){if(!this.ok||!this.fs)return aviso(this.err?"Los favoritos aún no están habilitados.":"Inicia sesión para usar favoritos.");
-    const ref=this.fs.collection("radar_favoritos").doc(this.id(d)),FV=firebase.firestore.FieldValue;
+    const ref=this.fs.collection(colR("radar_favoritos")).doc(this.id(d)),FV=firebase.firestore.FieldValue;
     if(this.doc(d)){ref.delete().then(()=>aviso("Quitado de favoritos del equipo")).catch(e=>aviso("No se pudo quitar ("+(e.code||"error")+")"));}
     else ref.set({fila:this.fila(d),act:Date.now(),por:{[this.uid]:{n:this.yo.n,e:this.yo.e,t:Date.now()}}},{merge:true})
       .then(()=>aviso("♥ Guardado en favoritos del equipo")).catch(e=>{console.warn("Favorito no guardado:",this.id(d),e);aviso("No se pudo guardar el favorito: "+(e.code==="permission-denied"?"tu cuenta no tiene permiso":(e.message||e.code||"error")))});},
@@ -1427,7 +1443,7 @@ function render(){
   const k=[["",R.length.toLocaleString("es-CO"),"procesos"],["",cop(R.reduce((a,b)=>a+b.val,0)),"valor"],
     ["hi",R.filter(d=>d.p==="Alta").length.toLocaleString("es-CO"),"alta"],["",R.filter(d=>d.fz).length.toLocaleString("es-CO"),"★ foco"],
     ["",R.filter(d=>d.rup!=="Sí").length.toLocaleString("es-CO"),"sin RUP"]];
-  document.getElementById("kpis").innerHTML=`<p class="kline"><b>${R.length.toLocaleString("es-CO")}</b> procesos · ${R.filter(d=>d.rup!=="Sí").length.toLocaleString("es-CO")} sin RUP · ${R.filter(d=>d.p==="Alta").length.toLocaleString("es-CO")} de alta conveniencia</p>`;
+  document.getElementById("kpis").innerHTML=`<p class="kline"><b>${R.length.toLocaleString("es-CO")}</b> procesos${!window.verTodo||verTodo()?"":" de tus líneas"} · ${R.filter(d=>d.rup!=="Sí").length.toLocaleString("es-CO")} sin RUP · ${R.filter(d=>d.p==="Alta").length.toLocaleString("es-CO")} de alta conveniencia</p>`;
 
   // Fichas por tipología
   const T=D.filter(d=>pass(d,["tipo"]));
@@ -1570,9 +1586,7 @@ queueMicrotask(render);
   try{
     const filas=await cargarDesdeAPI();
     if(!filas||filas.length<5){console.warn("Radar SECOP: API devolvió muy pocos resultados, usando fallback");actualizarSub(true);return;}
-    D.length=0;
-    filas.map(enriquecer).forEach(r=>D.push(r));
-    D.sort((a,b)=>b.score-a.score);
+    window._FILAS=filas;if(window.recalcular)recalcular(true);else{D.length=0;filas.map(enriquecer).forEach(r=>D.push(r));D.sort((a,b)=>b.score-a.score)}
     META={...META,desde:D.reduce((m,r)=>r.pub<m?r.pub:m,D[0].pub),fallback:false};
     if(window.cOpciones)cOpciones();
     actualizarSub(false);
@@ -1891,6 +1905,109 @@ function cDraw(){
 function simContract(i){const d=typeof i==="object"?i:(window._radarRows||[])[i];if(!d)return;if(window.cOpciones&&!(window._cOpts||[]).includes(d))cOpciones(d);cLoad(d);const k=(window._cOpts||[]).indexOf(d);$("c-sel").value=k;history.replaceState(null,"","#sim");showTab("sim");window.scrollTo(0,0)}
 </script>
 
+<div class="perf-bg" id="perf-bg" hidden></div>
+<div class="perf" id="perf" role="dialog" aria-modal="true" aria-labelledby="perf-t" hidden>
+  <header class="perf-h"><b id="perf-t">Perfil de la empresa</b><button class="side-x" type="button" id="perf-x" aria-label="Cerrar">✕</button></header>
+  <div class="perf-b" id="perf-b"></div>
+  <footer class="perf-f"><button class="btn" type="button" id="perf-cancel">Cancelar</button><button class="btn primary" type="button" id="perf-ok">Guardar</button></footer>
+</div>
+<script>
+/* ═════════ Empresa activa (multiempresa) y su perfil ═════════
+   Planificar Proyectos SAS usa las colecciones de siempre (radar_favoritos, radar_chat); las demás empresas,
+   empresas/{id}/radar_*. El perfil vive en empresas/{id}/radar_conf/perfil. «Ver todos los sectores» lo
+   permite el administrador por empresa (empresas/{id}.radar.todo); los administradores siempre lo tienen. */
+const PP_ID="planificar-proyectos-sas";
+const EMP={id:PP_ID,nombre:"Planificar Proyectos SAS",pp:true,admin:false,radar:{},perfil:null,fs:null,email:""};
+function colR(n){return EMP.pp?n:`empresas/${EMP.id}/${n}`}
+function puedeTodo(){return EMP.admin||(EMP.pp?EMP.radar.todo!==false:EMP.radar.todo===true)}
+function verTodo(){if(!puedeTodo())return false;let v=null;try{v=localStorage.getItem("radar:todo:"+EMP.id)}catch(e){}return v===null?EMP.pp:v==="1"}
+function recalcular(nuevo){const src=window._FILAS||_DATOS_FB,all=src.map(enriquecer).sort((a,b)=>b.score-a.score),todo=verTodo();
+  D.length=0;all.forEach(d=>{if(todo||d.tipo!=="Otros sectores")D.push(d)});
+  if(window.Fav)Fav._n=-1;if(window.Det)Det._n=-1;if(window.cOpciones)cOpciones();
+  render();try{if(window.Rad&&Rad.vis())Rad.pinta()}catch(e){}}
+const PLANT=[
+  ["Servicios de salud","salud,medic,hospital,clinic,paciente,enfermer,odontolog,ips,atencion primaria","85"],
+  ["Auditoría médica","auditoria medica,auditoria en salud,auditoria de cuentas medicas,cuentas medicas,auditoria concurrente,glosas",""],
+  ["Medicamentos e insumos médicos","medicament,farmac,insumos medicos,dispositivos medicos,reactivos,material medico","51,42"],
+  ["Tecnología e informática","software,licencia,computador,computo,tecnolog,informatic,conectividad,servidor,hosting,plataforma digital","43,8111"],
+  ["Aseo y cafetería","aseo,cafeteria,limpieza,fumigacion,desinfeccion","76"],
+  ["Vigilancia y seguridad","vigilancia,seguridad privada,escolta","92"],
+  ["Alimentos","alimentacion,alimentos,refrigerio,raciones,pae,catering,restaurante","50,90"],
+  ["Transporte y logística","transporte,vehiculo,mensajeria,combustible,logistic","78,15"],
+  ["Eventos y capacitación","evento,capacitacion,formacion,taller,diplomado,publicidad,audiovisual","86,8014"],
+  ["Consultoría jurídica y contable","asesoria juridica,juridic,contable,revisoria fiscal,auditoria externa,auditoria financiera","8012,8411"],
+  ["Construcción y obras","obra,construccion,adecuacion,remodelacion,pavimentacion,mantenimiento de infraestructura","72"],
+  ["Interventoría","interventoria,supervision tecnica","81101"],
+  ["Diseños y estudios","estudios y disenos,diseno,consultoria tecnica,topograf","8110"],
+  ["Ambiental","ambiental,residuos,reforestacion,saneamiento,forestal","77"],
+  ["Suministros y dotación","suministro,dotacion,papeleria,uniforme,mobiliario,ferreteria","44,53,56"]];
+const IMP=[["Alta",20],["Media",14],["Baja",8]];
+const Emp={
+  start(fs,u,r){EMP.fs=fs;EMP.email=String(u.email||"").toLowerCase();EMP.id=r.emp||PP_ID;EMP.pp=EMP.id===PP_ID;EMP.admin=!!r.admin;EMP.radar=r.radar||{};EMP.nombre=r.nombre||(EMP.pp?"Planificar Proyectos SAS":"Tu empresa");
+    const ch=document.querySelector(".chat-h span");if(ch)ch.textContent=EMP.nombre;
+    const hoy=document.querySelector('section[aria-labelledby="hoy"]');if(hoy)hoy.hidden=!EMP.pp;
+    this.cuenta();this.todoUI();
+    if(EMP.admin)fs.collection("empresas").get().then(sn=>{const L=sn.docs.map(x=>({id:x.id,n:(x.data()||{}).nombre||x.id})).sort((a,b)=>a.n.localeCompare(b.n,"es"));
+      const sel=document.getElementById("emp-sel");sel.innerHTML=L.map(e=>`<option value="${esc(e.id)}"${e.id===EMP.id?" selected":""}>${esc(e.n)}</option>`).join("");
+      document.getElementById("emp-pick").hidden=L.length<2;sel.onchange=()=>{try{localStorage.setItem("radar:emp",sel.value)}catch(e){}location.reload()}}).catch(()=>{});
+    if(this.unsub)this.unsub();
+    this.unsub=fs.collection("empresas").doc(EMP.id).collection("radar_conf").doc("perfil").onSnapshot(sn=>{EMP.perfil=sn.exists?sn.data():null;this.aplicar()},
+      e=>{console.warn("Perfil:",e&&e.code);EMP.perfil=null;this.aplicar()})},
+  /* Aplica el perfil a la clasificación, los colores y el puntaje, y recalcula el radar */
+  aplicar(){const p=EMP.perfil||{};
+    PERF.gen=!EMP.pp;PERF.rup=!!p.rup;PERF.vmin=(+p.vmin||0)*1e6;PERF.vmax=(+p.vmax||0)*1e6;
+    FOCUS.clear();(Array.isArray(p.foco)?p.foco:EMP.pp?["Bolívar","Cundinamarca","Bogotá D.C."]:[]).forEach(x=>FOCUS.add(x));
+    if(PERF.gen){const L=(Array.isArray(p.lineas)?p.lineas:[]).filter(l=>l&&String(l.n||"").trim()).slice(0,10).map(l=>({n:String(l.n).trim().slice(0,40),
+        kw:String(l.kw||"").split(",").map(normT).map(x=>x.trim()).filter(x=>x.length>=3),un:String(l.un||"").split(/[,\s]+/).map(x=>x.replace(/\D/g,"")).filter(x=>x.length>=2),w:+l.w||14}));
+      PERF.lineas=L;LINEAS.length=0;L.forEach(l=>LINEAS.push(l.n));LINEAS.push("Otros sectores");
+      for(const m of [SHORT,SLOT,COL,SOL,PAT,LW])for(const k in m)delete m[k];
+      const SL=["s1","s2","s3","s4","s5","s6","s7","s8","h1","h7"];
+      LINEAS.forEach((l,i)=>{const sl=l==="Otros sectores"?"s0":SL[i];SLOT[l]=sl;SHORT[l]=l.length>11?l.slice(0,10)+"…":l;COL[l]=`var(--${sl})`;SOL[l]=`var(--s${sl.slice(1)})`;
+        PAT[l]=sl[0]==="h"?`url(#p${sl})`:`var(--${sl})`;LW[l]=l==="Otros sectores"?0:L[i].w});
+      PRESETS[1][0]="Mis líneas";PRESETS[1][1]="las líneas del perfil de la empresa";PRESETS[1][2].tipo=LINEAS.filter(l=>l!=="Otros sectores");
+      const b=document.querySelector('.preset[data-i="1"]');if(b){b.textContent="Mis líneas";b.title=PRESETS[1][1]}
+      F.tipo.forEach(t=>{if(!LINEAS.includes(t))F.tipo.delete(t)});
+      try{document.getElementById("leg1").innerHTML=legend();document.getElementById("leg2").innerHTML=legend()}catch(e){}}
+    this.cuenta();recalcular();
+    if(PERF.gen&&!PERF.lineas.length&&!this._avisado){this._avisado=true;aviso("Configura el perfil de la empresa en Cuenta para ver tus procesos")}},
+  todoUI(){const w=document.getElementById("todo-sw"),c=document.getElementById("todo-ck");w.hidden=!puedeTodo();c.checked=verTodo();
+    c.onchange=()=>{try{localStorage.setItem("radar:todo:"+EMP.id,c.checked?"1":"0")}catch(e){}recalcular()}},
+  cuenta(){document.getElementById("emp-nom").textContent=EMP.nombre;const p=EMP.perfil||{};
+    document.getElementById("emp-sub").textContent=EMP.pp?"Clasificación base de Planificar":(PERF.lineas.length?PERF.lineas.length+" línea"+(PERF.lineas.length>1?"s":"")+" de negocio":"Perfil sin configurar")+(EMP.admin?" · eres administrador":"");
+    document.getElementById("emp-perf").onclick=()=>this.editor()},
+  /* ── Editor del perfil ── */
+  editor(){const p=JSON.parse(JSON.stringify(EMP.perfil||{}));this.ed={lineas:Array.isArray(p.lineas)?p.lineas:[],foco:Array.isArray(p.foco)?p.foco:(EMP.pp?["Bolívar","Cundinamarca","Bogotá D.C."]:[]),vmin:p.vmin||"",vmax:p.vmax||"",rup:!!p.rup};
+    this.pintaEd();document.getElementById("perf").hidden=false;document.getElementById("perf-bg").hidden=false;document.documentElement.classList.add("lock")},
+  cerrarEd(){document.getElementById("perf").hidden=true;document.getElementById("perf-bg").hidden=true;document.documentElement.classList.remove("lock")},
+  leerEd(){const b=document.getElementById("perf-b");if(!this.ed)return;
+    b.querySelectorAll("[data-ln]").forEach(r=>{const i=+r.dataset.ln,l=this.ed.lineas[i];if(!l)return;l.n=r.querySelector("[data-f=n]").value;l.kw=r.querySelector("[data-f=kw]").value;l.un=r.querySelector("[data-f=un]").value;l.w=+r.querySelector("[data-f=w]").value});
+    const v=id=>{const e=document.getElementById(id);return e?e.value:""};this.ed.vmin=v("pf-vmin");this.ed.vmax=v("pf-vmax");const rp=document.getElementById("pf-rup");if(rp)this.ed.rup=rp.checked},
+  pintaEd(){const e=this.ed,b=document.getElementById("perf-b"),deps=[...new Set(GEO.map(g=>g[0]))].sort((a,c)=>a.localeCompare(c,"es"));
+    const lin=EMP.pp?`<p class="pf-nota">Planificar usa su clasificación base (10 líneas de ingeniería y construcción). Aquí ajustas zonas, valor y RUP.</p>`:
+      `<section class="pf-sec"><h3>Líneas de negocio</h3><p class="pf-nota">Cada línea agrupa los procesos cuyo objeto contiene alguna palabra clave o cuyo código UNSPSC empieza por los códigos indicados. Escribe las palabras sin tildes, separadas por comas; sirven raíces como «medic» (médico, medicamento).</p>
+        ${e.lineas.map((l,i)=>`<div class="pf-ln" data-ln="${i}"><div class="pf-r"><input data-f="n" value="${esc(l.n||"")}" placeholder="Nombre de la línea" maxlength="40"><select data-f="w">${IMP.map(([n,w])=>`<option value="${w}"${+l.w===w||(!l.w&&w===14)?" selected":""}>${n}</option>`).join("")}</select><button type="button" class="pf-del" data-del="${i}" aria-label="Quitar línea">✕</button></div>
+          <textarea data-f="kw" rows="2" placeholder="Palabras clave: auditoria medica, glosas, cuentas medicas">${esc(l.kw||"")}</textarea>
+          <input data-f="un" value="${esc(l.un||"")}" placeholder="Códigos UNSPSC (opcional): 85, 8510" inputmode="numeric"></div>`).join("")||'<p class="pf-nota">Aún no hay líneas.</p>'}
+        <div class="pf-r">${e.lineas.length<10?`<button class="btn" type="button" id="pf-add">+ Línea vacía</button><select id="pf-plant"><option value="">+ Desde plantilla…</option>${PLANT.map((x,i)=>`<option value="${i}">${esc(x[0])}</option>`).join("")}</select>`:'<span class="pf-nota">Máximo 10 líneas.</span>'}</div></section>`;
+    b.innerHTML=lin+`<section class="pf-sec"><h3>Departamentos foco</h3><p class="pf-nota">Suman puntos de conveniencia.</p><div class="pf-deps">${deps.map(d=>`<button type="button" class="pf-dep" data-dep="${esc(d)}" aria-pressed="${e.foco.includes(d)}">${esc(d)}</button>`).join("")}</div></section>
+      <section class="pf-sec"><h3>Valor ideal de los contratos</h3><div class="pf-r"><label>Desde (millones)<input id="pf-vmin" type="number" min="0" step="1" value="${esc(e.vmin)}" placeholder="50"></label><label>Hasta (millones)<input id="pf-vmax" type="number" min="0" step="1" value="${esc(e.vmax)}" placeholder="300"></label></div></section>
+      <section class="pf-sec"><label class="todo-sw"><span><b>La empresa tiene RUP en firme</b><small>Los procesos que exigen RUP dejan de restar conveniencia</small></span><input type="checkbox" id="pf-rup" role="switch"${e.rup?" checked":""}></label></section>`;
+    b.querySelectorAll("[data-dep]").forEach(x=>x.onclick=()=>{const d=x.dataset.dep,k=e.foco.indexOf(d);k>=0?e.foco.splice(k,1):e.foco.push(d);x.setAttribute("aria-pressed",k<0)});
+    b.querySelectorAll("[data-del]").forEach(x=>x.onclick=()=>{this.leerEd();e.lineas.splice(+x.dataset.del,1);this.pintaEd()});
+    const ad=document.getElementById("pf-add");if(ad)ad.onclick=()=>{this.leerEd();e.lineas.push({n:"",kw:"",un:"",w:14});this.pintaEd()};
+    const pl=document.getElementById("pf-plant");if(pl)pl.onchange=()=>{if(pl.value==="")return;this.leerEd();const t=PLANT[+pl.value];e.lineas.push({n:t[0],kw:t[1].split(",").join(", "),un:t[2].split(",").join(", "),w:14});this.pintaEd()}},
+  guardar(){this.leerEd();const e=this.ed,num=x=>Math.max(0,Math.round(+x||0));
+    const doc={lineas:EMP.pp?[]:e.lineas.map(l=>({n:String(l.n||"").trim().slice(0,40),kw:String(l.kw||"").slice(0,600),un:String(l.un||"").slice(0,200),w:+l.w||14})).filter(l=>l.n),
+      foco:e.foco.slice(0,40),vmin:num(e.vmin),vmax:num(e.vmax),rup:!!e.rup,act:Date.now(),por:EMP.email};
+    if(doc.vmax&&doc.vmin>doc.vmax)return aviso("El valor «desde» no puede ser mayor que «hasta»");
+    if(!EMP.fs)return aviso("Inicia sesión para guardar el perfil");
+    EMP.fs.collection("empresas").doc(EMP.id).collection("radar_conf").doc("perfil").set(doc)
+      .then(()=>{aviso("Perfil guardado");this.cerrarEd()}).catch(x=>aviso("No se pudo guardar ("+(x.code==="permission-denied"?"sin permiso: falta publicar las reglas":(x.code||"error"))+")"))}
+};
+window.Emp=Emp;
+document.getElementById("perf-x").onclick=document.getElementById("perf-cancel").onclick=document.getElementById("perf-bg").onclick=()=>Emp.cerrarEd();
+document.getElementById("perf-ok").onclick=()=>Emp.guardar();
+</script>
 <div class="bv" id="bv" role="dialog" aria-modal="true" aria-labelledby="bv-t" hidden>
   <div class="bv-card"><div class="bv-ic" id="bv-ic"></div><h2 id="bv-t"></h2><p id="bv-p"></p><div class="bv-dots" id="bv-dots"></div>
     <div class="bv-b" id="bv-b"></div><button class="bv-skip" type="button" id="bv-skip">Saltar</button></div>
@@ -2396,7 +2513,7 @@ if(location.hash==="#rad")queueMicrotask(()=>Rad.pinta());
   <form class="pp-card" id="loginForm" novalidate>
     <img src="icon.svg" alt="">
     <h1>Radar SECOP</h1>
-    <p id="gateTxt">Planificar Proyectos SAS · Inicia sesión con tu cuenta de Planificar Proyectos Apps.</p>
+    <p id="gateTxt">Inicia sesión con tu cuenta de Planificar Proyectos Apps.</p>
     <div data-google-slot></div>
     <input id="lEm" type="email" placeholder="Correo" autocomplete="email" inputmode="email">
     <input id="lPw" type="password" placeholder="Contraseña" autocomplete="current-password">
@@ -2567,8 +2684,9 @@ function cpEval(d){
   o.comp=inter===0?.9:inter<=2?.75:inter<=5?.5:inter<=10?.3:.15;
   o.compT=inter===0?`sin competidores registrados aún${c[2]?` (${c[2]} visualizaciones)`:""}`:`${inter} proveedor${inter>1?"es":""} ya interesado${inter>1?"s":""}`;
   // Tamaño del contrato frente al rango ideal de la empresa
-  o.valor=!d.val?.2:d.val<1.5e7?.3:d.val<5e7?.7:d.val<3e8?1:d.val<=1e9?.6:.2;
-  o.valorT=!d.val?"sin valor publicado":`${cop(d.val)}`+(d.val>=5e7&&d.val<3e8?", en el rango ideal ($50–300 M)":d.val>1e9?", muy grande para la empresa hoy":d.val<1.5e7?", contrato pequeño":"");
+  const enR=PERF.vmax&&d.val>=PERF.vmin&&d.val<=PERF.vmax;
+  o.valor=!d.val?.2:PERF.vmax?(enR?1:d.val>=PERF.vmin/3&&d.val<=PERF.vmax*3?.6:.2):d.val<1.5e7?.3:d.val<5e7?.7:d.val<3e8?1:d.val<=1e9?.6:.2;
+  o.valorT=!d.val?"sin valor publicado":PERF.vmax?`${cop(d.val)}`+(enR?", en el rango ideal de la empresa":""):`${cop(d.val)}`+(d.val>=5e7&&d.val<3e8?", en el rango ideal ($50–300 M)":d.val>1e9?", muy grande para la empresa hoy":d.val<1.5e7?", contrato pequeño":"");
   // Modalidad
   const consult=/Diseño|Estudios|Interventor|BIM/.test(d.tipo);
   o.modal=/M[ií]nima/.test(d.mod)?.9:/con ofertas/.test(d.mod)?.7:/subasta/i.test(d.mod)?.4:/Selecci/.test(d.mod)?.7:/Concurso/.test(d.mod)?(consult?.85:.5):/Licitaci/.test(d.mod)?.4:/Solicitud/i.test(d.mod)?.2:/Enajenaci/i.test(d.mod)?.1:.5;
@@ -2683,7 +2801,7 @@ document.addEventListener("visibilitychange",()=>{if(document.hidden)return;Avis
   const p=Aviso.pend;Aviso.pend=null;if(p)setTimeout(()=>{p==="zumbido"?Aviso.buzz():Aviso.tono()},250)});
 const Chat={fs:null,uid:null,ms:[],ok:false,err:null,adj:null,abierto:false,KEY:"radar:chatLeido",
   start(fs,u){this.fs=fs;this.uid=u.uid;if(this.unsub)this.unsub();
-    this.unsub=fs.collection("radar_chat").orderBy("t","desc").limit(200).onSnapshot(sn=>{
+    this.unsub=fs.collection(colR("radar_chat")).orderBy("t","desc").limit(200).onSnapshot(sn=>{
       this.ms=sn.docs.map(x=>{const d=x.data({serverTimestamps:"estimate"});const t=d.t&&d.t.toMillis?d.t.toMillis():Date.now();return{id:x.id,...d,t}}).sort((a,b)=>a.t-b.t);
       if(this._carga){const nuevos=sn.docChanges().filter(ch=>ch.type==="added"&&!ch.doc.metadata.hasPendingWrites).map(ch=>ch.doc.data({serverTimestamps:"estimate"})).filter(m=>m.uid!==this.uid);
         if(nuevos.length)this.llega(nuevos)}
@@ -2704,7 +2822,7 @@ const Chat={fs:null,uid:null,ms:[],ok:false,err:null,adj:null,abierto:false,KEY:
     if(falta>0)return aviso(`Espera ${Math.ceil(falta/1000)} s para otro zumbido`);
     try{localStorage.setItem("radar:chatBuzz",String(Date.now()))}catch(e){}this.pintaBuzz();
     const yo=Fav.yo||{n:"",e:""};
-    return this.fs.collection("radar_chat").add({uid:this.uid,n:yo.n||yo.e.split("@")[0],e:yo.e,txt:"",tipo:"zumbido",t:firebase.firestore.FieldValue.serverTimestamp()})
+    return this.fs.collection(colR("radar_chat")).add({uid:this.uid,n:yo.n||yo.e.split("@")[0],e:yo.e,txt:"",tipo:"zumbido",t:firebase.firestore.FieldValue.serverTimestamp()})
       .then(()=>aviso("⚡ Zumbido enviado al equipo")).catch(e=>aviso("No se pudo enviar ("+(e.code||"error")+")"))},
   ultBuzz(){try{return+localStorage.getItem("radar:chatBuzz")||0}catch(e){return 0}},
   pintaBuzz(){const b=document.getElementById("chat-buzz"),t=document.getElementById("chat-buzz-t");if(!b)return;const falta=Math.ceil((this.ESPERA-(Date.now()-this.ultBuzz()))/1000);
@@ -2713,8 +2831,8 @@ const Chat={fs:null,uid:null,ms:[],ok:false,err:null,adj:null,abierto:false,KEY:
     const yo=Fav.yo||{n:"",e:""},doc={uid:this.uid,n:yo.n||yo.e.split("@")[0],e:yo.e,txt:txt.slice(0,2000),t:firebase.firestore.FieldValue.serverTimestamp()};
     if(this.adj){const d=this.adj;doc.ref={id:Fav.id(d),ent:String(d.ent||"").slice(0,120),obj:String(d.obj||"").slice(0,200),val:+d.val||0,cierre:d.cierre||"",url:d.url||"",ref:d.ref||""}}
     this.adj=null;this.pintaAdj();
-    return this.fs.collection("radar_chat").add(doc).catch(e=>aviso("No se pudo enviar ("+(e.code||"error")+")"))},
-  borrar(id){if(!confirmarBorrado(id))return;this.fs.collection("radar_chat").doc(id).delete().catch(e=>aviso("No se pudo eliminar ("+(e.code||"error")+")"))},
+    return this.fs.collection(colR("radar_chat")).add(doc).catch(e=>aviso("No se pudo enviar ("+(e.code||"error")+")"))},
+  borrar(id){if(!confirmarBorrado(id))return;this.fs.collection(colR("radar_chat")).doc(id).delete().catch(e=>aviso("No se pudo eliminar ("+(e.code||"error")+")"))},
   abrir(on){this.abierto=on;const el=document.getElementById("chat");el.hidden=!on;document.documentElement.classList.toggle("lock-chat",on);
     if(on){this.leido();this.pinta();setTimeout(()=>{const l=document.getElementById("chat-l");l.scrollTop=l.scrollHeight;if(matchMedia("(min-width:980px)").matches)document.getElementById("chat-t").focus()},30)}else this.pinta()},
   pintaAdj(){const el=document.getElementById("chat-adj");if(!this.adj){el.hidden=true;el.innerHTML="";return}
@@ -3354,6 +3472,41 @@ body .cta-card{border-radius:14px!important}
 .bv-dots{display:flex;gap:7px;justify-content:center}.bv-dots i{width:7px;height:7px;border-radius:50%;background:var(--dim)}.bv-dots i.on{background:var(--accent-fg)}
 .bv-b{display:grid;gap:8px}.bv-b .btn{min-height:50px!important;font-size:17px!important;justify-content:center}
 .bv-skip{border:0;background:none;color:var(--muted);font:inherit;font-size:15px;padding:6px;cursor:pointer}.bv-skip[hidden]{visibility:hidden;display:block}
+
+/* Multiempresa: interruptor «Ver todos los sectores», empresa en Cuenta y editor de perfil */
+.todo-sw{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--surface);border-radius:14px;padding:10px 14px;margin:0 0 10px;cursor:pointer}
+.todo-sw[hidden]{display:none}
+.todo-sw span{display:grid;gap:2px}.todo-sw b{font-size:15px;font-weight:600}.todo-sw small{font-size:12.5px;color:var(--muted)}
+.todo-sw input{appearance:none;-webkit-appearance:none;flex:none;width:51px;height:31px;border-radius:999px;background:var(--fill);position:relative;cursor:pointer;transition:background .2s;margin:0}
+.todo-sw input::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.15);transition:transform .2s}
+.todo-sw input:checked{background:#34C759}.todo-sw input:checked::after{transform:translateX(20px)}
+.emp-pick{display:grid;gap:4px;font-size:12.5px;color:var(--muted);font-weight:600}.emp-pick[hidden]{display:none}
+.emp-pick select{min-height:40px;border-radius:10px;border:0;background:var(--fill);color:var(--fg);padding:6px 10px;font:inherit;font-size:15px}
+#emp-perf{justify-content:center;min-height:44px}
+.perf-bg{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.4)}.perf-bg[hidden]{display:none}
+.perf{position:fixed;z-index:71;inset:max(44px,env(safe-area-inset-top,0px)) 0 0 0;background:var(--sheet);-webkit-backdrop-filter:saturate(180%) blur(30px);backdrop-filter:saturate(180%) blur(30px);border-radius:14px 14px 0 0;display:flex;flex-direction:column;animation:det-up .32s cubic-bezier(.2,.8,.2,1)}
+.perf[hidden]{display:none}
+@media (min-width:980px){.perf{inset:5vh auto 5vh 50%;transform:translateX(-50%);width:min(680px,92vw);border-radius:16px;animation:none;box-shadow:0 30px 80px rgba(0,0,0,.45)}}
+.perf-h{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 8px}.perf-h b{font-size:20px;font-weight:700}
+.perf-b{flex:1;min-height:0;overflow:auto;padding:4px 16px 16px;display:grid;gap:14px;align-content:start;overscroll-behavior:contain}
+.perf-f{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));border-top:.5px solid var(--line)}
+.perf-f .btn{min-height:46px;justify-content:center}
+.pf-sec{background:var(--surface);border-radius:14px;padding:12px 14px;display:grid;gap:8px}
+.pf-sec h3{margin:0;font-size:16px;font-weight:700}
+.pf-nota{margin:0;font-size:12.5px;color:var(--muted);line-height:1.4}
+.pf-ln{display:grid;gap:6px;padding:10px;border-radius:12px;background:var(--surface-2)}
+html:root[data-theme="light"] .pf-ln{background:#F2F2F7}
+.pf-r{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pf-r>input,.pf-r>select,.pf-r label{flex:1 1 140px;min-width:0}
+.pf-r label{display:grid;gap:3px;font-size:12px;color:var(--muted)}
+.perf input,.perf select,.perf textarea{border:0;border-radius:10px;background:var(--fill);color:var(--fg);padding:8px 10px;font:inherit;font-size:15px;min-height:38px;width:100%;box-sizing:border-box}
+.perf textarea{resize:vertical;min-height:56px}
+.pf-r>select[data-f=w]{flex:0 0 96px}
+.pf-del{flex:none;border:0;background:none;color:#FF453A;font-size:16px;width:34px;height:34px;border-radius:50%;cursor:pointer}
+.pf-deps{display:flex;flex-wrap:wrap;gap:6px}
+.pf-dep{border:0;background:var(--fill);color:var(--fg);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.pf-dep[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.perf .todo-sw{background:transparent;padding:0;margin:0}
 @media (prefers-reduced-motion:reduce){body .det,.bv-card{animation:none}body .card.ios-card{transition:none}}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -3386,14 +3539,23 @@ body .cta-card{border-radius:14px!important}
   function sinAcceso(u){$g('gate').hidden=false;$g('lEm').hidden=$g('lPw').hidden=true;
     $g('loginForm').querySelector('.pp-primary').hidden=true;
     var gs=document.querySelector('[data-google-slot]');if(gs)gs.hidden=true;$g('lOut').hidden=false;
-    $g('gateTxt').textContent='La cuenta '+u.email+' no tiene acceso al Radar SECOP. Es solo para miembros de Planificar Proyectos SAS; pide acceso al administrador.'}
+    $g('gateTxt').textContent='La cuenta '+u.email+' no tiene acceso al Radar SECOP. Pide al administrador que active el Radar para tu empresa.'}
   auth.onAuthStateChanged(function(u){
     if(!u){$g('gate').hidden=false;window.__loginPend=true;return}
     var em=String(u.email||'').toLowerCase();
     Uso.esAdmin(fs,u).then(function(adm){
-      if(adm) return {ok:true};
+      if(adm){var q=(location.search.match(/[?&]emp=([^&#]+)/)||[])[1];
+        if(q){try{localStorage.setItem('radar:emp',decodeURIComponent(q))}catch(e){}history.replaceState(null,'',location.pathname+location.hash)}
+        var eid='';try{eid=localStorage.getItem('radar:emp')||''}catch(e){}eid=eid||PP_EMP;
+        return fs.collection('empresas').doc(eid).get().then(function(s){var x=s.exists?s.data():{};
+          return s.exists?{ok:true,admin:true,emp:eid,nombre:x.nombre||eid,radar:x.radar||{}}:{ok:true,admin:true,emp:PP_EMP,nombre:'Planificar Proyectos SAS',radar:{}}},
+          function(){return {ok:true,admin:true,emp:PP_EMP,nombre:'Planificar Proyectos SAS',radar:{}}})}
       return fs.collection('invitaciones').doc(em).get().then(function(sn){var d=sn.exists?sn.data():null;
-        return {ok:!!d&&d.estado!=='revocado'&&d.empresaId===PP_EMP&&Uso.tipoDe(d)!=='familiar'&&(d.apps||{}).radar!==false}
+        if(!d||d.estado==='revocado'||!d.empresaId||Uso.tipoDe(d)==='familiar'||(d.apps||{}).radar===false) return {ok:false};
+        return fs.collection('empresas').doc(d.empresaId).get().then(function(s){var x=s.exists?s.data():{},r=x.radar||{};
+          if(d.empresaId!==PP_EMP&&r.activo!==true) return {ok:false};
+          return {ok:true,emp:d.empresaId,nombre:x.nombre||d.empresa||'',radar:r}},
+          function(){return d.empresaId===PP_EMP?{ok:true,emp:PP_EMP,nombre:d.empresa||'Planificar Proyectos SAS',radar:{}}:{ok:false}});
       },function(){return {ok:false}});
     }).then(function(r){
       if(!r.ok) return sinAcceso(u);
@@ -3404,6 +3566,7 @@ body .cta-card{border-radius:14px!important}
       try{fs.collection('users').doc(u.uid).collection('perfil').doc('datos').onSnapshot(function(d){var n=d.exists&&d.data().nombre||'';$g('cta-nombre').textContent=n||em.split('@')[0];if(window.ppSaludo)ppSaludo(n);if(window.Fav)Fav.nombre(n)})}catch(e){$g('cta-nombre').textContent=em.split('@')[0]}
       if(window.Apariencia){try{$g('cta-apariencia-slot').innerHTML=Apariencia.picker()}catch(e){}}
       try{Uso.start(fs,u,'radar')}catch(e){}
+      try{if(window.Emp)Emp.start(fs,u,r)}catch(e){console.warn(e)}
       try{if(window.Fav)Fav.start(fs,u,u.displayName)}catch(e){console.warn(e)}
       try{if(window.Chat)Chat.start(fs,u)}catch(e){console.warn(e)}
       try{if(window.Filtros)Filtros.start(fs,u)}catch(e){console.warn(e)}

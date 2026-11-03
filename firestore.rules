@@ -65,9 +65,31 @@ service cloud.firestore {
       allow delete: if isAdmin() || (signedIn() && myEmail() == email);
     }
 
-    // Empresas: solo el administrador las ve, crea, renombra y elimina (cada cuenta guarda el nombre de la suya)
+    // Empresas: solo el administrador las crea, renombra, elimina y les activa el Radar (empresas/{id}.radar.activo / .todo).
+    // Cada miembro puede leer la ficha de su propia empresa (nombre y apps activas).
+    function miEmpresa() { return get(invitePath()).data.get('empresaId', ''); }
     match /empresas/{id} {
-      allow read, write: if isAdmin();
+      allow read: if isAdmin() || (invited() && miEmpresa() == id);
+      allow write: if isAdmin();
+    }
+    // Radar SECOP multiempresa: miembros de la empresa con el Radar activo (Planificar Proyectos SAS siempre)
+    function radarDe(emp) {
+      return invited() && miEmpresa() == emp && get(invitePath()).data.get('apps', {}).get('radar', true) != false
+        && (emp == 'planificar-proyectos-sas'
+            || get(/databases/$(database)/documents/empresas/$(emp)).data.get('radar', {}).get('activo', false) == true);
+    }
+    match /empresas/{emp}/radar_conf/{id} {
+      allow read, write: if isAdmin() || radarDe(emp);
+    }
+    match /empresas/{emp}/radar_favoritos/{id} {
+      allow read, write: if isAdmin() || radarDe(emp);
+    }
+    match /empresas/{emp}/radar_chat/{id} {
+      allow read: if isAdmin() || radarDe(emp);
+      allow create: if (isAdmin() || radarDe(emp)) && request.resource.data.uid == request.auth.uid
+        && request.resource.data.t == request.time
+        && request.resource.data.txt is string && request.resource.data.txt.size() <= 2000;
+      allow delete: if isAdmin() || (radarDe(emp) && resource.data.uid == request.auth.uid);
     }
 
     // Cotizador: historial compartido solo por los miembros de Planificar Proyectos SAS (y administradores)

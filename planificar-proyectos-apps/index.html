@@ -403,7 +403,10 @@ function accesoApps(u){if(accUnsub){accUnsub();accUnsub=null}accUid=u&&u.uid;
     // Tipo de cuenta (familiar, empresarial o mixto): define la marca y qué apps se muestran; los interruptores por app afinan
     var U=window.Uso||{},t=U.tipoDe?U.tipoDe(d):(d.proyecta==='aprobado'?'mixto':'familiar'),del=U.appsDeTipo?U.appsDeTipo(t):['mindfocus','powerfit','lumen','proyecta'],v={};
     del.forEach(function(a){var so=(U.SOLO||{})[a];v[a]=a==='proyecta'?d.proyecta==='aprobado':ap[a]!==false&&(!so||d.empresaId===so)});
-    v.finanzas=em===FIN_OWNER;setMarca(t==='familiar'?'w':'pp');pintarApps(v)},
+    v.finanzas=em===FIN_OWNER;setMarca(t==='familiar'?'w':'pp');pintarApps(v);
+    // Radar SECOP para otras empresas: visible si el administrador lo activó en la empresa (empresas/{id}.radar.activo)
+    if(!v.radar&&d.empresaId&&ap.radar!==false&&del.indexOf('radar')>=0)db.collection('empresas').doc(d.empresaId).get().then(function(x){if(accUid!==uid)return;
+      if(x.exists&&(x.data().radar||{}).activo===true){v.radar=true;pintarApps(v)}}).catch(function(){})},
     function(){pintarApps({mindfocus:1,powerfit:1,lumen:1})})})}
  catch(e){pintarApps({mindfocus:1,powerfit:1,lumen:1})}}
 $('aSwitch').onclick=function(){setMode(mode==='login'?'register':'login')};

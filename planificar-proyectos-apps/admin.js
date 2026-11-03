@@ -34,9 +34,15 @@
         if(S.empRen===e.id)return '<form class="searchrow emp-ren" data-id="'+esc(e.id)+'" novalidate><label class="field"><input id="admEmpRen" type="text" maxlength="60" value="'+esc(e.nombre)+'" aria-label="Nuevo nombre de '+esc(e.nombre)+'"></label><button class="sbtn pri" type="submit">Guardar</button><button class="sbtn" type="button" data-adm="empren" data-id="">Cancelar</button></form>';
         return '<div class="urow"><div class="utop" style="cursor:default"><button type="button" class="link" data-adm="empfil" data-id="'+esc(e.id)+'" style="background:none;border:0;color:inherit;font:inherit;font-weight:700;cursor:pointer;padding:0;text-align:left">'+esc(e.nombre)+'</button>'
           +'<span class="usum">'+k+' usuario'+(k===1?'':'s')+'</span><span class="row2" style="margin:0"><button type="button" class="sbtn sm" data-adm="empren" data-id="'+esc(e.id)+'">Renombrar</button>'
+          +radarBtns(e)
           +(k||e.id===PP_EMP?'':'<button type="button" class="sbtn sm warn'+(S.sure==='emp:'+e.id?' sure':'')+'" data-adm="empdel" data-id="'+esc(e.id)+'">'+(S.sure==='emp:'+e.id?'¿Seguro?':'Eliminar')+'</button>')+'</span></div></div>'}).join(''):'<div class="empty">Aún no hay empresas.</div>')+'</div>'
       +'<div class="lbl">Nueva empresa</div><form id="admEmpNew" class="searchrow" novalidate><label class="field"><input id="admEmpNom" type="text" maxlength="60" placeholder="Nombre de la empresa" autocomplete="off"></label><button class="sbtn pri" type="submit">Crear</button></form>'
       +'<div class="msg'+(/^(Empresa )/.test(S.empMsg||'')?' ok':'')+'" role="status">'+esc(S.empMsg||'')+'</div></section>'}
+  /* Radar SECOP por empresa: activo (Planificar siempre) y «Ver todos los sectores» (Planificar sí, salvo que se apague) */
+  function radarBtns(e){var r=e.radar||{},pp=e.id===PP_EMP,act=pp||r.activo===true,todo=pp?r.todo!==false:r.todo===true;
+    return (pp?'<span class="pill">Radar siempre activo</span>':'<button type="button" class="sbtn sm'+(act?' pri':'')+'" data-adm="empradar" data-id="'+esc(e.id)+'" aria-pressed="'+act+'">Radar: '+(act?'activo':'inactivo')+'</button>')
+      +(act?'<button type="button" class="sbtn sm'+(todo?' pri':'')+'" data-adm="emptodo" data-id="'+esc(e.id)+'" aria-pressed="'+todo+'">Todos los sectores: '+(todo?'sí':'no')+'</button>'
+      +'<a class="sbtn sm" href="/radar-secop/?emp='+encodeURIComponent(e.id)+'" target="_blank" rel="noopener">Abrir Radar</a>':'')}
   function tipoPill(u){return u.admin?'':'<span class="pill tipo t-'+u.tipo+'">'+esc(TIPOS[u.tipo])+'</span>'+(u.sinEmp?'<span class="pill no">⚠ Sin empresa</span>':'')}
   var DIA=864e5, SUBS=['entradas','config','powerfit','lumen','proyecta','perfil'];
   var S={db:null,me:null,inv:[],stats:{},admins:{},uopen:null,users:[],upd:0,app:'mindfocus',q:'',sure:'',del:null,delOut:null,invMsg:null,busy:false,err:'',ver:null,verFoco:false,filt:'todos',invTipo:'familiar',emp:[],empFil:'',empRen:null,empMsg:'',needEmp:null,invEmpId:''};
@@ -93,7 +99,7 @@
 
   function cargar(){if(!S.db||S.busy)return;S.busy=true;S.err='';pintar();
     Promise.all([S.db.collection('invitaciones').get(),S.db.collection('stats').get(),S.db.collection('admins').get().catch(function(){return {docs:[]}}),S.db.collection('empresas').get().catch(function(){return {docs:[]}})]).then(function(r){
-      S.emp=r[3].docs.map(function(d){var x=d.data()||{};return {id:d.id,nombre:String(x.nombre||''),creada:x.creada||0}}).sort(function(a,b){return a.nombre.localeCompare(b.nombre,'es')});
+      S.emp=r[3].docs.map(function(d){var x=d.data()||{};return {id:d.id,nombre:String(x.nombre||''),creada:x.creada||0,radar:x.radar||{}}}).sort(function(a,b){return a.nombre.localeCompare(b.nombre,'es')});
       // Planificar Proyectos SAS: empresa fija (su id da acceso al Cotizador); se crea si falta y no se puede eliminar
       if(!S.emp.some(function(e){return e.id===PP_EMP})){S.emp.unshift({id:PP_EMP,nombre:'Planificar Proyectos SAS',creada:Date.now()});S.db.collection('empresas').doc(PP_EMP).set({nombre:'Planificar Proyectos SAS',creada:Date.now(),por:S.me},{merge:true}).catch(function(){})}
       S.admins={};r[2].docs.forEach(function(d){S.admins[d.id]=d.data()||{}});
@@ -322,6 +328,10 @@
     if(a==='invtipo'){S.invTipo=b.getAttribute('data-k');var ie=($('admInvEm')||{}).value;pintar();if($('admInvEm'))$('admInvEm').value=ie||'';return}
     if(a==='empfil'){S.empFil=id||'';S.filt='todos';pintar();if(id){var cs=document.getElementById('admQ');if(cs)cs.scrollIntoView({block:'center'})}return}
     if(a==='empren'){S.empRen=id||null;pintar();var ri=$('admEmpRen');if(ri){ri.focus();ri.select()}return}
+    if(a==='empradar'||a==='emptodo'){var ee=empById(id);if(!ee)return;var rr=ee.radar||{},pp=id===PP_EMP,nr={};
+      if(a==='empradar'){nr.activo=!(rr.activo===true)}else{nr.todo=!(pp?rr.todo!==false:rr.todo===true)}
+      ee.radar=Object.assign({},rr,nr);pintar();
+      return S.db.collection('empresas').doc(id).set({radar:nr},{merge:true}).then(function(){S.empMsg='Empresa actualizada: '+ee.nombre+'.';pintar()},function(x){ee.radar=rr;S.empMsg='No se pudo guardar: '+(x.code||x.message);pintar()})}
     if(a==='empdel'){if(id===PP_EMP)return;if(!seguro('emp:'+id))return pintar();if(S.users.some(function(u){return u.empresaId===id}))return;return S.db.collection('empresas').doc(id).delete().then(function(){S.empMsg='Empresa eliminada.';cargarSilencio()},function(e){alert('No se pudo eliminar: '+(e.code||e.message))})}
     if(a==='tipo'){var tu=porId(id),tk=b.getAttribute('data-k');if(!tu||(tu.tipo===tk&&!tu.sinEmp))return;
       if(tk!=='familiar'&&!empById(tu.empresaId)){S.needEmp=id;S.needTipo=tk;return pintar()}S.needEmp=null;b.disabled=true;
