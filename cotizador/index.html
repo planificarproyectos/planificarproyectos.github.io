@@ -369,6 +369,11 @@ select option,select optgroup{background:#171a20;color:#f4f5f6}
 .pr-bar .tr{display:block;height:8px;border-radius:99px;background:var(--field)}
 .pr-bar i{display:block;height:100%;border-radius:99px;background:var(--accent)}
 .pr-bar b{text-align:right;font-variant-numeric:tabular-nums}
+#pr-tC tr.grp td{background:var(--field);padding:0;border-bottom:1px solid var(--line)}
+.gtog{width:100%;display:flex;align-items:center;gap:10px;background:none;border:0;color:var(--ink);font:600 13px var(--ui);text-align:left;padding:11px 12px;cursor:pointer}
+.gtog:hover{background:rgba(255,255,255,.04)}
+.gtog .car{color:var(--accent);width:14px}
+.gtog em{margin-left:auto;font-style:normal;font-weight:500;font-size:12px;color:var(--muted)}
 </style>
 
 <div class="app">
@@ -627,6 +632,7 @@ select option,select optgroup{background:#171a20;color:#f4f5f6}
       <div class="pr-row pr-catbar">
         <input type="search" id="pr-cq" placeholder="Buscar ítem o código (ej. zapata, 08.01)" aria-label="Buscar en el catálogo" style="flex:1;min-width:200px">
         <select id="pr-cch" aria-label="Capítulo"></select>
+        <button class="btn small" id="pr-cexp" type="button">Expandir todo</button><button class="btn small" id="pr-ccol" type="button">Contraer todo</button>
         <button class="btn" id="pr-ifc2" type="button">Importar modelo IFC</button>
       </div>
       <p class="pr-note">Precios base estimados (COP). Al agregar un ítem se copia a tu presupuesto con precio "Estimado" y lo puedes editar.</p>
@@ -2781,12 +2787,28 @@ function linesFor(code, q, f, extra) {
 }
 /* catálogo */
 g('pr-cch').innerHTML = '<option value="">Todos los capítulos</option>' + Object.entries(CAT.chaps).sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([k, v]) => `<option value="${k}">${k} · ${X(v)}</option>`).join('');
+const gst = {};
+function catRow(i) { return `<tr data-c="${i.c}"><td>${i.c}</td><td>${X(i.d)}${i.ifc ? `<small>${i.ifc}</small>` : ''}</td><td>${X(i.u)}</td><td class="num">${i.mo ? cop(i.mo) : '–'}</td><td class="num">${i.mt ? cop(i.mt) : '–'}</td><td><input type="text" inputmode="decimal" class="cq" value="1" aria-label="Cantidad"></td><td><button class="btn small cadd" type="button">+ Agregar</button></td></tr>`; }
 function renderCat() {
-  const q = norm(g('pr-cq').value.trim()), ch = g('pr-cch').value;
+  const q = norm(g('pr-cq').value.trim()), ch = g('pr-cch').value, searching = !!(q || ch);
   const rows = CAT.items.filter((i) => (!ch || i.c.startsWith(ch)) && (!q || norm(i.c + ' ' + i.d).includes(q)));
-  g('pr-cl').innerHTML = rows.map((i) => `<tr data-c="${i.c}"><td>${i.c}</td><td>${X(i.d)}${i.ifc ? `<small>${i.ifc}</small>` : ''}</td><td>${X(i.u)}</td><td class="num">${i.mo ? cop(i.mo) : '–'}</td><td class="num">${i.mt ? cop(i.mt) : '–'}</td><td><input type="text" inputmode="decimal" class="cq" value="1" aria-label="Cantidad"></td><td><button class="btn small cadd" type="button">+ Agregar</button></td></tr>`).join('') || '<tr><td colspan="7">Sin resultados</td></tr>';
+  const grp = {}; rows.forEach((i) => { (grp[i.c.slice(0, 2)] = grp[i.c.slice(0, 2)] || []).push(i); });
+  let h = '';
+  Object.keys(grp).sort().forEach((k) => {
+    const open = gst[k] !== undefined ? gst[k] : searching;
+    h += `<tr class="grp" data-g="${k}"><td colspan="7"><button type="button" class="gtog" aria-expanded="${open}"><span class="car">${open ? '▾' : '▸'}</span> ${k} · ${X(CAT.chaps[k])} <em>${grp[k].length} ítems</em></button></td></tr>`;
+    if (open) h += grp[k].map(catRow).join('');
+  });
+  g('pr-cl').innerHTML = h || '<tr><td colspan="7">Sin resultados</td></tr>';
 }
-g('pr-cq').oninput = renderCat; g('pr-cch').onchange = renderCat; renderCat();
+const resetG = () => { Object.keys(gst).forEach((k) => delete gst[k]); renderCat(); };
+g('pr-cl').addEventListener('click', (e) => {
+  const t = e.target.closest('.gtog'); if (!t) return;
+  const k = t.closest('tr').dataset.g, cur0 = t.getAttribute('aria-expanded') === 'true'; gst[k] = !cur0; renderCat();
+});
+g('pr-cexp').onclick = () => { Object.keys(CAT.chaps).forEach((k) => { gst[k] = true; }); renderCat(); };
+g('pr-ccol').onclick = () => { Object.keys(CAT.chaps).forEach((k) => { gst[k] = false; }); renderCat(); };
+g('pr-cq').oninput = resetG; g('pr-cch').onchange = resetG; renderCat();
 /* dashboard del catálogo */
 function renderDash() {
   const it = CAT.items, per = {};
