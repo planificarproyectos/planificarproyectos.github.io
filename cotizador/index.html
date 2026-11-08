@@ -360,6 +360,15 @@ select option,select optgroup{background:#171a20;color:#f4f5f6}
 .pr-catbar select{width:auto;max-width:100%}
 .pr-catbar input[type=search]{width:auto}
 .pr-tile[hidden]{display:none!important}
+.pr-dash{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.pr-h{font-family:var(--doc);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:6px 0 0}
+.pr-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+.pr-bars{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:2px 16px}
+.pr-bar{display:grid;grid-template-columns:minmax(130px,1.4fr) 2fr 30px;align-items:center;gap:10px;background:none;border:0;color:var(--ink);font:inherit;font-size:12.5px;text-align:left;cursor:pointer;padding:5px 6px;border-radius:8px}
+.pr-bar:hover{background:var(--field)}
+.pr-bar .tr{display:block;height:8px;border-radius:99px;background:var(--field)}
+.pr-bar i{display:block;height:100%;border-radius:99px;background:var(--accent)}
+.pr-bar b{text-align:right;font-variant-numeric:tabular-nums}
 </style>
 
 <div class="app">
@@ -614,6 +623,7 @@ select option,select optgroup{background:#171a20;color:#f4f5f6}
       </div>
     </div>
     <div class="pr-panel" id="pr-p-catalogo" hidden>
+      <div class="pr-dash" id="pr-dash"></div>
       <div class="pr-row pr-catbar">
         <input type="search" id="pr-cq" placeholder="Buscar ítem o código (ej. zapata, 08.01)" aria-label="Buscar en el catálogo" style="flex:1;min-width:200px">
         <select id="pr-cch" aria-label="Capítulo"></select>
@@ -1945,7 +1955,7 @@ const chaps = {
  '05': 'Mampostería y muros', '06': 'Pañetes, nivelación y cielos', '07': 'Cubierta e impermeabilización',
  '08': 'Pisos, enchapes y zócalos', '09': 'Carpintería en madera y puertas', '10': 'Carpintería metálica, vidrio y ventanas',
  '11': 'Pintura y acabados', '12': 'Hidrosanitario', '13': 'Aparatos sanitarios y grifería',
- '14': 'Instalaciones eléctricas y de datos', '15': 'Gas, ventilación y especiales', '16': 'Aseo, administración y exteriores', '17': 'Torre: sótanos, industrialización y zonas comunes'
+ '14': 'Instalaciones eléctricas y de datos', '15': 'Gas, ventilación y especiales', '16': 'Aseo, administración y exteriores', '17': 'Torre: sótanos, industrialización y zonas comunes', '18': 'Obras exteriores y urbanismo', '19': 'Sostenibilidad, domótica y especiales'
 };
 const raw = `
 01.01|Localización y replanteo topográfico|m²|2500|800|IfcSite
@@ -2172,8 +2182,103 @@ const raw = `
 17.22|Parque infantil, BBQ y mobiliario exterior|gl|4000000|22000000|
 17.23|Pre-actas de vecindad y control de vibraciones|gl|2500000|6000000|
 17.24|Control de calidad estructural e interventoría técnica|mes|0|6500000|
+01.15|Estudio de suelos y levantamiento topográfico|gl|0|6500000|
+01.16|Estudios y diseños (arquitectónico, estructural y MEP)|m²|0|48000|
+01.17|Demolición de cubierta y retiro de teja|m²|14000|0|IfcRoof
+01.18|Corte y perforación de concreto (core drilling)|un|45000|35000|
+01.19|Apuntalamiento y reforzamiento provisional de placas existentes|m²|18000|26000|
+01.20|Desmonte y retiro de instalaciones eléctricas existentes|m²|6500|0|
+02.11|Excavación manual de zanjas para redes|m³|52000|0|
+02.12|Mejoramiento de suelo con geotextil y recebo|m²|8000|34000|
+02.13|Drenaje con filtro, geotextil y tubería perforada|ml|14000|38000|
+03.16|Pilote prefabricado hincado|ml|55000|185000|IfcPile
+03.17|Losa de cimentación (placa flotante) en concreto 4000 psi|m³|210000|760000|IfcSlab
+03.18|Micropilote de refuerzo|ml|95000|140000|IfcPile
+04.16|Losa postensada con cables y anclajes|m²|62000|165000|IfcSlab
+04.17|Losa en vigueta y bovedilla|m²|32000|74000|IfcSlab
+04.18|Muro prefabricado de concreto|m²|38000|135000|IfcWall
+05.11|Muro en bloque de concreto estructural e=15 cm|m²|38000|58000|IfcWall
+05.12|Muro en ladrillo estructural perforado|m²|42000|62000|IfcWall
+06.10|Cielo raso en fibra mineral registrable|m²|16000|44000|IfcCovering
+06.11|Cielo raso acústico en madera o perforado|m²|32000|130000|IfcCovering
+07.10|Cubierta en lámina metálica tipo sándwich|m²|26000|118000|IfcRoof
+07.11|Cubierta verde (sustrato, drenaje y vegetación)|m²|40000|150000|IfcRoof
+07.12|Impermeabilización con membrana PVC o TPO|m²|20000|68000|
+07.13|Aislamiento térmico de cubierta|m²|9000|28000|
+08.14|Piso en porcelanato gran formato 120x60|m²|52000|135000|IfcCovering
+08.15|Piso en piedra natural o mármol|m²|72000|280000|IfcCovering
+08.16|Piso en madera maciza (instalado y sellado)|m²|38000|210000|IfcCovering
+08.17|Piso en microcemento|m²|45000|85000|IfcCovering
+08.18|Enchape en mosaico o vidrio|m²|65000|120000|IfcCovering
+09.13|Escalera en madera (peldaños y zancas)|ml|140000|520000|IfcStair
+10.15|Fachada ventilada en porcelanato o HPL|m²|70000|290000|IfcCovering
+10.16|Fachada con aislamiento térmico tipo EIFS|m²|38000|74000|IfcCovering
+10.17|Celosía o persiana en aluminio|m²|55000|260000|
+10.18|Puerta cortafuego certificada RF-60|un|180000|1850000|IfcDoor
+10.19|Pérgola en aluminio o estructura metálica|m²|60000|240000|
+11.08|Pintura intumescente para estructura metálica|m²|16000|42000|
+11.09|Pintura antihongos o impermeable|m²|9500|9000|IfcCovering
+12.18|Bomba sumergible de achique|un|150000|780000|IfcPump
+12.19|Sistema central de agua caliente (bomba de calor o solar)|gl|2500000|14000000|
+12.20|Tubería sanitaria PVC 6"|ml|18000|52000|IfcPipeSegment
+12.21|Válvula reguladora de presión y check|un|35000|180000|IfcValve
+12.22|Medidor de agua individual|un|40000|165000|
+13.13|Sanitario suspendido con bastidor|un|90000|820000|IfcSanitaryTerminal
+13.14|Bañera o jacuzzi|un|250000|2400000|IfcSanitaryTerminal
+13.15|Ducha higiénica de mano|un|25000|95000|
+13.16|Lavaplatos de doble poceta con escurridor|un|70000|620000|IfcSanitaryTerminal
+13.17|Orinal con grifería|un|55000|420000|IfcSanitaryTerminal
+13.18|Barras de apoyo y accesorios para baño accesible|jgo|60000|380000|
+13.19|Grifería de ducha termostática|un|45000|520000|
+14.22|Luminaria LED lineal o de perfil|un|22000|140000|IfcLightFixture
+14.23|Iluminación decorativa en banda LED|ml|9000|28000|IfcLightFixture
+14.24|Interruptor inteligente o dimmer|un|18000|150000|IfcSwitchingDevice
+14.25|Cargador para vehículo eléctrico|un|250000|2600000|
+14.26|Bandeja portacables metálica|ml|14000|48000|IfcCableCarrierSegment
+14.27|Alimentador en cable THHN calibre 2/0|ml|9000|62000|IfcCableSegment
+14.28|Gabinete y panel de medidores|un|450000|1600000|IfcElectricDistributionBoard
+15.12|Aire acondicionado mini split 18.000 BTU|un|220000|2900000|IfcUnitaryEquipment
+15.13|Aire acondicionado centralizado (por TR)|un|900000|6500000|IfcUnitaryEquipment
+15.14|Extractor de parqueaderos (jet fan)|un|650000|6200000|IfcFan
+15.15|Detector de humo direccionable|un|35000|185000|IfcSensor
+15.16|Estación manual y sirena de alarma|un|45000|240000|IfcAlarm
+15.17|Sistema de voceo y sonido de emergencia|gl|900000|5800000|
+15.18|Montante de gas centralizada (por piso)|un|480000|900000|IfcPipeSegment
+15.19|Medidor de gas y regulador|un|60000|290000|
+18.01|Muro de contención de talud en concreto ciclópeo|m³|120000|420000|IfcWall
+18.02|Gavión en malla y piedra|m³|60000|190000|
+18.03|Red de alcantarillado sanitario PVC 8"|ml|32000|78000|IfcPipeSegment
+18.04|Red de alcantarillado pluvial 12"|ml|40000|110000|IfcPipeSegment
+18.05|Pozo de inspección en concreto|un|650000|1450000|
+18.06|Red de acueducto exterior 4"|ml|26000|62000|IfcPipeSegment
+18.07|Red eléctrica subterránea de media tensión|ml|42000|135000|IfcCableSegment
+18.08|Poste y luminaria de alumbrado exterior|un|180000|1250000|IfcLightFixture
+18.09|Vía en pavimento flexible (asfalto)|m²|18000|68000|
+18.10|Vía en pavimento rígido de concreto|m²|24000|95000|
+18.11|Bordillo y cuneta en concreto|ml|14000|36000|
+18.12|Andén en adoquín|m²|26000|62000|
+18.13|Sumidero y rejilla pluvial|un|120000|330000|
+18.14|Cerramiento perimetral en malla y postes|ml|22000|58000|
+18.15|Portón de acceso vehicular corredizo|m²|95000|620000|IfcDoor
+18.16|Muro de cerramiento en bloque con columnetas|m²|36000|54000|IfcWall
+18.17|Siembra de árboles y arbustos|un|22000|85000|
+18.18|Césped en rollo|m²|4500|9500|
+18.19|Sistema de riego automático|m²|2500|6500|
+18.20|Piscina en concreto con acabado y equipo de filtración|m²|480000|1650000|
+18.21|Cancha múltiple en concreto con demarcación|m²|28000|72000|
+18.22|Señalización vial horizontal y vertical|gl|600000|2400000|
+18.23|Planta de tratamiento de agua residual compacta|gl|3500000|38000000|
+18.24|Cuarto de basuras exterior|m²|280000|520000|
+19.01|Panel solar fotovoltaico 550 W instalado|un|120000|780000|
+19.02|Inversor y estructura de soporte solar (por kW)|kW|180000|1450000|
+19.03|Calentador solar de agua|un|350000|2800000|
+19.04|Sistema domótico básico (iluminación, cortinas y accesos)|gl|900000|6500000|
+19.05|Cerradura inteligente|un|40000|520000|
+19.06|Cortina motorizada|un|60000|780000|
+19.07|Sistema de audio multizona|gl|600000|5200000|
+19.08|Recolección y reuso de aguas lluvias|gl|1200000|6800000|
 `;
-const items = raw.trim().split('\n').map((l) => { const a = l.split('|'); return { c: a[0], d: a[1], u: a[2], mo: +a[3], mt: +a[4], ifc: a[5] || '' }; });
+const items = raw.trim().split('\n').map((l) => { const a = l.split('|'); return { c: a[0], d: a[1], u: a[2], mo: +a[3], mt: +a[4], ifc: a[5] || '' }; }).sort((a, b) => (a.c < b.c ? -1 : 1));
 
 const sel = (a, b) => [['No', 0], ['Sí', 1]];
 const rem = 'A:Área a intervenir (m²)';
@@ -2406,6 +2511,7 @@ function showTab(t) {
   if (!root.hidden && window.syncDock) window.syncDock('presup');
   root.querySelectorAll('#pr-tabs .tab').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.t === t)));
   root.querySelectorAll('.pr-panel').forEach((p) => { p.hidden = p.id !== 'pr-p-' + t; });
+  if (t === 'catalogo' && window.__prDash) window.__prDash();
 }
 
 /* ---------- proyectos ---------- */
@@ -2568,19 +2674,44 @@ function linesFor(code, q, f, extra) {
   return out;
 }
 /* catálogo */
-g('pr-cch').innerHTML = '<option value="">Todos los capítulos</option>' + Object.entries(CAT.chaps).map(([k, v]) => `<option value="${k}">${k} · ${X(v)}</option>`).join('');
+g('pr-cch').innerHTML = '<option value="">Todos los capítulos</option>' + Object.entries(CAT.chaps).sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([k, v]) => `<option value="${k}">${k} · ${X(v)}</option>`).join('');
 function renderCat() {
   const q = norm(g('pr-cq').value.trim()), ch = g('pr-cch').value;
   const rows = CAT.items.filter((i) => (!ch || i.c.startsWith(ch)) && (!q || norm(i.c + ' ' + i.d).includes(q)));
   g('pr-cl').innerHTML = rows.map((i) => `<tr data-c="${i.c}"><td>${i.c}</td><td>${X(i.d)}${i.ifc ? `<small>${i.ifc}</small>` : ''}</td><td>${X(i.u)}</td><td class="num">${i.mo ? cop(i.mo) : '–'}</td><td class="num">${i.mt ? cop(i.mt) : '–'}</td><td><input type="text" inputmode="decimal" class="cq" value="1" aria-label="Cantidad"></td><td><button class="btn small cadd" type="button">+ Agregar</button></td></tr>`).join('') || '<tr><td colspan="7">Sin resultados</td></tr>';
 }
 g('pr-cq').oninput = renderCat; g('pr-cch').onchange = renderCat; renderCat();
+/* dashboard del catálogo */
+function renderDash() {
+  const it = CAT.items, per = {};
+  it.forEach((i) => { const k = i.c.slice(0, 2); per[k] = (per[k] || 0) + 1; });
+  const mxn = Math.max(...Object.values(per)), cls = new Set(it.filter((i) => i.ifc).map((i) => i.ifc)).size;
+  const conIfc = it.filter((i) => i.ifc).length, ambos = it.filter((i) => i.mo > 0 && i.mt > 0).length;
+  const soloMo = it.filter((i) => i.mo > 0 && !(i.mt > 0)).length, soloMt = it.filter((i) => !(i.mo > 0) && i.mt > 0).length;
+  const und = new Set(it.map((i) => i.u)).size;
+  const T = (l, v, s) => `<div class="pr-tile"><div class="l">${l}</div><div class="v">${v}</div>${s ? `<div class="pr-sub">${s}</div>` : ''}</div>`;
+  let h = '<div class="pr-tiles">' + T('Ítems', it.length) + T('Capítulos', Object.keys(CAT.chaps).length) + T('Plantillas', CAT.tpls.length)
+    + T('Con clase IFC', conIfc, fm(conIfc / it.length * 100, 0) + '% · ' + cls + ' clases') + T('Mano de obra y material', ambos, 'Solo MO: ' + soloMo + ' · Solo material: ' + soloMt) + T('Unidades distintas', und) + '</div>';
+  const p = P();
+  if (p) {
+    const cod = p.items.filter((i) => i.cod), used = new Set(cod.map((i) => i.cod)), caps = new Set(cod.map((i) => i.cod.slice(0, 2)));
+    const est = p.items.filter((i) => i.on !== false && i.est).length, ifcl = p.items.filter((i) => i.ifcg && i.ifcg.length).length;
+    h += '<h2 class="pr-h">En el proyecto abierto: ' + X(p.name || 'Sin nombre') + '</h2><div class="pr-tiles">' + T('Líneas', p.items.length) + T('Del catálogo', cod.length, used.size + ' ítems distintos')
+      + T('Cobertura del catálogo', fm(used.size / it.length * 100, 0) + '%', caps.size + ' de ' + Object.keys(CAT.chaps).length + ' capítulos') + T('Precio estimado', est, 'Por confirmar') + T('Enlazadas a IFC', ifcl) + '</div>';
+  }
+  h += '<h2 class="pr-h">Ítems por capítulo</h2><div class="pr-bars">' + Object.entries(CAT.chaps).sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([k, n]) => `<button type="button" class="pr-bar" data-ch="${k}"><span>${k} · ${X(n)}</span><span class="tr"><i style="width:${(per[k] || 0) / mxn * 100}%"></i></span><b>${per[k] || 0}</b></button>`).join('') + '</div>';
+  g('pr-dash').innerHTML = h;
+}
+g('pr-dash').addEventListener('click', (e) => { const b = e.target.closest('.pr-bar'); if (!b) return; g('pr-cch').value = b.dataset.ch; renderCat(); g('pr-tC').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+renderDash();
+
+window.__prDash = renderDash;
 g('pr-cl').addEventListener('click', (e) => {
   const b = e.target.closest('.cadd'); if (!b) return;
   if (!P()) { aviso('Primero crea o abre un proyecto'); return; }
   const r = b.closest('tr'), q = pn(r.querySelector('.cq').value) || 1;
   P().items.push(...linesFor(r.dataset.c, q, 1));
-  markDirty(cur); renderTable('o'); renderTable('m'); recalc(); aviso('Agregado a tu presupuesto: ' + r.dataset.c);
+  markDirty(cur); renderTable('o'); renderTable('m'); recalc(); renderDash(); aviso('Agregado a tu presupuesto: ' + r.dataset.c);
 });
 /* plantillas */
 g('pr-tpl').innerHTML = CAT.tpls.map((t) => `<option value="${t.id}">${X(t.nm)}</option>`).join('');
