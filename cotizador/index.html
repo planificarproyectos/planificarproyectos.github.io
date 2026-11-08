@@ -2327,6 +2327,19 @@ const tpls = [
      + '16.01=AT;16.02=AT;16.03=mx(12,c(N*0.8+8));16.04=mx(12,c(N*0.8+8));16.05=c(N*0.3);16.06=1;16.07=Ap*0.4;16.08=Ap*0.6;16.09=1;16.11=mx(12,c(N*0.8+8))' }
 ];
 
+
+/* Opciones adicionales (Sí/No) que integran los ítems de exteriores, solar, domótica, fachada ventilada, piscina y aire */
+const YN = [['No', 0], ['Sí', 1]];
+const opt = (id, ps, rows) => { const t = tpls.find((x) => x.id === id); t.ps.push(...ps); t.rows += ';' + rows; };
+const pEX = ['EX', 'Obras exteriores (andenes, cerramiento, redes, paisajismo)', 1, YN], pSO = ['SO', 'Paneles solares', 0, YN], pDM = ['DM', 'Domótica básica', 0, YN], pFV = ['FV', 'Fachada ventilada (reemplaza pañete y pintura de fachada)', 0, YN], pPS = ['PS', 'Piscina', 0, YN], pAC = ['AC', 'Aire acondicionado', 0, YN];
+const EXT = '18.12=EX*Ap*0.3;18.14=EX*4*sq(Ap*2.5);18.15=EX*8;18.17=EX*c(Ap/40);18.18=EX*Ap*0.6;18.19=EX*Ap*0.6;18.08=EX*c(Ap/60);18.13=EX*2';
+const REDES = '18.03=EX*sq(Ap)*2;18.04=EX*sq(Ap)*2;18.06=EX*sq(Ap)*2;18.05=EX*c(sq(Ap)*2/30);18.11=EX*sq(Ap)*3;18.22=EX';
+opt('apto', [pAC, pDM], '15.12=AC*c(A/30);19.04=DM;19.05=DM;14.24=DM*c(A/10);19.06=DM*c(V/4)');
+opt('casarem', [pAC, pDM], '15.12=AC*c(A/30);19.04=DM;19.05=DM;14.24=DM*c(A/10);19.06=DM*c(V/4)');
+opt('casa', [pEX, pSO, pDM, pFV, pPS, pAC], EXT + ';19.01=SO*c(A*0.02/0.55);19.02=SO*A*0.02;19.04=DM;19.05=DM;19.06=DM*c(V/4);14.24=DM*c(A/10);10.15=FV*per*H*N*0.75;06.03=FV==1?0:per*H*N*0.75;11.03=FV==1?0:per*H*N*0.75;18.20=PS*24;15.12=AC*c(A/35)');
+opt('edificio', [pEX, pSO, pDM, pFV, pPS, pAC], REDES + ';19.01=SO*c(A*0.01/0.55);19.02=SO*A*0.01;19.04=DM*c(A/400);19.05=0;14.24=0;19.06=0');
+opt('torre', [pEX, pSO, pDM, pFV, pAC], EXT + ';' + REDES + ';18.07=EX*sq(Ap)*1.5;18.09=EX*Ap*0.5;18.24=EX*12;19.01=SO*c(NU*0.1/0.55);19.02=SO*NU*0.1;19.04=DM;19.05=DM*NU*TP;10.15=FV*per*H*N*0.75;06.03=FV==1?0:(SC==2?per*H*N*0.75:0);11.03=FV==1?0:per*H*N*0.75;15.12=AC*TP*NU*2');
+
 /* Mapa de clases IFC → código del catálogo (la función recibe los argumentos del elemento) */
 const ifcMap = {
  IFCWALL: '05.01', IFCWALLSTANDARDCASE: '05.01', IFCCURTAINWALL: '10.05', IFCCOLUMN: '04.01', IFCBEAM: '04.02', IFCMEMBER: '04.11',
