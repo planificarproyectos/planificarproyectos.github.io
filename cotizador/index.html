@@ -359,6 +359,7 @@ select option,select optgroup{background:#171a20;color:#f4f5f6}
 .pr-tplps input,.pr-tplps select{width:100%}
 .pr-catbar select{width:auto;max-width:100%}
 .pr-catbar input[type=search]{width:auto}
+.pr-tile[hidden]{display:none!important}
 </style>
 
 <div class="app">
@@ -583,6 +584,9 @@ select option,select optgroup{background:#171a20;color:#f4f5f6}
       <div class="pr-tile"><div class="l">Administración <span id="pr-admL"></span></div><div class="v" id="pr-tAdm">$0</div></div>
       <div class="pr-tile main"><div class="l">Total</div><div class="v" id="pr-tTot">$0</div></div>
       <div class="pr-tile warn"><div class="l">Por confirmar</div><div class="v" id="pr-tFalta">0</div></div>
+      <div class="pr-tile" id="pr-tUd" hidden><div class="l">Por vivienda</div><div class="v" id="pr-tUdV">$0</div></div>
+      <div class="pr-tile" id="pr-tM2" hidden><div class="l" id="pr-tM2L">Por m²</div><div class="v" id="pr-tM2V">$0</div></div>
+      <div class="pr-tile" id="pr-tTp" hidden><div class="l">Frente al precio tope</div><div class="v" id="pr-tTpV">–</div></div>
     </div>
     <div class="tabs pr-tabs" id="pr-tabs" role="tablist">
       <button class="tab" role="tab" data-t="obra" aria-selected="true">Mano de obra</button>
@@ -631,6 +635,13 @@ select option,select optgroup{background:#171a20;color:#f4f5f6}
           <div class="pr-row"><button class="btn small" data-adm="0" type="button">0%</button><button class="btn small" data-adm="5" type="button">5%</button><button class="btn small" data-adm="10" type="button">10%</button><button class="btn small" data-adm="15" type="button">15%</button><button class="btn small" data-adm="20" type="button">20%</button></div>
           <label class="check"><input type="checkbox" id="pr-admO"> Aplicar a mano de obra</label>
           <label class="check"><input type="checkbox" id="pr-admM"> Aplicar a materiales y compras</label>
+        </div>
+        <div class="pr-card"><h2>Indicadores del proyecto</h2>
+          <label for="pr-uds">Viviendas o unidades</label><input type="text" inputmode="decimal" id="pr-uds" style="width:100%" placeholder="Ej. 240">
+          <label for="pr-apriv">Área privada por vivienda (m²)</label><input type="text" inputmode="decimal" id="pr-apriv" style="width:100%">
+          <label for="pr-atot">Área construida total (m²)</label><input type="text" inputmode="decimal" id="pr-atot" style="width:100%">
+          <label for="pr-tope">Precio máximo de venta por vivienda (COP, opcional)</label><input type="text" inputmode="decimal" id="pr-tope" style="width:100%" placeholder="Tope VIS/VIP vigente que tú ingreses">
+          <span class="status">Calcula costo por vivienda y por m², y qué porcentaje del tope representa la obra.</span>
         </div>
         <div class="pr-card"><h2>Cliente de este proyecto</h2>
           <label for="pr-cliente">Cliente</label><input type="text" id="pr-cliente" placeholder="Nombre del cliente" style="width:100%">
@@ -1934,7 +1945,7 @@ const chaps = {
  '05': 'Mampostería y muros', '06': 'Pañetes, nivelación y cielos', '07': 'Cubierta e impermeabilización',
  '08': 'Pisos, enchapes y zócalos', '09': 'Carpintería en madera y puertas', '10': 'Carpintería metálica, vidrio y ventanas',
  '11': 'Pintura y acabados', '12': 'Hidrosanitario', '13': 'Aparatos sanitarios y grifería',
- '14': 'Instalaciones eléctricas y de datos', '15': 'Gas, ventilación y especiales', '16': 'Aseo, administración y exteriores'
+ '14': 'Instalaciones eléctricas y de datos', '15': 'Gas, ventilación y especiales', '16': 'Aseo, administración y exteriores', '17': 'Torre: sótanos, industrialización y zonas comunes'
 };
 const raw = `
 01.01|Localización y replanteo topográfico|m²|2500|800|IfcSite
@@ -2137,6 +2148,30 @@ const raw = `
 16.09|Planos récord (as-built) y manuales|gl|1200000|0|
 16.10|Vía interna en adoquín|m²|28000|72000|
 16.11|Herramienta menor y equipos|mes|0|650000|
+17.01|Muro pantalla en concreto reforzado (contención de sótanos)|m³|250000|900000|IfcWall
+17.02|Anclaje o puntal de contención provisional|un|450000|750000|
+17.03|Excavación mecánica y botada de sótano|m³|12000|34000|
+17.04|Formaleta de aluminio para muros y losas (alquiler y armado)|m²|11000|13500|
+17.05|Formaleta tipo túnel (alquiler y armado)|m²|9500|12500|
+17.06|Concreto 4000 psi para muros y losas industrializadas (sin formaleta)|m³|90000|560000|IfcWall
+17.07|Grúa torre (alquiler, operación y montaje)|mes|9000000|24000000|
+17.08|Montacargas de obra (alquiler y operador)|mes|3500000|9000000|
+17.09|Bombeo de concreto en altura|m³|8000|38000|
+17.10|Plataforma o andamio colgante de fachada|m²|9000|16000|
+17.11|Sistema de presurización de escaleras|un|3500000|32000000|
+17.12|Cisterna, tanque y bombas de red contra incendio|gl|9000000|85000000|
+17.13|Gabinete y red húmeda contra incendio (por piso)|un|650000|2400000|
+17.14|Shut de basuras con cuarto de reciclaje (por piso)|un|900000|1500000|
+17.15|Ascensor de pasajeros de alta velocidad (por parada)|parada|3500000|22000000|IfcTransportElement
+17.16|Lobby y portería (obra y acabados)|m²|650000|1550000|
+17.17|Zonas comunes (salón social, gimnasio, terrazas)|m²|520000|1250000|
+17.18|Rampa vehicular en concreto|m²|35000|85000|IfcRamp
+17.19|Demarcación y señalización de parqueaderos|m²|2500|3500|
+17.20|Cuartos técnicos y de bombas (obra y acabados)|m²|380000|720000|
+17.21|Medidores y gabinetes de servicios por vivienda|un|120000|420000|
+17.22|Parque infantil, BBQ y mobiliario exterior|gl|4000000|22000000|
+17.23|Pre-actas de vecindad y control de vibraciones|gl|2500000|6000000|
+17.24|Control de calidad estructural e interventoría técnica|mes|0|6500000|
 `;
 const items = raw.trim().split('\n').map((l) => { const a = l.split('|'); return { c: a[0], d: a[1], u: a[2], mo: +a[3], mt: +a[4], ifc: a[5] || '' }; });
 
@@ -2163,7 +2198,28 @@ const tpls = [
  { id: 'edificio', nm: 'Edificio nuevo (hasta 5 pisos)', ext: 'casa', ps: [['A', 'Área construida total (m²)', 1500], ['N', 'Pisos', 5], ['H', 'Altura libre por piso (m)', 2.5], ['B', 'Baños (total)', 10], ['K', 'Cocinas (total)', 5], ['PI', 'Puertas interiores', 20], ['V', 'Ventanas (m²)', 120],
      ['CI', 'Cimentación', 1, [['Zapatas', 0], ['Pilotes', 1]]], ['SE', 'Sistema estructural', 0, [['Pórticos de concreto', 0], ['Muros de concreto', 1]]]],
    rows: '01.03=40;02.01=Ap*1.6;02.02=Ap*2.5;02.04=Ap*0.5;02.06=Ap*2;03.14=CI==1?1:0;04.03=0;04.04=A;04.07=N*2.4;04.13=N>=4?N*3.5:0;07.01=0;07.03=0;07.04=Ap*1.05;07.05=Ap*1.05;07.07=per*0.4;'
-     + '12.09=0;12.10=A*0.04;12.11=N>=3?1:0;12.13=0;14.03=1;14.19=A>1000?1:0;14.20=N>=4?1:0;14.21=1;15.07=N>=4?N:0;15.08=N>=5?A:0;15.09=A;15.10=c(A/200);15.11=1;16.03=mx(6,c(A/120));16.04=mx(6,c(A/120));16.05=mx(3,c(A/150));16.11=mx(6,c(A/120))' }
+     + '12.09=0;12.10=A*0.04;12.11=N>=3?1:0;12.13=0;14.03=1;14.19=A>1000?1:0;14.20=N>=4?1:0;14.21=1;15.07=N>=4?N:0;15.08=N>=5?A:0;15.09=A;15.10=c(A/200);15.11=1;16.03=mx(6,c(A/120));16.04=mx(6,c(A/120));16.05=mx(3,c(A/150));16.11=mx(6,c(A/120))' } ,
+ { id: 'torre', nm: 'Torre residencial VIS / No VIS (hasta 40 pisos)', nmax: 40, meta: 'uds=NU;apriv=AA;atot=AT',
+   ps: [['N', 'Pisos', 30], ['U', 'Viviendas por piso', 8], ['AA', 'Área privada por vivienda (m²)', 45], ['TP', 'Tipo de vivienda', 0, [['VIS', 0], ['No VIS', 1]]], ['S', 'Sótanos', 2, [['Sin sótano', 0], ['1', 1], ['2', 2], ['3', 3]]], ['H', 'Altura libre por piso (m)', 2.4],
+     ['SC', 'Sistema constructivo', 0, [['Muros de concreto con formaleta de aluminio', 0], ['Muros de concreto con formaleta túnel', 1], ['Pórticos de concreto', 2]]]],
+   defs: 'A=N*U*AA*1.2;NU=N*U;B=NU*(TP==0?1:2);K=NU;AS=A/N*1.15;SA=S*AS;AT=A+SA',
+   rows: '01.01=Ap*1.8;01.02=per*1.6;01.03=60;01.04=1;02.01=Ap*1.8;02.02=S>0?0:Ap*1.0;17.03=S>0?SA*3.2+Ap*1.0:0;02.06=S>0?SA*3.2*0.5:0;02.07=S>0?per*3.2*S*0.8:0;02.09=S>0?60*S:0;17.01=S>0?per*(3.2*S+2)*0.4:0;17.02=S>0?c(per/3)*S:0;'
+     + '03.03=c(Ap/10)*(14+N*0.5);03.04=c(Ap/10)*2.2;03.05=Ap*0.5;03.08=per*0.2;03.09=c(Ap/10)*(14+N*0.5)*60+c(Ap/10)*2.2*100;03.10=Ap+SA;03.12=per*3.2*S+SA;03.14=2;03.15=c(AT/50);'
+     + '17.06=SC<2?A*0.21+SA*0.1:0;17.04=SC==0?A*2.6:0;17.05=SC==1?A*2.4:0;17.09=SC<2?A*0.21+SA*0.3:A*0.15+SA*0.3;'
+     + '04.01=(SC==2?A*0.025:0)+SA*0.04;04.02=(SC==2?A*0.04:0)+SA*0.05;04.04=(SC==2?A:0)+SA;04.13=SC==2?N*4.5:0;04.07=N*1.6;04.09=SA*1.2;'
+     + '04.08=(SC<2?A*0.21*90:A*0.065*130+A*8)+SA*0.09*130+SA*8;'
+     + '05.01=SC==2?per*H*N*0.75:0;05.04=SC==2?A*0.6:A*0.08;06.01=SC==2?A*2.2:0;06.03=SC==2?per*H*N*0.75:0;06.05=A*0.75;06.06=TP==1?A*0.35:A*0.1;'
+     + '07.04=Ap*1.05;07.05=Ap*1.05;07.07=per*0.4;07.06=B*3.5;'
+     + '08.01=TP==1?A*0.65:0;08.02=TP==0?A*0.65:0;08.08=B*(TP==0?5:14);08.09=K*2.5;08.06=A*0.7;08.05=SA*0.9;'
+     + '09.01=NU*(TP==0?2:3);09.02=TP==1?NU:0;10.01=TP==0?NU:0;09.03=B;09.08=NU*(TP==0?2:3);09.09=NU;09.05=TP==1?NU*3:0;09.06=NU*(TP==1?3:1.8);09.11=NU*(TP==1?3:1.8);09.07=TP==1?B:0;'
+     + '10.03=NU*AA*0.12;10.07=NU*2;10.10=S>0?24:0;10.11=B*0.4;'
+     + '11.01=A*2.4;11.02=A*0.85;11.03=per*H*N*0.75;11.06=SA*0.2;'
+     + '12.01=B;12.02=B*2+K*2;12.03=B*3+K*2+NU;12.04=TP==1?B*2+K:K;12.05=N*H*6+SA*0.2;12.06=A*0.25;12.07=A*0.3;12.08=c(A/80)+S*10;12.10=NU*0.5;12.11=mx(1,c(N/10));12.14=per*1.2;12.15=3;12.16=B+K+N*2;12.17=B+SA*0.04;'
+     + '13.01=TP==0?B:0;13.02=TP==1?B:0;13.03=TP==0?B:0;13.04=TP==1?B:0;13.05=B;13.06=B;13.07=TP==0?B:0;13.09=K;13.10=K;13.11=NU;13.12=TP==1?B:0;'
+     + '14.01=3;14.02=NU;14.03=2;14.04=NU*AA/8;14.05=NU*AA/4.5;14.06=B+K;14.07=NU*AA/10;14.08=B+K+NU;14.10=NU*AA/7;14.09=N*8;14.11=per/5;14.12=3;14.13=NU*AA/25;14.14=NU*3;14.15=NU;14.16=N*4+S*20;14.17=A*6;14.18=A*3;14.19=mx(1,c(NU/80));14.20=1;14.21=1;'
+     + '15.01=K;15.02=N*H*1.2+K*8;15.03=B+K;15.04=TP==1?K:0;15.06=SA;15.07=N<=12?mx(2,c(NU/40))*(N+S):0;17.15=N>12?mx(2,c(NU/60))*(N+S):0;15.08=AT;15.09=AT;15.10=c(AT/200)+N*2;15.11=1;'
+     + '17.11=N>=6?2:0;17.12=1;17.13=N+S;17.14=N;17.07=c(N*0.5+4);17.08=c(N*0.45+4);17.10=per*H*N*0.8;17.16=120;17.17=NU*(TP==0?1:2.2);17.18=S*45;17.19=SA*0.8;17.20=80;17.21=NU;17.22=1;17.23=1;17.24=mx(12,c(N*0.8+8));'
+     + '16.01=AT;16.02=AT;16.03=mx(12,c(N*0.8+8));16.04=mx(12,c(N*0.8+8));16.05=c(N*0.3);16.06=1;16.07=Ap*0.4;16.08=Ap*0.6;16.09=1;16.11=mx(12,c(N*0.8+8))' }
 ];
 
 /* Mapa de clases IFC → código del catálogo (la función recibe los argumentos del elemento) */
@@ -2221,7 +2277,7 @@ function totals(p) {
 
 /* ---------- historial (deshacer / rehacer) ---------- */
 const H = {}; let applying = false, hTimer = null;
-const snapOf = (p) => JSON.stringify({ name: p.name || '', imp: p.imp || 0, adm: p.adm || 0, admO: p.admO !== false, admM: p.admM !== false, cliente: p.cliente || '', empresa: p.empresa || '', notes: p.notes || '', items: p.items });
+const snapOf = (p) => JSON.stringify({ name: p.name || '', imp: p.imp || 0, adm: p.adm || 0, admO: p.admO !== false, admM: p.admM !== false, cliente: p.cliente || '', empresa: p.empresa || '', notes: p.notes || '', uds: p.uds || 0, apriv: p.apriv || 0, atot: p.atot || 0, tope: p.tope || 0, items: p.items });
 function initHist(id) { if (!H[id] && projects[id]) H[id] = { s: [snapOf(projects[id])], i: 0 }; }
 function updHist() { const h = H[cur]; g('pr-undo').disabled = !h || h.i <= 0; g('pr-redo').disabled = !h || h.i >= h.s.length - 1; }
 function pushHist() {
@@ -2256,7 +2312,7 @@ async function flush(id) {
   writing[id] = true; dirty[id] = false;
   const p = projects[id]; const rev = Math.random().toString(36).slice(2); lastRev[id] = rev;
   try {
-    await colP().doc(id).set(JSON.parse(JSON.stringify({ name: p.name, imp: p.imp, adm: p.adm || 0, admO: p.admO !== false, admM: p.admM !== false, cliente: p.cliente || '', empresa: p.empresa || '', notes: p.notes || '', order: p.order || 0, items: p.items, rev })));
+    await colP().doc(id).set(JSON.parse(JSON.stringify({ name: p.name, imp: p.imp, adm: p.adm || 0, admO: p.admO !== false, admM: p.admM !== false, cliente: p.cliente || '', empresa: p.empresa || '', notes: p.notes || '', uds: p.uds || 0, apriv: p.apriv || 0, atot: p.atot || 0, tope: p.tope || 0, order: p.order || 0, items: p.items, rev })));
     setSave('Guardado');
   } catch (e) { setSave('No se pudo guardar (' + (e && e.code || 'error') + ')'); }
   writing[id] = false; if (dirty[id]) flush(id);
@@ -2307,6 +2363,11 @@ function recalc() {
   g('pr-tImp').textContent = cop(t.imp); g('pr-impL').textContent = fm(p.imp, 2) + '%'; g('pr-impV').textContent = '≈ ' + cop(t.imp);
   g('pr-tAdm').textContent = cop(t.adm); g('pr-admL').textContent = fm(p.adm || 0, 2) + '%'; g('pr-admV').textContent = '≈ ' + cop(t.adm);
   g('pr-tTot').textContent = cop(t.tot); g('pr-tFalta').textContent = t.n;
+  const U = Number(p.uds) || 0, AT = Number(p.atot) || 0, AP = Number(p.apriv) || 0, TP = Number(p.tope) || 0;
+  g('pr-tUd').hidden = !(U > 0); g('pr-tM2').hidden = !(AT > 0 || (U > 0 && AP > 0)); g('pr-tTp').hidden = !(U > 0 && TP > 0);
+  if (U > 0) g('pr-tUdV').textContent = cop(t.tot / U);
+  if (AT > 0) { g('pr-tM2V').textContent = cop(t.tot / AT); g('pr-tM2L').textContent = 'Por m² construido'; } else if (U > 0 && AP > 0) { g('pr-tM2V').textContent = cop(t.tot / (U * AP)); g('pr-tM2L').textContent = 'Por m² privado'; }
+  if (U > 0 && TP > 0) { const pc = (t.tot / U) / TP * 100; g('pr-tTpV').textContent = fm(pc, 1) + '% del tope'; g('pr-tTpV').style.color = pc > 60 ? 'var(--warn)' : ''; }
   renderPend();
 }
 const pendItems = () => P().items.filter((i) => i.on !== false && ((i.p === null || i.p === undefined) || i.est));
@@ -2332,6 +2393,7 @@ function renderAll() {
     g('pr-imp').value = fm(p.imp, 2); g('pr-adm').value = fm(p.adm || 0, 2);
     g('pr-admO').checked = p.admO !== false; g('pr-admM').checked = p.admM !== false;
     g('pr-cliente').value = p.cliente || ''; g('pr-empresa').value = p.empresa || '';
+    g('pr-uds').value = fm(p.uds || '', 2); g('pr-apriv').value = fm(p.apriv || '', 2); g('pr-atot').value = fm(p.atot || '', 2); g('pr-tope').value = fm(p.tope || '', 0);
     g('pr-notes').value = p.notes || ''; g('pr-pnameIn').value = p.name || '';
     recalc();
   }
@@ -2351,7 +2413,7 @@ function selectProject(id) { cur = id; ls.set('prCur', id); renderAll(); }
 function createProject(name, fromCopy) {
   const id = 'p' + Math.random().toString(36).slice(2, 9), src = fromCopy && P();
   const items = src ? src.items.map((i) => ({ ...i, id: uid() })) : [blank('o', 'Mano de obra'), blank('m', 'Materiales')];
-  projects[id] = { name: name || 'Proyecto nuevo', imp: src ? src.imp : 5, adm: src ? (src.adm || 0) : 0, admO: src ? src.admO !== false : true, admM: src ? src.admM !== false : true, cliente: src ? (src.cliente || '') : '', empresa: src ? (src.empresa || '') : '', notes: '', order: Date.now(), items };
+  projects[id] = { name: name || 'Proyecto nuevo', imp: src ? src.imp : 5, adm: src ? (src.adm || 0) : 0, admO: src ? src.admO !== false : true, admM: src ? src.admM !== false : true, cliente: src ? (src.cliente || '') : '', empresa: src ? (src.empresa || '') : '', notes: '', uds: src ? (src.uds || 0) : 0, apriv: src ? (src.apriv || 0) : 0, atot: src ? (src.atot || 0) : 0, tope: src ? (src.tope || 0) : 0, order: Date.now(), items };
   if (!dbx) localOnly[id] = true;
   selectProject(id); markDirty(id); flush(id);
 }
@@ -2407,6 +2469,7 @@ root.addEventListener('input', (e) => {
   if (t.id === 'pr-imp') { P().imp = pn(t.value) ?? 0; touched(); }
   else if (t.id === 'pr-adm') { P().adm = pn(t.value) ?? 0; touched(); }
   else if (t.id === 'pr-admO' || t.id === 'pr-admM') { P()[t.id === 'pr-admO' ? 'admO' : 'admM'] = t.checked; touched(); }
+  else if (t.id === 'pr-uds' || t.id === 'pr-apriv' || t.id === 'pr-atot' || t.id === 'pr-tope') { P()[{ 'pr-uds': 'uds', 'pr-apriv': 'apriv', 'pr-atot': 'atot', 'pr-tope': 'tope' }[t.id]] = pn(t.value) ?? 0; touched(); }
   else if (t.id === 'pr-cliente') { P().cliente = t.value; markDirty(cur); }
   else if (t.id === 'pr-empresa') { P().empresa = t.value; markDirty(cur); }
   else if (t.id === 'pr-notes') { P().notes = t.value; markDirty(cur); }
@@ -2481,7 +2544,7 @@ fileIn.onchange = async () => {
     for (const [id0, d] of Object.entries(list)) {
       if (!d || !Array.isArray(d.items)) continue;
       const id = projects[id0] ? 'p' + Math.random().toString(36).slice(2, 9) : id0;
-      projects[id] = { name: d.name || 'Proyecto importado', imp: d.imp ?? 5, adm: d.adm || 0, admO: d.admO !== false, admM: d.admM !== false, cliente: d.cliente || '', empresa: d.empresa || '', notes: d.notes || '', order: Date.now() + n, items: d.items };
+      projects[id] = { name: d.name || 'Proyecto importado', imp: d.imp ?? 5, adm: d.adm || 0, admO: d.admO !== false, admM: d.admM !== false, cliente: d.cliente || '', empresa: d.empresa || '', notes: d.notes || '', uds: d.uds || 0, apriv: d.apriv || 0, atot: d.atot || 0, tope: d.tope || 0, order: Date.now() + n, items: d.items };
       if (!dbx) localOnly[id] = true;
       if (!cur) cur = id;
       markDirty(id); flush(id); n++;
@@ -2529,24 +2592,27 @@ function renderTplPs() {
 g('pr-tpl').onchange = renderTplPs; renderTplPs();
 const rowsOf = (t) => (t.ext ? rowsOf(tplById(t.ext)) : []).concat(t.rows.split(';').filter(Boolean));
 function evalTpl(t, v) {
-  const N = v.N || 1, A = v.A || 0;
-  const env = Object.assign({}, v, { Ap: A / N, per: 4 * Math.sqrt(A / N) * 1.2, c: Math.ceil, mx: Math.max, sq: Math.sqrt });
-  const keys = Object.keys(env), vals = keys.map((k) => env[k]), m = new Map();
+  const env = Object.assign({}, v, { c: Math.ceil, mx: Math.max, sq: Math.sqrt });
+  const run = (ex) => { const keys = Object.keys(env); return new Function(...keys, 'return (' + ex + ')')(...keys.map((k) => env[k])); };
+  if (t.defs) t.defs.split(';').forEach((d) => { const i = d.indexOf('='); try { env[d.slice(0, i)] = run(d.slice(i + 1)); } catch (e) {} });
+  const N = env.N || 1, A = env.A || 0; env.Ap = A / N; env.per = 4 * Math.sqrt(A / N) * 1.2;
+  const m = new Map();
   for (const r of rowsOf(t)) {
     const i = r.indexOf('='), cod = r.slice(0, i);
-    try { const q = new Function(...keys, 'return (' + r.slice(i + 1) + ')')(...vals); if (isFinite(q) && q > 0) m.set(cod, q); else m.delete(cod); } catch (e) {}
+    try { const q = run(r.slice(i + 1)); if (isFinite(q) && q > 0) m.set(cod, q); else m.delete(cod); } catch (e) {}
   }
-  return [...m].sort((a, b) => (a[0] < b[0] ? -1 : 1));
+  return { rows: [...m].sort((a, b) => (a[0] < b[0] ? -1 : 1)), env };
 }
 g('pr-tplgo').onclick = () => {
   const t = tplById(g('pr-tpl').value), v = {};
   g('pr-tplps').querySelectorAll('[data-k]').forEach((e) => { v[e.dataset.k] = pn(e.value) || 0; });
-  if (t.ps.some(([k]) => k === 'N')) v.N = Math.min(Math.max(Math.round(v.N || 1), 1), 5);
+  if (t.ps.some(([k]) => k === 'N')) v.N = Math.min(Math.max(Math.round(v.N || 1), 1), t.nmax || 5);
   const F = (pn(g('pr-tplf').value) || 100) / 100, items = [];
-  evalTpl(t, v).forEach(([c, q]) => items.push(...linesFor(c, q, F)));
+  const ev = evalTpl(t, v); ev.rows.forEach(([c, q]) => items.push(...linesFor(c, q, F)));
+  const meta = {}; (t.meta || '').split(';').filter(Boolean).forEach((d) => { const i = d.indexOf('='); const x = ev.env[d.slice(i + 1)]; if (isFinite(x)) meta[d.slice(0, i)] = Math.round(x * 100) / 100; });
   const id = 'p' + Math.random().toString(36).slice(2, 9);
   const info = t.ps.map(([k, l, d, o]) => l + ': ' + (o ? (o.find((x) => x[1] === v[k]) || [''])[0] : fm(v[k], 2))).join(' · ');
-  projects[id] = { name: g('pr-tplname').value.trim() || t.nm, imp: 5, adm: 0, admO: true, admM: true, cliente: '', empresa: '', notes: 'Plantilla: ' + t.nm + '. ' + info + '. Precios base estimados; confirma cada ítem.', order: Date.now(), items };
+  projects[id] = { name: g('pr-tplname').value.trim() || t.nm, imp: 5, adm: 0, admO: true, admM: true, cliente: '', empresa: '', notes: 'Plantilla: ' + t.nm + '. ' + info + '. Precios base estimados; confirma cada ítem.', uds: meta.uds || 0, apriv: meta.apriv || 0, atot: meta.atot || 0, tope: 0, order: Date.now(), items };
   if (!dbx) localOnly[id] = true;
   selectProject(id); markDirty(id); flush(id); showTab('obra'); g('pr-tplname').value = '';
   aviso('Presupuesto creado con ' + items.length + ' líneas');
