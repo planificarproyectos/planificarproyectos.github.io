@@ -393,6 +393,11 @@ tr.pr-act td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
 .pr-link select{width:100%}
 .btn.danger{color:#ff8a8a}
 #pr-trash{margin:10px 0}
+.pr-theme{margin-left:auto}
+html[data-theme="light"]:root:root:root{--bg:#f3f4f6;--panel:#ffffff;--field:#eef0f3;--ink:#14171c;--muted:#5d6672;--line:#d5d9df;--accent:#3e6ae1;--ok:#1f9d63;--warn:#c9741a;--bad:#d64545;color-scheme:light}
+html[data-theme="light"] body,html[data-theme="light"] textarea,html[data-theme="light"] select,html[data-theme="light"] input,html[data-theme="light"] .pr-tw,html[data-theme="light"] .dock,html[data-theme="light"] .editor,html[data-theme="light"] .hist,html[data-theme="light"] #view-presup{color-scheme:light}
+html[data-theme="light"] #pr-status,html[data-theme="light"] .dock{box-shadow:0 6px 22px rgba(0,0,0,.14),0 0 0 1px var(--line)}
+html[data-theme="light"] .pr-tag{color:#2a4fb8}
 </style>
 
 <div class="app">
@@ -2987,6 +2992,7 @@ ifcIn.onchange = async () => {
 
 
 /* ---------- vínculo cotización ↔ proyecto y estado activo ---------- */
+try { const t0 = localStorage.getItem('pr-theme'); if (t0 === 'light' || t0 === 'dark') document.documentElement.setAttribute('data-theme', t0); else document.documentElement.setAttribute('data-theme', 'dark'); } catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
 const stBar = document.createElement('div'); stBar.id = 'pr-status'; stBar.setAttribute('role', 'status');
 (document.querySelector('.app') || document.body).before(stBar);
 const qAct = () => ((typeof q !== 'undefined' && q && (q.id || (q.cliente_nombre || '').trim() || (q.proyecto || '').trim())) ? q : null);
@@ -3013,6 +3019,8 @@ function estadoVinculo() {
     else if (x.proyecto_id && projects[x.proyecto_id]) h += `<button type="button" class="pr-chip warn" data-a="goproj">Pertenece a «${X(pNom(x.proyecto_id))}» · Activar ese proyecto</button>`;
     else h += '<button type="button" class="pr-chip warn" data-a="link">Vincular al proyecto activo</button>';
   }
+  const lt = document.documentElement.getAttribute('data-theme') === 'light';
+  h += `<button type="button" class="pr-chip pr-theme" data-a="theme" title="${lt ? 'Cambiar a oscuro' : 'Cambiar a claro'}" aria-label="Alternar claro u oscuro">${lt ? '🌙 Oscuro' : '☀️ Claro'}</button>`;
   stBar.innerHTML = h;
   // selector en la cotización
   const sel = document.getElementById('pr-qlink');
@@ -3035,7 +3043,8 @@ function estadoVinculo() {
 }
 stBar.addEventListener('click', (e) => {
   const b = e.target.closest('[data-a]'); if (!b) return; const a = b.dataset.a;
-  if (a === 'proj') { mostrar('presup'); showTab('obra'); window.scrollTo({ top: 0 }); }
+  if (a === 'theme') { const n = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'; document.documentElement.setAttribute('data-theme', n); try { localStorage.setItem('pr-theme', n); } catch (e) {} estadoVinculo(); }
+  else if (a === 'proj') { mostrar('presup'); showTab('obra'); window.scrollTo({ top: 0 }); }
   else if (a === 'quote') mostrar('cotizar');
   else if (a === 'goproj') selectProject(q.proyecto_id);
   else if (a === 'link') { q.proyecto_id = cur; cambio(); estadoVinculo(); if (q.id) guardar(); else aviso('Se vinculará al guardar la cotización'); }
