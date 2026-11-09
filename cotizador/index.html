@@ -252,7 +252,7 @@ body[data-vista="cuenta"] .app{padding-bottom:0}
 .pr-top{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .pr-top select{width:auto;min-width:200px;max-width:100%}
 .pr-top .grow{flex:1}
-.pr-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:8px}
+.pr-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
 .pr-tile{background:var(--field);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;min-width:0}
 .pr-tile .l{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .pr-tile .v{font-family:var(--doc);font-weight:700;font-size:17px;font-variant-numeric:tabular-nums;margin-top:2px;overflow-wrap:anywhere}
@@ -319,7 +319,7 @@ body:not([data-view="cotizar"]) .bar .actions{display:none}
 input,select,textarea{border-radius:10px}
 .paper{box-shadow:0 12px 40px rgba(0,0,0,.45)}
 .pr-tile{border-radius:12px;background:var(--field)}
-.pr-tile .v{font-weight:300;font-size:20px}
+.pr-tile .v{font-weight:300;font-size:clamp(15px,1.5vw,19px);overflow-wrap:normal;white-space:nowrap}
 .pr-tile.main .v{font-weight:500}
 .pr-tbl th,.pr-tbl tr.sec td{background:var(--field)}
 .pr-tw{border-color:var(--line)}
@@ -346,6 +346,58 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.8)}
 select option,select optgroup{background:#171a20;color:#f4f5f6}
 .paper,.paper *{color-scheme:light;scrollbar-color:#c7ccd1 transparent}
 .paper *::-webkit-scrollbar-thumb{background:#c7ccd1;background-clip:padding-box}
+
+/* Catálogo, plantillas e IFC */
+.pr-catbar{margin-bottom:8px}
+#pr-tC{min-width:900px}
+#pr-tC td:first-child,#pr-tC th:first-child{width:auto;white-space:nowrap}
+#pr-tC td{vertical-align:top}
+#pr-tC input.cq{width:70px;text-align:right}
+#pr-tC small{color:var(--muted);font-size:11px;padding-left:0}
+.pr-tplps{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.pr-tplps label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.pr-tplps input,.pr-tplps select{width:100%}
+.pr-catbar select{width:auto;max-width:100%}
+.pr-catbar input[type=search]{width:auto}
+.pr-tile[hidden]{display:none!important}
+.pr-dash{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.pr-h{font-family:var(--doc);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:6px 0 0}
+.pr-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+.pr-bars{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:2px 16px}
+.pr-bar{display:grid;grid-template-columns:minmax(130px,1.4fr) 2fr 30px;align-items:center;gap:10px;background:none;border:0;color:var(--ink);font:inherit;font-size:12.5px;text-align:left;cursor:pointer;padding:5px 6px;border-radius:8px}
+.pr-bar:hover{background:var(--field)}
+.pr-bar .tr{display:block;height:8px;border-radius:99px;background:var(--field)}
+.pr-bar i{display:block;height:100%;border-radius:99px;background:var(--accent)}
+.pr-bar b{text-align:right;font-variant-numeric:tabular-nums}
+#pr-tC tr.grp td{background:var(--field);padding:0;border-bottom:1px solid var(--line)}
+.gtog{width:100%;display:flex;align-items:center;gap:10px;background:none;border:0;color:var(--ink);font:600 13px var(--ui);text-align:left;padding:11px 12px;cursor:pointer}
+.gtog:hover{background:rgba(255,255,255,.04)}
+.gtog .car{color:var(--accent);width:14px}
+.gtog em{margin-left:auto;font-style:normal;font-weight:500;font-size:12px;color:var(--muted)}
+/* Estado activo y vínculo cotización-proyecto */
+#pr-status{position:sticky;top:8px;z-index:26;display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin:8px auto 0;width:calc(100% - 32px);max-width:1408px;box-sizing:border-box;padding:6px 10px;border-radius:18px;background:var(--panel);box-shadow:0 6px 22px rgba(0,0,0,.35),0 0 0 1px var(--line)}
+.pr-chip{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:6px 12px;background:var(--field);color:var(--ink);font:500 12.5px var(--ui);cursor:pointer;max-width:100%;text-align:left}
+.pr-chip i{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:0 0 8px}
+.pr-chip.on i{background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}
+.pr-chip.q.on i{background:#7aa2ff;box-shadow:0 0 0 3px color-mix(in srgb,#7aa2ff 25%,transparent)}
+.pr-chip.off{color:var(--muted)}
+.pr-chip.warn{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.pr-chip.warn i{display:none}
+.pr-chip b{font-weight:600}
+.pr-ok{font-size:12.5px;color:var(--ok);font-weight:600;padding:0 6px}
+.pr-tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--accent) 25%,transparent);color:#9db8ff;vertical-align:middle}
+.pr-tag-p{background:var(--field);color:var(--muted)}
+tr.pr-act td{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+tr.pr-act td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+#pr-hproy{max-width:220px}
+.pr-link select{width:100%}
+.btn.danger{color:#ff8a8a}
+#pr-trash{margin:10px 0}
+.pr-theme{margin-left:auto}
+html[data-theme="light"]:root:root:root{--bg:#f3f4f6;--panel:#ffffff;--field:#eef0f3;--ink:#14171c;--muted:#5d6672;--line:#d5d9df;--accent:#3e6ae1;--ok:#1f9d63;--warn:#c9741a;--bad:#d64545;color-scheme:light}
+html[data-theme="light"] body,html[data-theme="light"] textarea,html[data-theme="light"] select,html[data-theme="light"] input,html[data-theme="light"] .pr-tw,html[data-theme="light"] .dock,html[data-theme="light"] .editor,html[data-theme="light"] .hist,html[data-theme="light"] #view-presup{color-scheme:light}
+html[data-theme="light"] #pr-status,html[data-theme="light"] .dock{box-shadow:0 6px 22px rgba(0,0,0,.14),0 0 0 1px var(--line)}
+html[data-theme="light"] .pr-tag{color:#2a4fb8}
 </style>
 
 <div class="app">
@@ -570,11 +622,15 @@ select option,select optgroup{background:#171a20;color:#f4f5f6}
       <div class="pr-tile"><div class="l">Administración <span id="pr-admL"></span></div><div class="v" id="pr-tAdm">$0</div></div>
       <div class="pr-tile main"><div class="l">Total</div><div class="v" id="pr-tTot">$0</div></div>
       <div class="pr-tile warn"><div class="l">Por confirmar</div><div class="v" id="pr-tFalta">0</div></div>
+      <div class="pr-tile" id="pr-tUd" hidden><div class="l">Por vivienda</div><div class="v" id="pr-tUdV">$0</div></div>
+      <div class="pr-tile" id="pr-tM2" hidden><div class="l" id="pr-tM2L">Por m²</div><div class="v" id="pr-tM2V">$0</div></div>
+      <div class="pr-tile" id="pr-tTp" hidden><div class="l">Frente al precio tope</div><div class="v" id="pr-tTpV">–</div></div>
     </div>
     <div class="tabs pr-tabs" id="pr-tabs" role="tablist">
       <button class="tab" role="tab" data-t="obra" aria-selected="true">Mano de obra</button>
       <button class="tab" role="tab" data-t="compras" aria-selected="false">Compras</button>
       <button class="tab" role="tab" data-t="pendientes" aria-selected="false">Pendientes</button>
+      <button class="tab" role="tab" data-t="catalogo" aria-selected="false">Catálogo</button>
       <button class="tab" role="tab" data-t="ajustes" aria-selected="false">Ajustes</button>
       <button class="tab" role="tab" data-t="proyectos" aria-selected="false">Proyectos</button>
     </div>
@@ -595,6 +651,17 @@ select option,select optgroup{background:#171a20;color:#f4f5f6}
         </div>
       </div>
     </div>
+    <div class="pr-panel" id="pr-p-catalogo" hidden>
+      <div class="pr-dash" id="pr-dash"></div>
+      <div class="pr-row pr-catbar">
+        <input type="search" id="pr-cq" placeholder="Buscar ítem o código (ej. zapata, 08.01)" aria-label="Buscar en el catálogo" style="flex:1;min-width:200px">
+        <select id="pr-cch" aria-label="Capítulo"></select>
+        <button class="btn small" id="pr-cexp" type="button">Expandir todo</button><button class="btn small" id="pr-ccol" type="button">Contraer todo</button>
+        <button class="btn" id="pr-ifc2" type="button">Importar modelo IFC</button>
+      </div>
+      <p class="pr-note">Precios base estimados (COP). Al agregar un ítem se copia a tu presupuesto con precio "Estimado" y lo puedes editar.</p>
+      <div class="pr-tw"><table class="pr-tbl" id="pr-tC"><thead><tr><th>Código</th><th>Descripción</th><th>Und</th><th class="num">Mano de obra</th><th class="num">Material</th><th>Cant.</th><th></th></tr></thead><tbody id="pr-cl"></tbody></table></div>
+    </div>
     <div class="pr-panel" id="pr-p-ajustes" hidden>
       <div class="pr-cards">
         <div class="pr-card"><h2>Imprevistos</h2>
@@ -608,6 +675,13 @@ select option,select optgroup{background:#171a20;color:#f4f5f6}
           <div class="pr-row"><button class="btn small" data-adm="0" type="button">0%</button><button class="btn small" data-adm="5" type="button">5%</button><button class="btn small" data-adm="10" type="button">10%</button><button class="btn small" data-adm="15" type="button">15%</button><button class="btn small" data-adm="20" type="button">20%</button></div>
           <label class="check"><input type="checkbox" id="pr-admO"> Aplicar a mano de obra</label>
           <label class="check"><input type="checkbox" id="pr-admM"> Aplicar a materiales y compras</label>
+        </div>
+        <div class="pr-card"><h2>Indicadores del proyecto</h2>
+          <label for="pr-uds">Viviendas o unidades</label><input type="text" inputmode="decimal" id="pr-uds" style="width:100%" placeholder="Ej. 240">
+          <label for="pr-apriv">Área privada por vivienda (m²)</label><input type="text" inputmode="decimal" id="pr-apriv" style="width:100%">
+          <label for="pr-atot">Área construida total (m²)</label><input type="text" inputmode="decimal" id="pr-atot" style="width:100%">
+          <label for="pr-tope">Precio máximo de venta por vivienda (COP, opcional)</label><input type="text" inputmode="decimal" id="pr-tope" style="width:100%" placeholder="Tope VIS/VIP vigente que tú ingreses">
+          <span class="status">Calcula costo por vivienda y por m², y qué porcentaje del tope representa la obra.</span>
         </div>
         <div class="pr-card"><h2>Cliente de este proyecto</h2>
           <label for="pr-cliente">Cliente</label><input type="text" id="pr-cliente" placeholder="Nombre del cliente" style="width:100%">
@@ -629,6 +703,25 @@ select option,select optgroup{background:#171a20;color:#f4f5f6}
           <div class="pr-row"><button class="btn primary" id="pr-create" type="button">Crear proyecto</button><button class="btn" id="pr-import" type="button">Importar (.json)</button></div>
         </div>
       </div>
+      <div class="pr-cards" style="margin-top:12px">
+        <div class="pr-card"><h2>Crear desde plantilla</h2>
+          <label for="pr-tpl">Tipo de proyecto</label><select id="pr-tpl"></select>
+          <label for="pr-tplname">Nombre</label><input type="text" id="pr-tplname" placeholder="Opcional" style="width:100%">
+          <div class="pr-tplps" id="pr-tplps"></div>
+          <label for="pr-tplf">Ajuste de precios del catálogo (%)</label><input type="text" inputmode="decimal" id="pr-tplf" value="100" style="width:90px">
+          <div class="pr-row"><button class="btn primary" id="pr-tplgo" type="button">Crear presupuesto</button></div>
+          <span class="status">Las cantidades salen de fórmulas sobre estos datos y son editables.</span>
+        </div>
+        <div class="pr-card"><h2>Modelo IFC</h2>
+          <span class="status">Lee muros, losas, columnas, vigas, puertas, ventanas, cubierta, pisos y más; toma sus cantidades y las enlaza al catálogo con su clase IFC y GlobalId.</span>
+          <div class="pr-row"><button class="btn primary" id="pr-ifc" type="button">Importar modelo IFC (.ifc)</button></div>
+          <span class="status" id="pr-ifcmsg"></span>
+        </div>
+      </div>
+      <div class="pr-card" style="margin-top:12px" id="pr-qcard"><h2>Cotizaciones de este proyecto</h2>
+        <div class="pr-plist" id="pr-qlist"></div>
+        <div class="pr-row" id="pr-qassign" hidden><select id="pr-qpick" aria-label="Cotización sin proyecto" style="min-width:240px;max-width:100%"></select><button class="btn small" id="pr-qlink2" type="button">Vincular a este proyecto</button></div>
+      </div>
       <div class="pr-card" style="margin-top:12px"><h2>Todos los proyectos</h2><div class="pr-plist" id="pr-plist"></div></div>
     </div>
     <p class="empty" id="pr-empty" hidden>Aún no hay proyectos. Crea el primero en la pestaña Proyectos.</p>
@@ -641,6 +734,7 @@ select option,select optgroup{background:#171a20;color:#f4f5f6}
   <button type="button" data-s="obra" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5 5L4 17l3 3 5.7-5.7a4 4 0 0 0 5-5l-2.5 2.5-2.2-.5-.5-2.2z"/></svg><span>Mano de obra</span></button>
   <button type="button" data-s="compras" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2.5l2 11h10l2-8H7"/><circle cx="9" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/></svg><span>Compras</span></button>
   <button type="button" data-s="pendientes" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3.5 6 1 1 2-2M3.5 12l1 1 2-2M3.5 18l1 1 2-2"/></svg><span>Pendientes</span></button>
+  <button type="button" data-s="catalogo" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11M9 8h6"/></svg><span>Catálogo</span></button>
   <button type="button" data-s="proyectos" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Proyectos</span></button>
   <i class="sep" aria-hidden="true"></i>
   <button type="button" data-s="ajustes" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Ajustes</span></button>
@@ -1204,6 +1298,7 @@ function pintarCobros() {
 const numeroCobro = (x, n) => 'CC-' + sinVersion(x.codigo || '').replace(/^COT-/, '') + '-' + n;
 const sucio = () => !q || guardada !== JSON.stringify(datosDe(q));
 function estadoGuardado() {
+  window.prEstado && window.prEstado();
   const s = $('status');
   if (!q) return;
   if (!q.id) { s.textContent = 'Sin guardar'; s.className = 'status dirty'; }
@@ -1730,7 +1825,7 @@ $('btn-pdf').addEventListener('click', async () => {
 });
 
 // ---------- guardar ----------
-const CLAVES = ['codigo', 'consecutivo', 'anio', 'version', 'fecha', 'estado', 'tipo', 'cliente_nombre', 'cliente_empresa', 'proyecto', 'ubicacion', 'titulo', 'intro', 'alcance', 'items', 'iva', 'forma_pago', 'vigencia', 'notas', 'terminos', 'cuenta', 'origen', 'base_id', 'codigo_base', 'departamento', 'municipio', 'cliente_doc', 'cobros', 'marca', 'tema'];
+const CLAVES = ['codigo', 'consecutivo', 'anio', 'version', 'fecha', 'estado', 'tipo', 'cliente_nombre', 'cliente_empresa', 'proyecto', 'ubicacion', 'titulo', 'intro', 'alcance', 'items', 'iva', 'forma_pago', 'vigencia', 'notas', 'terminos', 'cuenta', 'origen', 'base_id', 'codigo_base', 'departamento', 'municipio', 'cliente_doc', 'cobros', 'marca', 'tema', 'proyecto_id', 'eliminada', 'eliminada_fecha'];
 function datosDe(x) { const o = {}; for (const k of CLAVES) if (x[k] !== undefined) o[k] = x[k]; o.items = (x.items || []).map((i) => ({ descripcion: i.descripcion || '', cantidad: Number(i.cantidad) || 0, unidad: i.unidad || '', valor_unitario: Number(i.valor_unitario) || 0 })); o.total = totalDe(x); return o; }
 let guardando = false;
 $('btn-guardar').addEventListener('click', () => guardar());
@@ -1808,33 +1903,34 @@ function pintarHistorial() {
   opciones($('h-anio'), 'Todos los años', [...new Set(lista.map((c) => (c.fecha || '').slice(0, 4)).filter(Boolean))].sort().reverse().map((k) => [k, k]));
   const txt = $('h-buscar').value.trim().toLowerCase(), est = $('h-estado').value, tipo = $('h-tipo').value, cli = $('h-cliente').value, anio = $('h-anio').value;
   const [k, dir] = $('h-orden').value.split('-'); const f = ORDEN[k] || ORDEN.fecha; const s = dir === 'asc' ? 1 : -1;
-  const filas = lista.filter((c) => (!est || c.estado === est) && (!tipo || (TIPOS[c.tipo] ? c.tipo : 'otro') === tipo) && (!cli || clienteDe(c) === cli) && (!anio || (c.fecha || '').startsWith(anio))
+  const filas = lista.filter((c) => !c.eliminada && (!est || c.estado === est) && (!tipo || (TIPOS[c.tipo] ? c.tipo : 'otro') === tipo) && (!cli || clienteDe(c) === cli) && (!anio || (c.fecha || '').startsWith(anio))
+      && (!window.prFiltro || !window.prFiltro() || c.proyecto_id === window.prFiltro())
       && (!txt || [c.codigo, c.cliente_nombre, c.cliente_empresa, c.proyecto, c.ubicacion, servicioDe(c)].join(' ').toLowerCase().includes(txt)))
     .sort((a, b) => { const x = f(a), y = f(b); const r = typeof x === 'number' ? x - y : String(x).localeCompare(String(y), 'es'); return r ? r * s : (Number(b.consecutivo) || 0) - (Number(a.consecutivo) || 0); });
   document.querySelectorAll('.htable th[data-k]').forEach((th) => { const on = th.dataset.k === k; th.toggleAttribute('aria-sort', on); if (on) th.setAttribute('aria-sort', dir === 'asc' ? 'ascending' : 'descending'); th.textContent = th.textContent.replace(/ [▲▼]$/, '') + (on ? (dir === 'asc' ? ' ▲' : ' ▼') : ''); });
   const suma = (arr) => arr.reduce((t, c) => t + (Number(c.total) || 0), 0);
   const aprob = filas.filter((c) => c.estado === 'Aprobada' || c.estado === 'Entregada');
-  const filtrado = filas.length !== lista.length;
+  const vivas = lista.filter((c) => !c.eliminada); const filtrado = filas.length !== vivas.length;
   $('h-resumen').replaceChildren(
-    h('span', null, h('strong', null, String(filas.length)), filtrado ? ' de ' + lista.length + ' cotizaciones' : ' cotizaciones'),
+    h('span', null, h('strong', null, String(filas.length)), filtrado ? ' de ' + vivas.length + ' cotizaciones' : ' cotizaciones'),
     h('span', null, 'Cotizado ', h('strong', null, money(suma(filas)))),
     h('span', null, 'Aprobado o entregado ', h('strong', null, money(suma(aprob))), ' (' + aprob.length + ')'));
   $('h-limpiar').hidden = !(txt || est || tipo || cli || anio || $('h-orden').value !== 'fecha-desc');
-  $('hist-count').textContent = lista.length ? '(' + lista.length + ')' : '';
-  $('h-empty').hidden = lista.length > 0;
-  $('h-body').replaceChildren(...filas.map((c) => h('tr', null,
+  $('hist-count').textContent = vivas.length ? '(' + vivas.length + ')' : '';
+  $('h-empty').hidden = vivas.length > 0;
+  $('h-body').replaceChildren(...filas.map((c) => h('tr', { class: (q && c.id && c.id === q.id) ? 'pr-act' : '' },
     h('td', { class: 'n', 'data-label': 'N.º' }, Number.isFinite(Number(c.consecutivo)) && c.consecutivo !== null ? String(c.consecutivo).padStart(2, '0') : '—'),
     h('td', { 'data-label': 'Fecha' }, fechaCorta(c.fecha)),
     h('td', { 'data-label': 'Código' }, h('span', { class: 'hcode' }, c.codigo || 'Sin código')),
     h('td', { 'data-label': 'Cliente' }, c.cliente_nombre || h('span', { class: 'muted' }, 'Sin nombre'), c.cliente_empresa ? h('div', { class: 'muted' }, c.cliente_empresa) : null),
-    h('td', { 'data-label': 'Proyecto' }, c.proyecto),
+    h('td', { 'data-label': 'Proyecto' }, c.proyecto, window.prTag ? window.prTag(c) : null),
     h('td', { 'data-label': 'Servicio' }, (TIPOS[c.tipo] || TIPOS.otro).label),
     h('td', { class: 'n', 'data-label': 'Total' }, money(c.total)),
     h('td', { 'data-label': 'Estado' }, h('span', { class: 'pill ' + c.estado }, c.estado)),
     h('td', { class: 'acts-td', 'data-label': '' }, h('div', { class: 'acts' },
       h('button', { type: 'button', class: 'btn small', onclick: () => pedir('La cotización abierta tiene cambios sin guardar.', () => abrir(c)) }, 'Abrir'),
       h('button', { type: 'button', class: 'btn small', onclick: () => pedir('La cotización abierta tiene cambios sin guardar.', () => abrir(c, 'version')) }, 'Nueva versión'),
-      h('button', { type: 'button', class: 'btn small', onclick: () => pedir('La cotización abierta tiene cambios sin guardar.', () => abrir(c, 'duplicar')) }, 'Duplicar'))))));
+      h('button', { type: 'button', class: 'btn small', onclick: () => pedir('La cotización abierta tiene cambios sin guardar.', () => abrir(c, 'duplicar')) }, 'Duplicar'), window.prDel ? window.prDel(c) : null)))));
 }
 $('h-buscar').addEventListener('input', pintarHistorial);
 ['h-estado', 'h-tipo', 'h-cliente', 'h-anio', 'h-orden'].forEach((id) => $(id).addEventListener('change', pintarHistorial));
@@ -1878,8 +1974,9 @@ window.__cotiStart = (fs) => {
   let primera = true;
   db.collection('cotizaciones').onSnapshot((snap) => {
     lista = snap.docs.map((s) => ({ id: s.id, ...s.data() }));
+    window.prEstado && window.prEstado();
     if (primera && !q.id) { primera = false; q.anio = Number(q.fecha.slice(0, 4)); if (!q.codigo_base) q.consecutivo = siguienteConsecutivo(); q.codigo = codigoDe(q); $('f-codigo').textContent = q.codigo; pintarPapel(); estadoGuardado(); }
-    if (!$('view-historial').hidden) pintarHistorial(); else $('hist-count').textContent = lista.length ? '(' + lista.length + ')' : '';
+    if (!$('view-historial').hidden) pintarHistorial(); else $('hist-count').textContent = lista.filter((c) => !c.eliminada).length ? '(' + lista.filter((c) => !c.eliminada).length + ')' : '';
   }, () => { $('db-off').hidden = false; db = null; $('btn-guardar').disabled = true; });
 };
 </script>
@@ -1887,6 +1984,505 @@ window.__cotiStart = (fs) => {
 // Presupuestos de obra: personales, dentro de la cuenta de cada usuario (users/{uid}/presupuestos)
 window.PR_COLLECTION = (d) => d.collection('users').doc(firebase.auth().currentUser.uid).collection('presupuestos');
 </script>
+<script>
+/* Catálogo maestro de obra (precios base estimados en COP, Bogotá 2026; editables por ítem) */
+window.PR_CAT = (() => {
+const chaps = {
+ '01': 'Preliminares y demoliciones', '02': 'Movimiento de tierras', '03': 'Cimentación', '04': 'Estructura',
+ '05': 'Mampostería y muros', '06': 'Pañetes, nivelación y cielos', '07': 'Cubierta e impermeabilización',
+ '08': 'Pisos, enchapes y zócalos', '09': 'Carpintería en madera y puertas', '10': 'Carpintería metálica, vidrio y ventanas',
+ '11': 'Pintura y acabados', '12': 'Hidrosanitario', '13': 'Aparatos sanitarios y grifería',
+ '14': 'Instalaciones eléctricas y de datos', '15': 'Gas, ventilación y especiales', '16': 'Aseo, administración y exteriores', '17': 'Torre: sótanos, industrialización y zonas comunes', '18': 'Obras exteriores y urbanismo', '19': 'Sostenibilidad, domótica y especiales'
+};
+const raw = `
+01.01|Localización y replanteo topográfico|m²|2500|800|IfcSite
+01.02|Cerramiento provisional en lámina y madera|ml|16000|38000|
+01.03|Campamento y bodega provisional|m²|22000|68000|
+01.04|Instalaciones provisionales (agua, energía, baño)|gl|650000|1100000|
+01.05|Demolición de muros en mampostería|m²|26000|0|IfcWall
+01.06|Demolición de pisos y retiro de enchape|m²|30000|0|IfcCovering
+01.07|Demolición de enchape de muros|m²|24000|0|IfcCovering
+01.08|Retiro de escombros (cargue, transporte y disposición)|m³|28000|52000|
+01.09|Demolición de placa o losa de concreto|m²|65000|10000|IfcSlab
+01.10|Demolición de cielo raso|m²|10000|0|IfcCovering
+01.11|Desmonte de aparatos sanitarios y grifería|un|32000|0|
+01.12|Desmonte de puertas, marcos y ventanas|un|28000|0|
+01.13|Protección de pisos y elementos existentes|m²|3500|3500|
+01.14|Cerramiento de seguridad en malla y polisombra|ml|9000|14000|
+02.01|Descapote y limpieza del terreno|m²|2500|2500|IfcSite
+02.02|Excavación mecánica en material común|m³|7000|9000|
+02.03|Excavación manual en material común|m³|46000|0|
+02.04|Relleno con material de sitio compactado|m³|14000|10000|
+02.05|Relleno en recebo compactado|m³|18000|98000|
+02.06|Botada de sobrantes y transporte|m³|9000|42000|
+02.07|Entibado y apuntalamiento provisional de excavación|m²|32000|58000|
+02.08|Conformación y nivelación del terreno|m²|2500|1800|
+02.09|Bombeo y achique de agua de excavación|día|90000|70000|
+02.10|Relleno en material granular tipo base|m³|18000|115000|
+03.01|Pilote preexcavado en concreto Ø40 cm (incluye equipo)|ml|85000|165000|IfcPile
+03.02|Pilote preexcavado en concreto Ø60 cm (incluye equipo)|ml|125000|290000|IfcPile
+03.03|Pilote preexcavado en concreto Ø80 cm (incluye equipo)|ml|175000|480000|IfcPile
+03.04|Cabezal o dado de pilotes en concreto 4000 psi|m³|210000|790000|IfcFooting
+03.05|Concreto de limpieza 2000 psi e=5 cm|m²|9000|23000|
+03.06|Zapata aislada en concreto 3000 psi|m³|180000|690000|IfcFooting
+03.07|Zapata corrida en concreto 3000 psi|m³|190000|700000|IfcFooting
+03.08|Viga de cimentación / amarre en concreto 3000 psi|m³|200000|720000|IfcBeam
+03.09|Acero de refuerzo 60.000 psi (cimentación)|kg|1800|5200|IfcReinforcingBar
+03.10|Placa de contrapiso en concreto e=10 cm con malla|m²|22000|62000|IfcSlab
+03.11|Muro de contención en concreto reforzado|m³|260000|830000|IfcWall
+03.12|Impermeabilización de cimentación y muros enterrados|m²|12000|26000|
+03.13|Sobrecimiento en concreto|ml|22000|38000|IfcFooting
+03.14|Prueba de carga de pilotes|un|800000|1600000|
+03.15|Ensayos de laboratorio de concreto (cilindros)|un|0|45000|
+04.01|Columna en concreto 4000 psi (concreto y formaleta)|m³|330000|850000|IfcColumn
+04.02|Viga aérea en concreto 4000 psi (concreto y formaleta)|m³|320000|840000|IfcBeam
+04.03|Losa maciza en concreto 4000 psi e=12 cm|m²|52000|98000|IfcSlab
+04.04|Losa aligerada con casetón recuperable|m²|58000|118000|IfcSlab
+04.05|Losa de entrepiso en placa colaborante (steel deck)|m²|42000|135000|IfcSlab
+04.06|Muro estructural en concreto 4000 psi e=12 cm|m³|300000|830000|IfcWall
+04.07|Escalera en concreto reforzado|m³|420000|900000|IfcStair
+04.08|Acero de refuerzo 60.000 psi (estructura)|kg|1900|5300|IfcReinforcingBar
+04.09|Formaleta adicional en madera o metálica|m²|28000|22000|
+04.10|Junta de dilatación estructural|ml|14000|26000|
+04.11|Estructura metálica (perfiles, soldadura y pintura)|kg|3800|8200|IfcMember
+04.12|Reforzamiento estructural (columna o viga adicional)|un|650000|900000|IfcColumn
+04.13|Pantalla o muro de ascensor en concreto|m³|310000|850000|IfcWall
+04.14|Malla electrosoldada|m²|2800|9500|IfcReinforcingMesh
+04.15|Anclajes químicos y conectores|un|18000|32000|
+05.01|Muro en bloque de arcilla No. 5 (e=10 cm) con mortero|m²|32000|42000|IfcWall
+05.02|Muro en bloque de arcilla No. 4 (e=15 cm) con mortero|m²|36000|52000|IfcWall
+05.03|Muro en ladrillo tolete a la vista|m²|52000|68000|IfcWall
+05.04|Muro en drywall doble cara e=10 cm con aislamiento|m²|30000|56000|IfcWall
+05.05|Muro en fibrocemento para fachada o zonas húmedas|m²|34000|72000|IfcWall
+05.06|Columneta y viga de amarre en concreto 3000 psi|ml|24000|38000|IfcColumn
+05.07|Dintel en concreto sobre vanos|ml|18000|30000|IfcBeam
+05.08|Alféizar en concreto|ml|14000|22000|
+05.09|Dovelas y anclajes de muros a la estructura|un|6000|9000|
+05.10|Muro divisorio en bloque de vidrio|m²|85000|210000|IfcWall
+06.01|Pañete liso de muros interiores, mortero 1:4|m²|19000|9500|IfcCovering
+06.02|Pañete impermeabilizado en muros húmedos|m²|22000|13000|IfcCovering
+06.03|Pañete exterior o de fachada|m²|24000|11000|IfcCovering
+06.04|Filos, dilataciones y remates|ml|6000|2500|
+06.05|Mortero de nivelación y afinado de piso e=5 cm|m²|15000|18000|IfcCovering
+06.06|Cielo raso en drywall (placa 12 mm, estructura y masilla)|m²|24000|42000|IfcCovering
+06.07|Cielo raso en PVC o Superboard|m²|20000|38000|IfcCovering
+06.08|Resane y reparación de muros|m²|9000|4500|
+06.09|Regatas y cajillas para instalaciones|ml|7000|0|
+07.01|Cubierta en teja termoacústica o UPVC|m²|24000|102000|IfcRoof
+07.02|Cubierta en teja de barro con estructura de apoyo|m²|38000|110000|IfcRoof
+07.03|Estructura metálica de cubierta (cerchas y correas)|m²|34000|88000|IfcRoof
+07.04|Cubierta plana con pendiente en mortero|m²|18000|22000|IfcRoof
+07.05|Impermeabilización con manto asfáltico 4 mm|m²|16000|42000|
+07.06|Impermeabilizante cementoso flexible (baños, balcones)|m²|9000|15000|
+07.07|Canales y bajantes de aguas lluvias|ml|16000|38000|
+07.08|Remates, flashing y caballetes|ml|14000|26000|
+07.09|Tragaluz o claraboya|m²|60000|320000|IfcRoof
+08.01|Piso en porcelanato 60x60 (pegante y boquilla)|m²|38000|74000|IfcCovering
+08.02|Piso en cerámica 45x45 (pegante y boquilla)|m²|30000|42000|IfcCovering
+08.03|Piso en madera laminada con guardaescoba|m²|16000|68000|IfcCovering
+08.04|Piso vinílico SPC click|m²|14000|82000|IfcCovering
+08.05|Piso en concreto pulido o endurecido|m²|26000|18000|IfcCovering
+08.06|Guardaescoba o zócalo en porcelanato|ml|7000|12000|IfcCovering
+08.07|Guardaescoba en madera o poliestireno|ml|5500|13000|IfcCovering
+08.08|Enchape de muros en porcelanato o cerámica|m²|42000|68000|IfcCovering
+08.09|Enchape de salpicadero de cocina|m²|44000|70000|IfcCovering
+08.10|Enchape de fachada en piedra o ladrillo a la vista|m²|60000|110000|IfcCovering
+08.11|Piso en gres antideslizante exterior|m²|34000|58000|IfcCovering
+08.12|Enchape de huella y contrahuella de escaleras|ml|28000|46000|IfcCovering
+08.13|Piso en deck de madera plástica exterior|m²|30000|165000|IfcCovering
+09.01|Puerta interior en madera entamborada 0,80 m con marco|un|90000|520000|IfcDoor
+09.02|Puerta principal en madera maciza 0,90 m con marco|un|140000|1450000|IfcDoor
+09.03|Puerta de baño en aluminio o PVC|un|70000|380000|IfcDoor
+09.04|Marco y alfajía en madera|un|45000|140000|IfcDoor
+09.05|Clóset en MDF o madera (módulos con puertas y entrepaños)|ml|180000|620000|IfcFurniture
+09.06|Mueble de cocina inferior y superior en MDF|ml|220000|980000|IfcFurniture
+09.07|Mueble de baño (vanity) con tope|un|120000|620000|IfcFurniture
+09.08|Cerradura de manija para puerta interior|un|22000|85000|
+09.09|Cerradura de seguridad para puerta principal|un|40000|190000|
+09.10|Pasamanos en madera|ml|28000|95000|IfcRailing
+09.11|Mesón de cocina en granito o cuarzo|ml|85000|480000|IfcFurniture
+09.12|Puerta corrediza en madera con riel|un|150000|780000|IfcDoor
+10.01|Puerta metálica de seguridad con marco|un|180000|1250000|IfcDoor
+10.02|Puerta metálica para cuarto técnico o shut|un|120000|780000|IfcDoor
+10.03|Ventana en aluminio con vidrio de 5 mm|m²|60000|420000|IfcWindow
+10.04|Ventana en PVC con vidrio|m²|65000|520000|IfcWindow
+10.05|Fachada en muro cortina de vidrio y aluminio|m²|120000|780000|IfcCurtainWall
+10.06|Reja de seguridad para ventanas|m²|45000|140000|
+10.07|Baranda en acero inoxidable o tubular|ml|80000|290000|IfcRailing
+10.08|Baranda en vidrio templado con herrajes|ml|110000|620000|IfcRailing
+10.09|División de ducha en vidrio templado 8 mm|m²|80000|420000|
+10.10|Portón de garaje metálico o levadizo|m²|90000|520000|IfcDoor
+10.11|Espejo de baño|m²|30000|130000|
+10.12|Escalera metálica (estructura y peldaños)|ml|150000|480000|IfcStair
+10.13|Pasamanos metálico|ml|35000|85000|IfcRailing
+10.14|Cerramiento en reja metálica|ml|60000|180000|
+11.01|Estuco y pintura vinilo tipo 1 (3 manos) en muros|m²|11000|8500|IfcCovering
+11.02|Pintura vinilo en cielos rasos|m²|9500|7500|IfcCovering
+11.03|Pintura acrílica de fachada|m²|13000|11000|IfcCovering
+11.04|Esmalte o anticorrosivo sobre metal|m²|10000|9000|
+11.05|Barniz o laca sobre madera|m²|14000|12000|
+11.06|Pintura epóxica de pisos|m²|12000|26000|
+11.07|Revestimiento texturizado tipo graniplast|m²|16000|18000|
+12.01|Punto sanitario 4" (sanitario) con tubería y accesorios|un|62000|86000|IfcPipeSegment
+12.02|Punto sanitario 2" (lavamanos, ducha, lavaplatos, sifón)|un|45000|52000|IfcPipeSegment
+12.03|Punto de agua fría 1/2" (tubería PVC-P)|un|42000|48000|IfcPipeSegment
+12.04|Punto de agua caliente 1/2" (CPVC)|un|52000|62000|IfcPipeSegment
+12.05|Tubería sanitaria PVC 4"|ml|14000|32000|IfcPipeSegment
+12.06|Tubería sanitaria PVC 2"–3"|ml|10000|18000|IfcPipeSegment
+12.07|Tubería de presión PVC 3/4"–1"|ml|8000|12000|IfcPipeSegment
+12.08|Caja de inspección en concreto 60x60|un|120000|240000|
+12.09|Tanque de almacenamiento de agua 1000 L|un|90000|520000|IfcTank
+12.10|Cisterna en concreto impermeabilizada|m³|280000|620000|IfcTank
+12.11|Equipo de bombeo hidroneumático|un|480000|3200000|IfcPump
+12.12|Calentador de paso a gas 10 L|un|120000|780000|
+12.13|Trampa de grasas|un|90000|380000|
+12.14|Red de aguas lluvias (tubería PVC y cajas)|ml|24000|42000|IfcPipeSegment
+12.15|Acometida de acueducto y alcantarillado|gl|900000|1600000|
+12.16|Registro de corte y válvula|un|18000|48000|IfcValve
+12.17|Rejilla de piso con sifón|un|18000|34000|
+13.01|Sanitario económico con asiento (instalado)|un|55000|360000|IfcSanitaryTerminal
+13.02|Sanitario ahorrador gama media (instalado)|un|65000|620000|IfcSanitaryTerminal
+13.03|Lavamanos de pedestal|un|45000|240000|IfcSanitaryTerminal
+13.04|Lavamanos sobreponer con mueble|un|60000|480000|IfcSanitaryTerminal
+13.05|Grifería de lavamanos monocontrol|un|25000|165000|
+13.06|Grifería de ducha monocontrol|un|30000|240000|
+13.07|Ducha eléctrica 110 V|un|45000|219900|
+13.08|Ducha de lluvia con brazo|un|40000|330000|
+13.09|Lavaplatos en acero inoxidable 1 poceta|un|60000|390000|IfcSanitaryTerminal
+13.10|Grifería de lavaplatos|un|28000|185000|
+13.11|Lavadero prefabricado|un|55000|310000|IfcSanitaryTerminal
+13.12|Kit de accesorios de baño (papelera, toallero, gancho)|jgo|35000|130000|
+14.01|Acometida eléctrica y medidor|un|480000|1350000|
+14.02|Tablero de distribución 12 circuitos con breakers|un|220000|520000|IfcElectricDistributionBoard
+14.03|Tablero general trifásico con totalizador|un|450000|2400000|IfcElectricDistributionBoard
+14.04|Salida de iluminación (tubería, cable y caja)|un|38000|52000|
+14.05|Salida toma doble con polo a tierra|un|36000|58000|IfcOutlet
+14.06|Salida toma GFCI (zonas húmedas)|un|40000|98000|IfcOutlet
+14.07|Salida interruptor sencillo o doble|un|32000|42000|IfcSwitchingDevice
+14.08|Salida especial (ducha, horno, calentador, 220 V)|un|85000|140000|IfcOutlet
+14.09|Luminaria LED panel 60x60|un|18000|78000|IfcLightFixture
+14.10|Luminaria LED downlight de empotrar|un|12000|34000|IfcLightFixture
+14.11|Luminaria exterior o reflector LED|un|25000|95000|IfcLightFixture
+14.12|Sistema de puesta a tierra|gl|220000|420000|
+14.13|Punto de datos UTP Cat 6|un|45000|68000|
+14.14|Punto de TV (coaxial)|un|35000|38000|
+14.15|Citófono o videoportero|un|60000|480000|
+14.16|Luminaria de emergencia|un|20000|95000|IfcLightFixture
+14.17|Cableado THHN #12 (circuitos de tomas e iluminación)|ml|1500|3200|IfcCableSegment
+14.18|Tubería conduit EMT o PVC|ml|4500|7000|IfcCableCarrierSegment
+14.19|Transformador o subestación|un|2500000|18000000|IfcTransformer
+14.20|Planta eléctrica de emergencia|un|1800000|28000000|IfcElectricGenerator
+14.21|Apantallamiento y pararrayos|gl|900000|2400000|
+15.01|Punto de gas (estufa) con tubería y válvula|un|90000|140000|IfcPipeSegment
+15.02|Red de gas en cobre o multicapa|ml|22000|38000|IfcPipeSegment
+15.03|Ducto de extracción de baño o cocina|un|60000|110000|IfcDuctSegment
+15.04|Campana extractora|un|55000|620000|
+15.05|Aire acondicionado tipo split 12.000 BTU|un|180000|2100000|IfcUnitaryEquipment
+15.06|Ventilación mecánica de sótano|m²|9000|26000|IfcDuctSegment
+15.07|Ascensor de pasajeros 6 personas (por parada)|parada|2200000|14500000|IfcTransportElement
+15.08|Red contra incendio (rociadores y gabinetes)|m²|11000|36000|IfcFireSuppressionTerminal
+15.09|Sistema de detección de incendio|m²|3500|12000|IfcAlarm
+15.10|Extintores multipropósito|un|0|95000|
+15.11|Sistema de CCTV y control de acceso|gl|1200000|4800000|
+16.01|Aseo general de obra|m²|3200|700|
+16.02|Aseo final y entrega|m²|4500|1200|
+16.03|Dirección de obra y residente|mes|4200000|0|
+16.04|Seguridad y salud en el trabajo (SST)|mes|900000|350000|
+16.05|Alquiler de andamio certificado|mes|0|950000|
+16.06|Licencias, pólizas y permisos|gl|0|2500000|
+16.07|Andén y accesos en concreto e=10 cm|m²|22000|60000|IfcSlab
+16.08|Zonas verdes y paisajismo|m²|9000|22000|
+16.09|Planos récord (as-built) y manuales|gl|1200000|0|
+16.10|Vía interna en adoquín|m²|28000|72000|
+16.11|Herramienta menor y equipos|mes|0|650000|
+17.01|Muro pantalla en concreto reforzado (contención de sótanos)|m³|250000|900000|IfcWall
+17.02|Anclaje o puntal de contención provisional|un|450000|750000|
+17.03|Excavación mecánica y botada de sótano|m³|12000|34000|
+17.04|Formaleta de aluminio para muros y losas (alquiler y armado)|m²|11000|13500|
+17.05|Formaleta tipo túnel (alquiler y armado)|m²|9500|12500|
+17.06|Concreto 4000 psi para muros y losas industrializadas (sin formaleta)|m³|90000|560000|IfcWall
+17.07|Grúa torre (alquiler, operación y montaje)|mes|9000000|24000000|
+17.08|Montacargas de obra (alquiler y operador)|mes|3500000|9000000|
+17.09|Bombeo de concreto en altura|m³|8000|38000|
+17.10|Plataforma o andamio colgante de fachada|m²|9000|16000|
+17.11|Sistema de presurización de escaleras|un|3500000|32000000|
+17.12|Cisterna, tanque y bombas de red contra incendio|gl|9000000|85000000|
+17.13|Gabinete y red húmeda contra incendio (por piso)|un|650000|2400000|
+17.14|Shut de basuras con cuarto de reciclaje (por piso)|un|900000|1500000|
+17.15|Ascensor de pasajeros de alta velocidad (por parada)|parada|3500000|22000000|IfcTransportElement
+17.16|Lobby y portería (obra y acabados)|m²|650000|1550000|
+17.17|Zonas comunes (salón social, gimnasio, terrazas)|m²|520000|1250000|
+17.18|Rampa vehicular en concreto|m²|35000|85000|IfcRamp
+17.19|Demarcación y señalización de parqueaderos|m²|2500|3500|
+17.20|Cuartos técnicos y de bombas (obra y acabados)|m²|380000|720000|
+17.21|Medidores y gabinetes de servicios por vivienda|un|120000|420000|
+17.22|Parque infantil, BBQ y mobiliario exterior|gl|4000000|22000000|
+17.23|Pre-actas de vecindad y control de vibraciones|gl|2500000|6000000|
+17.24|Control de calidad estructural e interventoría técnica|mes|0|6500000|
+01.15|Estudio de suelos y levantamiento topográfico|gl|0|6500000|
+01.16|Estudios y diseños (arquitectónico, estructural y MEP)|m²|0|48000|
+01.17|Demolición de cubierta y retiro de teja|m²|14000|0|IfcRoof
+01.18|Corte y perforación de concreto (core drilling)|un|45000|35000|
+01.19|Apuntalamiento y reforzamiento provisional de placas existentes|m²|18000|26000|
+01.20|Desmonte y retiro de instalaciones eléctricas existentes|m²|6500|0|
+02.11|Excavación manual de zanjas para redes|m³|52000|0|
+02.12|Mejoramiento de suelo con geotextil y recebo|m²|8000|34000|
+02.13|Drenaje con filtro, geotextil y tubería perforada|ml|14000|38000|
+03.16|Pilote prefabricado hincado|ml|55000|185000|IfcPile
+03.17|Losa de cimentación (placa flotante) en concreto 4000 psi|m³|210000|760000|IfcSlab
+03.18|Micropilote de refuerzo|ml|95000|140000|IfcPile
+04.16|Losa postensada con cables y anclajes|m²|62000|165000|IfcSlab
+04.17|Losa en vigueta y bovedilla|m²|32000|74000|IfcSlab
+04.18|Muro prefabricado de concreto|m²|38000|135000|IfcWall
+05.11|Muro en bloque de concreto estructural e=15 cm|m²|38000|58000|IfcWall
+05.12|Muro en ladrillo estructural perforado|m²|42000|62000|IfcWall
+06.10|Cielo raso en fibra mineral registrable|m²|16000|44000|IfcCovering
+06.11|Cielo raso acústico en madera o perforado|m²|32000|130000|IfcCovering
+07.10|Cubierta en lámina metálica tipo sándwich|m²|26000|118000|IfcRoof
+07.11|Cubierta verde (sustrato, drenaje y vegetación)|m²|40000|150000|IfcRoof
+07.12|Impermeabilización con membrana PVC o TPO|m²|20000|68000|
+07.13|Aislamiento térmico de cubierta|m²|9000|28000|
+08.14|Piso en porcelanato gran formato 120x60|m²|52000|135000|IfcCovering
+08.15|Piso en piedra natural o mármol|m²|72000|280000|IfcCovering
+08.16|Piso en madera maciza (instalado y sellado)|m²|38000|210000|IfcCovering
+08.17|Piso en microcemento|m²|45000|85000|IfcCovering
+08.18|Enchape en mosaico o vidrio|m²|65000|120000|IfcCovering
+09.13|Escalera en madera (peldaños y zancas)|ml|140000|520000|IfcStair
+10.15|Fachada ventilada en porcelanato o HPL|m²|70000|290000|IfcCovering
+10.16|Fachada con aislamiento térmico tipo EIFS|m²|38000|74000|IfcCovering
+10.17|Celosía o persiana en aluminio|m²|55000|260000|
+10.18|Puerta cortafuego certificada RF-60|un|180000|1850000|IfcDoor
+10.19|Pérgola en aluminio o estructura metálica|m²|60000|240000|
+11.08|Pintura intumescente para estructura metálica|m²|16000|42000|
+11.09|Pintura antihongos o impermeable|m²|9500|9000|IfcCovering
+12.18|Bomba sumergible de achique|un|150000|780000|IfcPump
+12.19|Sistema central de agua caliente (bomba de calor o solar)|gl|2500000|14000000|
+12.20|Tubería sanitaria PVC 6"|ml|18000|52000|IfcPipeSegment
+12.21|Válvula reguladora de presión y check|un|35000|180000|IfcValve
+12.22|Medidor de agua individual|un|40000|165000|
+13.13|Sanitario suspendido con bastidor|un|90000|820000|IfcSanitaryTerminal
+13.14|Bañera o jacuzzi|un|250000|2400000|IfcSanitaryTerminal
+13.15|Ducha higiénica de mano|un|25000|95000|
+13.16|Lavaplatos de doble poceta con escurridor|un|70000|620000|IfcSanitaryTerminal
+13.17|Orinal con grifería|un|55000|420000|IfcSanitaryTerminal
+13.18|Barras de apoyo y accesorios para baño accesible|jgo|60000|380000|
+13.19|Grifería de ducha termostática|un|45000|520000|
+14.22|Luminaria LED lineal o de perfil|un|22000|140000|IfcLightFixture
+14.23|Iluminación decorativa en banda LED|ml|9000|28000|IfcLightFixture
+14.24|Interruptor inteligente o dimmer|un|18000|150000|IfcSwitchingDevice
+14.25|Cargador para vehículo eléctrico|un|250000|2600000|
+14.26|Bandeja portacables metálica|ml|14000|48000|IfcCableCarrierSegment
+14.27|Alimentador en cable THHN calibre 2/0|ml|9000|62000|IfcCableSegment
+14.28|Gabinete y panel de medidores|un|450000|1600000|IfcElectricDistributionBoard
+15.12|Aire acondicionado mini split 18.000 BTU|un|220000|2900000|IfcUnitaryEquipment
+15.13|Aire acondicionado centralizado (por TR)|un|900000|6500000|IfcUnitaryEquipment
+15.14|Extractor de parqueaderos (jet fan)|un|650000|6200000|IfcFan
+15.15|Detector de humo direccionable|un|35000|185000|IfcSensor
+15.16|Estación manual y sirena de alarma|un|45000|240000|IfcAlarm
+15.17|Sistema de voceo y sonido de emergencia|gl|900000|5800000|
+15.18|Montante de gas centralizada (por piso)|un|480000|900000|IfcPipeSegment
+15.19|Medidor de gas y regulador|un|60000|290000|
+18.01|Muro de contención de talud en concreto ciclópeo|m³|120000|420000|IfcWall
+18.02|Gavión en malla y piedra|m³|60000|190000|
+18.03|Red de alcantarillado sanitario PVC 8"|ml|32000|78000|IfcPipeSegment
+18.04|Red de alcantarillado pluvial 12"|ml|40000|110000|IfcPipeSegment
+18.05|Pozo de inspección en concreto|un|650000|1450000|
+18.06|Red de acueducto exterior 4"|ml|26000|62000|IfcPipeSegment
+18.07|Red eléctrica subterránea de media tensión|ml|42000|135000|IfcCableSegment
+18.08|Poste y luminaria de alumbrado exterior|un|180000|1250000|IfcLightFixture
+18.09|Vía en pavimento flexible (asfalto)|m²|18000|68000|
+18.10|Vía en pavimento rígido de concreto|m²|24000|95000|
+18.11|Bordillo y cuneta en concreto|ml|14000|36000|
+18.12|Andén en adoquín|m²|26000|62000|
+18.13|Sumidero y rejilla pluvial|un|120000|330000|
+18.14|Cerramiento perimetral en malla y postes|ml|22000|58000|
+18.15|Portón de acceso vehicular corredizo|m²|95000|620000|IfcDoor
+18.16|Muro de cerramiento en bloque con columnetas|m²|36000|54000|IfcWall
+18.17|Siembra de árboles y arbustos|un|22000|85000|
+18.18|Césped en rollo|m²|4500|9500|
+18.19|Sistema de riego automático|m²|2500|6500|
+18.20|Piscina en concreto con acabado y equipo de filtración|m²|480000|1650000|
+18.21|Cancha múltiple en concreto con demarcación|m²|28000|72000|
+18.22|Señalización vial horizontal y vertical|gl|600000|2400000|
+18.23|Planta de tratamiento de agua residual compacta|gl|3500000|38000000|
+18.24|Cuarto de basuras exterior|m²|280000|520000|
+19.01|Panel solar fotovoltaico 550 W instalado|un|120000|780000|
+19.02|Inversor y estructura de soporte solar (por kW)|kW|180000|1450000|
+19.03|Calentador solar de agua|un|350000|2800000|
+19.04|Sistema domótico básico (iluminación, cortinas y accesos)|gl|900000|6500000|
+19.05|Cerradura inteligente|un|40000|520000|
+19.06|Cortina motorizada|un|60000|780000|
+19.07|Sistema de audio multizona|gl|600000|5200000|
+19.08|Recolección y reuso de aguas lluvias|gl|1200000|6800000|
+12.23|Tubería de presión PVC 2"–3" (red principal y montantes)|ml|12000|24000|IfcPipeSegment
+12.24|Tubería de presión PVC o PEAD 4"|ml|16000|42000|IfcPipeSegment
+12.25|Tubería CPVC de agua caliente 3/4"|ml|9000|18000|IfcPipeSegment
+12.26|Aislamiento térmico de tubería de agua caliente|ml|3500|7500|
+12.27|Grupo hidroneumático de velocidad variable (triplex)|un|2800000|38000000|IfcPump
+12.28|Bomba de recirculación de agua caliente|un|180000|1450000|IfcPump
+12.29|Tablero de control y alternador de bombas|un|650000|4200000|
+12.30|Equipo eyector de aguas negras (doble bomba)|un|900000|9500000|IfcPump
+12.31|Tanque hidroacumulador|un|250000|2400000|IfcTank
+12.32|Válvula de compuerta o mariposa|un|40000|260000|IfcValve
+12.33|Soportería y abrazaderas de tuberías|ml|4500|9000|
+12.34|Macromedidor de agua|un|180000|1250000|
+12.35|Pruebas hidrostáticas y desinfección de redes|gl|650000|450000|
+12.36|Sistema de tratamiento de agua potable (filtración y ablandador)|un|1200000|9500000|
+12.37|Tubería de ventilación sanitaria PVC 2"|ml|7000|11000|IfcPipeSegment
+12.38|Cámara de inspección sanitaria|un|180000|420000|
+12.39|Tubería sanitaria PVC 8"|ml|22000|68000|IfcPipeSegment
+12.40|Equipo de bombeo de aguas lluvias|un|450000|3800000|IfcPump
+14.29|Celda de media tensión (seccionador y protección)|un|1800000|22000000|IfcSwitchingDevice
+14.30|Transformador seco trifásico 500 kVA|un|2200000|42000000|IfcTransformer
+14.31|Barraje blindado (busbar)|ml|45000|520000|IfcCableCarrierSegment
+14.32|Banco de condensadores para factor de potencia|un|900000|7500000|
+14.33|Sistema de respaldo UPS|un|600000|6500000|
+14.34|Transferencia automática de energía (ATS)|un|900000|9800000|
+14.35|Gabinete de comunicaciones y rack|un|350000|2600000|
+14.36|Fibra óptica (cableado y empalmes)|ml|3500|8500|
+14.37|Canalización subterránea con cámaras de paso|ml|28000|65000|
+14.38|Certificación RETIE y RETILAP|gl|1800000|1200000|
+15.20|Tubería de acero para gas (montante)|ml|18000|42000|IfcPipeSegment
+15.21|Gabinete de medidores de gas|un|220000|780000|
+15.22|Válvula de corte y regulador de etapa|un|45000|180000|IfcValve
+15.23|Central de cilindros o tanque estacionario de GLP|gl|1500000|9500000|IfcTank
+15.24|Prueba de hermeticidad y certificación de gas|gl|450000|350000|
+15.25|Ducto de evacuación de gases de combustión|ml|14000|36000|IfcDuctSegment
+15.26|Rejilla de ventilación para gas|un|18000|42000|
+15.27|Bomba principal contra incendio (eléctrica)|un|1500000|24000000|IfcPump
+15.28|Bomba jockey contra incendio|un|350000|3800000|IfcPump
+15.29|Siamesa y conexión para bomberos|un|280000|1600000|
+15.30|Rociador automático (sprinkler)|un|45000|68000|IfcFireSuppressionTerminal
+15.31|Tubería de acero para red contra incendio|ml|22000|58000|IfcPipeSegment
+15.32|Puesto de control y alarma de rociadores|un|650000|4200000|IfcValve
+15.33|Ducto de extracción en lámina galvanizada|kg|6500|14000|IfcDuctSegment
+15.34|Extractor centrífugo para cuartos técnicos y baños internos|un|220000|1800000|IfcFan
+14.39|Medición de puesta a tierra y certificación de protección contra rayos|gl|600000|1400000|
+15.35|Reserva de agua exclusiva contra incendio (cisterna o tanque)|m³|260000|560000|IfcTank
+15.36|Motobomba diésel de respaldo contra incendio|un|2500000|38000000|IfcPump
+15.37|Controlador listado para bomba contra incendio|un|900000|9500000|
+15.38|Válvula de control OS&Y con supervisión|un|90000|620000|IfcValve
+15.39|Detector de calor|un|30000|140000|IfcSensor
+15.40|Panel de alarma y detección direccionable|un|900000|7800000|IfcAlarm
+15.41|Señalización fotoluminiscente de evacuación y salidas|un|12000|48000|
+15.42|Compuerta cortafuego en ductos|un|120000|780000|
+15.43|Sello cortafuego en penetraciones de shaft y muros|un|35000|68000|
+15.44|Hidrante exterior|un|450000|3200000|
+15.45|Pruebas, puesta en marcha y certificación de la red contra incendio|gl|2500000|1800000|
+15.46|Plan de emergencia, brigada y simulacro|gl|2400000|900000|
+15.47|Sistema de aire acondicionado VRF (por TR)|TR|700000|5800000|IfcUnitaryEquipment
+15.48|Chiller enfriado por aire (por TR)|TR|450000|4800000|IfcChiller
+15.49|Unidad manejadora de aire (UMA)|un|1200000|12500000|IfcUnitaryEquipment
+15.50|Fan coil tipo cassette o de ducto|un|180000|1900000|IfcUnitaryEquipment
+15.51|Tubería de cobre refrigerante con aislamiento|ml|16000|52000|IfcPipeSegment
+15.52|Tubería de agua helada aislada|ml|28000|78000|IfcPipeSegment
+15.53|Rejilla o difusor de aire|un|18000|65000|IfcAirTerminal
+15.54|Drenaje de condensados|ml|7000|12000|IfcPipeSegment
+15.55|Control, termostatos y automatización (BMS)|gl|1800000|9500000|
+15.56|Balanceo, pruebas y puesta en marcha de aire acondicionado|gl|1800000|600000|
+15.57|Recuperador de calor y aire exterior para ventilación mecánica|un|350000|4200000|IfcUnitaryEquipment
+15.58|Aislamiento térmico de ductos|m²|8000|18000|
+15.59|Soportes antivibratorios para equipos|un|45000|180000|
+16.12|Supervisión técnica independiente de la construcción (NSR-10 Título I)|mes|0|9500000|
+16.13|Revisión estructural independiente de diseños|gl|0|18000000|
+16.14|Plan de manejo ambiental y gestión de residuos de construcción|gl|1500000|3500000|
+16.15|Plan de manejo de tránsito|gl|800000|2200000|
+16.16|Certificación de construcción sostenible (ahorro de agua y energía)|gl|0|9000000|
+16.17|Certificación de ascensores|un|0|4500000|
+16.18|Rampa de accesibilidad con pasamanos|ml|85000|240000|IfcRamp
+`;
+const items = raw.trim().split('\n').map((l) => { const a = l.split('|'); return { c: a[0], d: a[1], u: a[2], mo: +a[3], mt: +a[4], ifc: a[5] || '' }; }).sort((a, b) => (a.c < b.c ? -1 : 1));
+
+const sel = (a, b) => [['No', 0], ['Sí', 1]];
+const rem = 'A:Área a intervenir (m²)';
+const tpls = [
+ { id: 'bano', nm: 'Remodelación de baño', ps: [['A', 'Área del piso del baño (m²)', 4], ['D', 'División de ducha en vidrio', 0, [['No', 0], ['Sí', 1]]]],
+   rows: '01.13=A*2;01.07=A*4.2;01.06=A;01.11=3;01.08=A*0.35;12.01=1;12.02=2;12.03=3;12.04=2;12.17=1;07.06=A*1.8;06.05=A;08.08=A*4.2;08.01=A;13.01=1;13.04=1;13.05=1;13.06=1;13.12=1;09.03=1;09.08=1;10.09=D*1.6;14.04=1;14.06=1;14.07=2;14.10=2;06.06=A;11.02=A;16.02=A' },
+ { id: 'cocina', nm: 'Remodelación de cocina', ps: [['A', 'Área del piso de la cocina (m²)', 8], ['ML', 'Metros lineales de mesón', 4]],
+   rows: '01.13=A;01.06=A;01.07=ML*0.6;01.08=A*0.3;06.05=A;08.01=A;08.09=ML*0.6;09.06=ML;09.11=ML;13.09=1;13.10=1;12.02=2;12.03=2;12.04=1;15.01=1;15.04=1;14.05=4;14.06=2;14.04=2;14.08=1;14.10=A/2;11.01=A*2.2;11.02=A;16.02=A' },
+ { id: 'apto', nm: 'Remodelación de apartamento', ps: [['A', 'Área del apartamento (m²)', 70], ['B', 'Baños', 2], ['K', 'Cocinas', 1], ['PI', 'Puertas interiores', 5], ['V', 'Ventanas (m²)', 8]],
+   rows: '01.13=A;01.05=A*0.12;01.06=A*0.6;01.07=B*14;01.10=A*0.3;01.11=B*3+K*2;01.12=PI+1;01.08=A*0.25;05.04=A*0.25;06.01=A*0.4;06.05=A*0.85;06.06=A*0.5;06.08=A*0.8;07.06=B*5;08.01=A*0.75;08.06=A*0.8;08.08=B*14;08.09=K*3;09.01=PI;09.02=1;09.03=B;09.08=PI;09.09=1;09.05=A/12;09.06=K*3.5;09.11=K*3.5;09.07=B;10.03=V;10.11=B*0.5;11.01=A*2.6;11.02=A*0.9;12.01=B;12.02=B*2+K*2;12.03=B*3+K*2+1;12.04=B*2+K;12.17=B;13.02=B;13.04=B;13.05=B;13.06=B;13.12=B;13.09=K;13.10=K;14.02=1;14.04=A/6;14.05=A/4.5;14.06=B+K;14.07=A/10;14.10=A/7;14.13=A/25;14.14=c(A/40);15.01=K;15.03=B+K;15.04=K;16.01=A;16.02=A;16.03=mx(1,c(A/80));16.11=mx(1,c(A/80))' },
+ { id: 'casarem', nm: 'Remodelación de casa', ext: 'apto', ps: [['A', 'Área construida de la casa (m²)', 120], ['N', 'Pisos', 2], ['B', 'Baños', 3], ['K', 'Cocinas', 1], ['PI', 'Puertas interiores', 7], ['V', 'Ventanas (m²)', 14]],
+   rows: '11.03=per*2.4*N*0.7;07.05=Ap*0.5;07.07=per*0.4;14.02=N' },
+ { id: 'casa', nm: 'Casa nueva (obra desde cero)', ps: [['A', 'Área construida total (m²)', 120], ['N', 'Pisos', 2], ['H', 'Altura libre por piso (m)', 2.4], ['B', 'Baños', 3], ['K', 'Cocinas', 1], ['PI', 'Puertas interiores', 6], ['V', 'Ventanas (m²)', 18],
+     ['CI', 'Cimentación', 0, [['Zapatas', 0], ['Pilotes', 1]]], ['SE', 'Sistema estructural', 0, [['Pórticos de concreto', 0], ['Muros de concreto', 1]]]],
+   rows: '01.01=Ap*1.5;01.02=per*1.3;01.03=20;01.04=1;02.01=Ap*1.5;02.02=Ap*1.2;02.04=Ap*0.4;02.06=Ap*0.8;02.08=Ap*1.5;03.05=CI==0?Ap*0.5:0;03.06=CI==0?Ap*0.05*(N+1):0;03.01=CI==1&&N<=3?c(Ap/12)*10:0;03.02=CI==1&&N>3?c(Ap/15)*14:0;03.04=CI==1?c(Ap/12)*1.2:0;03.08=per*0.15;03.09=((CI==0?Ap*0.05*(N+1):c(Ap/12)*1.2)+per*0.15)*80;03.10=Ap;03.12=per*1.2;'
+     + '04.01=SE==0?A*0.022:A*0.004;04.02=SE==0?A*0.035:0;04.03=N<=2?A:0;04.04=N>2?A:0;04.06=SE==1?A*0.09:0;04.07=mx(0.8,(N-1)*1.2);04.08=(SE==0?A*0.057:A*0.004)*130+(SE==1?A*0.09*70:0)+A*8;'
+     + '05.01=SE==0?per*H*N*0.75:0;05.04=SE==0?A*0.6:A*0.25;05.07=V*0.9;06.01=per*H*N*0.75+A*0.2;06.02=B*12;06.03=per*H*N*0.75;06.05=A*0.9;06.06=A*0.6;07.01=Ap*1.15;07.03=Ap*1.15;07.06=B*5;07.07=per*0.6;07.08=per*0.5;'
+     + '08.01=A*0.8;08.06=A*0.9;08.08=B*14;08.09=K*3;08.12=(N-1)*14;09.01=PI;09.02=1;09.03=B;09.05=A/10;09.06=K*3.6;09.07=B;09.08=PI;09.09=1;09.10=(N-1)*4;09.11=K*3.6;10.03=V;10.07=(N-1)*4;10.11=B*0.5;'
+     + '11.01=A*2.6;11.02=A*0.9;11.03=per*H*N*0.75;12.01=B+1;12.02=B*2+K*2+1;12.03=B*3+K*2+2;12.04=B*2+K;12.05=per*0.8+N*H*2;12.06=A*0.3;12.07=A*0.4;12.08=c(A/60)+2;12.09=1;12.14=per*0.8;12.15=1;12.16=B+K+2;12.17=B;'
+     + '13.02=B;13.04=B;13.05=B;13.06=B;13.12=B;13.09=K;13.10=K;13.11=1;14.01=1;14.02=N;14.04=A/6;14.05=A/4.5;14.06=B+K;14.07=A/10;14.08=B+K+1;14.10=A/7;14.11=per/6;14.12=1;14.13=A/25;14.14=c(A/40);14.15=1;14.16=N*2;14.17=A*6;14.18=A*3.5;'
+     + '15.01=K;15.02=K*8;15.03=B+K;15.04=K;16.01=A;16.02=A;16.03=mx(3,c(A/50));16.04=mx(3,c(A/50));16.05=N>=2?mx(2,c(A/80)):0;16.06=1;16.07=Ap*0.3;16.08=Ap*0.5;16.09=1;16.11=mx(3,c(A/50))' },
+ { id: 'edificio', nm: 'Edificio nuevo (hasta 5 pisos)', ext: 'casa', ps: [['A', 'Área construida total (m²)', 1500], ['N', 'Pisos', 5], ['H', 'Altura libre por piso (m)', 2.5], ['B', 'Baños (total)', 10], ['K', 'Cocinas (total)', 5], ['PI', 'Puertas interiores', 20], ['V', 'Ventanas (m²)', 120],
+     ['CI', 'Cimentación', 1, [['Zapatas', 0], ['Pilotes', 1]]], ['SE', 'Sistema estructural', 0, [['Pórticos de concreto', 0], ['Muros de concreto', 1]]]],
+   rows: '01.03=40;02.01=Ap*1.6;02.02=Ap*2.5;02.04=Ap*0.5;02.06=Ap*2;03.14=CI==1?1:0;04.03=0;04.04=A;04.07=N*2.4;04.13=N>=4?N*3.5:0;07.01=0;07.03=0;07.04=Ap*1.05;07.05=Ap*1.05;07.07=per*0.4;'
+     + '12.09=0;12.10=A*0.04;12.11=N>=3?1:0;12.13=0;14.03=1;14.19=A>1000?1:0;14.20=N>=4?1:0;14.21=1;15.07=N>=4?N:0;15.08=N>=5?A:0;15.09=A;15.10=c(A/200);15.11=1;16.03=mx(6,c(A/120));16.04=mx(6,c(A/120));16.05=mx(3,c(A/150));16.11=mx(6,c(A/120))' } ,
+ { id: 'torre', nm: 'Torre residencial VIS / No VIS (hasta 40 pisos)', nmax: 40, meta: 'uds=NU;apriv=AA;atot=AT',
+   ps: [['N', 'Pisos', 30], ['U', 'Viviendas por piso', 8], ['AA', 'Área privada por vivienda (m²)', 45], ['TP', 'Tipo de vivienda', 0, [['VIS', 0], ['No VIS', 1]]], ['S', 'Sótanos', 2, [['Sin sótano', 0], ['1', 1], ['2', 2], ['3', 3]]], ['H', 'Altura libre por piso (m)', 2.4],
+     ['SC', 'Sistema constructivo', 0, [['Muros de concreto con formaleta de aluminio', 0], ['Muros de concreto con formaleta túnel', 1], ['Pórticos de concreto', 2]]]],
+   defs: 'A=N*U*AA*1.2;NU=N*U;B=NU*(TP==0?1:2);K=NU;AS=A/N*1.15;SA=S*AS;AT=A+SA',
+   rows: '01.01=Ap*1.8;01.02=per*1.6;01.03=60;01.04=1;02.01=Ap*1.8;02.02=S>0?0:Ap*1.0;17.03=S>0?SA*3.2+Ap*1.0:0;02.06=S>0?SA*3.2*0.5:0;02.07=S>0?per*3.2*S*0.8:0;02.09=S>0?60*S:0;17.01=S>0?per*(3.2*S+2)*0.4:0;17.02=S>0?c(per/3)*S:0;'
+     + '03.03=c(Ap/10)*(14+N*0.5);03.04=c(Ap/10)*2.2;03.05=Ap*0.5;03.08=per*0.2;03.09=c(Ap/10)*(14+N*0.5)*60+c(Ap/10)*2.2*100;03.10=Ap+SA;03.12=per*3.2*S+SA;03.14=2;03.15=c(AT/50);'
+     + '17.06=SC<2?A*0.21+SA*0.1:0;17.04=SC==0?A*2.6:0;17.05=SC==1?A*2.4:0;17.09=SC<2?A*0.21+SA*0.3:A*0.15+SA*0.3;'
+     + '04.01=(SC==2?A*0.025:0)+SA*0.04;04.02=(SC==2?A*0.04:0)+SA*0.05;04.04=(SC==2?A:0)+SA;04.13=SC==2?N*4.5:0;04.07=N*1.6;04.09=SA*1.2;'
+     + '04.08=(SC<2?A*0.21*90:A*0.065*130+A*8)+SA*0.09*130+SA*8;'
+     + '05.01=SC==2?per*H*N*0.75:0;05.04=SC==2?A*0.6:A*0.08;06.01=SC==2?A*2.2:0;06.03=SC==2?per*H*N*0.75:0;06.05=A*0.75;06.06=TP==1?A*0.35:A*0.1;'
+     + '07.04=Ap*1.05;07.05=Ap*1.05;07.07=per*0.4;07.06=B*3.5;'
+     + '08.01=TP==1?A*0.65:0;08.02=TP==0?A*0.65:0;08.08=B*(TP==0?5:14);08.09=K*2.5;08.06=A*0.7;08.05=SA*0.9;'
+     + '09.01=NU*(TP==0?2:3);09.02=TP==1?NU:0;10.01=TP==0?NU:0;09.03=B;09.08=NU*(TP==0?2:3);09.09=NU;09.05=TP==1?NU*3:0;09.06=NU*(TP==1?3:1.8);09.11=NU*(TP==1?3:1.8);09.07=TP==1?B:0;'
+     + '10.03=NU*AA*0.12;10.07=NU*2;10.10=S>0?24:0;10.11=B*0.4;'
+     + '11.01=A*2.4;11.02=A*0.85;11.03=per*H*N*0.75;11.06=SA*0.2;'
+     + '12.01=B;12.02=B*2+K*2;12.03=B*3+K*2+NU;12.04=TP==1?B*2+K:K;12.05=N*H*6+SA*0.2;12.06=A*0.25;12.07=A*0.3;12.08=c(A/80)+S*10;12.10=NU*0.5;12.11=mx(1,c(N/10));12.14=per*1.2;12.15=3;12.16=B+K+N*2;12.17=B+SA*0.04;'
+     + '13.01=TP==0?B:0;13.02=TP==1?B:0;13.03=TP==0?B:0;13.04=TP==1?B:0;13.05=B;13.06=B;13.07=TP==0?B:0;13.09=K;13.10=K;13.11=NU;13.12=TP==1?B:0;'
+     + '14.01=3;14.02=NU;14.03=2;14.04=NU*AA/8;14.05=NU*AA/4.5;14.06=B+K;14.07=NU*AA/10;14.08=B+K+NU;14.10=NU*AA/7;14.09=N*8;14.11=per/5;14.12=3;14.13=NU*AA/25;14.14=NU*3;14.15=NU;14.16=N*4+S*20;14.17=A*6;14.18=A*3;14.19=mx(1,c(NU/80));14.20=1;14.21=1;'
+     + '15.01=K;15.02=N*H*1.2+K*8;15.03=B+K;15.04=TP==1?K:0;15.06=SA;15.07=N<=12?mx(2,c(NU/40))*(N+S):0;17.15=N>12?mx(2,c(NU/60))*(N+S):0;15.08=AT;15.09=AT;15.10=c(AT/200)+N*2;15.11=1;'
+     + '17.11=N>=6?2:0;17.12=1;17.13=N+S;17.14=N;17.07=c(N*0.5+4);17.08=c(N*0.45+4);17.10=per*H*N*0.8;17.16=120;17.17=NU*(TP==0?1:2.2);17.18=S*45;17.19=SA*0.8;17.20=80;17.21=NU;17.22=1;17.23=1;17.24=mx(12,c(N*0.8+8));'
+     + '16.01=AT;16.02=AT;16.03=mx(12,c(N*0.8+8));16.04=mx(12,c(N*0.8+8));16.05=c(N*0.3);16.06=1;16.07=Ap*0.4;16.08=Ap*0.6;16.09=1;16.11=mx(12,c(N*0.8+8))' }
+];
+
+
+/* Opciones adicionales (Sí/No) que integran los ítems de exteriores, solar, domótica, fachada ventilada, piscina y aire */
+const YN = [['No', 0], ['Sí', 1]];
+const opt = (id, ps, rows) => { const t = tpls.find((x) => x.id === id); t.ps.push(...ps); t.rows += ';' + rows; };
+const pEX = ['EX', 'Obras exteriores (andenes, cerramiento, redes, paisajismo)', 1, YN], pSO = ['SO', 'Paneles solares', 0, YN], pDM = ['DM', 'Domótica básica', 0, YN], pFV = ['FV', 'Fachada ventilada (reemplaza pañete y pintura de fachada)', 0, YN], pPS = ['PS', 'Piscina', 0, YN], pAC = ['AC', 'Aire acondicionado', 0, YN];
+const EXT = '18.12=EX*Ap*0.3;18.14=EX*4*sq(Ap*2.5);18.15=EX*8;18.17=EX*c(Ap/40);18.18=EX*Ap*0.6;18.19=EX*Ap*0.6;18.08=EX*c(Ap/60);18.13=EX*2';
+const REDES = '18.03=EX*sq(Ap)*2;18.04=EX*sq(Ap)*2;18.06=EX*sq(Ap)*2;18.05=EX*c(sq(Ap)*2/30);18.11=EX*sq(Ap)*3;18.22=EX';
+opt('apto', [pAC, pDM], '15.12=AC*c(A/30);19.04=DM;19.05=DM;14.24=DM*c(A/10);19.06=DM*c(V/4)');
+opt('casarem', [pAC, pDM], '15.12=AC*c(A/30);19.04=DM;19.05=DM;14.24=DM*c(A/10);19.06=DM*c(V/4)');
+opt('casa', [pEX, pSO, pDM, pFV, pPS, pAC], EXT + ';19.01=SO*c(A*0.02/0.55);19.02=SO*A*0.02;19.04=DM;19.05=DM;19.06=DM*c(V/4);14.24=DM*c(A/10);10.15=FV*per*H*N*0.75;06.03=FV==1?0:per*H*N*0.75;11.03=FV==1?0:per*H*N*0.75;18.20=PS*24;15.12=AC*c(A/35)');
+opt('edificio', [pEX, pSO, pDM, pFV, pPS, pAC], REDES + ';19.01=SO*c(A*0.01/0.55);19.02=SO*A*0.01;19.04=DM*c(A/400);19.05=0;14.24=0;19.06=0');
+opt('torre', [pEX, pSO, pDM, pFV, pAC], EXT + ';' + REDES + ';18.07=EX*sq(Ap)*1.5;18.09=EX*Ap*0.5;18.24=EX*12;19.01=SO*c(NU*0.1/0.55);19.02=SO*NU*0.1;19.04=DM;19.05=DM*NU*TP;10.15=FV*per*H*N*0.75;06.03=FV==1?0:(SC==2?per*H*N*0.75:0);11.03=FV==1?0:per*H*N*0.75;15.12=AC*TP*NU*2');
+
+
+/* Redes y equipos (hidráulica, sanitaria, gas, contra incendio, bombas, subestación) integrados a las plantillas */
+const addRows = (id, rows) => { tpls.find((x) => x.id === id).rows += ';' + rows; };
+addRows('casa', '12.22=1;12.32=B+K+2;12.35=1;12.37=A*0.08;12.38=c(A/60)+1;15.21=1;15.22=K+1;15.24=1;15.26=K*2;14.38=1');
+tpls.find((x) => x.id === 'edificio').defs = 'NU=mx(K,1)';
+addRows('edificio', '12.23=N*H*3+per*1.2;12.24=N*H*1.5+per;12.25=B*6;12.26=B*3;12.27=N>=3?1:0;12.11=0;12.29=N>=3?1:0;12.31=N>=3?2:0;12.32=N*2+B+K;12.33=N*H*5+per*2;12.34=1;12.35=1;12.37=N*H*4;12.38=c(per/12)+2;12.39=per*1.2;15.19=K;15.20=N*H*1.1;15.21=N;15.22=NU;15.24=1;15.25=N*H*1.5;15.26=K*2;15.27=N>=5?1:0;15.28=N>=5?1:0;15.29=N>=5?2:0;15.32=N>=5?1:0;14.30=A>1000?1:0;14.19=0;14.31=N*H*2;14.26=N*H*2+per*2;14.27=N*H*4;14.28=N;14.32=A>1000?1:0;14.35=1;14.36=N*H*2+per;14.37=per*1.5;14.38=1');
+addRows('torre', '12.23=N*H*3+per*1.2;12.24=N*H*1.5+per;12.25=TP==1?NU*14:NU*5;12.26=(TP==1?NU*14:NU*5)*0.5;12.27=1;12.11=0;12.28=N>=10?2:0;12.29=1;12.30=S>0?2:0;12.31=2;12.32=N*3+B+K;12.33=N*H*6+per*2;12.34=1;12.35=1;12.37=N*H*4;12.38=c(per/12)+S*2;12.39=per*1.2;12.40=S>0?2:0;15.19=K;15.20=N*H*1.1;15.21=N;15.22=NU;15.24=1;15.25=N*H*1.5;15.26=K*2;15.27=1;15.28=1;15.29=2;15.32=1;14.19=0;14.29=1;14.30=mx(1,c(NU/80));14.31=N*H*2;14.32=1;14.33=1;14.34=1;14.35=1;14.36=N*H*2+per;14.37=per*1.5;14.38=1;14.26=N*H*2+per*2;14.27=N*H*4;14.28=N');
+
+
+addRows('casa', '16.18=4;14.39=1');
+const HV_ED = '15.47=AC*c(A/60);15.50=AC*c(A/25);15.51=AC*A*0.5;15.53=AC*c(A/12);15.54=AC*A*0.15;15.55=AC;15.56=AC;15.57=AC*c(A/500);15.33=AC*A*0.4;15.58=AC*A*0.08;15.59=AC*4';
+addRows('edificio', '15.12=0;15.08=0;15.09=A;15.30=N>=5?A/10:0;15.31=N>=5?A*0.2:0;15.32=N>=5?N:0;15.35=N>=5?mx(40,A*0.012):0;15.36=N>=5?1:0;15.37=N>=5?2:0;15.38=N>=5?N+4:0;15.39=c(A/100);15.40=N>=3?1:0;15.41=N*8;15.42=N>=5?N*2:0;15.43=N*6;15.44=1;15.45=1;15.46=1;15.34=N;16.12=A>2000?mx(6,c(A/250)):0;16.13=A>2000?1:0;16.14=1;16.15=1;16.16=1;16.17=N>=4?mx(2,c(K/40)):0;16.18=8;14.39=1;' + HV_ED);
+addRows('torre', '15.08=0;15.30=AT/10;15.31=AT*0.2;15.32=N+S;15.35=mx(80,AT*0.01);15.36=1;15.37=2;15.38=N+S+4;15.39=c(AT/100);15.40=c(N/10)+1;15.41=N*8+S*10;15.42=N*2;15.43=NU*1.5+N*6;15.44=2;15.45=1;15.46=1;17.12=0;15.34=c(N/2)+S*2;15.14=S>0?c(SA/500):0;16.12=mx(12,c(N*0.8+8));16.13=1;16.14=1;16.15=1;16.16=1;16.17=mx(2,c(NU/(N>12?60:40)));16.18=12;14.39=1;15.47=AC*c(NU/30);15.50=AC*c(NU/8);15.51=AC*NU*3;15.53=AC*c(NU/4);15.54=AC*NU*1.5;15.55=AC;15.56=AC;15.57=AC*c(NU/80)');
+
+
+const NORMA = 'Normativa a verificar con los diseñadores, la curaduría y el cuerpo de bomberos: NSR-10 (estructura, Título J y K de protección contra incendio y Título I de supervisión técnica), RETIE y RETILAP, normas NFPA aplicables a rociadores, bombas, montantes y alarmas, reglamento técnico de agua y saneamiento (RAS), certificación de gas, certificación de ascensores, accesibilidad, construcción sostenible (ahorro de agua y energía) y manejo de residuos de obra. Este presupuesto es una estimación: los umbrales y diseños los define el profesional responsable.';
+['casa', 'edificio', 'torre'].forEach((id) => { tpls.find((x) => x.id === id).norm = NORMA; });
+/* Mapa de clases IFC → código del catálogo (la función recibe los argumentos del elemento) */
+const ifcMap = {
+ IFCWALL: '05.01', IFCWALLSTANDARDCASE: '05.01', IFCCURTAINWALL: '10.05', IFCCOLUMN: '04.01', IFCBEAM: '04.02', IFCMEMBER: '04.11',
+ IFCFOOTING: '03.06', IFCPILE: '03.01', IFCSTAIR: '04.07', IFCSTAIRFLIGHT: '04.07', IFCDOOR: '09.01', IFCWINDOW: '10.03',
+ IFCROOF: '07.01', IFCRAILING: '10.07', IFCSANITARYTERMINAL: '13.02', IFCLIGHTFIXTURE: '14.10', IFCOUTLET: '14.05',
+ IFCELECTRICDISTRIBUTIONBOARD: '14.02', IFCPIPESEGMENT: '12.06', IFCTANK: '12.09', IFCPUMP: '12.11', IFCTRANSPORTELEMENT: '15.07',
+ IFCSLAB: (a) => /\.BASESLAB\./.test(a) ? '03.10' : /\.ROOF\./.test(a) ? '07.04' : '04.03',
+ IFCCOVERING: (a) => /\.CEILING\./.test(a) ? '06.06' : /\.CLADDING\./.test(a) ? '08.08' : /\.FLOORING\./.test(a) ? '08.01' : /\.INSULATION\.|\.MEMBRANE\./.test(a) ? '' : '06.01'
+};
+return { chaps, items, tpls, ifcMap };
+})();
+</script>
+
 <script>
 /* Presupuestos de obra: proyectos guardados en la colección "proyectos" y generación de cotizaciones */
 (() => {
@@ -1929,7 +2525,7 @@ function totals(p) {
 
 /* ---------- historial (deshacer / rehacer) ---------- */
 const H = {}; let applying = false, hTimer = null;
-const snapOf = (p) => JSON.stringify({ name: p.name || '', imp: p.imp || 0, adm: p.adm || 0, admO: p.admO !== false, admM: p.admM !== false, cliente: p.cliente || '', empresa: p.empresa || '', notes: p.notes || '', items: p.items });
+const snapOf = (p) => JSON.stringify({ name: p.name || '', imp: p.imp || 0, adm: p.adm || 0, admO: p.admO !== false, admM: p.admM !== false, cliente: p.cliente || '', empresa: p.empresa || '', notes: p.notes || '', uds: p.uds || 0, apriv: p.apriv || 0, atot: p.atot || 0, tope: p.tope || 0, items: p.items });
 function initHist(id) { if (!H[id] && projects[id]) H[id] = { s: [snapOf(projects[id])], i: 0 }; }
 function updHist() { const h = H[cur]; g('pr-undo').disabled = !h || h.i <= 0; g('pr-redo').disabled = !h || h.i >= h.s.length - 1; }
 function pushHist() {
@@ -1964,7 +2560,7 @@ async function flush(id) {
   writing[id] = true; dirty[id] = false;
   const p = projects[id]; const rev = Math.random().toString(36).slice(2); lastRev[id] = rev;
   try {
-    await colP().doc(id).set(JSON.parse(JSON.stringify({ name: p.name, imp: p.imp, adm: p.adm || 0, admO: p.admO !== false, admM: p.admM !== false, cliente: p.cliente || '', empresa: p.empresa || '', notes: p.notes || '', order: p.order || 0, items: p.items, rev })));
+    await colP().doc(id).set(JSON.parse(JSON.stringify({ name: p.name, imp: p.imp, adm: p.adm || 0, admO: p.admO !== false, admM: p.admM !== false, cliente: p.cliente || '', empresa: p.empresa || '', notes: p.notes || '', uds: p.uds || 0, apriv: p.apriv || 0, atot: p.atot || 0, tope: p.tope || 0, order: p.order || 0, items: p.items, rev })));
     setSave('Guardado');
   } catch (e) { setSave('No se pudo guardar (' + (e && e.code || 'error') + ')'); }
   writing[id] = false; if (dirty[id]) flush(id);
@@ -2015,6 +2611,11 @@ function recalc() {
   g('pr-tImp').textContent = cop(t.imp); g('pr-impL').textContent = fm(p.imp, 2) + '%'; g('pr-impV').textContent = '≈ ' + cop(t.imp);
   g('pr-tAdm').textContent = cop(t.adm); g('pr-admL').textContent = fm(p.adm || 0, 2) + '%'; g('pr-admV').textContent = '≈ ' + cop(t.adm);
   g('pr-tTot').textContent = cop(t.tot); g('pr-tFalta').textContent = t.n;
+  const U = Number(p.uds) || 0, AT = Number(p.atot) || 0, AP = Number(p.apriv) || 0, TP = Number(p.tope) || 0;
+  g('pr-tUd').hidden = !(U > 0); g('pr-tM2').hidden = !(AT > 0 || (U > 0 && AP > 0)); g('pr-tTp').hidden = !(U > 0 && TP > 0);
+  if (U > 0) g('pr-tUdV').textContent = cop(t.tot / U);
+  if (AT > 0) { g('pr-tM2V').textContent = cop(t.tot / AT); g('pr-tM2L').textContent = 'Por m² construido'; } else if (U > 0 && AP > 0) { g('pr-tM2V').textContent = cop(t.tot / (U * AP)); g('pr-tM2L').textContent = 'Por m² privado'; }
+  if (U > 0 && TP > 0) { const pc = (t.tot / U) / TP * 100; g('pr-tTpV').textContent = fm(pc, 1) + '% del tope'; g('pr-tTpV').style.color = pc > 60 ? 'var(--warn)' : ''; }
   renderPend();
 }
 const pendItems = () => P().items.filter((i) => i.on !== false && ((i.p === null || i.p === undefined) || i.est));
@@ -2024,7 +2625,8 @@ function renderPend() {
 }
 function renderProjList() {
   g('pr-plist').innerHTML = ordered().map((id) => { const p = projects[id], t = totals(p);
-    return `<div class="pr-pitem${id === cur ? ' cur' : ''}"><div><b>${X(p.name || 'Sin nombre')}</b><br><span class="muted">${p.items.length} ítems · ${cop(t.tot)}</span></div><button class="btn small open" type="button" data-id="${id}">${id === cur ? 'Abierto' : 'Abrir'}</button></div>`; }).join('');
+    const nq = (typeof lista !== 'undefined' ? lista : []).filter((c) => !c.eliminada && c.proyecto_id === id).length;
+    return `<div class="pr-pitem${id === cur ? ' cur' : ''}"><div><b>${X(p.name || 'Sin nombre')}</b>${id === cur ? ' <span class="pr-tag">Activo</span>' : ''}<br><span class="muted">${p.items.length} ítems · ${cop(t.tot)} · ${nq} cotización(es)</span></div><button class="btn small open" type="button" data-id="${id}">${id === cur ? 'Abierto' : 'Abrir'}</button></div>`; }).join('');
 }
 function renderAll() {
   if (P()) initHist(cur);
@@ -2040,18 +2642,21 @@ function renderAll() {
     g('pr-imp').value = fm(p.imp, 2); g('pr-adm').value = fm(p.adm || 0, 2);
     g('pr-admO').checked = p.admO !== false; g('pr-admM').checked = p.admM !== false;
     g('pr-cliente').value = p.cliente || ''; g('pr-empresa').value = p.empresa || '';
+    g('pr-uds').value = fm(p.uds || '', 2); g('pr-apriv').value = fm(p.apriv || '', 2); g('pr-atot').value = fm(p.atot || '', 2); g('pr-tope').value = fm(p.tope || '', 0);
     g('pr-notes').value = p.notes || ''; g('pr-pnameIn').value = p.name || '';
     recalc();
   }
   renderProjList(); showTab(tab);
+  if (window.prEstado) window.prEstado();
 }
 function showTab(t) {
-  if (!['obra', 'compras', 'pendientes', 'ajustes', 'proyectos'].includes(t)) t = 'obra';
+  if (!['obra', 'compras', 'pendientes', 'catalogo', 'ajustes', 'proyectos'].includes(t)) t = 'obra';
   const want = t; if (!P()) t = 'proyectos'; else tab = want;
   shown = t;
   if (!root.hidden && window.syncDock) window.syncDock('presup');
   root.querySelectorAll('#pr-tabs .tab').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.t === t)));
   root.querySelectorAll('.pr-panel').forEach((p) => { p.hidden = p.id !== 'pr-p-' + t; });
+  if (t === 'catalogo' && window.__prDash) window.__prDash();
 }
 
 /* ---------- proyectos ---------- */
@@ -2059,7 +2664,7 @@ function selectProject(id) { cur = id; ls.set('prCur', id); renderAll(); }
 function createProject(name, fromCopy) {
   const id = 'p' + Math.random().toString(36).slice(2, 9), src = fromCopy && P();
   const items = src ? src.items.map((i) => ({ ...i, id: uid() })) : [blank('o', 'Mano de obra'), blank('m', 'Materiales')];
-  projects[id] = { name: name || 'Proyecto nuevo', imp: src ? src.imp : 5, adm: src ? (src.adm || 0) : 0, admO: src ? src.admO !== false : true, admM: src ? src.admM !== false : true, cliente: src ? (src.cliente || '') : '', empresa: src ? (src.empresa || '') : '', notes: '', order: Date.now(), items };
+  projects[id] = { name: name || 'Proyecto nuevo', imp: src ? src.imp : 5, adm: src ? (src.adm || 0) : 0, admO: src ? src.admO !== false : true, admM: src ? src.admM !== false : true, cliente: src ? (src.cliente || '') : '', empresa: src ? (src.empresa || '') : '', notes: '', uds: src ? (src.uds || 0) : 0, apriv: src ? (src.apriv || 0) : 0, atot: src ? (src.atot || 0) : 0, tope: src ? (src.tope || 0) : 0, order: Date.now(), items };
   if (!dbx) localOnly[id] = true;
   selectProject(id); markDirty(id); flush(id);
 }
@@ -2093,7 +2698,7 @@ function generar(mode) {
   if (!items.length) { aviso('Este presupuesto no tiene ítems con precio.'); return; }
   nueva('remodelacion');
   q.proyecto = p.name || ''; q.cliente_nombre = p.cliente || ''; q.cliente_empresa = p.empresa || '';
-  q.items = items; q.alcance = caps.join('\n'); q.origen = 'presupuesto';
+  q.items = items; q.alcance = caps.join('\n'); q.origen = 'presupuesto'; q.proyecto_id = cur;
   pristine = false; pintarEditor(); pintarPapel(); estadoGuardado(); mostrar('cotizar');
   aviso('Cotización creada desde "' + (p.name || 'presupuesto') + '". Revisa y guarda.');
 }
@@ -2115,6 +2720,7 @@ root.addEventListener('input', (e) => {
   if (t.id === 'pr-imp') { P().imp = pn(t.value) ?? 0; touched(); }
   else if (t.id === 'pr-adm') { P().adm = pn(t.value) ?? 0; touched(); }
   else if (t.id === 'pr-admO' || t.id === 'pr-admM') { P()[t.id === 'pr-admO' ? 'admO' : 'admM'] = t.checked; touched(); }
+  else if (t.id === 'pr-uds' || t.id === 'pr-apriv' || t.id === 'pr-atot' || t.id === 'pr-tope') { P()[{ 'pr-uds': 'uds', 'pr-apriv': 'apriv', 'pr-atot': 'atot', 'pr-tope': 'tope' }[t.id]] = pn(t.value) ?? 0; touched(); }
   else if (t.id === 'pr-cliente') { P().cliente = t.value; markDirty(cur); }
   else if (t.id === 'pr-empresa') { P().empresa = t.value; markDirty(cur); }
   else if (t.id === 'pr-notes') { P().notes = t.value; markDirty(cur); }
@@ -2189,7 +2795,7 @@ fileIn.onchange = async () => {
     for (const [id0, d] of Object.entries(list)) {
       if (!d || !Array.isArray(d.items)) continue;
       const id = projects[id0] ? 'p' + Math.random().toString(36).slice(2, 9) : id0;
-      projects[id] = { name: d.name || 'Proyecto importado', imp: d.imp ?? 5, adm: d.adm || 0, admO: d.admO !== false, admM: d.admM !== false, cliente: d.cliente || '', empresa: d.empresa || '', notes: d.notes || '', order: Date.now() + n, items: d.items };
+      projects[id] = { name: d.name || 'Proyecto importado', imp: d.imp ?? 5, adm: d.adm || 0, admO: d.admO !== false, admM: d.admM !== false, cliente: d.cliente || '', empresa: d.empresa || '', notes: d.notes || '', uds: d.uds || 0, apriv: d.apriv || 0, atot: d.atot || 0, tope: d.tope || 0, order: Date.now() + n, items: d.items };
       if (!dbx) localOnly[id] = true;
       if (!cur) cur = id;
       markDirty(id); flush(id); n++;
@@ -2198,6 +2804,295 @@ fileIn.onchange = async () => {
   } catch (e) { aviso('Archivo no válido'); }
   fileIn.value = '';
 };
+
+
+/* ---------- catálogo, plantillas e IFC ---------- */
+const CAT = window.PR_CAT, byCode = {}; CAT.items.forEach((i) => { byCode[i.c] = i; });
+const norm = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const r2 = (n) => Math.round(n * 100) / 100;
+function linesFor(code, q, f, extra) {
+  const c = byCode[code]; if (!c || !(q > 0)) return [];
+  const s = CAT.chaps[code.slice(0, 2)], out = [];
+  const mk = (t, pr) => Object.assign({ id: uid(), t, s, d: c.d, u: c.u, q: r2(q), p: Math.round(pr * f), on: true, est: true, n: '', cod: code }, c.ifc ? { ifc: c.ifc } : {}, extra || {});
+  if (c.mo > 0) out.push(mk('o', c.mo));
+  if (c.mt > 0) out.push(mk('m', c.mt));
+  return out;
+}
+/* catálogo */
+g('pr-cch').innerHTML = '<option value="">Todos los capítulos</option>' + Object.entries(CAT.chaps).sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([k, v]) => `<option value="${k}">${k} · ${X(v)}</option>`).join('');
+const gst = {};
+function catRow(i) { return `<tr data-c="${i.c}"><td>${i.c}</td><td>${X(i.d)}${i.ifc ? `<small>${i.ifc}</small>` : ''}</td><td>${X(i.u)}</td><td class="num">${i.mo ? cop(i.mo) : '–'}</td><td class="num">${i.mt ? cop(i.mt) : '–'}</td><td><input type="text" inputmode="decimal" class="cq" value="1" aria-label="Cantidad"></td><td><button class="btn small cadd" type="button">+ Agregar</button></td></tr>`; }
+function renderCat() {
+  const q = norm(g('pr-cq').value.trim()), ch = g('pr-cch').value, searching = !!(q || ch);
+  const rows = CAT.items.filter((i) => (!ch || i.c.startsWith(ch)) && (!q || norm(i.c + ' ' + i.d).includes(q)));
+  const grp = {}; rows.forEach((i) => { (grp[i.c.slice(0, 2)] = grp[i.c.slice(0, 2)] || []).push(i); });
+  let h = '';
+  Object.keys(grp).sort().forEach((k) => {
+    const open = gst[k] !== undefined ? gst[k] : searching;
+    h += `<tr class="grp" data-g="${k}"><td colspan="7"><button type="button" class="gtog" aria-expanded="${open}"><span class="car">${open ? '▾' : '▸'}</span> ${k} · ${X(CAT.chaps[k])} <em>${grp[k].length} ítems</em></button></td></tr>`;
+    if (open) h += grp[k].map(catRow).join('');
+  });
+  g('pr-cl').innerHTML = h || '<tr><td colspan="7">Sin resultados</td></tr>';
+}
+const resetG = () => { Object.keys(gst).forEach((k) => delete gst[k]); renderCat(); };
+g('pr-cl').addEventListener('click', (e) => {
+  const t = e.target.closest('.gtog'); if (!t) return;
+  const k = t.closest('tr').dataset.g, cur0 = t.getAttribute('aria-expanded') === 'true'; gst[k] = !cur0; renderCat();
+});
+g('pr-cexp').onclick = () => { Object.keys(CAT.chaps).forEach((k) => { gst[k] = true; }); renderCat(); };
+g('pr-ccol').onclick = () => { Object.keys(CAT.chaps).forEach((k) => { gst[k] = false; }); renderCat(); };
+g('pr-cq').oninput = resetG; g('pr-cch').onchange = resetG; renderCat();
+/* dashboard del catálogo */
+function renderDash() {
+  const it = CAT.items, per = {};
+  it.forEach((i) => { const k = i.c.slice(0, 2); per[k] = (per[k] || 0) + 1; });
+  const mxn = Math.max(...Object.values(per)), cls = new Set(it.filter((i) => i.ifc).map((i) => i.ifc)).size;
+  const conIfc = it.filter((i) => i.ifc).length, ambos = it.filter((i) => i.mo > 0 && i.mt > 0).length;
+  const soloMo = it.filter((i) => i.mo > 0 && !(i.mt > 0)).length, soloMt = it.filter((i) => !(i.mo > 0) && i.mt > 0).length;
+  const und = new Set(it.map((i) => i.u)).size;
+  const T = (l, v, s) => `<div class="pr-tile"><div class="l">${l}</div><div class="v">${v}</div>${s ? `<div class="pr-sub">${s}</div>` : ''}</div>`;
+  let h = '<div class="pr-tiles">' + T('Ítems', it.length) + T('Capítulos', Object.keys(CAT.chaps).length) + T('Plantillas', CAT.tpls.length)
+    + T('Con clase IFC', conIfc, fm(conIfc / it.length * 100, 0) + '% · ' + cls + ' clases') + T('Mano de obra y material', ambos, 'Solo MO: ' + soloMo + ' · Solo material: ' + soloMt) + T('Unidades distintas', und) + '</div>';
+  const p = P();
+  if (p) {
+    const cod = p.items.filter((i) => i.cod), used = new Set(cod.map((i) => i.cod)), caps = new Set(cod.map((i) => i.cod.slice(0, 2)));
+    const est = p.items.filter((i) => i.on !== false && i.est).length, ifcl = p.items.filter((i) => i.ifcg && i.ifcg.length).length;
+    h += '<h2 class="pr-h">En el proyecto abierto: ' + X(p.name || 'Sin nombre') + '</h2><div class="pr-tiles">' + T('Líneas', p.items.length) + T('Del catálogo', cod.length, used.size + ' ítems distintos')
+      + T('Cobertura del catálogo', fm(used.size / it.length * 100, 0) + '%', caps.size + ' de ' + Object.keys(CAT.chaps).length + ' capítulos') + T('Precio estimado', est, 'Por confirmar') + T('Enlazadas a IFC', ifcl) + '</div>';
+  }
+  h += '<h2 class="pr-h">Ítems por capítulo</h2><div class="pr-bars">' + Object.entries(CAT.chaps).sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([k, n]) => `<button type="button" class="pr-bar" data-ch="${k}"><span>${k} · ${X(n)}</span><span class="tr"><i style="width:${(per[k] || 0) / mxn * 100}%"></i></span><b>${per[k] || 0}</b></button>`).join('') + '</div>';
+  g('pr-dash').innerHTML = h;
+}
+g('pr-dash').addEventListener('click', (e) => { const b = e.target.closest('.pr-bar'); if (!b) return; g('pr-cch').value = b.dataset.ch; renderCat(); g('pr-tC').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+renderDash();
+
+window.__prDash = renderDash;
+g('pr-cl').addEventListener('click', (e) => {
+  const b = e.target.closest('.cadd'); if (!b) return;
+  if (!P()) { aviso('Primero crea o abre un proyecto'); return; }
+  const r = b.closest('tr'), q = pn(r.querySelector('.cq').value) || 1;
+  P().items.push(...linesFor(r.dataset.c, q, 1));
+  markDirty(cur); renderTable('o'); renderTable('m'); recalc(); renderDash(); aviso('Agregado a tu presupuesto: ' + r.dataset.c);
+});
+/* plantillas */
+g('pr-tpl').innerHTML = CAT.tpls.map((t) => `<option value="${t.id}">${X(t.nm)}</option>`).join('');
+const tplById = (id) => CAT.tpls.find((t) => t.id === id);
+function renderTplPs() {
+  const t = tplById(g('pr-tpl').value);
+  g('pr-tplps').innerHTML = t.ps.map(([k, l, d, o]) => `<label>${X(l)}${o ? `<select data-k="${k}">${o.map(([n, v]) => `<option value="${v}"${v === d ? ' selected' : ''}>${X(n)}</option>`).join('')}</select>` : `<input type="text" inputmode="decimal" data-k="${k}" value="${d}">`}</label>`).join('');
+}
+g('pr-tpl').onchange = renderTplPs; renderTplPs();
+const rowsOf = (t) => (t.ext ? rowsOf(tplById(t.ext)) : []).concat(t.rows.split(';').filter(Boolean));
+function evalTpl(t, v) {
+  const env = Object.assign({}, v, { c: Math.ceil, mx: Math.max, sq: Math.sqrt });
+  const run = (ex) => { const keys = Object.keys(env); return new Function(...keys, 'return (' + ex + ')')(...keys.map((k) => env[k])); };
+  if (t.defs) t.defs.split(';').forEach((d) => { const i = d.indexOf('='); try { env[d.slice(0, i)] = run(d.slice(i + 1)); } catch (e) {} });
+  const N = env.N || 1, A = env.A || 0; env.Ap = A / N; env.per = 4 * Math.sqrt(A / N) * 1.2;
+  const m = new Map();
+  for (const r of rowsOf(t)) {
+    const i = r.indexOf('='), cod = r.slice(0, i);
+    try { const q = run(r.slice(i + 1)); if (isFinite(q) && q > 0) m.set(cod, q); else m.delete(cod); } catch (e) {}
+  }
+  return { rows: [...m].sort((a, b) => (a[0] < b[0] ? -1 : 1)), env };
+}
+g('pr-tplgo').onclick = () => {
+  const t = tplById(g('pr-tpl').value), v = {};
+  g('pr-tplps').querySelectorAll('[data-k]').forEach((e) => { v[e.dataset.k] = pn(e.value) || 0; });
+  if (t.ps.some(([k]) => k === 'N')) v.N = Math.min(Math.max(Math.round(v.N || 1), 1), t.nmax || 5);
+  const F = (pn(g('pr-tplf').value) || 100) / 100, items = [];
+  const ev = evalTpl(t, v); ev.rows.forEach(([c, q]) => items.push(...linesFor(c, q, F)));
+  const meta = {}; (t.meta || '').split(';').filter(Boolean).forEach((d) => { const i = d.indexOf('='); const x = ev.env[d.slice(i + 1)]; if (isFinite(x)) meta[d.slice(0, i)] = Math.round(x * 100) / 100; });
+  const id = 'p' + Math.random().toString(36).slice(2, 9);
+  const info = t.ps.map(([k, l, d, o]) => l + ': ' + (o ? (o.find((x) => x[1] === v[k]) || [''])[0] : fm(v[k], 2))).join(' · ');
+  projects[id] = { name: g('pr-tplname').value.trim() || t.nm, imp: 5, adm: 0, admO: true, admM: true, cliente: '', empresa: '', notes: 'Plantilla: ' + t.nm + '. ' + info + '. Precios base estimados; confirma cada ítem.' + (t.norm ? '\n\n' + t.norm : ''), uds: meta.uds || 0, apriv: meta.apriv || 0, atot: meta.atot || 0, tope: 0, order: Date.now(), items };
+  if (!dbx) localOnly[id] = true;
+  selectProject(id); markDirty(id); flush(id); showTab('obra'); g('pr-tplname').value = '';
+  aviso('Presupuesto creado con ' + items.length + ' líneas');
+};
+/* IFC */
+const ifcIn = document.createElement('input'); ifcIn.type = 'file'; ifcIn.accept = '.ifc,text/plain'; ifcIn.hidden = true; root.append(ifcIn);
+g('pr-ifc').onclick = g('pr-ifc2').onclick = () => ifcIn.click();
+function splitArgs(s) {
+  const out = []; let d = 0, q = false, cur = '';
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (q) { cur += ch; if (ch === "'") { if (s[i + 1] === "'") { cur += "'"; i++; } else q = false; } continue; }
+    if (ch === "'") { q = true; cur += ch; } else if (ch === '(') { d++; cur += ch; } else if (ch === ')') { d--; cur += ch; }
+    else if (ch === ',' && d === 0) { out.push(cur.trim()); cur = ''; } else cur += ch;
+  }
+  out.push(cur.trim()); return out;
+}
+const strOf = (a) => (a && a[0] === "'" ? a.slice(1, -1).replace(/''/g, "'") : '');
+const refs = (a) => ((a || '').match(/#\d+/g) || []).map((x) => +x.slice(1));
+const PFX = { '.MILLI.': 1e-3, '.CENTI.': 1e-2, '.KILO.': 1e3 };
+const NAMES = { 'm²': ['NetSideArea', 'NetArea', 'GrossSideArea', 'GrossArea', 'NetFloorArea', 'GrossFloorArea', 'Area'], 'm³': ['NetVolume', 'GrossVolume', 'Volume'], 'ml': ['Length', 'Perimeter'], 'kg': ['NetWeight', 'GrossWeight', 'Weight'] };
+function parseIfc(txt) {
+  const E = new Map(), re = /#(\d+)\s*=\s*([A-Z0-9_]+)\s*\(([\s\S]*?)\)\s*;/g; let m;
+  while ((m = re.exec(txt))) E.set(+m[1], [m[2], m[3]]);
+  const f = { L: 1, A: null, V: null };
+  for (const [, [c, a]] of E) if (c === 'IFCSIUNIT') {
+    const x = splitArgs(a), k = x[1], p = PFX[x[2]] || 1;
+    if (k === '.LENGTHUNIT.') f.L = p; else if (k === '.AREAUNIT.') f.A = p; else if (k === '.VOLUMEUNIT.') f.V = p;
+  }
+  const sc = { A: f.A !== null ? f.A : f.L * f.L, V: f.V !== null ? f.V : f.L * f.L * f.L, L: f.L };
+  const Q = new Map(), QS = new Map(), byEl = new Map();
+  for (const [id, [c, a]] of E) {
+    if (/^IFCQUANTITY(AREA|VOLUME|LENGTH|WEIGHT|COUNT)$/.test(c)) { const x = splitArgs(a); Q.set(id, { n: strOf(x[0]), v: parseFloat(x[3]), k: c.slice(11)[0] }); }
+  }
+  for (const [id, [c, a]] of E) if (c === 'IFCELEMENTQUANTITY') QS.set(id, refs(splitArgs(a)[5]));
+  for (const [, [c, a]] of E) if (c === 'IFCRELDEFINESBYPROPERTIES') {
+    const x = splitArgs(a), ps = +String(x[5]).slice(1);
+    if (!QS.has(ps)) continue;
+    for (const o of refs(x[4])) { if (!byEl.has(o)) byEl.set(o, []); byEl.get(o).push(ps); }
+  }
+  const agg = new Map(); let nEl = 0, skipped = 0;
+  for (const [id, [c, a]] of E) {
+    const mp = CAT.ifcMap[c]; if (mp === undefined) continue;
+    const x = splitArgs(a), code = typeof mp === 'function' ? mp(a) : mp; if (!code) { skipped++; continue; }
+    const cat = byCode[code]; if (!cat) continue;
+    nEl++;
+    let q = null;
+    if (cat.u === 'un') q = 1;
+    else {
+      const names = NAMES[cat.u] || [], qs = [];
+      (byEl.get(id) || []).forEach((s) => QS.get(s).forEach((qi) => { if (Q.has(qi)) qs.push(Q.get(qi)); }));
+      for (const nm of names) { const hit = qs.find((z) => z.n === nm && z.v > 0); if (hit) { q = hit.v * (cat.u === 'm²' ? sc.A : cat.u === 'm³' ? sc.V : cat.u === 'ml' ? sc.L : 1); break; } }
+      if (q === null && c === 'IFCWINDOW') { const h = parseFloat(x[8]), w = parseFloat(x[9]); if (h > 0 && w > 0) q = h * w * sc.L * sc.L; }
+    }
+    const o = agg.get(code) || { q: 0, n: 0, miss: 0, g: [] };
+    o.n++; if (q === null) o.miss++; else o.q += q; if (o.g.length < 300) o.g.push(strOf(x[0]));
+    agg.set(code, o);
+  }
+  return { agg, nEl, skipped, total: E.size };
+}
+ifcIn.onchange = async () => {
+  const f = ifcIn.files[0]; if (!f) return; const msg = g('pr-ifcmsg');
+  try {
+    msg.textContent = 'Leyendo ' + f.name + '…';
+    const r = parseIfc(await f.text());
+    if (!r.agg.size) { msg.textContent = 'No encontré elementos constructivos reconocibles en el archivo.'; aviso('IFC sin elementos reconocibles'); ifcIn.value = ''; return; }
+    if (!P()) {
+      const id = 'p' + Math.random().toString(36).slice(2, 9);
+      projects[id] = { name: f.name.replace(/\.ifc$/i, ''), imp: 5, adm: 0, admO: true, admM: true, cliente: '', empresa: '', notes: '', order: Date.now(), items: [] };
+      if (!dbx) localOnly[id] = true; cur = id; ls.set('prCur', id);
+    }
+    const p = P(); let lines = 0, miss = 0;
+    [...r.agg].sort((a, b) => (a[0] < b[0] ? -1 : 1)).forEach(([code, o]) => {
+      miss += o.miss;
+      const nota = 'Importado de IFC: ' + o.n + ' elemento(s)' + (o.miss ? ' (' + o.miss + ' sin cantidad en el modelo, revisar)' : '') + '.';
+      const it = linesFor(code, o.q > 0 ? o.q : o.n, 1, { n: nota, ifcg: o.g }); lines += it.length; p.items.push(...it);
+    });
+    p.notes = ((p.notes || '') + '\nIFC importado: ' + f.name + ' · ' + r.nEl + ' elementos · ' + new Date().toLocaleDateString('es-CO')).trim();
+    markDirty(cur); flush(cur); renderAll(); showTab('obra');
+    msg.textContent = r.nEl + ' elementos → ' + lines + ' líneas' + (miss ? ' · ' + miss + ' sin cantidad' : '') + '.';
+    aviso('IFC importado: ' + lines + ' líneas con precio estimado');
+  } catch (e) { msg.textContent = 'No se pudo leer el IFC.'; aviso('Archivo IFC no válido'); }
+  ifcIn.value = '';
+};
+
+
+/* ---------- vínculo cotización ↔ proyecto y estado activo ---------- */
+try { const t0 = localStorage.getItem('pr-theme'); if (t0 === 'light' || t0 === 'dark') document.documentElement.setAttribute('data-theme', t0); else document.documentElement.setAttribute('data-theme', 'dark'); } catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+const stBar = document.createElement('div'); stBar.id = 'pr-status'; stBar.setAttribute('role', 'status');
+(document.querySelector('.app') || document.body).before(stBar);
+const qAct = () => ((typeof q !== 'undefined' && q && (q.id || (q.cliente_nombre || '').trim() || (q.proyecto || '').trim())) ? q : null);
+const pNom = (id) => (projects[id] ? (projects[id].name || 'Sin nombre') : '');
+const LQ = () => (typeof lista !== 'undefined' ? lista : []);
+const qDe = (id) => LQ().filter((c) => !c.eliminada && c.proyecto_id === id).sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')) || (Number(b.consecutivo) || 0) - (Number(a.consecutivo) || 0));
+let lastQ = null;
+const mkLink = document.getElementById('f-proyecto');
+if (mkLink) { const sp = mkLink.closest('.row') && mkLink.closest('.row').querySelector(':scope > span'); if (sp) sp.innerHTML = '<label for="pr-qlink">Proyecto vinculado (presupuesto)<select id="pr-qlink"></select></label>'; }
+const hf = document.getElementById('h-limpiar');
+if (hf) { const s = document.createElement('select'); s.id = 'pr-hproy'; s.setAttribute('aria-label', 'Filtrar por proyecto vinculado'); hf.before(s); s.addEventListener('change', () => { if (typeof pintarHistorial === 'function') pintarHistorial(); }); }
+window.prFiltro = () => { const s = document.getElementById('pr-hproy'); return s ? s.value : ''; };
+window.prTag = (c) => { const n = c.proyecto_id && pNom(c.proyecto_id); const el = document.createElement('div'); if (c.id && typeof q !== 'undefined' && q && q.id === c.id) { const a = document.createElement('span'); a.className = 'pr-tag'; a.textContent = 'Activa'; el.append(a, ' '); } if (n) { const s = document.createElement('span'); s.className = 'pr-tag pr-tag-p'; s.textContent = '🔗 ' + n; el.append(s); } return el.childNodes.length ? el : null; };
+const cotFila = (c) => `<div class="pr-pitem${qAct() && qAct().id === c.id ? ' cur' : ''}"><div><b>${X(c.codigo || 'Sin código')}</b>${qAct() && qAct().id === c.id ? ' <span class="pr-tag">Activa</span>' : ''}<br><span class="muted">${X(c.estado || '')} · ${X(c.fecha || '')} · ${cop(c.total || 0)}</span></div><button class="btn small qopen" type="button" data-q="${c.id}">Abrir</button></div>`;
+function estadoVinculo() {
+  const p = P(), x = qAct();
+  if (!x) lastQ = null;
+  else if (x.id && x.id !== lastQ) { lastQ = x.id; if (x.proyecto_id && projects[x.proyecto_id] && cur !== x.proyecto_id) { selectProject(x.proyecto_id); return; } }
+  const chip = (cls, inner, a) => `<button type="button" class="pr-chip ${cls}" data-a="${a}"><i></i>${inner}</button>`;
+  let h = p ? chip('on', 'Proyecto activo: <b>' + X(p.name || 'Sin nombre') + '</b>', 'proj') : chip('off', 'Sin proyecto activo', 'proj');
+  h += x ? chip('on q', 'Cotización activa: <b>' + X(x.codigo || 'Nueva') + '</b>' + (x.id ? ' · ' + X(x.estado || '') : ' · sin guardar'), 'quote') : chip('off', 'Sin cotización activa', 'quote');
+  if (p && x) {
+    if (x.proyecto_id === cur) h += '<span class="pr-ok">✓ Vinculadas</span>';
+    else if (x.proyecto_id && projects[x.proyecto_id]) h += `<button type="button" class="pr-chip warn" data-a="goproj">Pertenece a «${X(pNom(x.proyecto_id))}» · Activar ese proyecto</button>`;
+    else h += '<button type="button" class="pr-chip warn" data-a="link">Vincular al proyecto activo</button>';
+  }
+  const lt = document.documentElement.getAttribute('data-theme') === 'light';
+  h += `<button type="button" class="pr-chip pr-theme" data-a="theme" title="${lt ? 'Cambiar a oscuro' : 'Cambiar a claro'}" aria-label="Alternar claro u oscuro">${lt ? '🌙 Oscuro' : '☀️ Claro'}</button>`;
+  stBar.innerHTML = h;
+  // selector en la cotización
+  const sel = document.getElementById('pr-qlink');
+  if (sel && document.activeElement !== sel) sel.innerHTML = '<option value="">Sin proyecto</option>' + ordered().map((id) => `<option value="${id}"${x && x.proyecto_id === id ? ' selected' : ''}>${X(pNom(id))}</option>`).join('');
+  // filtro del historial
+  const hs = document.getElementById('pr-hproy');
+  if (hs) { const v = hs.value; hs.innerHTML = '<option value="">Todos los proyectos</option>' + ordered().map((id) => `<option value="${id}">${X(pNom(id))}</option>`).join(''); hs.value = v; }
+  // tarjeta del proyecto
+  const card = g('pr-qlist');
+  if (card) {
+    if (!p) { card.innerHTML = '<span class="status">Abre un proyecto para ver sus cotizaciones.</span>'; g('pr-qassign').hidden = true; }
+    else {
+      const mine = qDe(cur); card.innerHTML = mine.length ? mine.map(cotFila).join('') : '<span class="status">Este proyecto aún no tiene cotizaciones. Usa "Generar cotización".</span>';
+      const libres = LQ().filter((c) => !c.eliminada && (!c.proyecto_id || !projects[c.proyecto_id]));
+      g('pr-qassign').hidden = !libres.length;
+      g('pr-qpick').innerHTML = libres.map((c) => `<option value="${c.id}">${X((c.codigo || '') + ' · ' + (c.cliente_nombre || '') + ' · ' + (c.proyecto || ''))}</option>`).join('');
+    }
+  }
+  if (!root.hidden) renderProjList();
+}
+stBar.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-a]'); if (!b) return; const a = b.dataset.a;
+  if (a === 'theme') { const n = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'; document.documentElement.setAttribute('data-theme', n); try { localStorage.setItem('pr-theme', n); } catch (e) {} estadoVinculo(); }
+  else if (a === 'proj') { mostrar('presup'); showTab('obra'); window.scrollTo({ top: 0 }); }
+  else if (a === 'quote') mostrar('cotizar');
+  else if (a === 'goproj') selectProject(q.proyecto_id);
+  else if (a === 'link') { q.proyecto_id = cur; cambio(); estadoVinculo(); if (q.id) guardar(); else aviso('Se vinculará al guardar la cotización'); }
+});
+document.addEventListener('change', (e) => {
+  if (e.target.id === 'pr-qlink') { if (typeof q === 'undefined' || !q) return; if (e.target.value) q.proyecto_id = e.target.value; else delete q.proyecto_id; cambio(); estadoVinculo(); }
+});
+g('pr-qlist').addEventListener('click', (e) => {
+  const b = e.target.closest('.qopen'); if (!b) return; const c = LQ().find((z) => z.id === b.dataset.q); if (!c) return;
+  pedir('La cotización abierta tiene cambios sin guardar.', () => abrir(c));
+});
+g('pr-qlink2').onclick = async () => {
+  const c = LQ().find((z) => z.id === g('pr-qpick').value); if (!c || !P() || !db) return;
+  const d = Object.assign({}, c); delete d.id; d.proyecto_id = cur;
+  try { await db.collection('cotizaciones').doc(c.id).set(d); aviso('Cotización ' + (c.codigo || '') + ' vinculada a ' + pNom(cur)); } catch (err) { aviso('No se pudo vincular'); }
+};
+window.prEstado = estadoVinculo; estadoVinculo();
+/* ---------- papelera de cotizaciones ---------- */
+const enPap = () => LQ().filter((c) => c.eliminada);
+const guardarDoc = (c, ch) => { const d = Object.assign({}, c, ch); delete d.id; Object.keys(ch).forEach((k) => { if (ch[k] === undefined) delete d[k]; }); return db.collection('cotizaciones').doc(c.id).set(d); };
+window.prDel = (c) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small danger'; b.textContent = 'Eliminar'; b.title = 'Mover a la papelera'; b.onclick = async () => { try { await guardarDoc(c, { eliminada: true, eliminada_fecha: new Date().toISOString() }); if (typeof q !== 'undefined' && q && q.id === c.id && typeof nueva === 'function') nueva(c.tipo || 'otro'); aviso('Cotización ' + (c.codigo || '') + ' movida a la papelera'); } catch (e) { aviso('No se pudo eliminar'); } }; return b; };
+const trBox = document.createElement('div'); trBox.id = 'pr-trash'; trBox.hidden = true;
+const trBtn = document.createElement('button'); trBtn.type = 'button'; trBtn.className = 'btn small'; trBtn.id = 'pr-trashbtn';
+const hres = document.getElementById('h-resumen');
+if (hres) hres.after(trBox);
+if (hf) hf.after(trBtn);
+let trOpen = false, conf = null;
+trBtn.onclick = () => { trOpen = !trOpen; conf = null; renderTrash(); };
+function renderTrash() {
+  const t = enPap();
+  trBtn.textContent = '🗑 Papelera' + (t.length ? ' (' + t.length + ')' : '');
+  trBox.hidden = !trOpen;
+  if (!trOpen) return;
+  const f = (c) => (c.eliminada_fecha || '').slice(0, 10);
+  const row = (c) => `<div class="pr-pitem"><div><b>${X(c.codigo || 'Sin código')}</b> <span class="muted">${X(c.cliente_nombre || '')} · ${X(c.proyecto || '')}</span><br><span class="muted">${cop(c.total || 0)} · eliminada ${X(f(c))}</span></div><div class="acts"><button class="btn small" type="button" data-t="rest" data-q="${c.id}">Restaurar</button><button class="btn small danger" type="button" data-t="del" data-q="${c.id}">${conf === c.id ? '¿Seguro? Confirmar' : 'Eliminar definitivamente'}</button></div></div>`;
+  trBox.innerHTML = `<div class="pr-card"><h2>Papelera</h2>` + (t.length ? t.map(row).join('') + `<div class="pr-row" style="margin-top:10px"><button class="btn small danger" type="button" data-t="all">${conf === 'all' ? '¿Seguro? Confirmar vaciado (' + t.length + ')' : 'Vaciar papelera'}</button></div>` : '<span class="status">La papelera está vacía.</span>') + '</div>';
+}
+trBox.addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-t]'); if (!b || !db) return; const k = b.dataset.t, id = b.dataset.q;
+  try {
+    if (k === 'rest') { const c = LQ().find((z) => z.id === id); await guardarDoc(c, { eliminada: undefined, eliminada_fecha: undefined }); aviso('Cotización restaurada'); }
+    else if (k === 'del') { if (conf !== id) { conf = id; renderTrash(); return; } conf = null; await db.collection('cotizaciones').doc(id).delete(); aviso('Eliminada definitivamente'); }
+    else if (k === 'all') { if (conf !== 'all') { conf = 'all'; renderTrash(); return; } conf = null; for (const c of enPap()) await db.collection('cotizaciones').doc(c.id).delete(); aviso('Papelera vaciada'); }
+  } catch (err) { aviso('No se pudo completar'); }
+});
+document.addEventListener('click', (e) => { if (conf && e.target.isConnected && !e.target.closest('#pr-trash')) { conf = null; renderTrash(); } });
+const _est = estadoVinculo; window.prEstado = () => { _est(); renderTrash(); };
+window.prEstado();
 
 /* ---------- pastilla flotante inferior ---------- */
 const dockEl = g('dock');
