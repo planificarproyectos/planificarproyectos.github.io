@@ -391,6 +391,8 @@ tr.pr-act td{background:color-mix(in srgb,var(--accent) 14%,transparent)}
 tr.pr-act td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
 #pr-hproy{max-width:220px}
 .pr-link select{width:100%}
+.btn.danger{color:#ff8a8a}
+#pr-trash{margin:10px 0}
 </style>
 
 <div class="app">
@@ -1818,7 +1820,7 @@ $('btn-pdf').addEventListener('click', async () => {
 });
 
 // ---------- guardar ----------
-const CLAVES = ['codigo', 'consecutivo', 'anio', 'version', 'fecha', 'estado', 'tipo', 'cliente_nombre', 'cliente_empresa', 'proyecto', 'ubicacion', 'titulo', 'intro', 'alcance', 'items', 'iva', 'forma_pago', 'vigencia', 'notas', 'terminos', 'cuenta', 'origen', 'base_id', 'codigo_base', 'departamento', 'municipio', 'cliente_doc', 'cobros', 'marca', 'tema', 'proyecto_id'];
+const CLAVES = ['codigo', 'consecutivo', 'anio', 'version', 'fecha', 'estado', 'tipo', 'cliente_nombre', 'cliente_empresa', 'proyecto', 'ubicacion', 'titulo', 'intro', 'alcance', 'items', 'iva', 'forma_pago', 'vigencia', 'notas', 'terminos', 'cuenta', 'origen', 'base_id', 'codigo_base', 'departamento', 'municipio', 'cliente_doc', 'cobros', 'marca', 'tema', 'proyecto_id', 'eliminada', 'eliminada_fecha'];
 function datosDe(x) { const o = {}; for (const k of CLAVES) if (x[k] !== undefined) o[k] = x[k]; o.items = (x.items || []).map((i) => ({ descripcion: i.descripcion || '', cantidad: Number(i.cantidad) || 0, unidad: i.unidad || '', valor_unitario: Number(i.valor_unitario) || 0 })); o.total = totalDe(x); return o; }
 let guardando = false;
 $('btn-guardar').addEventListener('click', () => guardar());
@@ -1896,21 +1898,21 @@ function pintarHistorial() {
   opciones($('h-anio'), 'Todos los años', [...new Set(lista.map((c) => (c.fecha || '').slice(0, 4)).filter(Boolean))].sort().reverse().map((k) => [k, k]));
   const txt = $('h-buscar').value.trim().toLowerCase(), est = $('h-estado').value, tipo = $('h-tipo').value, cli = $('h-cliente').value, anio = $('h-anio').value;
   const [k, dir] = $('h-orden').value.split('-'); const f = ORDEN[k] || ORDEN.fecha; const s = dir === 'asc' ? 1 : -1;
-  const filas = lista.filter((c) => (!est || c.estado === est) && (!tipo || (TIPOS[c.tipo] ? c.tipo : 'otro') === tipo) && (!cli || clienteDe(c) === cli) && (!anio || (c.fecha || '').startsWith(anio))
+  const filas = lista.filter((c) => !c.eliminada && (!est || c.estado === est) && (!tipo || (TIPOS[c.tipo] ? c.tipo : 'otro') === tipo) && (!cli || clienteDe(c) === cli) && (!anio || (c.fecha || '').startsWith(anio))
       && (!window.prFiltro || !window.prFiltro() || c.proyecto_id === window.prFiltro())
       && (!txt || [c.codigo, c.cliente_nombre, c.cliente_empresa, c.proyecto, c.ubicacion, servicioDe(c)].join(' ').toLowerCase().includes(txt)))
     .sort((a, b) => { const x = f(a), y = f(b); const r = typeof x === 'number' ? x - y : String(x).localeCompare(String(y), 'es'); return r ? r * s : (Number(b.consecutivo) || 0) - (Number(a.consecutivo) || 0); });
   document.querySelectorAll('.htable th[data-k]').forEach((th) => { const on = th.dataset.k === k; th.toggleAttribute('aria-sort', on); if (on) th.setAttribute('aria-sort', dir === 'asc' ? 'ascending' : 'descending'); th.textContent = th.textContent.replace(/ [▲▼]$/, '') + (on ? (dir === 'asc' ? ' ▲' : ' ▼') : ''); });
   const suma = (arr) => arr.reduce((t, c) => t + (Number(c.total) || 0), 0);
   const aprob = filas.filter((c) => c.estado === 'Aprobada' || c.estado === 'Entregada');
-  const filtrado = filas.length !== lista.length;
+  const vivas = lista.filter((c) => !c.eliminada); const filtrado = filas.length !== vivas.length;
   $('h-resumen').replaceChildren(
-    h('span', null, h('strong', null, String(filas.length)), filtrado ? ' de ' + lista.length + ' cotizaciones' : ' cotizaciones'),
+    h('span', null, h('strong', null, String(filas.length)), filtrado ? ' de ' + vivas.length + ' cotizaciones' : ' cotizaciones'),
     h('span', null, 'Cotizado ', h('strong', null, money(suma(filas)))),
     h('span', null, 'Aprobado o entregado ', h('strong', null, money(suma(aprob))), ' (' + aprob.length + ')'));
   $('h-limpiar').hidden = !(txt || est || tipo || cli || anio || $('h-orden').value !== 'fecha-desc');
-  $('hist-count').textContent = lista.length ? '(' + lista.length + ')' : '';
-  $('h-empty').hidden = lista.length > 0;
+  $('hist-count').textContent = vivas.length ? '(' + vivas.length + ')' : '';
+  $('h-empty').hidden = vivas.length > 0;
   $('h-body').replaceChildren(...filas.map((c) => h('tr', { class: (q && c.id && c.id === q.id) ? 'pr-act' : '' },
     h('td', { class: 'n', 'data-label': 'N.º' }, Number.isFinite(Number(c.consecutivo)) && c.consecutivo !== null ? String(c.consecutivo).padStart(2, '0') : '—'),
     h('td', { 'data-label': 'Fecha' }, fechaCorta(c.fecha)),
@@ -1923,7 +1925,7 @@ function pintarHistorial() {
     h('td', { class: 'acts-td', 'data-label': '' }, h('div', { class: 'acts' },
       h('button', { type: 'button', class: 'btn small', onclick: () => pedir('La cotización abierta tiene cambios sin guardar.', () => abrir(c)) }, 'Abrir'),
       h('button', { type: 'button', class: 'btn small', onclick: () => pedir('La cotización abierta tiene cambios sin guardar.', () => abrir(c, 'version')) }, 'Nueva versión'),
-      h('button', { type: 'button', class: 'btn small', onclick: () => pedir('La cotización abierta tiene cambios sin guardar.', () => abrir(c, 'duplicar')) }, 'Duplicar'))))));
+      h('button', { type: 'button', class: 'btn small', onclick: () => pedir('La cotización abierta tiene cambios sin guardar.', () => abrir(c, 'duplicar')) }, 'Duplicar'), window.prDel ? window.prDel(c) : null)))));
 }
 $('h-buscar').addEventListener('input', pintarHistorial);
 ['h-estado', 'h-tipo', 'h-cliente', 'h-anio', 'h-orden'].forEach((id) => $(id).addEventListener('change', pintarHistorial));
@@ -1969,7 +1971,7 @@ window.__cotiStart = (fs) => {
     lista = snap.docs.map((s) => ({ id: s.id, ...s.data() }));
     window.prEstado && window.prEstado();
     if (primera && !q.id) { primera = false; q.anio = Number(q.fecha.slice(0, 4)); if (!q.codigo_base) q.consecutivo = siguienteConsecutivo(); q.codigo = codigoDe(q); $('f-codigo').textContent = q.codigo; pintarPapel(); estadoGuardado(); }
-    if (!$('view-historial').hidden) pintarHistorial(); else $('hist-count').textContent = lista.length ? '(' + lista.length + ')' : '';
+    if (!$('view-historial').hidden) pintarHistorial(); else $('hist-count').textContent = lista.filter((c) => !c.eliminada).length ? '(' + lista.filter((c) => !c.eliminada).length + ')' : '';
   }, () => { $('db-off').hidden = false; db = null; $('btn-guardar').disabled = true; });
 };
 </script>
@@ -2618,7 +2620,7 @@ function renderPend() {
 }
 function renderProjList() {
   g('pr-plist').innerHTML = ordered().map((id) => { const p = projects[id], t = totals(p);
-    const nq = (typeof lista !== 'undefined' ? lista : []).filter((c) => c.proyecto_id === id).length;
+    const nq = (typeof lista !== 'undefined' ? lista : []).filter((c) => !c.eliminada && c.proyecto_id === id).length;
     return `<div class="pr-pitem${id === cur ? ' cur' : ''}"><div><b>${X(p.name || 'Sin nombre')}</b>${id === cur ? ' <span class="pr-tag">Activo</span>' : ''}<br><span class="muted">${p.items.length} ítems · ${cop(t.tot)} · ${nq} cotización(es)</span></div><button class="btn small open" type="button" data-id="${id}">${id === cur ? 'Abierto' : 'Abrir'}</button></div>`; }).join('');
 }
 function renderAll() {
@@ -2990,7 +2992,7 @@ const stBar = document.createElement('div'); stBar.id = 'pr-status'; stBar.setAt
 const qAct = () => ((typeof q !== 'undefined' && q && (q.id || (q.cliente_nombre || '').trim() || (q.proyecto || '').trim())) ? q : null);
 const pNom = (id) => (projects[id] ? (projects[id].name || 'Sin nombre') : '');
 const LQ = () => (typeof lista !== 'undefined' ? lista : []);
-const qDe = (id) => LQ().filter((c) => c.proyecto_id === id).sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')) || (Number(b.consecutivo) || 0) - (Number(a.consecutivo) || 0));
+const qDe = (id) => LQ().filter((c) => !c.eliminada && c.proyecto_id === id).sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')) || (Number(b.consecutivo) || 0) - (Number(a.consecutivo) || 0));
 let lastQ = null;
 const mkLink = document.getElementById('f-proyecto');
 if (mkLink) { const sp = mkLink.closest('.row') && mkLink.closest('.row').querySelector(':scope > span'); if (sp) sp.innerHTML = '<label for="pr-qlink">Proyecto vinculado (presupuesto)<select id="pr-qlink"></select></label>'; }
@@ -3024,7 +3026,7 @@ function estadoVinculo() {
     if (!p) { card.innerHTML = '<span class="status">Abre un proyecto para ver sus cotizaciones.</span>'; g('pr-qassign').hidden = true; }
     else {
       const mine = qDe(cur); card.innerHTML = mine.length ? mine.map(cotFila).join('') : '<span class="status">Este proyecto aún no tiene cotizaciones. Usa "Generar cotización".</span>';
-      const libres = LQ().filter((c) => !c.proyecto_id || !projects[c.proyecto_id]);
+      const libres = LQ().filter((c) => !c.eliminada && (!c.proyecto_id || !projects[c.proyecto_id]));
       g('pr-qassign').hidden = !libres.length;
       g('pr-qpick').innerHTML = libres.map((c) => `<option value="${c.id}">${X((c.codigo || '') + ' · ' + (c.cliente_nombre || '') + ' · ' + (c.proyecto || ''))}</option>`).join('');
     }
@@ -3051,6 +3053,38 @@ g('pr-qlink2').onclick = async () => {
   try { await db.collection('cotizaciones').doc(c.id).set(d); aviso('Cotización ' + (c.codigo || '') + ' vinculada a ' + pNom(cur)); } catch (err) { aviso('No se pudo vincular'); }
 };
 window.prEstado = estadoVinculo; estadoVinculo();
+/* ---------- papelera de cotizaciones ---------- */
+const enPap = () => LQ().filter((c) => c.eliminada);
+const guardarDoc = (c, ch) => { const d = Object.assign({}, c, ch); delete d.id; Object.keys(ch).forEach((k) => { if (ch[k] === undefined) delete d[k]; }); return db.collection('cotizaciones').doc(c.id).set(d); };
+window.prDel = (c) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small danger'; b.textContent = 'Eliminar'; b.title = 'Mover a la papelera'; b.onclick = async () => { try { await guardarDoc(c, { eliminada: true, eliminada_fecha: new Date().toISOString() }); if (typeof q !== 'undefined' && q && q.id === c.id && typeof nueva === 'function') nueva(c.tipo || 'otro'); aviso('Cotización ' + (c.codigo || '') + ' movida a la papelera'); } catch (e) { aviso('No se pudo eliminar'); } }; return b; };
+const trBox = document.createElement('div'); trBox.id = 'pr-trash'; trBox.hidden = true;
+const trBtn = document.createElement('button'); trBtn.type = 'button'; trBtn.className = 'btn small'; trBtn.id = 'pr-trashbtn';
+const hres = document.getElementById('h-resumen');
+if (hres) hres.after(trBox);
+if (hf) hf.after(trBtn);
+let trOpen = false, conf = null;
+trBtn.onclick = () => { trOpen = !trOpen; conf = null; renderTrash(); };
+function renderTrash() {
+  const t = enPap();
+  trBtn.textContent = '🗑 Papelera' + (t.length ? ' (' + t.length + ')' : '');
+  trBox.hidden = !trOpen;
+  if (!trOpen) return;
+  const f = (c) => (c.eliminada_fecha || '').slice(0, 10);
+  const row = (c) => `<div class="pr-pitem"><div><b>${X(c.codigo || 'Sin código')}</b> <span class="muted">${X(c.cliente_nombre || '')} · ${X(c.proyecto || '')}</span><br><span class="muted">${cop(c.total || 0)} · eliminada ${X(f(c))}</span></div><div class="acts"><button class="btn small" type="button" data-t="rest" data-q="${c.id}">Restaurar</button><button class="btn small danger" type="button" data-t="del" data-q="${c.id}">${conf === c.id ? '¿Seguro? Confirmar' : 'Eliminar definitivamente'}</button></div></div>`;
+  trBox.innerHTML = `<div class="pr-card"><h2>Papelera</h2>` + (t.length ? t.map(row).join('') + `<div class="pr-row" style="margin-top:10px"><button class="btn small danger" type="button" data-t="all">${conf === 'all' ? '¿Seguro? Confirmar vaciado (' + t.length + ')' : 'Vaciar papelera'}</button></div>` : '<span class="status">La papelera está vacía.</span>') + '</div>';
+}
+trBox.addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-t]'); if (!b || !db) return; const k = b.dataset.t, id = b.dataset.q;
+  try {
+    if (k === 'rest') { const c = LQ().find((z) => z.id === id); await guardarDoc(c, { eliminada: undefined, eliminada_fecha: undefined }); aviso('Cotización restaurada'); }
+    else if (k === 'del') { if (conf !== id) { conf = id; renderTrash(); return; } conf = null; await db.collection('cotizaciones').doc(id).delete(); aviso('Eliminada definitivamente'); }
+    else if (k === 'all') { if (conf !== 'all') { conf = 'all'; renderTrash(); return; } conf = null; for (const c of enPap()) await db.collection('cotizaciones').doc(c.id).delete(); aviso('Papelera vaciada'); }
+  } catch (err) { aviso('No se pudo completar'); }
+});
+document.addEventListener('click', (e) => { if (conf && e.target.isConnected && !e.target.closest('#pr-trash')) { conf = null; renderTrash(); } });
+const _est = estadoVinculo; window.prEstado = () => { _est(); renderTrash(); };
+window.prEstado();
+
 /* ---------- pastilla flotante inferior ---------- */
 const dockEl = g('dock');
 window.syncDock = (v) => {
