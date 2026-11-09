@@ -374,6 +374,23 @@ select option,select optgroup{background:#171a20;color:#f4f5f6}
 .gtog:hover{background:rgba(255,255,255,.04)}
 .gtog .car{color:var(--accent);width:14px}
 .gtog em{margin-left:auto;font-style:normal;font-weight:500;font-size:12px;color:var(--muted)}
+/* Estado activo y vínculo cotización-proyecto */
+#pr-status{position:sticky;top:8px;z-index:26;display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin:8px auto 0;width:calc(100% - 32px);max-width:1408px;box-sizing:border-box;padding:6px 10px;border-radius:18px;background:var(--panel);box-shadow:0 6px 22px rgba(0,0,0,.35),0 0 0 1px var(--line)}
+.pr-chip{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:6px 12px;background:var(--field);color:var(--ink);font:500 12.5px var(--ui);cursor:pointer;max-width:100%;text-align:left}
+.pr-chip i{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:0 0 8px}
+.pr-chip.on i{background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}
+.pr-chip.q.on i{background:#7aa2ff;box-shadow:0 0 0 3px color-mix(in srgb,#7aa2ff 25%,transparent)}
+.pr-chip.off{color:var(--muted)}
+.pr-chip.warn{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.pr-chip.warn i{display:none}
+.pr-chip b{font-weight:600}
+.pr-ok{font-size:12.5px;color:var(--ok);font-weight:600;padding:0 6px}
+.pr-tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--accent) 25%,transparent);color:#9db8ff;vertical-align:middle}
+.pr-tag-p{background:var(--field);color:var(--muted)}
+tr.pr-act td{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+tr.pr-act td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+#pr-hproy{max-width:220px}
+.pr-link select{width:100%}
 </style>
 
 <div class="app">
@@ -693,6 +710,10 @@ select option,select optgroup{background:#171a20;color:#f4f5f6}
           <div class="pr-row"><button class="btn primary" id="pr-ifc" type="button">Importar modelo IFC (.ifc)</button></div>
           <span class="status" id="pr-ifcmsg"></span>
         </div>
+      </div>
+      <div class="pr-card" style="margin-top:12px" id="pr-qcard"><h2>Cotizaciones de este proyecto</h2>
+        <div class="pr-plist" id="pr-qlist"></div>
+        <div class="pr-row" id="pr-qassign" hidden><select id="pr-qpick" aria-label="Cotización sin proyecto" style="min-width:240px;max-width:100%"></select><button class="btn small" id="pr-qlink2" type="button">Vincular a este proyecto</button></div>
       </div>
       <div class="pr-card" style="margin-top:12px"><h2>Todos los proyectos</h2><div class="pr-plist" id="pr-plist"></div></div>
     </div>
@@ -1270,6 +1291,7 @@ function pintarCobros() {
 const numeroCobro = (x, n) => 'CC-' + sinVersion(x.codigo || '').replace(/^COT-/, '') + '-' + n;
 const sucio = () => !q || guardada !== JSON.stringify(datosDe(q));
 function estadoGuardado() {
+  window.prEstado && window.prEstado();
   const s = $('status');
   if (!q) return;
   if (!q.id) { s.textContent = 'Sin guardar'; s.className = 'status dirty'; }
@@ -1796,7 +1818,7 @@ $('btn-pdf').addEventListener('click', async () => {
 });
 
 // ---------- guardar ----------
-const CLAVES = ['codigo', 'consecutivo', 'anio', 'version', 'fecha', 'estado', 'tipo', 'cliente_nombre', 'cliente_empresa', 'proyecto', 'ubicacion', 'titulo', 'intro', 'alcance', 'items', 'iva', 'forma_pago', 'vigencia', 'notas', 'terminos', 'cuenta', 'origen', 'base_id', 'codigo_base', 'departamento', 'municipio', 'cliente_doc', 'cobros', 'marca', 'tema'];
+const CLAVES = ['codigo', 'consecutivo', 'anio', 'version', 'fecha', 'estado', 'tipo', 'cliente_nombre', 'cliente_empresa', 'proyecto', 'ubicacion', 'titulo', 'intro', 'alcance', 'items', 'iva', 'forma_pago', 'vigencia', 'notas', 'terminos', 'cuenta', 'origen', 'base_id', 'codigo_base', 'departamento', 'municipio', 'cliente_doc', 'cobros', 'marca', 'tema', 'proyecto_id'];
 function datosDe(x) { const o = {}; for (const k of CLAVES) if (x[k] !== undefined) o[k] = x[k]; o.items = (x.items || []).map((i) => ({ descripcion: i.descripcion || '', cantidad: Number(i.cantidad) || 0, unidad: i.unidad || '', valor_unitario: Number(i.valor_unitario) || 0 })); o.total = totalDe(x); return o; }
 let guardando = false;
 $('btn-guardar').addEventListener('click', () => guardar());
@@ -1875,6 +1897,7 @@ function pintarHistorial() {
   const txt = $('h-buscar').value.trim().toLowerCase(), est = $('h-estado').value, tipo = $('h-tipo').value, cli = $('h-cliente').value, anio = $('h-anio').value;
   const [k, dir] = $('h-orden').value.split('-'); const f = ORDEN[k] || ORDEN.fecha; const s = dir === 'asc' ? 1 : -1;
   const filas = lista.filter((c) => (!est || c.estado === est) && (!tipo || (TIPOS[c.tipo] ? c.tipo : 'otro') === tipo) && (!cli || clienteDe(c) === cli) && (!anio || (c.fecha || '').startsWith(anio))
+      && (!window.prFiltro || !window.prFiltro() || c.proyecto_id === window.prFiltro())
       && (!txt || [c.codigo, c.cliente_nombre, c.cliente_empresa, c.proyecto, c.ubicacion, servicioDe(c)].join(' ').toLowerCase().includes(txt)))
     .sort((a, b) => { const x = f(a), y = f(b); const r = typeof x === 'number' ? x - y : String(x).localeCompare(String(y), 'es'); return r ? r * s : (Number(b.consecutivo) || 0) - (Number(a.consecutivo) || 0); });
   document.querySelectorAll('.htable th[data-k]').forEach((th) => { const on = th.dataset.k === k; th.toggleAttribute('aria-sort', on); if (on) th.setAttribute('aria-sort', dir === 'asc' ? 'ascending' : 'descending'); th.textContent = th.textContent.replace(/ [▲▼]$/, '') + (on ? (dir === 'asc' ? ' ▲' : ' ▼') : ''); });
@@ -1888,12 +1911,12 @@ function pintarHistorial() {
   $('h-limpiar').hidden = !(txt || est || tipo || cli || anio || $('h-orden').value !== 'fecha-desc');
   $('hist-count').textContent = lista.length ? '(' + lista.length + ')' : '';
   $('h-empty').hidden = lista.length > 0;
-  $('h-body').replaceChildren(...filas.map((c) => h('tr', null,
+  $('h-body').replaceChildren(...filas.map((c) => h('tr', { class: (q && c.id && c.id === q.id) ? 'pr-act' : '' },
     h('td', { class: 'n', 'data-label': 'N.º' }, Number.isFinite(Number(c.consecutivo)) && c.consecutivo !== null ? String(c.consecutivo).padStart(2, '0') : '—'),
     h('td', { 'data-label': 'Fecha' }, fechaCorta(c.fecha)),
     h('td', { 'data-label': 'Código' }, h('span', { class: 'hcode' }, c.codigo || 'Sin código')),
     h('td', { 'data-label': 'Cliente' }, c.cliente_nombre || h('span', { class: 'muted' }, 'Sin nombre'), c.cliente_empresa ? h('div', { class: 'muted' }, c.cliente_empresa) : null),
-    h('td', { 'data-label': 'Proyecto' }, c.proyecto),
+    h('td', { 'data-label': 'Proyecto' }, c.proyecto, window.prTag ? window.prTag(c) : null),
     h('td', { 'data-label': 'Servicio' }, (TIPOS[c.tipo] || TIPOS.otro).label),
     h('td', { class: 'n', 'data-label': 'Total' }, money(c.total)),
     h('td', { 'data-label': 'Estado' }, h('span', { class: 'pill ' + c.estado }, c.estado)),
@@ -1944,6 +1967,7 @@ window.__cotiStart = (fs) => {
   let primera = true;
   db.collection('cotizaciones').onSnapshot((snap) => {
     lista = snap.docs.map((s) => ({ id: s.id, ...s.data() }));
+    window.prEstado && window.prEstado();
     if (primera && !q.id) { primera = false; q.anio = Number(q.fecha.slice(0, 4)); if (!q.codigo_base) q.consecutivo = siguienteConsecutivo(); q.codigo = codigoDe(q); $('f-codigo').textContent = q.codigo; pintarPapel(); estadoGuardado(); }
     if (!$('view-historial').hidden) pintarHistorial(); else $('hist-count').textContent = lista.length ? '(' + lista.length + ')' : '';
   }, () => { $('db-off').hidden = false; db = null; $('btn-guardar').disabled = true; });
@@ -2594,7 +2618,8 @@ function renderPend() {
 }
 function renderProjList() {
   g('pr-plist').innerHTML = ordered().map((id) => { const p = projects[id], t = totals(p);
-    return `<div class="pr-pitem${id === cur ? ' cur' : ''}"><div><b>${X(p.name || 'Sin nombre')}</b><br><span class="muted">${p.items.length} ítems · ${cop(t.tot)}</span></div><button class="btn small open" type="button" data-id="${id}">${id === cur ? 'Abierto' : 'Abrir'}</button></div>`; }).join('');
+    const nq = (typeof lista !== 'undefined' ? lista : []).filter((c) => c.proyecto_id === id).length;
+    return `<div class="pr-pitem${id === cur ? ' cur' : ''}"><div><b>${X(p.name || 'Sin nombre')}</b>${id === cur ? ' <span class="pr-tag">Activo</span>' : ''}<br><span class="muted">${p.items.length} ítems · ${cop(t.tot)} · ${nq} cotización(es)</span></div><button class="btn small open" type="button" data-id="${id}">${id === cur ? 'Abierto' : 'Abrir'}</button></div>`; }).join('');
 }
 function renderAll() {
   if (P()) initHist(cur);
@@ -2615,6 +2640,7 @@ function renderAll() {
     recalc();
   }
   renderProjList(); showTab(tab);
+  if (window.prEstado) window.prEstado();
 }
 function showTab(t) {
   if (!['obra', 'compras', 'pendientes', 'catalogo', 'ajustes', 'proyectos'].includes(t)) t = 'obra';
@@ -2665,7 +2691,7 @@ function generar(mode) {
   if (!items.length) { aviso('Este presupuesto no tiene ítems con precio.'); return; }
   nueva('remodelacion');
   q.proyecto = p.name || ''; q.cliente_nombre = p.cliente || ''; q.cliente_empresa = p.empresa || '';
-  q.items = items; q.alcance = caps.join('\n'); q.origen = 'presupuesto';
+  q.items = items; q.alcance = caps.join('\n'); q.origen = 'presupuesto'; q.proyecto_id = cur;
   pristine = false; pintarEditor(); pintarPapel(); estadoGuardado(); mostrar('cotizar');
   aviso('Cotización creada desde "' + (p.name || 'presupuesto') + '". Revisa y guarda.');
 }
@@ -2957,6 +2983,74 @@ ifcIn.onchange = async () => {
   ifcIn.value = '';
 };
 
+
+/* ---------- vínculo cotización ↔ proyecto y estado activo ---------- */
+const stBar = document.createElement('div'); stBar.id = 'pr-status'; stBar.setAttribute('role', 'status');
+(document.querySelector('.app') || document.body).before(stBar);
+const qAct = () => ((typeof q !== 'undefined' && q && (q.id || (q.cliente_nombre || '').trim() || (q.proyecto || '').trim())) ? q : null);
+const pNom = (id) => (projects[id] ? (projects[id].name || 'Sin nombre') : '');
+const LQ = () => (typeof lista !== 'undefined' ? lista : []);
+const qDe = (id) => LQ().filter((c) => c.proyecto_id === id).sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')) || (Number(b.consecutivo) || 0) - (Number(a.consecutivo) || 0));
+let lastQ = null;
+const mkLink = document.getElementById('f-proyecto');
+if (mkLink) { const sp = mkLink.closest('.row') && mkLink.closest('.row').querySelector(':scope > span'); if (sp) sp.innerHTML = '<label for="pr-qlink">Proyecto vinculado (presupuesto)<select id="pr-qlink"></select></label>'; }
+const hf = document.getElementById('h-limpiar');
+if (hf) { const s = document.createElement('select'); s.id = 'pr-hproy'; s.setAttribute('aria-label', 'Filtrar por proyecto vinculado'); hf.before(s); s.addEventListener('change', () => { if (typeof pintarHistorial === 'function') pintarHistorial(); }); }
+window.prFiltro = () => { const s = document.getElementById('pr-hproy'); return s ? s.value : ''; };
+window.prTag = (c) => { const n = c.proyecto_id && pNom(c.proyecto_id); const el = document.createElement('div'); if (c.id && typeof q !== 'undefined' && q && q.id === c.id) { const a = document.createElement('span'); a.className = 'pr-tag'; a.textContent = 'Activa'; el.append(a, ' '); } if (n) { const s = document.createElement('span'); s.className = 'pr-tag pr-tag-p'; s.textContent = '🔗 ' + n; el.append(s); } return el.childNodes.length ? el : null; };
+const cotFila = (c) => `<div class="pr-pitem${qAct() && qAct().id === c.id ? ' cur' : ''}"><div><b>${X(c.codigo || 'Sin código')}</b>${qAct() && qAct().id === c.id ? ' <span class="pr-tag">Activa</span>' : ''}<br><span class="muted">${X(c.estado || '')} · ${X(c.fecha || '')} · ${cop(c.total || 0)}</span></div><button class="btn small qopen" type="button" data-q="${c.id}">Abrir</button></div>`;
+function estadoVinculo() {
+  const p = P(), x = qAct();
+  if (!x) lastQ = null;
+  else if (x.id && x.id !== lastQ) { lastQ = x.id; if (x.proyecto_id && projects[x.proyecto_id] && cur !== x.proyecto_id) { selectProject(x.proyecto_id); return; } }
+  const chip = (cls, inner, a) => `<button type="button" class="pr-chip ${cls}" data-a="${a}"><i></i>${inner}</button>`;
+  let h = p ? chip('on', 'Proyecto activo: <b>' + X(p.name || 'Sin nombre') + '</b>', 'proj') : chip('off', 'Sin proyecto activo', 'proj');
+  h += x ? chip('on q', 'Cotización activa: <b>' + X(x.codigo || 'Nueva') + '</b>' + (x.id ? ' · ' + X(x.estado || '') : ' · sin guardar'), 'quote') : chip('off', 'Sin cotización activa', 'quote');
+  if (p && x) {
+    if (x.proyecto_id === cur) h += '<span class="pr-ok">✓ Vinculadas</span>';
+    else if (x.proyecto_id && projects[x.proyecto_id]) h += `<button type="button" class="pr-chip warn" data-a="goproj">Pertenece a «${X(pNom(x.proyecto_id))}» · Activar ese proyecto</button>`;
+    else h += '<button type="button" class="pr-chip warn" data-a="link">Vincular al proyecto activo</button>';
+  }
+  stBar.innerHTML = h;
+  // selector en la cotización
+  const sel = document.getElementById('pr-qlink');
+  if (sel && document.activeElement !== sel) sel.innerHTML = '<option value="">Sin proyecto</option>' + ordered().map((id) => `<option value="${id}"${x && x.proyecto_id === id ? ' selected' : ''}>${X(pNom(id))}</option>`).join('');
+  // filtro del historial
+  const hs = document.getElementById('pr-hproy');
+  if (hs) { const v = hs.value; hs.innerHTML = '<option value="">Todos los proyectos</option>' + ordered().map((id) => `<option value="${id}">${X(pNom(id))}</option>`).join(''); hs.value = v; }
+  // tarjeta del proyecto
+  const card = g('pr-qlist');
+  if (card) {
+    if (!p) { card.innerHTML = '<span class="status">Abre un proyecto para ver sus cotizaciones.</span>'; g('pr-qassign').hidden = true; }
+    else {
+      const mine = qDe(cur); card.innerHTML = mine.length ? mine.map(cotFila).join('') : '<span class="status">Este proyecto aún no tiene cotizaciones. Usa "Generar cotización".</span>';
+      const libres = LQ().filter((c) => !c.proyecto_id || !projects[c.proyecto_id]);
+      g('pr-qassign').hidden = !libres.length;
+      g('pr-qpick').innerHTML = libres.map((c) => `<option value="${c.id}">${X((c.codigo || '') + ' · ' + (c.cliente_nombre || '') + ' · ' + (c.proyecto || ''))}</option>`).join('');
+    }
+  }
+  if (!root.hidden) renderProjList();
+}
+stBar.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-a]'); if (!b) return; const a = b.dataset.a;
+  if (a === 'proj') { mostrar('presup'); showTab('obra'); window.scrollTo({ top: 0 }); }
+  else if (a === 'quote') mostrar('cotizar');
+  else if (a === 'goproj') selectProject(q.proyecto_id);
+  else if (a === 'link') { q.proyecto_id = cur; cambio(); estadoVinculo(); if (q.id) guardar(); else aviso('Se vinculará al guardar la cotización'); }
+});
+document.addEventListener('change', (e) => {
+  if (e.target.id === 'pr-qlink') { if (typeof q === 'undefined' || !q) return; if (e.target.value) q.proyecto_id = e.target.value; else delete q.proyecto_id; cambio(); estadoVinculo(); }
+});
+g('pr-qlist').addEventListener('click', (e) => {
+  const b = e.target.closest('.qopen'); if (!b) return; const c = LQ().find((z) => z.id === b.dataset.q); if (!c) return;
+  pedir('La cotización abierta tiene cambios sin guardar.', () => abrir(c));
+});
+g('pr-qlink2').onclick = async () => {
+  const c = LQ().find((z) => z.id === g('pr-qpick').value); if (!c || !P() || !db) return;
+  const d = Object.assign({}, c); delete d.id; d.proyecto_id = cur;
+  try { await db.collection('cotizaciones').doc(c.id).set(d); aviso('Cotización ' + (c.codigo || '') + ' vinculada a ' + pNom(cur)); } catch (err) { aviso('No se pudo vincular'); }
+};
+window.prEstado = estadoVinculo; estadoVinculo();
 /* ---------- pastilla flotante inferior ---------- */
 const dockEl = g('dock');
 window.syncDock = (v) => {
