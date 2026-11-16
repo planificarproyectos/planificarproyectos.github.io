@@ -412,6 +412,14 @@ function escenarios(S) { const L = limits(S), out = [], seen = new Set();
     const q = Object.assign({}, S, { p: Object.assign({}, S.p, { torres: n, auto: false, pisos: N, ptor: [] }) }); out.push({ n, N, R: compute(q) }); }); }
   return out.sort((a, b) => b.R.und - a.R.und || a.n - b.n); }
 const kv = rows => '<div class="lt-kv">' + rows.filter(Boolean).map(([l, v]) => `<span>${l}</span><b>${v}</b>`).join('') + '</div>';
+/* Explica qué regla limita la altura en renovación y desarrollo, que no tienen un tope de pisos fijo */
+function altRegla() { const R = U.R, S = U.S, L = R.L, N = R.N, top = R.e.bands[R.e.bands.length - 1], pl = top ? Math.round(top.area) : 0;
+  let m;
+  if (S.norm.aero > 0 && R.e.H >= S.norm.aero - S.p.hPiso) m = 'límite de la Aeronáutica Civil (' + S.norm.aero + ' m)';
+  else if (R.limitado || (L.cap && R.comp >= L.cap * S.geo.area * 0.97)) m = 'índice de construcción ' + nf(L.cap, 2).replace(/,00$/, '') + (S.norm.ae ? ' (base de la actuación estratégica «' + esc(S.norm.ae) + '»)' : '');
+  else if (N >= L.nMax) m = 'tope de ' + L.nMax + ' pisos';
+  else m = 'aislamientos y forma del lote (planta de ' + pl + ' m² en el piso alto)';
+  return N + ' pisos, limitada por el ' + m; }
 function pNorma() { const S = U.S, n = S.norm, pd = S.predio;
   return `<div class="lt-card"><p class="lt-h">${esc(pd.dir || 'Lote ' + S.code)}</p><p class="lt-sub">${[pd.barrio && esc(pd.barrio), n.upl && 'UPL ' + esc(n.upl), pd.chip && 'CHIP ' + esc(pd.chip), pd.n > 1 && pd.n + ' predios (propiedad horizontal)'].filter(Boolean).join(' · ')}</p></div>
   <div class="lt-big"><div><span>Área del lote</span><b>${nf(S.geo.area)} m²</b><small>${pd.aTerr ? 'Catastro: ' + nf(pd.aTerr, 1) + ' m²' : 'medida sobre el plano'}</small></div>
@@ -419,7 +427,7 @@ function pNorma() { const S = U.S, n = S.norm, pd = S.predio;
   <div class="lt-card"><h3>Norma POT · Decreto 555 de 2021</h3>${n.sinPot ? '<p class="lt-note">No se pudo consultar el mapa del POT. Intenta de nuevo.</p>' : kv([
     ['Tratamiento', esc(TR_NAME[n.tr] || n.trNombre || 'Sin dato')],
     n.tr === 'C' && ['Tipología', n.tip === 'TA' ? 'Aislada' : 'Continua'],
-    n.altTxt && ['Altura máxima', esc(n.altTxt) + ' pisos'], (n.tr === 'R' || n.tr === 'D') && ['Altura', 'Resultante de la norma'],
+    n.altTxt && ['Altura máxima', esc(n.altTxt) + ' pisos'], (n.tr === 'R' || n.tr === 'D') && ['Altura', altRegla()],
     ['Área de actividad', esc(n.aaCod || '—')], n.tr === 'D' && ['Rango de edificabilidad', esc(n.rango || '—')],
     ['Antejardín', n.tr === 'C' ? (n.antejardinDato ? nf(n.antejardin, 2) + ' m' : 'Sin dato en el mapa') : 'No se exige'],
     ['Índice base', (n.tr === 'C' || n.tr === 'R') ? '1,3' : '—'], ['Clase de suelo', /^URB/i.test(n.suelo) ? 'Urbano' : esc(n.suelo || '—')]])}
