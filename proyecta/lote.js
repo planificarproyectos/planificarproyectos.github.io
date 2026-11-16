@@ -88,7 +88,7 @@ function mezcla(vend, tipos) { const T = (tipos || []).filter(t => t.a >= 15 && 
 }
 function defaults(norm) { const pq = PARQ[norm.aaCod];
   return { auto: true, pisos: 0, hPiso: 3, antejardin: norm.tr === 'C' ? (norm.antejardin || 0) : 0, modalidad: norm.ae ? 'base' : '5', anchoVia: 0,
-    computable: 85, eficiencia: 80, areaApto: 55, tipos: TIPOS0.map(t => ({ a: t, pct: 20 })), torres: 1, ptor: [], sep: 0, com: { on: false, pct: 30 }, precioM2: 0, smmlv: SMMLV, parqPct: pq ? pq.max : 15, m2Cupo: 25 }; }
+    computable: 85, eficiencia: 80, areaApto: 55, tipos: TIPOS0.map(t => ({ a: t, pct: 20 })), torres: 1, ptor: [], parqUbic: 'sot', estrato: 4, efApto: 96, nAsc: 0, nEsc: 0, sep: 0, com: { on: false, pct: 30 }, precioM2: 0, smmlv: SMMLV, parqPct: pq ? pq.max : 15, m2Cupo: 25 }; }
 /* Topes de altura e índice según el tratamiento */
 function limits(S) { const t = S.norm.tr, p = S.p, A = S.geo.area, alt = S.norm.alt, L = { nDef: 3, nMax: 60, cap: 0, notas: [] };
   if (S.norm.aero > 0) L.nMax = Math.max(1, Math.min(L.nMax, Math.floor(S.norm.aero / p.hPiso)));
@@ -148,6 +148,51 @@ function oblig(S, ic, year) { const t = S.norm.tr, AT = S.geo.area, V = S.norm.v
   else return null;
   const cs = AT * fce, enSitio = cs >= 400, comp = enSitio ? 0 : cs * V * k, pago = AT * fd * V * d, redes = ic > 1.3 && !(AT <= 300 && ic < 2) ? AT * (fce + fd) * V * 0.064 : 0;
   return { fs: fce + fd, fce, fd, cs, enSitio, comp, pago, redes, total: comp + pago + redes, vis, k, d }; }
+/* ---- Edificio realista: núcleo de circulación, parqueo, zonas comunes y equipamiento comunal ----
+   Dimensiones y cantidades de ascensores y escaleras son criterios de diseño (no vienen del POT): confírmalos con el diseñador.
+   Equipamiento comunal privado: Anexo 5, numeral 1.3.2 (10 m² por 80 m² en consolidación y renovación; 6 m² por unidad en VIS/VIP). */
+const ASC = 4.2, VEST = 5, ESC = 14, CORR = 1.5;       // m²: ascensor con foso y puerta, vestíbulo por ascensor, escalera de dos tramos, ancho del corredor (m)
+const AMEN = { 3: { b: [['Salón social', 40]], x: [['Juegos de niños', 30]] }, 4: { b: [['Salón social', 50], ['Gimnasio', 40]], x: [['Juegos de niños', 30], ['Zona BBQ', 30]] },
+  5: { b: [['Salón social', 60], ['Gimnasio', 60], ['Sauna y turco', 25], ['Cowork', 30]], x: [['Piscina', 60], ['Zona BBQ', 40]] },
+  6: { b: [['Salón social', 80], ['Gimnasio', 90], ['Spa, sauna y turco', 50], ['Sala de cine', 35], ['Cowork', 40]], x: [['Piscina', 120], ['Zona BBQ', 50]] } };
+function plateDims(poly) { if (!poly || poly.length < 3) return { L: 0, W: 0 }; const u = axisOf(poly), v = [-u[1], u[0]]; let a0 = 1e9, a1 = -1e9, b0 = 1e9, b1 = -1e9;
+  poly.forEach(p => { const x = p[0] * u[0] + p[1] * u[1], y = p[0] * v[0] + p[1] * v[1]; a0 = Math.min(a0, x); a1 = Math.max(a1, x); b0 = Math.min(b0, y); b1 = Math.max(b1, y); });
+  return { L: Math.max(a1 - a0, b1 - b0), W: Math.min(a1 - a0, b1 - b0) }; }
+/* En plantas anchas solo se aprovecha un anillo de ~10,5 m desde la fachada (9 m de apartamento + 1,5 m de corredor): el resto es patio o vacío.
+   Devuelve la fracción de la planta que forma el anillo, o null si la planta es angosta (corredor central). */
+function anillo(poly) { if (!poly || poly.length < 3) return null; const A = area(poly); if (!(A > 0)) return null; if (poly._r !== undefined) return poly._r;
+  const q = inset(poly, poly.map(() => 10.5)); poly._r = q.length ? Math.max(0, Math.min(1, (A - area(q)) / A)) : null; return poly._r; }
+function edificio(S, ts, kf, cuposReq, visAll) { const p = S.p, AT = S.geo.area, m2 = Math.max(10, p.m2Cupo), tw = ts.tw, nT = tw.length, Nmin = Math.min.apply(null, tw.map(t => t.N));
+  const fl = tw.map(t => { const a = []; for (let f = 0; f < t.N; f++) { const b = t.bands.find(b => f >= b.from && f < b.to); a.push((b ? b.area : 0) * kf); } return a; }),
+    ur = tw.map(t => { const a = []; for (let f = 0; f < t.N; f++) { const b = t.bands.find(b => f >= b.from && f < b.to); a.push(b ? anillo(b.poly) : null); } return a; });
+  const dims = tw.map(t => plateDims(t.bands[0] && t.bands[0].poly)), ef = Math.max(0.5, Math.min(1, (p.efApto || 96) / 100));
+  const fl0 = fl.reduce((x, a) => x + a[0], 0), comG = p.com && p.com.on ? fl0 * Math.max(0, Math.min(100, +p.com.pct || 0)) / 100 * 0.5 * 2 / 2 : 0;
+  const T = (p.tipos || []).filter(t => t.a >= 15 && t.pct > 0), sp = T.reduce((x, t) => x + t.pct, 0) || 1, pm = T.length ? T.reduce((x, t) => x + t.a * t.pct, 0) / sp : 55;
+  const pod = p.parqUbic === 'pod', avis = []; let k = 0, niv = 0, podCupos = 0; const capNivel = Math.max(1, Math.floor((AT * 0.85 - 70) / m2));
+  if (pod) { let acc = 0; for (let j = 1; j <= Nmin - 1; j++) { acc = fl.reduce((x, a) => x + a.slice(0, j).reduce((y, z) => y + z, 0), 0) * 0.9 - comG; k = j; if (acc / m2 >= cuposReq) break; } podCupos = Math.max(0, Math.floor(acc / m2));
+    if (k === 0 || podCupos < cuposReq) avis.push('El podio no alcanza para los ' + cuposReq + ' cupos con ' + Nmin + ' pisos: caben ' + podCupos + '. Usa sótanos o sube los pisos.'); }
+  else niv = Math.ceil(cuposReq / capNivel);
+  const sumTyp = tw.map((t, i) => { let x = 0; for (let f = k + 1; f < t.N; f++) x += fl[i][f]; return x; }), totTyp = sumTyp.reduce((x, y) => x + y, 0);
+  const comp = A => mezcla(A, p.tipos), est = AMEN[Math.max(3, Math.min(6, p.estrato || 4))];
+  let U = Math.floor(0.78 * (totTyp + fl.reduce((x, a, i) => x + (a[k] || 0), 0)) / pm), R = null;
+  for (let pass = 0; pass < 4; pass++) { R = { asc: [], esc: [], nuc: 0, corr: 0, typ: 0, gr: 0, vac: 0 }; const gAv = [];
+    tw.forEach((t, i) => { const uT = totTyp ? U * sumTyp[i] / totTyp : U / nT, na = p.nAsc > 0 ? Math.round(p.nAsc) : (t.N < 6 ? 0 : Math.max(t.N > 12 ? 2 : 1, Math.min(6, Math.ceil(uT / 40)))), ne = p.nEsc > 0 ? Math.round(p.nEsc) : (t.N <= 5 ? 1 : 2);
+      R.asc.push(na); R.esc.push(ne); const d = dims[i], nu = na * (ASC + VEST) + ne * ESC, fa = fl[i][k] || 0, cl = d.W >= 12 ? Math.max(0, d.L - 8) * CORR : d.L * 1.2, co = Math.min(cl, 0.25 * fa);
+      const fx = (a, r) => { if (r == null) { const ap = Math.max(0, a - nu - co); return { ap, co: Math.min(Math.max(0, a - nu), co), vac: 0 }; }
+        const ring = a * r, ap = Math.max(0, ring - nu) * 9 / 10.5; return { ap, co: Math.max(0, ring - nu) * 1.5 / 10.5, vac: a - ring }; };
+      for (let f = k + 1; f < t.N; f++) { const x = fx(fl[i][f], ur[i][f]); R.typ += x.ap * ef; R.nuc += Math.min(fl[i][f], nu); R.corr += x.co; R.vac += x.vac; }
+      const g = fx(fa, ur[i][k]); gAv.push(g.ap); R.nuc += Math.min(fa, nu); R.corr += g.co; R.vac += g.vac; });
+    const gAvT = gAv.reduce((x, y) => x + y, 0), aptsApprox = R.typ + gAvT * ef, ecpBase = visAll ? (U <= 150 ? 6 * U : 6 * 150 + 8.5 * (U - 150)) : (S.norm.tr === 'D' ? 15 : 10) * aptsApprox / 80;
+    const ecp = ecpBase + (comG ? 10 * comG / 120 : 0), f = Math.max(0.7, Math.min(2.2, Math.sqrt(Math.max(U, 1) / 60))), prog = est.b.reduce((x, y) => x + y[1], 0) * f, amenB = Math.max(0.2 * ecp, prog);
+    const lobby = 30 + 0.3 * U, tecn = 20 + 0.2 * U, bici = 0.5 * U, gnr = lobby + tecn + bici + amenB + (pod ? 0 : comG), over = Math.max(0, gnr - gAvT);
+    R.gAvT = gAvT; R.gnr = gnr; R.over = over; R.ecp = ecp; R.amenB = amenB; R.lobby = lobby; R.tecn = tecn; R.bici = bici; R.prog = prog; R.f = f;
+    R.aptos = Math.max(0, R.typ + Math.max(0, gAvT - gnr) * ef - over); U = comp(R.aptos).und; R.U = U; }
+  const mz = comp(R.aptos), foot = fl.reduce((x, a) => x + a[0], 0), libre = Math.max(0, AT - foot), podArea = fl.reduce((x, a) => x + a.slice(0, k).reduce((y, z) => y + z, 0), 0), tot = fl.reduce((x, a) => x + a.reduce((y, z) => y + z, 0), 0);
+  const verd = 0.4 * R.ecp, xs = est.b && est.x.reduce((x, y) => x + y[1], 0) * R.f;
+  if (R.over > 0) avis.push('Las zonas comunes y accesos (' + Math.round(R.gnr) + ' m²) superan el primer piso disponible; ocupan ' + Math.round(R.over) + ' m² de los pisos de apartamentos.');
+  if (libre + 0.001 < verd) avis.push('El equipamiento comunal exige ' + Math.round(verd) + ' m² de zonas verdes y recreativas en áreas libres y solo quedan ' + Math.round(libre) + ' m² sin construir.');
+  return { k, pod, niv, capNivel, podCupos, nT, asc: R.asc, esc: R.esc, aptos: R.aptos, mz, und: mz.und, comG, avis, tot, podArea,
+    nuc: R.nuc, corr: R.corr, vac: R.vac, gnr: R.gnr, lobby: R.lobby, tecn: R.tecn, bici: R.bici, amenB: R.amenB, prog: R.prog, amen: est, f: R.f, ecp: R.ecp, ecpVerdes: verd, ecpComun: 0.2 * R.ecp, libre, xs, merma: Math.max(0, tot - podArea - R.aptos - R.nuc - R.corr - R.vac - R.gnr) }; }
 /* VIS / VIP según el precio de venta del apartamento (en salarios mínimos) */
 function clasif(a, p, tr) { if (!(p.precioM2 > 0)) return ''; const v = a * p.precioM2 / (p.smmlv || SMMLV); return v <= 90 ? 'VIP' : v <= (tr === 'R' ? 175 : 150) ? 'VIS' : 'No VIS'; }
 /* Estacionamientos del art. 389 */
@@ -161,9 +206,11 @@ function compute(S) { const p = S.p, L = limits(S), AT = S.geo.area, avis = L.no
   const pt = []; for (let i = 0; i < nT; i++) pt.push(Math.max(1, Math.min(60, Math.round(p.ptor && p.ptor[i] > 0 ? p.ptor[i] : N)))); N = Math.max(...pt);
   const ts = towerSet(S, nT, pt), e = ts.e, pct = p.computable / 100; let built = e.built, comp = built * pct, limitado = false;
   if (L.cap && comp > L.cap * AT + 0.5) { comp = L.cap * AT; built = comp / pct; limitado = true; }
-  const ic = AT ? comp / AT : 0, io = AT ? e.foot / AT : 0, comG = p.com && p.com.on ? Math.min(built * 0.5, e.foot * Math.max(0, Math.min(100, +p.com.pct || 0)) / 100) : 0, vend = (built - comG) * p.eficiencia / 100, mz = mezcla(vend, p.tipos), und = mz.und;
-  const vis = mz.filas.filter(t => t.und > 0).map(t => Object.assign({ c: clasif(t.a, p, S.norm.tr) }, t)), visAll = vis.length > 0 && vis.every(t => t.c === 'VIS' || t.c === 'VIP');
-  const aParq = built * p.parqPct / 100, cupos = Math.floor(aParq / Math.max(10, p.m2Cupo)), top = e.bands[e.bands.length - 1], parq = parqInfo(S, built, cupos, visAll, und);
+  const ic = AT ? comp / AT : 0, io = AT ? e.foot / AT : 0, cl = (p.tipos || []).filter(t => t.a >= 15 && t.pct > 0).map(t => clasif(t.a, p, S.norm.tr)), visAll = cl.length > 0 && cl.every(c => c === 'VIS' || c === 'VIP');
+  const aParq = built * p.parqPct / 100, cupos = Math.floor(aParq / Math.max(10, p.m2Cupo)), ed = edificio(S, ts, e.built ? built / e.built : 1, cupos, visAll), comG = ed.comG, vend = ed.aptos, mz = ed.mz, und = mz.und;
+  const vis = mz.filas.filter(t => t.und > 0).map(t => Object.assign({ c: clasif(t.a, p, S.norm.tr) }, t));
+  avis.push.apply(avis, ed.avis);
+  const top = e.bands[e.bands.length - 1], parq = parqInfo(S, built, cupos, visAll, und);
   if (N > L.nMax) avis.push('Los ' + N + ' pisos superan el máximo de ' + L.nMax + ' que resulta de la norma para este lote.');
   if (S.norm.aero > 0 && e.H > S.norm.aero) avis.push('La altura (' + e.H.toFixed(1) + ' m) supera el límite de la Aeronáutica Civil (' + S.norm.aero + ' m).');
   if (top && top.area < MINPLATE && e.foot >= MINPLATE) avis.push('Con los aislamientos, la planta de los pisos altos queda en ' + top.area.toFixed(0) + ' m²: es poco viable.');
@@ -178,7 +225,7 @@ function compute(S) { const p = S.p, L = limits(S), AT = S.geo.area, avis = L.no
   if (S.g.esquina) avis.push('Lote esquinero: no se exige aislamiento posterior; la transición se resuelve con patio en la esquina interior.');
   if (S.geo.fondo && S.geo.fondo <= 8) avis.push('Fondo de 8 m o menos: no se exige aislamiento posterior.');
   const tb = ts.tw.reduce((x, t) => x + t.built, 0) || 1, ok = N <= L.nMax && ts.ok && !(S.norm.aero > 0 && e.H > S.norm.aero) && !(parq.ref && cupos < parq.cuposMin) && (nT === 1 || ts.tw.every(t => { const b = t.bands[t.bands.length - 1]; return b && b.area >= MINPLATE; }));
-  return { N, nT, pt, nAuto, ts, tw: ts.tw.map((t, i) => ({ N: pt[i], built: t.built * built / (e.built || 1), share: t.built / tb })), sep: ts.sep, comG, comVend: comG * 0.9, vis, visAll, parq, ok, L, e, sb: e.sb, built, comp, ic, io, vend, und, mz, aParq, cupos, limitado, avis, ob: oblig(S, ic), valorLote: (S.norm.vref || 0) * AT }; }
+  return { ed, N, nT, pt, nAuto, ts, tw: ts.tw.map((t, i) => ({ N: pt[i], built: t.built * built / (e.built || 1), share: t.built / tb })), sep: ts.sep, comG, comVend: comG * 0.9, vis, visAll, parq, ok, L, e, sb: e.sb, built, comp, ic, io, vend, und, mz, aParq, cupos, limitado, avis, ob: oblig(S, ic), valorLote: (S.norm.vref || 0) * AT }; }
 
 /* ---------------- Servicios oficiales ---------------- */
 async function ags(url, params, post) { const q = new URLSearchParams(Object.assign({ f: 'json' }, params));
@@ -305,6 +352,10 @@ const CSS = `
 .lt-b{border:0;border-radius:99px;height:40px;padding:0 16px;font:inherit;font-weight:800;font-size:13px;background:var(--acc,#4FC3F7);color:var(--on-acc,#06222E);cursor:pointer}.lt-b.g{background:var(--sunk,#222);color:inherit;padding:0 14px;font-size:18px}
 .lt-lot{display:flex;align-items:center;gap:6px;border-top:1px solid var(--line,#2B2D2A)}.lt-lot:first-of-type{border-top:0}.lt-lot>button:first-child{flex:1;min-width:0;text-align:left;border:0;background:transparent;color:inherit;font:inherit;padding:10px 2px;cursor:pointer}.lt-lot b{display:block;font-size:14px}.lt-lot small{display:block;font-size:11.5px;color:var(--muted,#9A9D96);margin-top:2px}
 .lt-x{border:0;min-width:36px;height:36px;border-radius:99px;background:transparent;color:var(--muted,#9A9D96);font:inherit;font-size:18px;cursor:pointer;padding:0 8px}.lt-x.on{background:#EF5350;color:#fff;font-size:12px;font-weight:800;padding:0 12px}
+.lt-sbar{display:flex;height:14px;border-radius:99px;overflow:hidden;margin:2px 0 12px;background:var(--sunk,#222)}.lt-sbar i{display:block;min-width:2px}.lt-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px}
+.lt-save2{flex-direction:column;align-items:stretch}.lt-save2 div{display:flex;gap:6px}.lt-find{width:100%;box-sizing:border-box;height:40px;border-radius:99px;border:1px solid var(--line,#2B2D2A);background:var(--sunk,#222);color:inherit;font:inherit;font-size:14px;padding:0 14px;color-scheme:dark}
+.lt-lotw{border-top:1px solid var(--line,#2B2D2A);padding-bottom:8px}.lt-lotw:first-of-type{border-top:0}.lt-lotw .lt-lot{border-top:0}.lt-tags{display:flex;flex-wrap:wrap;gap:6px;padding:0 2px}
+.lt-tag{border:0;border-radius:99px;padding:4px 10px;font:inherit;font-size:11.5px;font-weight:700;background:var(--sunk,#222);color:var(--muted,#9A9D96);cursor:pointer}.lt-tag[aria-pressed=true]{background:color-mix(in srgb,var(--acc,#4FC3F7) 24%,transparent);color:var(--acc-ink,#8FD8FA)}.lt-tag.add{background:transparent;border:1px dashed var(--line,#2B2D2A)}
 .lt-card{background:var(--panel,#17191A);border-radius:var(--r,18px);padding:14px 16px;margin-bottom:10px}
 .lt-card h3{margin:0 0 8px;font-size:13px;letter-spacing:.02em;text-transform:uppercase;color:var(--muted,#9A9D96)}
 .lt-h{font-size:19px;font-weight:800;line-height:1.2;margin:0}
@@ -386,7 +437,10 @@ function draw() { const m = U.map, S = U.S; if (!m || !U.mapOk) return; const se
   set('lot', [poly(S.geo.ring)]);
   const r = S.geo.ring; set('edges', r.map((a, i) => ({ type: 'Feature', properties: { i, c: ROLE_COLOR[S.roles[i]] }, geometry: { type: 'LineString', coordinates: [S.pr.back(a), S.pr.back(r[(i + 1) % r.length])] } })));
   const R = U.R, h = S.p.hPiso, cols = [U.acc || '#4FC3F7'];
-  set('env', R ? (R.e.all || R.e.bands).filter(b => b.poly.length).map((b, k) => poly(b.poly, { b: U.d3 ? b.from * h : 0, h: U.d3 ? b.to * h : 0.2, c: cols[0] })) : []);
+  const kp = R && R.ed && R.ed.pod ? R.ed.k : 0, segs = [];
+  if (R) (R.e.all || R.e.bands).filter(b => b.poly.length).forEach(b => { const cut = [b.from]; [kp, kp + 1].forEach(c => { if (c > b.from && c < b.to) cut.push(c); }); cut.push(b.to);
+    for (let i = 0; i < cut.length - 1; i++) { const a = cut[i], z = cut[i + 1]; if (!U.d3 && i) break; segs.push(poly(b.poly, { b: U.d3 ? a * h : 0, h: U.d3 ? z * h : 0.2, c: a < kp ? '#FFB74D' : a === kp ? '#26C6DA' : cols[0] })); } });
+  set('env', segs);
   m.setLayoutProperty('cons-x', 'visibility', U.d3 ? 'visible' : 'none'); }
 async function overlay() { const m = U.map, o = OVS[U.ov]; if (!m || !U.mapOk) return; const src = m.getSource('ov');
   if (!o || m.getZoom() < 13.5) { src.setData(FC()); return; }
@@ -481,6 +535,13 @@ function pCab() { const S = U.S, p = S.p, R = U.R, n = R.nT, c = p.com || { on: 
    <div class="lt-opt"><button data-la="com" data-k="1" aria-pressed="${!!c.on}">Con comercio</button><button data-la="com" data-k="0" aria-pressed="${!c.on}">Solo vivienda</button></div>
    ${c.on ? `<div class="lt-tp lt-pt"><span>Comercio en</span><input type="number" inputmode="decimal" min="0" max="100" step="5" value="${c.pct}" data-pc="1" aria-label="Porcentaje del primer piso en comercio"><span class="lt-un">% del 1.er piso</span></div>` : ''}
    <p class="lt-note" style="margin:8px 0 0">Los usos comerciales dependen del área de actividad y del frente a la malla vial arterial (arts. 243 y 272); en vías arteriales al menos el 50 % de la fachada del primer piso debe ser comercio, servicios o dotacional, y en todos los casos al menos 30 %.</p></div>
+  <div class="lt-card"><h3>Parqueo, estrato y núcleo</h3>
+   <div class="lt-opt"><button data-la="ubic" data-k="sot" aria-pressed="${p.parqUbic !== 'pod'}">Parqueo en sótanos</button><button data-la="ubic" data-k="pod" aria-pressed="${p.parqUbic === 'pod'}">Parqueo en pisos (podio)</button></div>
+   <div class="lt-opt" style="margin-top:8px">${[3, 4, 5, 6].map(e => `<button data-la="estr" data-k="${e}" aria-pressed="${(p.estrato || 4) === e}">Estrato ${e}</button>`).join('')}</div>
+   <div class="lt-tp lt-pt" style="margin-top:10px"><span>Ascensores</span><input type="number" inputmode="numeric" min="0" max="8" step="1" value="${p.nAsc || 0}" data-pn="nAsc" aria-label="Ascensores por torre"><span class="lt-un">por torre · 0 = auto</span></div>
+   <div class="lt-tp lt-pt"><span>Escaleras</span><input type="number" inputmode="numeric" min="0" max="4" step="1" value="${p.nEsc || 0}" data-pn="nEsc" aria-label="Escaleras por torre"><span class="lt-un">por torre · 0 = auto</span></div>
+   <p class="lt-note" style="margin:8px 0 0">El estrato define las zonas comunes (gimnasio, sauna, salón social...). Las cantidades y dimensiones de ascensores y escaleras son criterios de diseño, no del POT: confírmalas con el diseñador y la NSR-10.</p></div>
+  <div data-out="edif"></div><div data-out="amen"></div>
   <div class="lt-card"><h3>Escenarios</h3><p class="lt-note" style="margin:0 0 8px">Prueba 1, 2 y 3 torres con la altura máxima de la norma y alturas menores, y las compara.</p>
    <button class="lt-cta" data-la="gen" style="padding:11px;font-size:14px">Generar escenarios</button><div data-out="scn" style="margin-top:10px"></div></div>
   <div data-out="parq"></div>`; }
@@ -494,18 +555,31 @@ function oCabTop() { const R = U.R, S = U.S;
 function oScn() { const L = U.scn; if (!L) return ''; const cur = U.R;
   return `<div class="lt-scb h"><span>Torres × pisos</span><span>Aptos</span><span>Índice</span><span>Cupos mín.</span><span>Estado</span></div>` + L.map((x, i) => { const R = x.R, on = R.nT === cur.nT && R.pt.join() === cur.pt.join();
     return `<button class="lt-scb" data-la="scnpick" data-k="${i}" aria-pressed="${on}"><b>${x.n} × ${x.N}</b><span>${nf(R.und)}</span><span>${nf(R.ic, 2)}</span><span>${R.parq.ref ? nf(R.parq.cuposMin) : '—'}</span><span style="color:${R.ok ? '#66BB6A' : '#FFB74D'}">${R.ok ? 'Cumple' : 'Revisar'}</span></button>`; }).join('') + '<p class="lt-note">Toca un escenario para verlo en 3D y usarlo en el proyecto.</p>'; }
+function oEdif() { const R = U.R, d = R.ed, S = U.S, c = { pq: '#FFB74D', nu: '#9E9E9E', cm: '#26C6DA', vc: '#546E7A', ap: U.acc || '#4FC3F7' };
+  const seg = [['Parqueo en pisos', d.podArea, c.pq], ['Ascensores y escaleras', d.nuc, c.nu], ['Corredores', d.corr, '#B0BEC5'], ['Zonas comunes y accesos', d.gnr, c.cm], ['Patios y vacíos', d.vac, c.vc], ['Apartamentos', d.aptos, c.ap]].filter(x => x[1] > 0.5), tot = Math.max(1, d.tot);
+  const pct = v => nf(v * 100 / tot) + ' %';
+  return `<div class="lt-card"><h3>Áreas del edificio</h3><div class="lt-sbar">${seg.map(x => `<i style="flex:${x[1]};background:${x[2]}" title="${x[0]}"></i>`).join('')}</div>`
+   + kv(seg.map(x => [`<span class="lt-dot" style="background:${x[2]}"></span>${x[0]}`, nf(x[1]) + ' m² · ' + pct(x[1])]).concat([
+     ['Ascensores / escaleras', d.asc.map((a, i) => (d.nT > 1 ? 'T' + (i + 1) + ': ' : '') + a + ' / ' + d.esc[i]).join(' · ')], d.comG ? ['Comercio', nf(R.comVend) + ' m² (' + nf(d.comG) + ' brutos)'] : null,
+     ['Eficiencia real', nf(d.aptos * 100 / Math.max(1, d.tot - d.podArea)) + ' % del área sobre el parqueo']])) +
+   `<p class="lt-note">Las plantas anchas solo aprovechan unos 10,5 m desde la fachada (apartamento más corredor); el resto queda como patio o vacío. Es un cálculo por áreas: el dibujo en planta viene después.</p></div>`; }
+function oAmen() { const R = U.R, d = R.ed, f = d.f, ex = d.amen.x;
+  return `<div class="lt-card"><h3>Zonas comunes y equipamiento comunal</h3>` + kv(d.amen.b.map(([n, a]) => [esc(n), nf(a * f) + ' m²']).concat(ex.map(([n, a]) => [esc(n) + ' (exterior)', nf(a * f) + ' m²']), [
+    ['Lobby y portería', nf(d.lobby) + ' m²'], ['Cuartos técnicos y acopio', nf(d.tecn) + ' m²'], ['Bicicletero', nf(d.bici) + ' m²'],
+    ['Equipamiento comunal exigido', nf(d.ecp) + ' m² (Anexo 5, 1.3.2)'], ['Zonas verdes y recreativas', nf(d.ecpVerdes) + ' m² · disponibles ' + nf(d.libre) + ' m² libres'], ['Servicios comunales construidos', nf(d.ecpComun) + ' m² mínimo · se destinan ' + nf(d.amenB) + ' m²']])) +
+   `<p class="lt-note">Exigencia: 10 m² por cada 80 m² de área en vivienda no VIS (15 en desarrollo) o 6 m² por unidad en VIS/VIP; al menos 40 % en zonas verdes y 20 % en servicios comunales. El programa de zonas comunes por estrato es un supuesto de mercado.</p></div>`; }
 function oParq() { const R = U.R, P = R.parq, S = U.S;
   if (!P.ref) return `<div class="lt-card"><h3>Parqueaderos</h3><p class="lt-note" style="margin:0">No tengo confirmado el porcentaje del art. 389 para el área ${esc(S.norm.aaCod || '')}. Se usa el valor que fijes en Proyecto (${nf(R.cupos)} cupos, ${nf(R.parq.porApto, 2)} por apartamento).</p></div>`;
   return `<div class="lt-card"><h3>Parqueaderos (art. 389)</h3>` + kv([['Mínimo exigido', P.pctMin ? nf(P.cuposMin) + ' cupos · ' + P.pctMin + ' % del área construida' + (P.visMin ? ' (VIS/VIP)' : '') : 'No se exige mínimo'],
     ['Máximo sin pago', nf(P.cuposMax) + ' cupos · ' + P.pctMax + ' %'], ['Con pago compensatorio', 'hasta ' + nf(P.cuposMaxAdic) + ' cupos · +' + P.pctAdic + ' %'],
-    ['En el proyecto', nf(P.cupos) + ' cupos' + (P.cupos < P.cuposMin ? ' · no cumple el mínimo' : '')], ['Por apartamento', nf(P.porApto, 2)], ['Niveles de sótano aprox.', nf(P.niveles)]]) +
+    ['En el proyecto', nf(P.cupos) + ' cupos' + (P.cupos < P.cuposMin ? ' · no cumple el mínimo' : '')], ['Por apartamento', nf(P.porApto, 2)], [R.ed.pod ? 'Parqueo en pisos' : 'Sótanos', R.ed.pod ? R.ed.k + ' piso' + (R.ed.k === 1 ? '' : 's') + ' de podio · caben ' + nf(R.ed.podCupos) + ' cupos' : nf(R.ed.niv) + ' nivel' + (R.ed.niv === 1 ? '' : 'es') + ' · ' + nf(R.ed.capNivel) + ' cupos por nivel']]) +
    `<p class="lt-note">Los cupos de visitantes y de comercio van dentro de estos porcentajes. El porcentaje del proyecto se fija en la pestaña Proyecto. ${S.norm.aaCod === 'AAPRSU' ? 'El mínimo de 8 % baja a 6 % si todas las tipologías son VIS o VIP.' : ''}</p></div>`; }
 function pProy() { const S = U.S, pq = PARQ[S.norm.aaCod];
   return `<div data-out="proyTop"></div>
   <div class="lt-card"><h3>Tipologías de apartamento</h3><div data-tp-box>${pTip()}</div></div>
   <div data-out="mezcla"></div>
   <div class="lt-card"><h3>Supuestos del proyecto</h3>
-   ${sl('eficiencia', 'Área vendible sobre área construida', 55, 92, 1, '%', 'Lo que queda después de puntos fijos, circulaciones y zonas comunes.')}
+   ${sl('efApto', 'Aprovechamiento de la planta de apartamentos', 85, 100, 1, '%', 'Muros comunes, ductos y pérdidas en la planta tipo. Los ascensores, escaleras, corredores y zonas comunes se calculan aparte en Cabida.')}
    ${sl('computable', 'Área que cuenta para el índice', 60, 100, 1, '%', 'El índice no incluye estacionamientos, circulaciones ni cuartos técnicos (art. 266).')}
    ${sl('parqPct', 'Estacionamientos sobre área construida', 0, 35, 1, '%', pq ? 'Tope de ' + pq.max + ' % para ' + esc(S.norm.aaCod) + '; hasta ' + pq.adic + ' % más con pago compensatorio (art. 389).' : 'Valor por verificar para esta área de actividad (art. 389).')}
    ${sl('m2Cupo', 'Área por cupo, con maniobra', 18, 35, 1, 'm²')}</div>
@@ -517,24 +591,39 @@ function oProyTop() { const R = U.R, S = U.S;
    <div><span>Parqueaderos</span><b>${nf(R.cupos)}</b><small>${nf(R.aParq)} m², tope aproximado</small></div>
    <div><span>Valor del lote</span><b>${R.valorLote ? fM(R.valorLote) : '—'}</b><small>${R.valorLote ? 'referencia Catastro' : 'sin valor de referencia'}</small></div></div>`; }
 const LH = () => (H() || {}).lotes, defName = () => (U.S.predio.dir || ('Lote ' + (U.S.predio.chip || ''))).trim();
-function lotBar() { if (!U.S) return ''; if (U.saving) return `<form class="lt-save" data-form="save"><input name="n" value="${esc(U.lotName || defName())}" maxlength="60" aria-label="Nombre del lote" autocomplete="off"><button class="lt-b">Guardar</button><button type="button" class="lt-b g" data-la="savex" aria-label="Cancelar">×</button></form>`;
+function lotBar() { if (!U.S) return ''; if (U.saving) return `<form class="lt-save lt-save2" data-form="save"><input name="n" value="${esc(U.lotName || defName())}" maxlength="60" aria-label="Nombre del lote" autocomplete="off"><input name="t" value="${esc((U.lotTags || []).join(', '))}" maxlength="120" placeholder="Etiquetas separadas por coma (ej. compra, Chapinero)" aria-label="Etiquetas" autocomplete="off"><div><button class="lt-b">Guardar</button><button type="button" class="lt-b g" data-la="savex" aria-label="Cancelar">×</button></div></form>`;
   return `<div class="lt-opt lt-bar"><button data-la="savo">${ic('save')}${U.lotId ? 'Actualizar guardado' : 'Guardar lote'}</button><button data-la="lotes">Mis lotes</button></div>`; }
-async function guardar(nombre) { const S = U.S, R = U.R, L = LH(); if (!L) { tell('Guardar no está disponible aquí'); return; }
-  const d = { id: U.lotId || undefined, nombre: (nombre || '').trim() || defName(), code: S.code, chip: S.predio.chip || '', dir: S.predio.dir || '', area: Math.round(S.geo.area), p: JSON.parse(JSON.stringify(S.p)), roles: S.roles.slice(),
+function parseTags(v) { const o = []; String(v || '').split(',').forEach(t => { t = t.trim().replace(/\s+/g, ' ').slice(0, 24); if (t && !o.some(x => x.toLowerCase() === t.toLowerCase())) o.push(t); }); return o.slice(0, 8); }
+async function guardar(nombre, tags) { const S = U.S, R = U.R, L = LH(); if (!L) { tell('Guardar no está disponible aquí'); return; }
+  const d = { id: U.lotId || undefined, nombre: (nombre || '').trim() || defName(), code: S.code, chip: S.predio.chip || '', dir: S.predio.dir || '', area: Math.round(S.geo.area), tags: parseTags(tags), p: JSON.parse(JSON.stringify(S.p)), roles: S.roles.slice(),
     res: { torres: R.nT, pisos: R.pt.join('+'), und: R.und, ic: +R.ic.toFixed(2), built: Math.round(R.built), vend: Math.round(R.vend), cupos: R.cupos } };
   if (!d.id) delete d.id; loading('Guardando…');
-  try { const r = await L.save(d); U.lotId = r.id; U.lotName = d.nombre; U.saving = false; tell('Lote guardado en tu cuenta'); panel(); } catch (e) { tell('No se pudo guardar el lote. Revisa tu conexión.'); }
+  try { const r = await L.save(d); U.lotId = r.id; U.lotName = d.nombre; U.lotTags = d.tags; U.saving = false; tell('Lote guardado en tu cuenta'); panel(); } catch (e) { tell('No se pudo guardar el lote. Revisa tu conexión.'); }
   loading(''); }
 async function verLotes() { U.view = 'lotes'; U.cands = null; U.lots = null; U.del = null; panel();
   try { U.lots = ((await LH().list()) || []).sort((a, b) => (b.ts || 0) - (a.ts || 0)); } catch (e) { U.lots = []; tell('No se pudieron leer tus lotes'); } if (U.view === 'lotes') panel(); }
+function lotFiltrados() { let L = (U.lots || []).slice(); const q = (U.lq || '').trim().toLowerCase();
+  if (q) L = L.filter(l => [l.nombre, l.dir, l.chip, (l.tags || []).join(' ')].join(' ').toLowerCase().includes(q));
+  (U.ltags || []).forEach(t => { L = L.filter(l => (l.tags || []).includes(t)); });
+  const o = U.lsort || 'rec'; L.sort(o === 'nom' ? (a, b) => String(a.nombre).localeCompare(String(b.nombre), 'es') : o === 'apt' ? (a, b) => ((b.res || {}).und || 0) - ((a.res || {}).und || 0) : (a, b) => (b.ts || 0) - (a.ts || 0)); return L; }
+function lotRow(l) { const r = l.res || {}, tg = l.tags || [];
+  return `<div class="lt-lotw"><div class="lt-lot"><button data-la="lotopen" data-k="${esc(l.id)}"><b>${esc(l.nombre || l.dir)}</b><small>${[esc(l.dir), r.torres ? r.torres + ' torre' + (r.torres > 1 ? 's' : '') + ' · ' + esc(r.pisos) + ' pisos' : '', r.und != null ? nf(r.und) + ' aptos' : '', r.ic ? 'IC ' + nf(r.ic, 2) : '', l.area ? nf(l.area) + ' m²' : ''].filter(Boolean).join(' · ')}</small></button>
+   <button class="lt-x${U.del === l.id ? ' on' : ''}" data-la="lotdel" data-k="${esc(l.id)}" aria-label="Borrar lote">${U.del === l.id ? 'Confirmar' : '×'}</button></div>
+   ${U.tagEdit === l.id ? `<form class="lt-save" data-form="tags" data-id="${esc(l.id)}"><input name="t" value="${esc(tg.join(', '))}" maxlength="120" placeholder="Etiquetas separadas por coma" aria-label="Etiquetas del lote" autocomplete="off"><button class="lt-b">OK</button></form>`
+    : `<div class="lt-tags">${tg.map(t => `<button class="lt-tag" data-la="ltag" data-k="${esc(t)}" aria-pressed="${(U.ltags || []).includes(t)}">${esc(t)}</button>`).join('')}<button class="lt-tag add" data-la="lotag" data-k="${esc(l.id)}">${tg.length ? 'Editar' : '+ Etiquetas'}</button></div>`}</div>`; }
+function lotRows() { const L = lotFiltrados(); return L.length ? L.map(lotRow).join('') : '<p class="lt-note">Ningún lote coincide con el filtro.</p>'; }
+async function etiquetar(id, v) { const l = (U.lots || []).find(x => x.id === id); if (!l) return; l.tags = parseTags(v); U.tagEdit = null;
+  try { const r = await LH().save(l); l.ts = r.ts || l.ts; if (U.lotId === id) U.lotTags = l.tags; tell('Etiquetas guardadas'); } catch (e) { tell('No se pudieron guardar las etiquetas'); } panel(); }
 function pLotes() { const L = U.lots;
   const back = `<div class="lt-opt lt-bar"><button data-la="lotback">${U.S ? 'Volver al lote' : 'Cerrar lista'}</button></div>`;
   if (!LH()) return back + '<p class="lt-note">Guardar lotes no está disponible aquí.</p>';
   if (!L) return back + '<p class="lt-note">Leyendo tus lotes…</p>';
   if (!L.length) return back + '<div class="lt-card"><p class="lt-h">Aún no tienes lotes guardados</p><p class="lt-sub" style="margin-top:6px">Analiza un lote y toca "Guardar lote". Se guarda en tu cuenta y lo ves desde cualquier equipo.</p></div>';
-  return back + `<div class="lt-card"><h3>Mis lotes (${L.length})</h3>` + L.map(l => { const r = l.res || {};
-    return `<div class="lt-lot"><button data-la="lotopen" data-k="${esc(l.id)}"><b>${esc(l.nombre || l.dir)}</b><small>${[esc(l.dir), r.torres ? r.torres + ' torre' + (r.torres > 1 ? 's' : '') + ' · ' + esc(r.pisos) + ' pisos' : '', r.und != null ? nf(r.und) + ' aptos' : '', r.ic ? 'IC ' + nf(r.ic, 2) : '', l.area ? nf(l.area) + ' m²' : ''].filter(Boolean).join(' · ')}</small></button>
-     <button class="lt-x${U.del === l.id ? ' on' : ''}" data-la="lotdel" data-k="${esc(l.id)}" aria-label="Borrar lote">${U.del === l.id ? 'Confirmar' : '×'}</button></div>`; }).join('') + '</div>'; }
+  const cnt = {}; L.forEach(l => (l.tags || []).forEach(t => { cnt[t] = (cnt[t] || 0) + 1; })); const tags = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a] || a.localeCompare(b, 'es'));
+  return back + `<div class="lt-card"><h3>Mis lotes (${L.length})</h3><input class="lt-find" type="search" data-lq placeholder="Buscar por nombre, dirección o etiqueta" value="${esc(U.lq || '')}" aria-label="Buscar lotes" autocomplete="off">
+   <div class="lt-opt" style="margin:8px 0">${[['rec', 'Recientes'], ['nom', 'Nombre'], ['apt', 'Más aptos']].map(([k, n]) => `<button data-la="lsort" data-k="${k}" aria-pressed="${(U.lsort || 'rec') === k}">${n}</button>`).join('')}</div>
+   ${tags.length ? `<div class="lt-opt" style="margin-bottom:6px">${tags.map(t => `<button data-la="ltag" data-k="${esc(t)}" aria-pressed="${(U.ltags || []).includes(t)}">${esc(t)} · ${cnt[t]}</button>`).join('')}${(U.ltags || []).length ? '<button data-la="lclear">Quitar filtros</button>' : ''}</div>` : '<p class="lt-note" style="margin:0 0 6px">Agrega etiquetas a tus lotes para agruparlos y filtrarlos.</p>'}
+   <div data-lotlist>${lotRows()}</div></div>`; }
 function panel() { const el = U.el.querySelector('[data-panel]');
   if (U.view === 'lotes') { el.innerHTML = pLotes(); el.scrollTop = 0; return; }
   if (U.cands) { el.innerHTML = `<div class="lt-card"><h3>${U.cands.length} lotes coinciden</h3><div class="lt-list">${U.cands.map(c => `<button data-la="cand" data-k="${esc(c.code)}"><b>${esc(c.dir)}</b><small>${[c.barrio, c.n > 1 ? c.n + ' predios' : c.chip].filter(Boolean).map(esc).join(' · ')}</small></button>`).join('')}</div></div>`; return; }
@@ -544,10 +633,10 @@ function panel() { const el = U.el.querySelector('[data-panel]');
     <div class="lt-al"><i class="n0"></i><div><b>Proyecto</b><p>Apartamentos, parqueaderos y valor del lote, listos para la factibilidad.</p></div></div></div>
     <div class="lt-opt"><button data-la="lotes">${ic('save')}Mis lotes guardados</button></div><p class="lt-note">Datos en vivo de Catastro Distrital (IDECA) y de la Secretaría Distrital de Planeación.</p>`; return; }
   el.innerHTML = lotBar() + (U.tab === 'norma' ? pNorma() : U.tab === 'vol' ? pVol() : U.tab === 'cab' ? pCab() : pProy()); outs(); el.scrollTop = 0; }
-function outs() { const O = { volTop: oVolTop, sb: oSb, ob: oOb, proyTop: oProyTop, mezcla: oMezcla, cabTop: oCabTop, parq: oParq, scn: oScn }; U.el.querySelectorAll('[data-out]').forEach(e => { e.innerHTML = O[e.dataset.out](); }); }
+function outs() { const O = { volTop: oVolTop, sb: oSb, ob: oOb, proyTop: oProyTop, mezcla: oMezcla, cabTop: oCabTop, parq: oParq, scn: oScn, edif: oEdif, amen: oAmen }; U.el.querySelectorAll('[data-out]').forEach(e => { e.innerHTML = O[e.dataset.out](); }); }
 function recalc(full) { if (!U.S) return; U.R = compute(U.S); if (full) panel(); else outs(); draw(); save(); }
 function loading(t) { U.busy = !!t; const l = U.el.querySelector('[data-load]'); l.hidden = !t; l.textContent = t || ''; }
-async function abrir(code, geom, keep) { loading('Consultando Catastro y POT…'); U.cands = null; U.scn = null; U.view = null; U.saving = false; U.lotId = (keep && keep.id) || null; U.lotName = '';
+async function abrir(code, geom, keep) { loading('Consultando Catastro y POT…'); U.cands = null; U.scn = null; U.view = null; U.saving = false; U.lotId = (keep && keep.id) || null; U.lotName = ''; U.lotTags = (keep && keep.tags) || [];
   try { const S = await cargar(code, geom); if (keep && keep.code === code) { Object.assign(S.p, keep.p || {}); if (keep.roles && keep.roles.length === S.roles.length) { S.roles = keep.roles; U.S = S; regeo(); } }
     U.S = S; U.R = compute(S); U.tab = 'norma'; tools(); panel(); draw(); fit(); save(); if (S.norm.sinPot) tell('No respondió el mapa del POT'); }
   catch (e) { tell(e.message || 'No se pudo consultar el lote'); } loading(''); }
@@ -562,8 +651,12 @@ function prefill() { const S = U.S, R = U.R, und = Math.max(1, R.und);
 function onClick(e) { const b = e.target.closest('[data-la]'); if (!b || b.tagName === 'FORM') return; const a = b.dataset.la, k = b.dataset.k, S = U.S;
   if (a === 'close') Lote.close();
   else if (a === 'lotes') verLotes();
+  else if (a === 'lsort') { U.lsort = k; panel(); }
+  else if (a === 'ltag') { const t = U.ltags || []; U.ltags = t.includes(k) ? t.filter(x => x !== k) : t.concat(k); panel(); }
+  else if (a === 'lclear') { U.ltags = []; U.lq = ''; panel(); }
+  else if (a === 'lotag') { U.tagEdit = k; panel(); const i = U.el.querySelector('[data-form=tags] input'); if (i) { i.focus(); i.select(); } }
   else if (a === 'lotback') { U.view = null; panel(); }
-  else if (a === 'lotopen') { const l = (U.lots || []).find(x => x.id === k); if (l) { U.view = null; abrir(l.code, null, { code: l.code, p: l.p, roles: l.roles, id: l.id }); } }
+  else if (a === 'lotopen') { const l = (U.lots || []).find(x => x.id === k); if (l) { U.view = null; abrir(l.code, null, { code: l.code, p: l.p, roles: l.roles, id: l.id, tags: l.tags }); } }
   else if (a === 'lotdel') { if (U.del !== k) { U.del = k; panel(); } else { U.del = null; LH().del(k).then(() => { U.lots = (U.lots || []).filter(x => x.id !== k); if (U.lotId === k) U.lotId = null; panel(); tell('Lote borrado'); }).catch(() => tell('No se pudo borrar el lote')); } }
   else if (a === 'savo') { U.saving = true; panel(); const i = U.el.querySelector('.lt-save input'); if (i) { i.focus(); i.select(); } }
   else if (a === 'savex') { U.saving = false; panel(); }
@@ -579,13 +672,17 @@ function onClick(e) { const b = e.target.closest('[data-la]'); if (!b || b.tagNa
   else if (a === 'tdel') { S.p.tipos.splice(+k, 1); tipRender(); }
   else if (a === 'tigual') { S.p.tipos.forEach(t => { t.pct = 20; }); tipRender(); }
   else if (a === 'torres') { S.p.torres = +k; S.p.ptor = []; S.p.auto = true; U.scn = null; recalc(true); }
+  else if (a === 'ubic') { S.p.parqUbic = k; recalc(true); }
+  else if (a === 'estr') { S.p.estrato = +k; recalc(true); }
   else if (a === 'cabmax') { S.p.ptor = []; S.p.auto = true; recalc(true); }
   else if (a === 'com') { S.p.com = Object.assign({ pct: 30 }, S.p.com, { on: k === '1' }); recalc(true); }
   else if (a === 'gen') { loading('Probando configuraciones…'); setTimeout(() => { try { U.scn = escenarios(S); } catch (e) { tell(e.message); } loading(''); outs(); }, 30); }
   else if (a === 'scnpick') { const x = (U.scn || [])[+k]; if (x) { S.p.torres = x.n; S.p.auto = false; S.p.pisos = x.N; S.p.ptor = []; recalc(true); } }
   else if (a === 'crear') { if (H().crear) H().crear(prefill()); else tell('Abre el analizador desde Proyecta para crear el proyecto'); } }
 function tipRender() { const b = U.el.querySelector('[data-tp-box]'); if (b) b.innerHTML = pTip(); recalc(false); }
-function onInput(e) { const pt = e.target.closest('[data-pt]'); if (pt && U.S) { const p = U.S.p; p.ptor = (p.ptor || []).slice(); p.ptor[+pt.dataset.pt] = Math.max(0, Math.round(+pt.value || 0)); p.auto = false; recalc(false); return; }
+function onInput(e) { const lq = e.target.closest('[data-lq]'); if (lq) { U.lq = lq.value; const b = U.el.querySelector('[data-lotlist]'); if (b) b.innerHTML = lotRows(); return; }
+   const pt = e.target.closest('[data-pt]'); if (pt && U.S) { const p = U.S.p; p.ptor = (p.ptor || []).slice(); p.ptor[+pt.dataset.pt] = Math.max(0, Math.round(+pt.value || 0)); p.auto = false; recalc(false); return; }
+  const pn = e.target.closest('[data-pn]'); if (pn && U.S) { U.S.p[pn.dataset.pn] = Math.max(0, Math.round(+pn.value || 0)); recalc(false); return; }
   const pc = e.target.closest('[data-pc]'); if (pc && U.S) { U.S.p.com = Object.assign({ on: true }, U.S.p.com, { pct: Math.max(0, Math.min(100, +pc.value || 0)) }); recalc(false); return; }
   const pp = e.target.closest('[data-pp]'); if (pp && U.S) { U.S.p[pp.dataset.pp] = Math.max(0, +pp.value || 0); recalc(false); return; }
   const tp = e.target.closest('[data-tp]'); if (tp && U.S) { const t = U.S.p.tipos[+tp.dataset.i]; if (t) { t[tp.dataset.tp] = Math.max(0, +tp.value || 0); recalc(false); } return; } const i = e.target.closest('[data-lp]'); if (!i || !U.S) return; const k = i.dataset.lp, v = +i.value; U.S.p[k] = v;
@@ -594,7 +691,8 @@ function onInput(e) { const pt = e.target.closest('[data-pt]'); if (pt && U.S) {
 
 const Lote = { open(opt) { opt = opt || {};
     if (!U.el) { const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st); const el = U.el = document.createElement('section'); el.id = 'lote'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Analizador de lotes de Bogotá'); el.innerHTML = shell(); document.body.appendChild(el);
-      el.addEventListener('click', onClick); el.addEventListener('input', onInput); el.addEventListener('submit', e => { e.preventDefault(); if (e.target.dataset.form === 'save') { guardar(e.target.elements.n.value); return; } const q = e.target.elements.q; q.blur(); onSearch(q.value); });
+      el.addEventListener('click', onClick); el.addEventListener('input', onInput); el.addEventListener('submit', e => { e.preventDefault(); if (e.target.dataset.form === 'save') { guardar(e.target.elements.n.value, e.target.elements.t.value); return; }
+    if (e.target.dataset.form === 'tags') { etiquetar(e.target.dataset.id, e.target.elements.t.value); return; } const q = e.target.elements.q; q.blur(); onSearch(q.value); });
       document.addEventListener('keydown', e => { if (e.key === 'Escape' && Lote.isOpen() && !/INPUT|TEXTAREA/.test((e.target || {}).tagName || '')) Lote.close(); });
       tools(); panel(); loadLib().then(initMap).catch(e => tell(e.message)); }
     U.el.hidden = false; document.body.classList.add('loteon'); if (U.map) setTimeout(() => U.map.resize(), 30);
