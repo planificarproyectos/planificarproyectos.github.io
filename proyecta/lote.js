@@ -478,9 +478,21 @@ function regeo() { const S = U.S, r = S.geo.ring, n = r.length; let fr = 0, main
 /* ---- Volumetría importada de un modelo validado: huellas en metros, por bloque y rango de pisos ---- */
 const unflat = a => { const o = []; for (let i = 0; i + 1 < a.length; i += 2) o.push([a[i], a[i + 1]]); return o; };
 function volPts(V) { return [].concat(...V.bl.filter(b => b.tipo === 't').map(b => unflat(b.p))); }
-function volAuto(S) { const V = S.vol, P = volPts(V); if (!P.length) { V.t = { rot: 0, dx: 0, dy: 0 }; return; } const n = P.length, cx = P.reduce((a, q) => a + q[0], 0) / n, cy = P.reduce((a, q) => a + q[1], 0) / n;
-  let sxx = 0, sxy = 0, syy = 0; P.forEach(q => { const x = q[0] - cx, y = q[1] - cy; sxx += x * x; sxy += x * y; syy += y * y; }); const am = 0.5 * Math.atan2(2 * sxy, sxx - syy), u = axisOf(S.geo.ring), al = Math.atan2(u[1], u[0]);
-  let d = (al - am) * 180 / Math.PI; while (d > 90) d -= 180; while (d < -90) d += 180; V.t = { rot: +d.toFixed(1), dx: 0, dy: 0 }; }
+function volAuto(S) { const V = S.vol, P = volPts(V); if (!P.length) { V.t = { rot: 0, dx: 0, dy: 0 }; return; }
+  /* Muestras: vértices de todos los bloques (torres y podio) + puntos intermedios de cada arista */
+  const Q = []; V.bl.forEach(b => { const r = unflat(b.p); r.forEach((q, i) => { const w = r[(i + 1) % r.length]; for (let k = 0; k < 3; k++) Q.push([q[0] + (w[0] - q[0]) * k / 3, q[1] + (w[1] - q[1]) * k / 3]); }); });
+  const n = P.length, cx = P.reduce((a, q) => a + q[0], 0) / n, cy = P.reduce((a, q) => a + q[1], 0) / n, R = S.geo.ring, lx = R.reduce((a, q) => a + q[0], 0) / R.length, ly = R.reduce((a, q) => a + q[1], 0) / R.length;
+  const inP = (x, y) => { let c = false; for (let i = 0, j = R.length - 1; i < R.length; j = i++) if ((R[i][1] > y) !== (R[j][1] > y) && x < (R[j][0] - R[i][0]) * (y - R[i][1]) / (R[j][1] - R[i][1]) + R[i][0]) c = !c; return c; };
+  const dE = (x, y) => { let m = 1e9; for (let i = 0; i < R.length; i++) { const a = R[i], b = R[(i + 1) % R.length], vx = b[0] - a[0], vy = b[1] - a[1], t = Math.max(0, Math.min(1, ((x - a[0]) * vx + (y - a[1]) * vy) / (vx * vx + vy * vy || 1))), dx = x - a[0] - t * vx, dy = y - a[1] - t * vy; m = Math.min(m, dx * dx + dy * dy); } return Math.sqrt(m); };
+  const score = (th, dx, dy) => { const c = Math.cos(th), sn = Math.sin(th); let sc = 0; for (const q of Q) { const x = lx + dx + c * (q[0] - cx) - sn * (q[1] - cy), y = ly + dy + sn * (q[0] - cx) + c * (q[1] - cy); if (!inP(x, y)) { const d = dE(x, y); sc += d * d; } } return sc + 0.01 * (dx * dx + dy * dy); };
+  let best = null;
+  for (let g = 0; g < 360; g += 6) { const th = g * Math.PI / 180; let dx = 0, dy = 0, sc = score(th, dx, dy); for (let st = 16; st >= 0.5; st /= 2) { let mv = true, it = 0; while (mv && it++ < 30) { mv = false; for (const [ax, ay] of [[st, 0], [-st, 0], [0, st], [0, -st]]) { const v = score(th, dx + ax, dy + ay); if (v < sc - 1e-9) { sc = v; dx += ax; dy += ay; mv = true; } } } }
+    if (!best || sc < best.sc) best = { sc, th, dx, dy }; }
+  let rot = best.th * 180 / Math.PI; while (rot > 180) rot -= 360;
+  /* afina el giro alrededor del mejor ángulo */
+  for (let st = 3; st >= 0.25; st /= 2) for (const d of [st, -st]) { const th = best.th + d * Math.PI / 180, sc = score(th, best.dx, best.dy); if (sc < best.sc) { best.sc = sc; best.th = th; } }
+  rot = best.th * 180 / Math.PI; while (rot > 180) rot -= 360; while (rot < -180) rot += 360;
+  V.t = { rot: +rot.toFixed(1), dx: +best.dx.toFixed(1), dy: +best.dy.toFixed(1), fuera: +Math.sqrt(best.sc).toFixed(1) }; }
 function volMap(S) { const V = S.vol, P = volPts(V), n = P.length || 1, cx = P.reduce((a, q) => a + q[0], 0) / n, cy = P.reduce((a, q) => a + q[1], 0) / n, r = S.geo.ring, lx = r.reduce((a, q) => a + q[0], 0) / r.length, ly = r.reduce((a, q) => a + q[1], 0) / r.length, t = V.t || {}, th = (+t.rot || 0) * Math.PI / 180, c = Math.cos(th), sn = Math.sin(th);
   return (x, y) => [lx + (+t.dx || 0) + c * (x - cx) - sn * (y - cy), ly + (+t.dy || 0) + sn * (x - cx) + c * (y - cy)]; }
 function volFeatures(S, poly) { const V = S.vol, M = volMap(S), out = [], niv = V.niv || [];
@@ -804,7 +816,7 @@ function onClick(e) { const b = e.target.closest('[data-la]'); if (!b || b.tagNa
   else if (a === 'tigual') { S.p.tipos.forEach(t => { t.pct = 20; }); tipRender(); }
   else if (a === 'sum') { U.sum = !U.sum; if (U.sum) tell('Toca en el mapa el predio vecino que quieres sumar'); panel(); }
   else if (a === 'sumx') { U.sum = false; abrir(S.code, null, { code: S.code, p: S.p, id: U.lotId, tags: U.lotTags, apodo: U.lotApodo, extra: [] }); }
-  else if (a === 'volc') { volAuto(S); S.vol.t.dx = 0; S.vol.t.dy = 0; draw(); panel(); }
+  else if (a === 'volc') { volAuto(S); draw(); panel(); }
   else if (a === 'volr') { S.vol.t.rot = +(((+S.vol.t.rot || 0) + 180) % 360).toFixed(1); draw(); panel(); }
   else if (a === 'volv') { U.volOn = U.volOn === false; draw(); panel(); }
   else if (a === 'volq') { S.vol = null; draw(); panel(); }
