@@ -72,9 +72,21 @@ const postR = h => h <= 12 ? 4 : h <= 18 ? 5 : h <= 27 ? 6 : h <= 36 ? 8 : h <= 
 const postMI = n => n <= 3 ? 0 : n <= 6 ? 5 : n <= 9 ? 6 : 8;
 function trCode(name) { const s = String(name || '').toUpperCase(); return /RENOV/.test(s) ? 'R' : /CONSOL/.test(s) ? 'C' : /DESARR/.test(s) ? 'D' : /MEJORA/.test(s) ? 'MI' : /CONSERV/.test(s) ? 'CO' : ''; }
 function parseAlt(s) { const m = String(s || '').match(/\d+/g); if (!m) return null; const a = +m[0], b = m[1] ? +m[1] : a; return a > 0 ? [a, Math.max(a, b)] : null; }
+const TIPOS0 = [35, 45, 55, 65, 75];
+/* Reparte los apartamentos según el área vendible y la mezcla de tipologías */
+function mezcla(vend, tipos) { const T = (tipos || []).filter(t => t.a >= 15 && t.pct > 0), sp = T.reduce((x, t) => x + t.pct, 0);
+  if (!T.length || !(vend > 0)) return { filas: [], und: 0, prom: 0, usada: 0 };
+  const prom = T.reduce((x, t) => x + t.a * t.pct, 0) / sp, tot = Math.floor(vend / prom + 1e-9);
+  const f = T.map(t => { const q = tot * t.pct / sp; return { a: t.a, pct: t.pct * 100 / sp, und: Math.floor(q), r: q % 1 }; });
+  let falta = tot - f.reduce((x, t) => x + t.und, 0); f.slice().sort((x, y) => y.r - x.r).forEach(t => { if (falta > 0) { t.und++; falta--; } });
+  let usada = f.reduce((x, t) => x + t.und * t.a, 0);
+  while (usada > vend + 1e-6) { const t = f.filter(x => x.und > 0).sort((x, y) => y.a - x.a)[0]; if (!t) break; t.und--; usada -= t.a; }
+  const filas = f.sort((x, y) => x.a - y.a).map(t => ({ a: t.a, pct: t.pct, und: t.und, m2: t.und * t.a })), und = filas.reduce((x, t) => x + t.und, 0);
+  return { filas, und, prom, usada };
+}
 function defaults(norm) { const pq = PARQ[norm.aaCod];
   return { auto: true, pisos: 0, hPiso: 3, antejardin: norm.tr === 'C' ? (norm.antejardin || 0) : 0, modalidad: norm.ae ? 'base' : '5', anchoVia: 0,
-    computable: 85, eficiencia: 80, areaApto: 55, parqPct: pq ? pq.max : 15, m2Cupo: 25 }; }
+    computable: 85, eficiencia: 80, areaApto: 55, tipos: TIPOS0.map(t => ({ a: t, pct: 20 })), parqPct: pq ? pq.max : 15, m2Cupo: 25 }; }
 /* Topes de altura e índice según el tratamiento */
 function limits(S) { const t = S.norm.tr, p = S.p, A = S.geo.area, alt = S.norm.alt, L = { nDef: 3, nMax: 60, cap: 0, notas: [] };
   if (S.norm.aero > 0) L.nMax = Math.max(1, Math.min(L.nMax, Math.floor(S.norm.aero / p.hPiso)));
@@ -123,7 +135,7 @@ function compute(S) { const p = S.p, L = limits(S), AT = S.geo.area, avis = L.no
   let N = p.auto || !(p.pisos > 0) ? autoN(S, L) : Math.round(p.pisos); N = Math.max(1, Math.min(60, N));
   const e = envelope(S, N), pct = p.computable / 100; let built = e.built, comp = built * pct, limitado = false;
   if (L.cap && comp > L.cap * AT + 0.5) { comp = L.cap * AT; built = comp / pct; limitado = true; }
-  const ic = AT ? comp / AT : 0, io = AT ? e.foot / AT : 0, vend = built * p.eficiencia / 100, und = Math.max(0, Math.floor(vend / Math.max(20, p.areaApto)));
+  const ic = AT ? comp / AT : 0, io = AT ? e.foot / AT : 0, vend = built * p.eficiencia / 100, mz = mezcla(vend, p.tipos), und = mz.und;
   const aParq = built * p.parqPct / 100, cupos = Math.floor(aParq / Math.max(10, p.m2Cupo)), top = e.bands[e.bands.length - 1];
   if (N > L.nMax) avis.push('Los ' + N + ' pisos superan el máximo de ' + L.nMax + ' que resulta de la norma para este lote.');
   if (S.norm.aero > 0 && e.H > S.norm.aero) avis.push('La altura (' + e.H.toFixed(1) + ' m) supera el límite de la Aeronáutica Civil (' + S.norm.aero + ' m).');
@@ -133,7 +145,7 @@ function compute(S) { const p = S.p, L = limits(S), AT = S.geo.area, avis = L.no
   if (S.g.sinFrente) avis.push('No identifiqué el frente del lote: toca en el mapa el lindero que da a la calle.');
   if (S.g.esquina) avis.push('Lote esquinero: no se exige aislamiento posterior; la transición se resuelve con patio en la esquina interior.');
   if (S.geo.fondo && S.geo.fondo <= 8) avis.push('Fondo de 8 m o menos: no se exige aislamiento posterior.');
-  return { N, L, e, sb: e.sb, built, comp, ic, io, vend, und, aParq, cupos, limitado, avis, ob: oblig(S, ic), valorLote: (S.norm.vref || 0) * AT }; }
+  return { N, L, e, sb: e.sb, built, comp, ic, io, vend, und, mz, aParq, cupos, limitado, avis, ob: oblig(S, ic), valorLote: (S.norm.vref || 0) * AT }; }
 
 /* ---------------- Servicios oficiales ---------------- */
 async function ags(url, params, post) { const q = new URLSearchParams(Object.assign({ f: 'json' }, params));
@@ -247,6 +259,9 @@ const CSS = `
 .lt-tabs{position:absolute;left:210px;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:6;display:flex;gap:4px;padding:6px;border-radius:99px;background:var(--panel,#17191A);border:1px solid var(--line,#2B2D2A);box-shadow:0 10px 30px rgba(0,0,0,.4)}
 .lt-tabs button{border:0;background:transparent;color:var(--muted,#9A9D96);display:flex;align-items:center;gap:6px;font:inherit;font-size:12px;font-weight:700;padding:9px 14px;border-radius:99px;cursor:pointer}
 .lt-tabs button[aria-selected=true]{background:color-mix(in srgb,var(--acc,#4FC3F7) 24%,transparent);color:var(--acc-ink,#8FD8FA)}
+.lt-tp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 36px;gap:8px;margin-bottom:6px;align-items:center}.lt-tph{font-size:11px;color:var(--muted,#9A9D96);font-weight:700}
+.lt-tp input{width:100%;box-sizing:border-box;height:38px;border-radius:10px;border:1px solid var(--line,#2B2D2A);background:var(--sunk,#222);color:inherit;font:inherit;font-size:14px;padding:0 10px;color-scheme:dark}
+.lt-tp button{border:0;width:36px;height:36px;border-radius:50%;background:transparent;color:var(--muted,#9A9D96);font-size:20px;cursor:pointer}.lt-tp button:hover{background:var(--sunk,#222)}
 .lt-card{background:var(--panel,#17191A);border-radius:var(--r,18px);padding:14px 16px;margin-bottom:10px}
 .lt-card h3{margin:0 0 8px;font-size:13px;letter-spacing:.02em;text-transform:uppercase;color:var(--muted,#9A9D96)}
 .lt-h{font-size:19px;font-weight:800;line-height:1.2;margin:0}
@@ -393,11 +408,17 @@ function oOb() { const R = U.R, o = R.ob, S = U.S; if (!o) return '<p class="lt-
   return kv([['Cesión para espacio público', nf(o.fs * 100) + ' % del lote'], ['Parte en suelo', nf(o.cs) + ' m² ' + (o.enSitio ? '(en sitio)' : '(se paga, menos de 400 m²)')],
     S.norm.vref && ['Compensación en dinero', fM(o.comp + o.pago)], S.norm.vref && o.redes ? ['Redes locales', fM(o.redes)] : null, S.norm.vref && ['Total estimado', fM(o.total)], o.vis && ['Vivienda social', esc(o.vis)]]) +
    `<p class="lt-note">Estimado con el valor de referencia de Catastro y los factores vigentes este año (arts. 317 a 322). La liquidación oficial la hace la curaduría.</p>`; }
+function pTip() { const T = U.S.p.tipos, sp = T.reduce((x, t) => x + (+t.pct || 0), 0);
+  return `<div class="lt-tp lt-tph"><span>Área m²</span><span>Mezcla %</span><span></span></div>` + T.map((t, i) => `<div class="lt-tp"><input type="number" inputmode="decimal" min="15" max="250" step="1" value="${t.a}" data-tp="a" data-i="${i}" aria-label="Área de la tipología ${i + 1}"><input type="number" inputmode="decimal" min="0" max="100" step="5" value="${t.pct}" data-tp="pct" data-i="${i}" aria-label="Mezcla de la tipología ${i + 1}"><button data-la="tdel" data-k="${i}" aria-label="Quitar tipología">×</button></div>`).join('')
+   + `<div class="lt-opt" style="margin-top:8px"><button data-la="tadd">+ Agregar tipología</button><button data-la="tigual">Mezcla pareja</button></div><p class="lt-note" style="margin:8px 0 0">Los m² de cada tipo se cuentan contra el área vendible. La mezcla suma ${nf(sp)} % y se normaliza sola.</p>`; }
+function oMezcla() { const R = U.R, M = R.mz; if (!M.filas.length) return '<p class="lt-warn">Agrega al menos una tipología con área y mezcla mayores a cero.</p>';
+  return `<div class="lt-card"><h3>Apartamentos que caben</h3>` + kv(M.filas.map(t => [nf(t.a) + ' m² · ' + nf(t.pct) + ' %', nf(t.und) + ' apto' + (t.und === 1 ? '' : 's') + ' · ' + nf(t.m2) + ' m²']).concat([['Total', nf(M.und) + ' aptos · ' + nf(M.usada) + ' de ' + nf(R.vend) + ' m² vendibles'], ['Área promedio', nf(M.prom, 1) + ' m²'], ['Por piso', nf(R.und / R.N, 1) + ' aptos']])) + '</div>'; }
 function pProy() { const S = U.S, pq = PARQ[S.norm.aaCod];
   return `<div data-out="proyTop"></div>
+  <div class="lt-card"><h3>Tipologías de apartamento</h3><div data-tp-box>${pTip()}</div></div>
+  <div data-out="mezcla"></div>
   <div class="lt-card"><h3>Supuestos del proyecto</h3>
    ${sl('eficiencia', 'Área vendible sobre área construida', 55, 92, 1, '%', 'Lo que queda después de puntos fijos, circulaciones y zonas comunes.')}
-   ${sl('areaApto', 'Área promedio por apartamento', 25, 160, 1, 'm²')}
    ${sl('computable', 'Área que cuenta para el índice', 60, 100, 1, '%', 'El índice no incluye estacionamientos, circulaciones ni cuartos técnicos (art. 266).')}
    ${sl('parqPct', 'Estacionamientos sobre área construida', 0, 35, 1, '%', pq ? 'Tope de ' + pq.max + ' % para ' + esc(S.norm.aaCod) + '; hasta ' + pq.adic + ' % más con pago compensatorio (art. 389).' : 'Valor por verificar para esta área de actividad (art. 389).')}
    ${sl('m2Cupo', 'Área por cupo, con maniobra', 18, 35, 1, 'm²')}</div>
@@ -405,7 +426,7 @@ function pProy() { const S = U.S, pq = PARQ[S.norm.aaCod];
   <p class="lt-note">Abre el asistente con las torres, pisos, apartamentos, parqueaderos y valor del lote ya llenos. Puedes cambiarlos antes de guardar.</p>`; }
 function oProyTop() { const R = U.R, S = U.S;
   return `<div class="lt-big"><div><span>Área vendible</span><b>${nf(R.vend)} m²</b><small>${nf(R.built)} m² construidos</small></div>
-   <div><span>Apartamentos</span><b>${nf(R.und)}</b><small>de ${nf(S.p.areaApto)} m² en ${R.N} pisos</small></div>
+   <div><span>Apartamentos</span><b>${nf(R.und)}</b><small>promedio ${nf(R.mz.prom, 1)} m² en ${R.N} pisos</small></div>
    <div><span>Parqueaderos</span><b>${nf(R.cupos)}</b><small>${nf(R.aParq)} m², tope aproximado</small></div>
    <div><span>Valor del lote</span><b>${R.valorLote ? fM(R.valorLote) : '—'}</b><small>${R.valorLote ? 'referencia Catastro' : 'sin valor de referencia'}</small></div></div>`; }
 function panel() { const el = U.el.querySelector('[data-panel]');
@@ -416,7 +437,7 @@ function panel() { const el = U.el.querySelector('[data-panel]');
     <div class="lt-al"><i class="n0"></i><div><b>Proyecto</b><p>Apartamentos, parqueaderos y valor del lote, listos para la factibilidad.</p></div></div></div>
     <p class="lt-note">Datos en vivo de Catastro Distrital (IDECA) y de la Secretaría Distrital de Planeación.</p>`; return; }
   el.innerHTML = U.tab === 'norma' ? pNorma() : U.tab === 'vol' ? pVol() : pProy(); outs(); el.scrollTop = 0; }
-function outs() { const O = { volTop: oVolTop, sb: oSb, ob: oOb, proyTop: oProyTop }; U.el.querySelectorAll('[data-out]').forEach(e => { e.innerHTML = O[e.dataset.out](); }); }
+function outs() { const O = { volTop: oVolTop, sb: oSb, ob: oOb, proyTop: oProyTop, mezcla: oMezcla }; U.el.querySelectorAll('[data-out]').forEach(e => { e.innerHTML = O[e.dataset.out](); }); }
 function recalc(full) { if (!U.S) return; U.R = compute(U.S); if (full) panel(); else outs(); draw(); save(); }
 function loading(t) { U.busy = !!t; const l = U.el.querySelector('[data-load]'); l.hidden = !t; l.textContent = t || ''; }
 async function abrir(code, geom, keep) { loading('Consultando Catastro y POT…'); U.cands = null;
@@ -428,7 +449,7 @@ async function onSearch(q) { if (U.busy) return; loading('Buscando…'); try { c
     if (!c.length) { tell('No encontré ese CHIP o dirección en Catastro'); return; } if (c.length === 1) return abrir(c[0].code); U.cands = c; panel(); } catch (e) { loading(''); tell(e.message); } }
 function save() { try { const S = U.S; if (S) localStorage.setItem('proyecta.lote', JSON.stringify({ code: S.code, p: S.p, roles: S.roles })); } catch (e) { } }
 function prefill() { const S = U.S, R = U.R, und = Math.max(1, R.und);
-  return { nombre: S.predio.dir ? 'Lote ' + S.predio.dir : '', ciudad: 'Bogotá', pisos: R.N, und, areaApto: Math.round(S.p.areaApto), cupos: R.cupos, lote: Math.round(R.valorLote / 1e6) * 1e6,
+  return { nombre: S.predio.dir ? 'Lote ' + S.predio.dir : '', ciudad: 'Bogotá', pisos: R.N, und, areaApto: Math.round(R.mz.prom), tipos: R.mz.filas.filter(t => t.und > 0).map(t => ({ n: t.a + ' m²', area: t.a, und: t.und })), cupos: R.cupos, lote: Math.round(R.valorLote / 1e6) * 1e6,
     loteInfo: { code: S.code, chip: S.predio.chip, dir: S.predio.dir, area: Math.round(S.geo.area), tratamiento: TR_NAME[S.norm.tr] || S.norm.trNombre, actividad: S.norm.aaCod, pisos: R.N, construida: Math.round(R.built), vendible: Math.round(R.vend), ic: +R.ic.toFixed(2), fecha: new Date().toISOString().slice(0, 10) } }; }
 function onClick(e) { const b = e.target.closest('[data-la]'); if (!b || b.tagName === 'FORM') return; const a = b.dataset.la, k = b.dataset.k, S = U.S;
   if (a === 'close') Lote.close();
@@ -440,8 +461,12 @@ function onClick(e) { const b = e.target.closest('[data-la]'); if (!b || b.tagNa
   else if (!S) return;
   else if (a === 'auto') { S.p.auto = k === '1'; if (!S.p.auto) S.p.pisos = U.R.N; recalc(true); }
   else if (a === 'mod') { S.p.modalidad = k; S.p.auto = true; recalc(true); }
+  else if (a === 'tadd') { const T = S.p.tipos, u = T.length ? Math.max(...T.map(t => t.a)) + 10 : 55; T.push({ a: Math.min(250, u), pct: 10 }); tipRender(); }
+  else if (a === 'tdel') { S.p.tipos.splice(+k, 1); tipRender(); }
+  else if (a === 'tigual') { S.p.tipos.forEach(t => { t.pct = 20; }); tipRender(); }
   else if (a === 'crear') { if (H().crear) H().crear(prefill()); else tell('Abre el analizador desde Proyecta para crear el proyecto'); } }
-function onInput(e) { const i = e.target.closest('[data-lp]'); if (!i || !U.S) return; const k = i.dataset.lp, v = +i.value; U.S.p[k] = v;
+function tipRender() { const b = U.el.querySelector('[data-tp-box]'); if (b) b.innerHTML = pTip(); recalc(false); }
+function onInput(e) { const tp = e.target.closest('[data-tp]'); if (tp && U.S) { const t = U.S.p.tipos[+tp.dataset.i]; if (t) { t[tp.dataset.tp] = Math.max(0, +tp.value || 0); recalc(false); } return; } const i = e.target.closest('[data-lp]'); if (!i || !U.S) return; const k = i.dataset.lp, v = +i.value; U.S.p[k] = v;
   const o = U.el.querySelector('[data-val="' + k + '"]'); if (o) o.textContent = nf(v, +i.step < 1 ? 1 : 0) + (i.dataset.u ? ' ' + i.dataset.u : '');
   cancelAnimationFrame(U.raf); U.raf = requestAnimationFrame(() => recalc(false)); }
 

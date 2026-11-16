@@ -2519,7 +2519,7 @@ function loteOpen(){if(!window.Lote){toast('El analizador de lotes aún está ca
   const li=ST.P&&ST.P.general&&ST.P.general.loteInfo;Lote.open(li&&li.code?{code:li.code}:{})}
 window.LoteHost={toast:m=>toast(m,3600),
   crear(d){if(ST.readOnly){toast('Tienes acceso de solo lectura');return}
-    const pre={et:[{torres:[{pisos:d.pisos,und:d.und}]}],tipos:[{n:'Tipo A',area:d.areaApto,und:d.und}],parqRel:wzSnapRel(d.und,d.cupos),loteInfo:d.loteInfo};
+    const pre={et:[{torres:[{pisos:d.pisos,und:d.und}]}],tipos:(d.tipos&&d.tipos.length?d.tipos:[{n:'Tipo A',area:d.areaApto,und:d.und}]),parqRel:wzSnapRel(d.und,d.cupos),loteInfo:d.loteInfo};
     if(d.lote>0)pre.lote=d.lote;Lote.close();wzOpen(pre);Object.assign(WZ.a,{nombre:d.nombre||'',ciudad:d.ciudad||'Bogotá'});wzRender()}};
 /* ---------- Asistente de proyecto nuevo (botón +) ----------
    Pide la información en pasos cortos con ayuda leída y escuchada, propone valores típicos según el tipo de vivienda,
