@@ -131,6 +131,9 @@ function towerSet(S, n, pt) { n = Math.max(1, n | 0); pt = pt.slice(0, n);
     let built = 0; bands.forEach(b => { built += b.area * (b.to - b.from); }); return { N: e.H / S.p.hPiso, bands, built, foot: bands.length ? bands[0].area : 0 }; };
   const eM = envelope(S, Math.max(...pt)); let tw, sep = 0, ok = true;
   if (n === 1) tw = [mk(eM)];
+  else if (S.p.disp === 'par' && +S.p.barW > 0) { const u0 = axisOf(S.geo.ring), u = [-u0[1], u0[0]], base = eM.bands[0] ? eM.bands[0].poly : S.geo.ring; let t0 = 1e9, t1 = -1e9; base.forEach(p => { const t = p[0] * u[0] + p[1] * u[1]; t0 = Math.min(t0, t); t1 = Math.max(t1, t); });
+    const bw = +S.p.barW, R = t1 - t0; ok = R >= n * bw; sep = n > 1 ? Math.max(0, (R - n * bw) / (n - 1)) : 0;
+    tw = pt.map((N, i) => ok ? mk(envelope(S, N), { u, lo: t0 + i * (R - bw) / (n - 1), hi: t0 + i * (R - bw) / (n - 1) + bw }) : { N, bands: [], built: 0, foot: 0 }); }
   else { const u = axisOf(S.geo.ring), base = eM.bands[0] ? eM.bands[0].poly : S.geo.ring; let t0 = 1e9, t1 = -1e9; base.forEach(p => { const t = p[0] * u[0] + p[1] * u[1]; t0 = Math.min(t0, t); t1 = Math.max(t1, t); });
     sep = S.p.sep > 0 ? S.p.sep : Math.max(6, Math.round(2 * (eM.sb.lat || 0))); const w = ((t1 - t0) - (n - 1) * sep) / n; ok = w > 4;
     tw = pt.map((N, i) => ok ? mk(envelope(S, N), { u, lo: t0 + i * (w + sep), hi: t0 + i * (w + sep) + w }) : { N, bands: [], built: 0, foot: 0 }); }
@@ -591,6 +594,7 @@ function pCab() { const S = U.S, p = S.p, R = U.R, n = R.nT, c = p.com || { on: 
    <div class="lt-tp lt-pt"><span>Cesión de parque</span><input type="number" inputmode="numeric" min="0" step="1" value="${+p.cesPq > 0 ? p.cesPq : ''}" placeholder="0" data-pf="cesPq" aria-label="Cesión de parque en metros cuadrados"><span class="lt-un">m²</span></div>
    <div class="lt-tp lt-pt"><span>Control ambiental</span><input type="number" inputmode="numeric" min="0" step="1" value="${+p.cesCa > 0 ? p.cesCa : ''}" placeholder="0" data-pf="cesCa" aria-label="Control ambiental en metros cuadrados"><span class="lt-un">m²</span></div>
    <div class="lt-tp lt-pt"><span>Ancho de cada torre</span><input type="number" inputmode="decimal" min="0" step="0.5" value="${+p.barW > 0 ? p.barW : ''}" placeholder="libre" data-pf="barW" aria-label="Ancho de la torre en metros"><span class="lt-un">m</span></div>
+   ${R.nT > 1 ? `<div class="lt-opt"><button data-la="disp" data-k="ser" aria-pressed="${p.disp !== 'par'}">Torres en serie</button><button data-la="disp" data-k="par" aria-pressed="${p.disp === 'par'}">Torres en paralelo</button></div>` : ''}
    <div class="lt-tp lt-pt"><span>Cupos de carro</span><input type="number" inputmode="numeric" min="0" step="1" value="${+p.cuposOv > 0 ? p.cuposOv : ''}" placeholder="auto" data-pf="cuposOv" aria-label="Cupos de parqueo del proyecto"><span class="lt-un">cupos</span></div>
    <p class="lt-note">Las cesiones y el control ambiental se descuentan de las áreas libres del lote (zonas verdes y parqueo en superficie). El índice de construcción se sigue calculando sobre el área bruta.</p>
    <p class="lt-note">Vacío = se usa la norma del mapa. Úsalo cuando la curaduría ya validó un índice o una altura distintos. Para sumar lotes vecinos usa "Sumar predio" arriba.</p></div>
@@ -804,6 +808,7 @@ function onClick(e) { const b = e.target.closest('[data-la]'); if (!b || b.tagNa
   else if (a === 'volr') { S.vol.t.rot = +(((+S.vol.t.rot || 0) + 180) % 360).toFixed(1); draw(); panel(); }
   else if (a === 'volv') { U.volOn = U.volOn === false; draw(); panel(); }
   else if (a === 'volq') { S.vol = null; draw(); panel(); }
+  else if (a === 'disp') { S.p.disp = k; U.scn = null; recalc(true); }
   else if (a === 'pryap') pryAplicar();
   else if (a === 'pryvin') pryVincular();
   else if (a === 'torres') { S.p.torres = +k; S.p.ptor = []; S.p.undTor = null; S.p.auto = true; U.scn = null; recalc(true); }
