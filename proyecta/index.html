@@ -390,7 +390,9 @@ textarea.paste{width:100%;min-height:96px;font-size:12px;border:0;background:var
 
 /* Navegación inferior */
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:8;background:var(--panel);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
-.nav .in{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));max-width:720px;margin:0 auto;height:var(--nav-h)}
+.nav .in{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));max-width:780px;margin:0 auto;height:var(--nav-h)}
+@media (max-width:430px){.nav .in{display:flex}.nav button{flex:1 1 auto;padding:0 3px;font-size:10px;letter-spacing:-.2px}}
+body.loteon .toast{z-index:70}
 .nav button{border:0;background:transparent;display:grid;justify-items:center;align-content:center;gap:4px;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;padding:0}
 .nav button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .nav button[aria-current=page],.nav button[aria-pressed=true]{color:var(--acc-ink)}
@@ -788,6 +790,7 @@ body.desk .dtabs{display:block}
 <nav class="nav" aria-label="Secciones">
   <div class="in">
     <button data-go="inicio" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z"/></svg>Inicio</button>
+    <button data-go="lote"><svg viewBox="0 0 24 24"><path d="M4 8.5 9.5 6l5 2.5L20 6v10l-5.5 2.5-5-2.5L4 18.5z"/><path d="M9.5 6v10M14.5 8.5v10"/></svg>Lote</button>
     <button data-go="modelo"><svg viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>Modelo</button>
     <button data-go="resultados"><svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M9 4v16"/></svg>Resultados</button>
     <button data-go="control"><svg viewBox="0 0 24 24"><path d="M4 20h16M7 16v-4M12 16V6M17 16v-7"/></svg>Control</button>
@@ -1607,11 +1610,12 @@ const RENDER={inicio:()=>renderInicio(),modelo:()=>renderModelo(),resultados:()=
 const NAMES={inicio:'Inicio',modelo:'Modelo',resultados:'Resultados',control:'Control',comparar:'Comparar',cuenta:'Cuenta'};
 function visible(){return ST.web?prefs.cols.slice():[ST.screen==='cuenta'?'cuenta':ST.screen]}
 function shown(id){const el=$('#s-'+id);return el&&!el.hidden}
-function go(s){if(!SCREENS.includes(s))s='inicio';
+function go(s){if(s==='lote'){loteOpen();return}if(!SCREENS.includes(s))s='inicio';
   if(ST.web){if(s==='cuenta'){ST.cuentaOpen=true}else if(!prefs.cols.includes(s)){showCol(s);savePrefs()}renderScreen();
     if(s!=='cuenta'){const el=$('#s-'+s);if(el){el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')}}return}
   ST.screen=s;prefs.screen=s;savePrefs();window.scrollTo(0,0);renderScreen()}
 function navTap(s){
+  if(s==='lote'){loteOpen();return}
   if(!ST.web){go(s);return}
   if(s==='cuenta'){ST.cuentaOpen=!ST.cuentaOpen;renderScreen();return}
   if(prefs.cols.includes(s)){if(prefs.cols.length===1){toast('Debe quedar al menos una sección visible');return}prefs.cols=prefs.cols.filter(c=>c!==s)}
@@ -1621,6 +1625,7 @@ function navTap(s){
 }
 function moveCol(id,d){const i=prefs.cols.indexOf(id),j=i+d;if(i<0||j<0||j>=prefs.cols.length)return;const a=prefs.cols;[a[i],a[j]]=[a[j],a[i]];syncColOrder();savePrefs();renderScreen()}
 function navState(){$$('.nav button').forEach(b=>{const k=b.dataset.go;
+  if(k==='lote'){b.removeAttribute('aria-current');b.removeAttribute('aria-pressed');b.title='Analizar un lote de Bogotá';return}
   if(ST.web){b.removeAttribute('aria-current');b.setAttribute('aria-pressed',k==='cuenta'?ST.cuentaOpen:prefs.cols.includes(k));b.title=(k==='cuenta'?'Abrir o cerrar ':'Mostrar u ocultar ')+NAMES[k]}
   else{b.removeAttribute('aria-pressed');b.removeAttribute('title');k===ST.screen?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current')}})}
 function layout(){const ab=$('.appbar').offsetHeight,nv=$('.nav').offsetHeight;root.style.setProperty('--top',ab+'px');
@@ -2507,6 +2512,15 @@ function roleName(){if(ST.mode==='fb')return 'Tu cuenta';if(ST.mode!=='db')retur
 function canMacro(){return ST.mode!=='db'||ST.role.edit||ST.role.owner}
 const WI={manual:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19a2 2 0 0 1 2-2h13M9 7h6M9 11h6"/>',glos:'<path d="M5 3h10l4 4v14H5zM15 3v4h4M8 11h8M8 15h8M8 19h5"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',key:'<circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M14 9l2 2"/>',xls:'<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 12l6 6M15 12l-6 6"/>',dl:'<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',chk:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',chat:'<path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/>',bulb:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',out:'<path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 8l-4 4 4 4M6 12h10"/>',trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',apps:'<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',chev:'<path d="m9 6 6 6-6 6"/>'};
 const wic=(k,s=22,w=1.8)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${WI[k]}</svg>`;
+/* ---------- Analizador de lotes de Bogotá (lote.js) ----------
+   Abre a pantalla completa desde el botón "Lote". Al terminar, pasa torres, pisos, apartamentos, parqueaderos y
+   valor del lote al asistente de proyecto nuevo, que queda prellenado. */
+function loteOpen(){if(!window.Lote){toast('El analizador de lotes aún está cargando');return}
+  const li=ST.P&&ST.P.general&&ST.P.general.loteInfo;Lote.open(li&&li.code?{code:li.code}:{})}
+window.LoteHost={toast:m=>toast(m,3600),
+  crear(d){if(ST.readOnly){toast('Tienes acceso de solo lectura');return}
+    const pre={et:[{torres:[{pisos:d.pisos,und:d.und}]}],tipos:[{n:'Tipo A',area:d.areaApto,und:d.und}],parqRel:wzSnapRel(d.und,d.cupos),loteInfo:d.loteInfo};
+    if(d.lote>0)pre.lote=d.lote;Lote.close();wzOpen(pre);Object.assign(WZ.a,{nombre:d.nombre||'',ciudad:d.ciudad||'Bogotá'});wzRender()}};
 /* ---------- Asistente de proyecto nuevo (botón +) ----------
    Pide la información en pasos cortos con ayuda leída y escuchada, propone valores típicos según el tipo de vivienda,
    calcula si el proyecto es viable y sugiere qué ajustar para que lo sea. Al guardar crea un proyecto normal. */
@@ -2555,7 +2569,7 @@ function wzBuild(a){
     if(pq[k]>0)P.tipologias.push({id:'t'+(k+1)+'_p',etapa:id,nombre:'Parqueaderos',clase:'parq',unidades:pq[k],area:0,precio:+a.parqPrecio,primaPiso:0,pctVista:0,primaVista:0});
   });
   const f=(+a.costo||1)/(sum(T.costos.capitulos.map(c=>+c.valor))||1);P.costos.capitulos.forEach(c=>c.valor=Math.round(c.valor*f/1000)*1000);
-  P.costos.lote.valor=+a.lote;P.costos.lote.forma=a.loteForma;
+  P.costos.lote.valor=+a.lote;P.costos.lote.forma=a.loteForma;if(a.loteInfo)P.general.loteInfo=a.loteInfo;
   P.ventas.ciPct=+a.ci;
   P.socios=+a.socios===1?[{id:'s1',nombre:'Socio único',part:100,aportaLote:a.loteForma==='especie'}]
     :[{id:'s1',nombre:'Socio gestor',part:+a.part1,aportaLote:false},{id:'s2',nombre:a.loteForma==='especie'?'Propietario del lote':'Socio inversionista',part:100-(+a.part1),aportaLote:a.loteForma==='especie'}];
@@ -2661,8 +2675,8 @@ function wzStepSl(b){const w=b.closest('.wzsl'),k=w.dataset.sl,st=+w.dataset.ste
 document.addEventListener('focusout',e=>{const t=e.target;if(t.classList&&t.classList.contains('wzsl-in')&&WZ.a){const w=t.closest('.wzsl');t.value=wzFmt(getPath(WZ.a,t.dataset.wz),+w.dataset.step)}});
 function wzRadio(k,opts){return `<div class="wzopts">${opts.map(([v,l])=>`<button class="wzopt" data-act="wz-set" data-k="${k}" data-v="${String(v)}" aria-pressed="${String(WZ.a[k])===String(v)}"><b>${l}</b></button>`).join('')}</div>`}
 function wzSw(k,label,d){return `<label class="wzsw"><input type="checkbox" data-wz="${k}"${WZ.a[k]?' checked':''}><span><b>${label}</b><small>${d||''}</small></span></label>`}
-function wzOpen(){if(ST.readOnly){toast('Tienes acceso de solo lectura');return}
-  WZ.i=0;WZ.a=wzDefaults('NoVIS');WZ.P=null;WZ.R=null;WZ.opt=null;$('#wiz').hidden=false;document.body.classList.add('wizon');wzRender();wzAuto()}
+function wzOpen(pre){if(ST.readOnly){toast('Tienes acceso de solo lectura');return}
+  WZ.i=0;WZ.a=wzDefaults('NoVIS');WZ.pre=pre&&pre.et?pre:null;if(WZ.pre)Object.assign(WZ.a,clone(WZ.pre));WZ.P=null;WZ.R=null;WZ.opt=null;$('#wiz').hidden=false;document.body.classList.add('wizon');wzRender();wzAuto()}
 function wzClose(force){if(!force&&WZ.i>0&&!confirm('¿Salir del asistente? Se perderán los datos que ingresaste.'))return;wzStop();$('#wiz').hidden=true;document.body.classList.remove('wizon')}
 function wzRender(){const s=WZ_STEPS[WZ.i],n=WZ_STEPS.length,last=WZ.i===n-1;
   if(last){WZ.P=wzBuild(WZ.a);WZ.R=runProject(WZ.P,ST.macro)}
@@ -3181,7 +3195,7 @@ document.addEventListener('click',async e=>{
     case 'wz-say':wzSay();break;
     case 'glos-say':glosSay();break;
     case 'wz-save':b.disabled=true;wzSave();break;
-    case 'wz-tipo':if(WZ.a.tipo!==b.dataset.k){WZ.a=wzDefaults(b.dataset.k,{nombre:WZ.a.nombre,ciudad:WZ.a.ciudad,fecha:WZ.a.fecha});if(b.dataset.k==='VIS'&&ESP_CIUDADES.test(WZ.a.ciudad||''))WZ.a.topeEsp=true;wzRender()}break;
+    case 'wz-tipo':if(WZ.a.tipo!==b.dataset.k){WZ.a=wzDefaults(b.dataset.k,{nombre:WZ.a.nombre,ciudad:WZ.a.ciudad,fecha:WZ.a.fecha});if(WZ.pre)Object.assign(WZ.a,clone(WZ.pre));if(b.dataset.k==='VIS'&&ESP_CIUDADES.test(WZ.a.ciudad||''))WZ.a.topeEsp=true;wzRender()}break;
     case 'wz-set':{const v=b.dataset.v;WZ.a[b.dataset.k]=v==='true'?true:v==='false'?false:(isNaN(+v)?v:+v);wzRender();break}
     case 'wz-addet':{const e=WZ.a.et[WZ.a.et.length-1];WZ.a.et.push({torres:[Object.assign({},e.torres[e.torres.length-1])]});wzRender();break}
     case 'wz-delet':WZ.a.et.splice(i,1);wzRender();break;
@@ -3250,7 +3264,7 @@ addEventListener('resize',()=>{if(ST.ready)layout()});
     if(!s||s.scrollWidth-s.clientWidth<4)return;const before=s.scrollLeft;s.scrollLeft+=e.deltaY;if(s.scrollLeft!==before)e.preventDefault()},{passive:false});
 })();
 /* Deslizar para cambiar de sección en celular y tablet (no en la vista de columnas del computador) */
-if(window.swipeNav)swipeNav({items:()=>ST.desk?$$('#dt1 button'):$$('.nav button'),enabled:()=>ST.ready&&!ST.web&&!$('#sheetHost').innerHTML&&$('#wiz').hidden&&!document.body.classList.contains('authing'),content:()=>$('#cols > .screen:not([hidden])')});
+if(window.swipeNav)swipeNav({items:()=>ST.desk?$$('#dt1 button:not([data-go=lote])'):$$('.nav button:not([data-go=lote])'),enabled:()=>ST.ready&&!ST.web&&!$('#sheetHost').innerHTML&&$('#wiz').hidden&&!(window.Lote&&Lote.isOpen())&&!document.body.classList.contains('authing'),content:()=>$('#cols > .screen:not([hidden])')});
 function webHint(){if(prefs.webHint2)return;prefs.webHint2=1;savePrefs();setTimeout(()=>toast('Toca las secciones de abajo para sumarlas como columnas. Arrastra el encabezado de una columna para reordenarla.'),600)}
 /* Arrastrar columnas para reordenarlas */
 let DRAG=null;
@@ -3615,5 +3629,6 @@ init();
 
 </script>
 <script>if('serviceWorker' in navigator&&location.protocol==='https:'){addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}</script>
+<script src="lote.js"></script>
 </body>
 </html>

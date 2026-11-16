@@ -7,6 +7,7 @@ Modelo financiero inmobiliario para proyectos de vivienda en Colombia.
 - Presupuesto por capítulos con curva S e índice ICCV, lote (contado, diferido, especie o área), licencias, indirectos y posventa.
 - IVA y devolución VIS, ICA, 4x1000 y renta según vehículo (fiducia o sociedad).
 - Crédito constructor (IBR + spread), crédito puente, fiducia y socios con TIR antes y después de impuestos.
+- Analizador de lotes de Bogotá (botón "Lote", archivo `lote.js`): consulta en vivo Catastro/IDECA y el POT (Decreto 555 de 2021) de Planeación, muestra la norma del lote, calcula un volumen edificable preliminar en 3D y abre el asistente de proyecto nuevo con torres, pisos, apartamentos, parqueaderos y valor del lote ya llenos. Es una prefactibilidad: no reemplaza el concepto de norma de la curaduría.
 - Estado de resultados, balance proyectado, seguimiento contra presupuesto, versiones, sensibilidad, informe para comité y exportación a Excel.
 
 Publicada en https://www.planificarproyectos.com/proyecta/
