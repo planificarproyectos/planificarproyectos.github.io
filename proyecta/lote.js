@@ -509,6 +509,9 @@ function volAuto(S) { const V = S.vol, P = volPts(V); if (!P.length) { V.t = { r
   V.t = { rot: +rot.toFixed(1), dx: +best.dx.toFixed(1), dy: +best.dy.toFixed(1), fuera: +Math.sqrt(best.sc).toFixed(1) }; }
 function volMap(S) { const V = S.vol, P = volPts(V), n = P.length || 1, cx = P.reduce((a, q) => a + q[0], 0) / n, cy = P.reduce((a, q) => a + q[1], 0) / n, r = S.geo.ring, lx = r.reduce((a, q) => a + q[0], 0) / r.length, ly = r.reduce((a, q) => a + q[1], 0) / r.length, t = V.t || {}, th = (+t.rot || 0) * Math.PI / 180, c = Math.cos(th), sn = Math.sin(th);
   return (x, y) => [lx + (+t.dx || 0) + c * (x - cx) - sn * (y - cy), ly + (+t.dy || 0) + sn * (x - cx) + c * (y - cy)]; }
+/* Modelos validados que se cargan solos al abrir el lote (clave: código del lote en Catastro) */
+const MODELOS = { '004206073001': 'modelos/cda.json' };
+function autoVol(S) { const u = MODELOS[S.code]; if (!u || S.vol) return; fetch(u).then(r => r.ok ? r.json() : null).then(V => { if (!V || !V.bl || U.S !== S || S.vol) return; S.vol = V; volAuto(S); U.volOn = true; draw(); panel(); tell('Modelo validado cargado: ' + (V.nombre || '')); }).catch(() => { }); }
 function volC(S) { const V = S.vol, t = V.t || {}, r = S.geo.ring, n = r.length; return [r.reduce((a, q) => a + q[0], 0) / n + (+t.dx || 0), r.reduce((a, q) => a + q[1], 0) / n + (+t.dy || 0)]; }
 function volHandle(S) { const C = volC(S), th = ((+(S.vol.t || {}).rot || 0) + 90) * Math.PI / 180, d = 45; return [C[0] + d * Math.cos(th), C[1] + d * Math.sin(th)]; }
 function volEdit(S, poly) { if (!U.volEd || !S.vol) return []; const M = volMap(S), C = volC(S), H = volHandle(S), out = [];
@@ -805,7 +808,7 @@ function recalc(full) { if (!U.S) return; U.R = compute(U.S); if (full) panel();
 function loading(t) { U.busy = !!t; const l = U.el.querySelector('[data-load]'); l.hidden = !t; l.textContent = t || ''; }
 async function abrir(code, geom, keep) { loading('Consultando Catastro y POT…'); U.cands = null; U.scn = null; U.view = null; U.saving = false; U.lotId = (keep && keep.id) || null; U.lotName = ''; U.lotApodo = (keep && keep.apodo) || ''; U.lotTags = (keep && keep.tags) || [];
   try { const S = await cargar(code, geom, keep && keep.extra); if (keep && keep.code === code) { Object.assign(S.p, keep.p || {}); if (keep.roles && keep.roles.length === S.roles.length) { S.roles = keep.roles; U.S = S; regeo(); } }
-    if (keep && keep.vol) S.vol = keep.vol; U.S = S; U.R = compute(S); U.tab = 'norma'; tools(); panel(); draw(); fit(); save(); if (S.norm.sinPot) tell('No respondió el mapa del POT'); }
+    if (keep && keep.vol) S.vol = keep.vol; U.S = S; U.R = compute(S); autoVol(S); U.tab = 'norma'; tools(); panel(); draw(); fit(); save(); if (S.norm.sinPot) tell('No respondió el mapa del POT'); }
   catch (e) { tell(e.message || 'No se pudo consultar el lote'); } loading(''); }
 function cargarPC() { return new Promise((ok, no) => { if (G.polygonClipping) return ok(G.polygonClipping); const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/polygon-clipping@0.15.7/dist/polygon-clipping.umd.min.js'; sc.onload = () => G.polygonClipping ? ok(G.polygonClipping) : no(new Error('no cargó')); sc.onerror = () => no(new Error('No se pudo cargar la librería para unir predios')); document.head.appendChild(sc); }); }
 async function sumar(lng, lat) { const S = U.S; loading('Sumando el predio…');
