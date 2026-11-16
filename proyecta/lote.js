@@ -177,7 +177,7 @@ function compute(S) { const p = S.p, L = limits(S), AT = S.geo.area, avis = L.no
   if (S.g.sinFrente) avis.push('No identifiqué el frente del lote: toca en el mapa el lindero que da a la calle.');
   if (S.g.esquina) avis.push('Lote esquinero: no se exige aislamiento posterior; la transición se resuelve con patio en la esquina interior.');
   if (S.geo.fondo && S.geo.fondo <= 8) avis.push('Fondo de 8 m o menos: no se exige aislamiento posterior.');
-  const tb = ts.tw.reduce((x, t) => x + t.built, 0) || 1, ok = !limitado && N <= L.nMax && ts.ok && !(S.norm.aero > 0 && e.H > S.norm.aero) && !(parq.ref && cupos < parq.cuposMin) && (nT === 1 || ts.tw.every(t => { const b = t.bands[t.bands.length - 1]; return b && b.area >= MINPLATE; }));
+  const tb = ts.tw.reduce((x, t) => x + t.built, 0) || 1, ok = N <= L.nMax && ts.ok && !(S.norm.aero > 0 && e.H > S.norm.aero) && !(parq.ref && cupos < parq.cuposMin) && (nT === 1 || ts.tw.every(t => { const b = t.bands[t.bands.length - 1]; return b && b.area >= MINPLATE; }));
   return { N, nT, pt, nAuto, ts, tw: ts.tw.map((t, i) => ({ N: pt[i], built: t.built * built / (e.built || 1), share: t.built / tb })), sep: ts.sep, comG, comVend: comG * 0.9, vis, visAll, parq, ok, L, e, sb: e.sb, built, comp, ic, io, vend, und, mz, aParq, cupos, limitado, avis, ob: oblig(S, ic), valorLote: (S.norm.vref || 0) * AT }; }
 
 /* ---------------- Servicios oficiales ---------------- */
@@ -267,6 +267,7 @@ const fM = v => { v = +v || 0; return v >= 1e9 ? '$ ' + nf(v / 1e6, 0) + ' M' : 
 const U = { el: null, map: null, S: null, R: null, tab: 'norma', base: '', ov: 0, d3: true, busy: false, cands: null, raf: 0, ovT: 0, ready: null };
 const IC = { back: '<path d="m15 6-6 6 6 6"/>', norma: '<path d="M6 3h9l4 4v14H6zM15 3v4h4M9 12h7M9 16h7"/>', vol: '<path d="M12 3 4 7v10l8 4 8-4V7zM4 7l8 4 8-4M12 11v10"/>', proy: '<path d="M4 20h16M7 16v-5M12 16V6M17 16v-8"/>',
   layers: '<path d="m12 4 9 5-9 5-9-5zM3 14l9 5 9-5"/>', search: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>' };
+IC.save = '<path d="M6 3h12v18l-6-4-6 4z"/>';
 IC.cab = '<path d="M3 21V10l6-3v14M9 21V4l8 3v14M17 21v-9l4 2v7M2 21h20"/>';
 const ic = k => '<svg viewBox="0 0 24 24" aria-hidden="true">' + IC[k] + '</svg>';
 const CSS = `
@@ -299,6 +300,11 @@ const CSS = `
 .lt-pt{grid-template-columns:70px minmax(0,1fr) auto}.lt-un{font-size:12px;color:var(--muted,#9A9D96)}
 .lt-scb{display:grid;grid-template-columns:1.1fr .8fr .8fr 1fr 1fr;gap:4px;width:100%;box-sizing:border-box;align-items:center;text-align:center;border:1px solid var(--line,#2B2D2A);border-radius:12px;background:transparent;color:inherit;padding:9px 6px;margin-bottom:6px;font:inherit;font-size:12.5px;cursor:pointer}
 .lt-scb.h{border:0;padding:0 6px 2px;font-size:11px;color:var(--muted,#9A9D96);font-weight:700;cursor:default}.lt-scb[aria-pressed=true]{border-color:var(--acc,#4FC3F7);background:color-mix(in srgb,var(--acc,#4FC3F7) 14%,transparent)}
+.lt-bar{margin-bottom:10px}.lt-bar button{display:flex;align-items:center;gap:6px}.lt-bar svg{width:16px;height:16px}
+.lt-save{display:flex;gap:6px;margin-bottom:10px}.lt-save input{flex:1;min-width:0;height:40px;border-radius:99px;border:1px solid var(--line,#2B2D2A);background:var(--sunk,#222);color:inherit;font:inherit;font-size:14px;padding:0 14px;color-scheme:dark}
+.lt-b{border:0;border-radius:99px;height:40px;padding:0 16px;font:inherit;font-weight:800;font-size:13px;background:var(--acc,#4FC3F7);color:var(--on-acc,#06222E);cursor:pointer}.lt-b.g{background:var(--sunk,#222);color:inherit;padding:0 14px;font-size:18px}
+.lt-lot{display:flex;align-items:center;gap:6px;border-top:1px solid var(--line,#2B2D2A)}.lt-lot:first-of-type{border-top:0}.lt-lot>button:first-child{flex:1;min-width:0;text-align:left;border:0;background:transparent;color:inherit;font:inherit;padding:10px 2px;cursor:pointer}.lt-lot b{display:block;font-size:14px}.lt-lot small{display:block;font-size:11.5px;color:var(--muted,#9A9D96);margin-top:2px}
+.lt-x{border:0;min-width:36px;height:36px;border-radius:99px;background:transparent;color:var(--muted,#9A9D96);font:inherit;font-size:18px;cursor:pointer;padding:0 8px}.lt-x.on{background:#EF5350;color:#fff;font-size:12px;font-weight:800;padding:0 12px}
 .lt-card{background:var(--panel,#17191A);border-radius:var(--r,18px);padding:14px 16px;margin-bottom:10px}
 .lt-card h3{margin:0 0 8px;font-size:13px;letter-spacing:.02em;text-transform:uppercase;color:var(--muted,#9A9D96)}
 .lt-h{font-size:19px;font-weight:800;line-height:1.2;margin:0}
@@ -502,18 +508,38 @@ function oProyTop() { const R = U.R, S = U.S;
    <div><span>Apartamentos</span><b>${nf(R.und)}</b><small>promedio ${nf(R.mz.prom, 1)} m² en ${R.N} pisos</small></div>
    <div><span>Parqueaderos</span><b>${nf(R.cupos)}</b><small>${nf(R.aParq)} m², tope aproximado</small></div>
    <div><span>Valor del lote</span><b>${R.valorLote ? fM(R.valorLote) : '—'}</b><small>${R.valorLote ? 'referencia Catastro' : 'sin valor de referencia'}</small></div></div>`; }
+const LH = () => (H() || {}).lotes, defName = () => (U.S.predio.dir || ('Lote ' + (U.S.predio.chip || ''))).trim();
+function lotBar() { if (!U.S) return ''; if (U.saving) return `<form class="lt-save" data-form="save"><input name="n" value="${esc(U.lotName || defName())}" maxlength="60" aria-label="Nombre del lote" autocomplete="off"><button class="lt-b">Guardar</button><button type="button" class="lt-b g" data-la="savex" aria-label="Cancelar">×</button></form>`;
+  return `<div class="lt-opt lt-bar"><button data-la="savo">${ic('save')}${U.lotId ? 'Actualizar guardado' : 'Guardar lote'}</button><button data-la="lotes">Mis lotes</button></div>`; }
+async function guardar(nombre) { const S = U.S, R = U.R, L = LH(); if (!L) { tell('Guardar no está disponible aquí'); return; }
+  const d = { id: U.lotId || undefined, nombre: (nombre || '').trim() || defName(), code: S.code, chip: S.predio.chip || '', dir: S.predio.dir || '', area: Math.round(S.geo.area), p: JSON.parse(JSON.stringify(S.p)), roles: S.roles.slice(),
+    res: { torres: R.nT, pisos: R.pt.join('+'), und: R.und, ic: +R.ic.toFixed(2), built: Math.round(R.built), vend: Math.round(R.vend), cupos: R.cupos } };
+  if (!d.id) delete d.id; loading('Guardando…');
+  try { const r = await L.save(d); U.lotId = r.id; U.lotName = d.nombre; U.saving = false; tell('Lote guardado en tu cuenta'); panel(); } catch (e) { tell('No se pudo guardar el lote. Revisa tu conexión.'); }
+  loading(''); }
+async function verLotes() { U.view = 'lotes'; U.cands = null; U.lots = null; U.del = null; panel();
+  try { U.lots = ((await LH().list()) || []).sort((a, b) => (b.ts || 0) - (a.ts || 0)); } catch (e) { U.lots = []; tell('No se pudieron leer tus lotes'); } if (U.view === 'lotes') panel(); }
+function pLotes() { const L = U.lots;
+  const back = `<div class="lt-opt lt-bar"><button data-la="lotback">${U.S ? 'Volver al lote' : 'Cerrar lista'}</button></div>`;
+  if (!LH()) return back + '<p class="lt-note">Guardar lotes no está disponible aquí.</p>';
+  if (!L) return back + '<p class="lt-note">Leyendo tus lotes…</p>';
+  if (!L.length) return back + '<div class="lt-card"><p class="lt-h">Aún no tienes lotes guardados</p><p class="lt-sub" style="margin-top:6px">Analiza un lote y toca "Guardar lote". Se guarda en tu cuenta y lo ves desde cualquier equipo.</p></div>';
+  return back + `<div class="lt-card"><h3>Mis lotes (${L.length})</h3>` + L.map(l => { const r = l.res || {};
+    return `<div class="lt-lot"><button data-la="lotopen" data-k="${esc(l.id)}"><b>${esc(l.nombre || l.dir)}</b><small>${[esc(l.dir), r.torres ? r.torres + ' torre' + (r.torres > 1 ? 's' : '') + ' · ' + esc(r.pisos) + ' pisos' : '', r.und != null ? nf(r.und) + ' aptos' : '', r.ic ? 'IC ' + nf(r.ic, 2) : '', l.area ? nf(l.area) + ' m²' : ''].filter(Boolean).join(' · ')}</small></button>
+     <button class="lt-x${U.del === l.id ? ' on' : ''}" data-la="lotdel" data-k="${esc(l.id)}" aria-label="Borrar lote">${U.del === l.id ? 'Confirmar' : '×'}</button></div>`; }).join('') + '</div>'; }
 function panel() { const el = U.el.querySelector('[data-panel]');
+  if (U.view === 'lotes') { el.innerHTML = pLotes(); el.scrollTop = 0; return; }
   if (U.cands) { el.innerHTML = `<div class="lt-card"><h3>${U.cands.length} lotes coinciden</h3><div class="lt-list">${U.cands.map(c => `<button data-la="cand" data-k="${esc(c.code)}"><b>${esc(c.dir)}</b><small>${[c.barrio, c.n > 1 ? c.n + ' predios' : c.chip].filter(Boolean).map(esc).join(' · ')}</small></button>`).join('')}</div></div>`; return; }
   if (!U.S) { el.innerHTML = `<div class="lt-card"><p class="lt-h">Analiza un lote de Bogotá</p><p class="lt-sub" style="margin-top:6px">Busca por CHIP o dirección, o acércate en el mapa y toca el lote.</p></div>
     <div class="lt-card"><h3>Qué vas a ver</h3><div class="lt-al"><i class="n0"></i><div><b>Norma</b><p>Tratamiento, área de actividad, altura, antejardín y restricciones del POT.</p></div></div>
     <div class="lt-al"><i class="n0"></i><div><b>Volumen</b><p>Pisos, aislamientos, área construible e índices, en 3D sobre el mapa.</p></div></div>
     <div class="lt-al"><i class="n0"></i><div><b>Proyecto</b><p>Apartamentos, parqueaderos y valor del lote, listos para la factibilidad.</p></div></div></div>
-    <p class="lt-note">Datos en vivo de Catastro Distrital (IDECA) y de la Secretaría Distrital de Planeación.</p>`; return; }
-  el.innerHTML = U.tab === 'norma' ? pNorma() : U.tab === 'vol' ? pVol() : U.tab === 'cab' ? pCab() : pProy(); outs(); el.scrollTop = 0; }
+    <div class="lt-opt"><button data-la="lotes">${ic('save')}Mis lotes guardados</button></div><p class="lt-note">Datos en vivo de Catastro Distrital (IDECA) y de la Secretaría Distrital de Planeación.</p>`; return; }
+  el.innerHTML = lotBar() + (U.tab === 'norma' ? pNorma() : U.tab === 'vol' ? pVol() : U.tab === 'cab' ? pCab() : pProy()); outs(); el.scrollTop = 0; }
 function outs() { const O = { volTop: oVolTop, sb: oSb, ob: oOb, proyTop: oProyTop, mezcla: oMezcla, cabTop: oCabTop, parq: oParq, scn: oScn }; U.el.querySelectorAll('[data-out]').forEach(e => { e.innerHTML = O[e.dataset.out](); }); }
 function recalc(full) { if (!U.S) return; U.R = compute(U.S); if (full) panel(); else outs(); draw(); save(); }
 function loading(t) { U.busy = !!t; const l = U.el.querySelector('[data-load]'); l.hidden = !t; l.textContent = t || ''; }
-async function abrir(code, geom, keep) { loading('Consultando Catastro y POT…'); U.cands = null; U.scn = null;
+async function abrir(code, geom, keep) { loading('Consultando Catastro y POT…'); U.cands = null; U.scn = null; U.view = null; U.saving = false; U.lotId = (keep && keep.id) || null; U.lotName = '';
   try { const S = await cargar(code, geom); if (keep && keep.code === code) { Object.assign(S.p, keep.p || {}); if (keep.roles && keep.roles.length === S.roles.length) { S.roles = keep.roles; U.S = S; regeo(); } }
     U.S = S; U.R = compute(S); U.tab = 'norma'; tools(); panel(); draw(); fit(); save(); if (S.norm.sinPot) tell('No respondió el mapa del POT'); }
   catch (e) { tell(e.message || 'No se pudo consultar el lote'); } loading(''); }
@@ -527,7 +553,13 @@ function prefill() { const S = U.S, R = U.R, und = Math.max(1, R.und);
     loteInfo: { code: S.code, chip: S.predio.chip, dir: S.predio.dir, area: Math.round(S.geo.area), tratamiento: TR_NAME[S.norm.tr] || S.norm.trNombre, actividad: S.norm.aaCod, pisos: R.N, construida: Math.round(R.built), vendible: Math.round(R.vend), torres: R.nT, comercio: Math.round(R.comVend), cuposMin: R.parq.ref ? R.parq.cuposMin : null, ic: +R.ic.toFixed(2), fecha: new Date().toISOString().slice(0, 10) } }; }
 function onClick(e) { const b = e.target.closest('[data-la]'); if (!b || b.tagName === 'FORM') return; const a = b.dataset.la, k = b.dataset.k, S = U.S;
   if (a === 'close') Lote.close();
-  else if (a === 'tab') { U.tab = k; U.cands = null; tools(); panel(); }
+  else if (a === 'lotes') verLotes();
+  else if (a === 'lotback') { U.view = null; panel(); }
+  else if (a === 'lotopen') { const l = (U.lots || []).find(x => x.id === k); if (l) { U.view = null; abrir(l.code, null, { code: l.code, p: l.p, roles: l.roles, id: l.id }); } }
+  else if (a === 'lotdel') { if (U.del !== k) { U.del = k; panel(); } else { U.del = null; LH().del(k).then(() => { U.lots = (U.lots || []).filter(x => x.id !== k); if (U.lotId === k) U.lotId = null; panel(); tell('Lote borrado'); }).catch(() => tell('No se pudo borrar el lote')); } }
+  else if (a === 'savo') { U.saving = true; panel(); const i = U.el.querySelector('.lt-save input'); if (i) { i.focus(); i.select(); } }
+  else if (a === 'savex') { U.saving = false; panel(); }
+  else if (a === 'tab') { U.tab = k; U.cands = null; U.view = null; tools(); panel(); }
   else if (a === 'base') { U.base = k; tools(); if (U.map && U.mapOk) U.map.getSource('base').setTiles(tiles(BASES[k])); }
   else if (a === 'ov') { U.ov = +k; tools(); overlay(); if (U.ov && U.map && U.map.getZoom() < 13.5) tell('Acércate para ver la capa'); }
   else if (a === 'd3') { U.d3 = k === '1'; tools(); draw(); if (U.map) U.map.easeTo({ pitch: U.d3 ? 58 : 0, bearing: U.d3 ? -18 : 0, duration: 600 }); }
@@ -554,7 +586,7 @@ function onInput(e) { const pt = e.target.closest('[data-pt]'); if (pt && U.S) {
 
 const Lote = { open(opt) { opt = opt || {};
     if (!U.el) { const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st); const el = U.el = document.createElement('section'); el.id = 'lote'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Analizador de lotes de Bogotá'); el.innerHTML = shell(); document.body.appendChild(el);
-      el.addEventListener('click', onClick); el.addEventListener('input', onInput); el.addEventListener('submit', e => { e.preventDefault(); const q = e.target.elements.q; q.blur(); onSearch(q.value); });
+      el.addEventListener('click', onClick); el.addEventListener('input', onInput); el.addEventListener('submit', e => { e.preventDefault(); if (e.target.dataset.form === 'save') { guardar(e.target.elements.n.value); return; } const q = e.target.elements.q; q.blur(); onSearch(q.value); });
       document.addEventListener('keydown', e => { if (e.key === 'Escape' && Lote.isOpen() && !/INPUT|TEXTAREA/.test((e.target || {}).tagName || '')) Lote.close(); });
       tools(); panel(); loadLib().then(initMap).catch(e => tell(e.message)); }
     U.el.hidden = false; document.body.classList.add('loteon'); if (U.map) setTimeout(() => U.map.resize(), 30);

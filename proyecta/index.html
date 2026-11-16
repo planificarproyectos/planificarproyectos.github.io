@@ -2518,6 +2518,10 @@ const wic=(k,s=22,w=1.8)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" f
 function loteOpen(){if(!window.Lote){toast('El analizador de lotes aún está cargando');return}
   const li=ST.P&&ST.P.general&&ST.P.general.loteInfo;Lote.open(li&&li.code?{code:li.code}:{})}
 window.LoteHost={toast:m=>toast(m,3600),
+  lotes:{async list(){if(ST.mode==='fb'){const s=await ST.fbCol.get();return s.docs.filter(d=>d.id.indexOf('l_')===0).map(d=>Object.assign({},d.data(),{id:d.id.slice(2)}))}return Object.values(LS.get('pp.lotes',{}))},
+    async save(d){const id=d.id||Date.now().toString(36)+Math.random().toString(36).slice(2,5),doc=Object.assign({},clone(d),{id,ts:Date.now()});
+      if(ST.mode==='fb')await ST.fbCol.doc('l_'+id).set(doc);else{const m=LS.get('pp.lotes',{});m[id]=doc;LS.set('pp.lotes',m)}return doc},
+    async del(id){if(ST.mode==='fb')await ST.fbCol.doc('l_'+id).delete();else{const m=LS.get('pp.lotes',{});delete m[id];LS.set('pp.lotes',m)}}},
   crear(d){if(ST.readOnly){toast('Tienes acceso de solo lectura');return}
     const pre={et:[{torres:(d.torres&&d.torres.length?d.torres:[{pisos:d.pisos,und:d.und}])}],tipos:(d.tipos&&d.tipos.length?d.tipos:[{n:'Tipo A',area:d.areaApto,und:d.und}]),parqRel:wzSnapRel(d.und,d.cupos),loteInfo:d.loteInfo};
     if(d.lote>0)pre.lote=d.lote;Lote.close();wzOpen(pre);Object.assign(WZ.a,{nombre:d.nombre||'',ciudad:d.ciudad||'Bogotá'});wzRender()}};
