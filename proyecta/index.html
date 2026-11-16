@@ -2518,6 +2518,9 @@ const wic=(k,s=22,w=1.8)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" f
 function loteOpen(){if(!window.Lote){toast('El analizador de lotes aún está cargando');return}
   const li=ST.P&&ST.P.general&&ST.P.general.loteInfo;Lote.open(li&&li.code?{code:li.code}:{})}
 window.LoteHost={toast:m=>toast(m,3600),
+  proyecto(){const P=ST.P;if(!P||!P.general||!(P.tipologias||[]).length)return null;const tp={};let und=0,vend=0;(P.tipologias||[]).forEach(t=>{const u=+t.unidades||0,a=+t.area||0;tp[a]=(tp[a]||0)+u;und+=u;vend+=u*a});
+    return{nombre:P.general.nombre,et:(P.etapas||[]).map(e=>({n:e.nombre,pisos:+e.pisos||0,und:(P.tipologias||[]).filter(t=>t.etapa===e.id).reduce((x,t)=>x+(+t.unidades||0),0)})),tipos:Object.keys(tp).map(a=>({area:+a,und:tp[a]})).sort((x,y)=>x.area-y.area),und,vend,loteInfo:P.general.loteInfo||null,ro:!!ST.readOnly}},
+  vincular(info){if(ST.readOnly||!ST.P||!ST.P.general)return false;ST.P.general.loteInfo=Object.assign({},ST.P.general.loteInfo||{},info);markDirty();return true},
   lotes:{async list(){if(ST.mode==='fb'){const s=await ST.fbCol.get();return s.docs.filter(d=>d.id.indexOf('l_')===0).map(d=>Object.assign({},d.data(),{id:d.id.slice(2)}))}return Object.values(LS.get('pp.lotes',{}))},
     async save(d){const id=d.id||Date.now().toString(36)+Math.random().toString(36).slice(2,5),doc=Object.assign({},clone(d),{id,ts:Date.now()});
       if(ST.mode==='fb')await ST.fbCol.doc('l_'+id).set(doc);else{const m=LS.get('pp.lotes',{});m[id]=doc;LS.set('pp.lotes',m)}return doc},
