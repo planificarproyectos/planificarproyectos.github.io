@@ -471,9 +471,10 @@ function draw() { const m = U.map, S = U.S; if (!m || !U.mapOk) return; const se
   if (R) (R.e.all || R.e.bands).filter(b => b.poly.length).forEach(b => { const cut = [b.from]; [kp, kp + 1].forEach(c => { if (c > b.from && c < b.to) cut.push(c); }); cut.push(b.to);
     for (let i = 0; i < cut.length - 1; i++) { const a = cut[i], z = cut[i + 1]; if (!U.d3 && i) break; if (R.lay && R.lay.has[b.tw || 0] && (a > kp || R.pt[b.tw || 0] === 1)) continue; segs.push(poly(b.poly, { b: U.d3 ? a * h : 0, h: U.d3 ? z * h : 0.2, c: a < kp ? '#FFB74D' : a === kp ? '#26C6DA' : cols[0] })); } });
   const lf = [];
-  if (R && R.lay) R.lay.tw.forEach(L => { const h0 = L.lo * h, h1 = L.hi * h;
-    const add = (pl, c, extra) => { const q = inset(pl, pl.map(() => extra || 0.15)); if (q.length) lf.push(poly(q, { b: U.d3 ? h0 : 0, h: U.d3 ? h1 : 0.2, c })); };
-    add(L.corr, '#CFD8DC', 0.05); add(L.core, '#78909C', 0.05); L.cells.forEach(c => add(c.poly, c.ok ? TCOL[c.ti % TCOL.length] : '#EF5350')); });
+  if (R && R.lay) R.lay.tw.forEach(L => { const fa = U.d3 ? L.lo : 0, fz = U.d3 ? L.hi : 1;
+    for (let f = fa; f < fz; f++) { const b = U.d3 ? f * h + 0.3 : 0, t = U.d3 ? (f + 1) * h - 0.15 : 0.2;
+      const add = (pl, c, extra) => { const q = inset(pl, pl.map(() => extra)); if (q.length) lf.push(poly(q, { b, h: t, c })); };
+      add(L.corr, '#ECEFF1', 0.05); add(L.core, '#546E7A', 0.1); L.cells.forEach(c => add(c.poly, c.ok ? TCOL[c.ti % TCOL.length] : '#EF5350', 0.35)); } });
   set('env', segs); set('lay', lf);
   m.setLayoutProperty('cons-x', 'visibility', U.d3 ? 'visible' : 'none'); }
 async function overlay() { const m = U.map, o = OVS[U.ov]; if (!m || !U.mapOk) return; const src = m.getSource('ov');
@@ -590,10 +591,27 @@ function oCabTop() { const R = U.R, S = U.S;
 function oScn() { const L = U.scn; if (!L) return ''; const cur = U.R;
   return `<div class="lt-scb h"><span>Torres × pisos</span><span>Aptos</span><span>Índice</span><span>Cupos mín.</span><span>Estado</span></div>` + L.map((x, i) => { const R = x.R, on = R.nT === cur.nT && R.pt.join() === cur.pt.join();
     return `<button class="lt-scb" data-la="scnpick" data-k="${i}" aria-pressed="${on}"><b>${x.n} × ${x.N}</b><span>${nf(R.und)}</span><span>${nf(R.ic, 2)}</span><span>${R.parq.ref ? nf(R.parq.cuposMin) : '—'}</span><span style="color:${R.ok ? '#66BB6A' : '#FFB74D'}">${R.ok ? 'Cumple' : 'Revisar'}</span></button>`; }).join('') + '<p class="lt-note">Toca un escenario para verlo en 3D y usarlo en el proyecto.</p>'; }
+function planSvg(Ly) { const L = Ly.tw[0], all = [].concat(L.corr, L.core, ...L.cells.map(c => c.poly)); if (!all.length) return '';
+  const xs = all.map(q => q[0]), ys = all.map(q => q[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), w = x1 - x0 || 1, hh = y1 - y0 || 1, sc = Math.min(340 / w, 220 / hh), W = w * sc + 20, H = hh * sc + 20;
+  const P = pl => pl.map(q => ((q[0] - x0) * sc + 10).toFixed(1) + ',' + ((y1 - q[1]) * sc + 10).toFixed(1)).join(' ');
+  const cen = pl => [pl.reduce((a, q) => a + q[0], 0) / pl.length, pl.reduce((a, q) => a + q[1], 0) / pl.length];
+  const txt = (pl, t) => { const c = cen(pl); return `<text stroke="none" x="${((c[0] - x0) * sc + 10).toFixed(1)}" y="${((y1 - c[1]) * sc + 14).toFixed(1)}" text-anchor="middle" font-size="11" style="fill:#0b0b0b" font-weight="600">${t}</text>`; };
+  const ac = L.corr[0] ? `<polygon points="${P(L.corr)}" fill="#ECEFF1" stroke="#0b0b0b" stroke-width="1"/>` : '';
+  const cells = L.cells.map(c => `<polygon points="${P(c.poly)}" fill="${c.ok ? TCOL[c.ti % TCOL.length] : '#EF5350'}" stroke="#0b0b0b" stroke-width="2"/>${txt(c.poly, nf(c.a) + (c.ok ? '' : ' ✕'))}`).join('');
+  const core = `<polygon points="${P(L.core)}" fill="#546E7A" stroke="#0b0b0b" stroke-width="1"/>${txt(L.core, 'núcleo')}`.replace('fill:#0b0b0b', 'fill:#fff');
+  return `<svg viewBox="0 0 ${W.toFixed(0)} ${H.toFixed(0)}" style="width:100%;height:auto;max-width:420px;background:#14161a;border-radius:12px;display:block;margin:0 auto 10px">${ac}${core}${cells}</svg>`; }
+function niveles(R) { const ed = R.ed, k = ed.pod ? ed.k : 0, out = [];
+  R.ts.tw.forEach((t, i) => { const N = t.N, rows = [], pf = f => { const L = R.lay && R.lay.tw.find(x => x.tw === i && f >= x.lo && f < x.hi); return L ? L.perFloor : 0; };
+    for (let f = N - 1; f >= 0; f--) { const c = f === 0 ? '#26C6DA' : f <= k ? '#FFB74D' : TCOL[0], n = pf(f);
+      rows.push([c, 'Piso ' + (f + 1), f === 0 ? (N === 1 ? 'Apartamentos / lobby' : 'Lobby, zonas comunes' + (R.comG ? ' y comercio' : '')) : f <= k ? 'Parqueaderos (podio)' : n ? n + (n === 1 ? ' apartamento' : ' apartamentos') : 'Apartamentos']); }
+    for (let j = 1; j <= (ed.niv || 0); j++) rows.push(['#78909C', 'Sótano ' + j, 'Parqueaderos']);
+    const rh = rows.length > 14 ? 15 : 20, H = rows.length * rh + 4;
+    out.push(`<div style="margin:0 0 10px"><div class="lt-note" style="margin:0 0 4px">${R.nT > 1 ? 'Torre ' + (i + 1) + ' · ' : ''}Niveles</div><svg viewBox="0 0 320 ${H}" style="width:100%;height:auto;max-width:420px;display:block;background:#14161a;border-radius:12px">${rows.map((r, j) => `<rect x="8" y="${j * rh + 2}" width="${/apart/i.test(r[2]) ? 120 : 90}" height="${rh - 2}" rx="3" fill="${r[0]}"/><text stroke="none" x="14" y="${j * rh + rh / 2 + 4}" font-size="11" font-weight="600" style="fill:#0b0b0b">${r[1]}</text><text stroke="none" x="150" y="${j * rh + rh / 2 + 4}" font-size="11" style="fill:#cfd8dc">${r[2]}</text>`).join('')}</svg></div>`); });
+  return out.join(''); }
 function oPlanta() { const R = U.R, Ly = R.lay; if (!Ly) return '<p class="lt-note" style="margin:0">Con "Solo por áreas" las unidades salen del área disponible, sin repartirlas en la planta.</p>';
   const rows = []; Ly.tw.forEach(L => { rows.push([(R.nT > 1 ? 'Torre ' + (L.tw + 1) + ' · ' : '') + 'piso' + (L.fl === 1 ? ' ' + (L.lo + 1) : 's ' + (L.lo + 1) + ' a ' + L.hi), L.perFloor + ' aptos por piso' + (L.blind ? ' · ' + L.blind + ' sin ventana' : '')]); });
   const leg = Ly.mz.filas.map((f, i) => `<span style="display:inline-flex;align-items:center;gap:5px;margin:0 10px 4px 0;font-size:12px"><i class="lt-dot" style="background:${TCOL[i % TCOL.length]};margin:0"></i>${nf(f.a)} m² · ${nf(f.und)}</span>`).join('');
-  return kv(rows) + `<div style="margin-top:8px">${leg}<span style="display:inline-flex;align-items:center;gap:5px;margin:0 10px 4px 0;font-size:12px"><i class="lt-dot" style="background:#EF5350;margin:0"></i>Sin ventana</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:12px"><i class="lt-dot" style="background:#78909C;margin:0"></i>Ascensores y escaleras</span></div>
+  return planSvg(Ly) + niveles(R) + kv(rows) + `<div style="margin-top:8px">${leg}<span style="display:inline-flex;align-items:center;gap:5px;margin:0 10px 4px 0;font-size:12px"><i class="lt-dot" style="background:#EF5350;margin:0"></i>Sin ventana</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:12px"><i class="lt-dot" style="background:#78909C;margin:0"></i>Ascensores y escaleras</span></div>
    <p class="lt-note">Ve a 3D o Planta: el núcleo va al centro, el corredor al medio y los apartamentos a los lados. Se descartan los que solo darían a un vecino sin aislamiento. En el primer piso van el lobby, las zonas comunes y el comercio.</p>`; }
 function oEdif() { const R = U.R, d = R.ed, S = U.S, c = { pq: '#FFB74D', nu: '#9E9E9E', cm: '#26C6DA', vc: '#546E7A', ap: U.acc || '#4FC3F7' };
   const seg = [['Parqueo en pisos', d.podArea, c.pq], ['Ascensores y escaleras', d.nuc, c.nu], ['Corredores', d.corr, '#B0BEC5'], ['Zonas comunes y accesos', d.gnr, c.cm], ['Patios y vacíos', d.vac, c.vc], ['Apartamentos', d.aptos, c.ap]].filter(x => x[1] > 0.5), tot = Math.max(1, d.tot);
