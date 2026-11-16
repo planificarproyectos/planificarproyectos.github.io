@@ -126,7 +126,8 @@ function strip(poly, u, lo, hi) { let p = poly; if (p.length) { const a = [u[0] 
   if (p.length) { const a = [u[0] * hi, u[1] * hi]; p = clip(p, a, [a[0] - u[1], a[1] + u[0]], 0); } return p.length >= 3 ? p : []; }
 /* Torres: se reparten en franjas a lo largo del lado más largo del lote, separadas entre sí; cada una con su propia altura */
 function towerSet(S, n, pt) { n = Math.max(1, n | 0); pt = pt.slice(0, n);
-  const mk = (e, poly) => { const bands = e.bands.map(b => { const q = poly ? strip(b.poly, poly.u, poly.lo, poly.hi) : b.poly; return Object.assign({}, b, { poly: q, area: q.length ? area(q) : 0 }); });
+  const bw = +S.p.barW > 0 ? +S.p.barW : 0, bar = q => { if (!bw || q.length < 3) return q; const u = axisOf(S.geo.ring), v = [-u[1], u[0]]; let a0 = 1e9, a1 = -1e9; q.forEach(p => { const t = p[0] * v[0] + p[1] * v[1]; a0 = Math.min(a0, t); a1 = Math.max(a1, t); }); if (a1 - a0 <= bw) return q; const c = (a0 + a1) / 2; return strip(q, v, c - bw / 2, c + bw / 2); };
+  const mk = (e, poly) => { const bands = e.bands.map(b => { const q = bar(poly ? strip(b.poly, poly.u, poly.lo, poly.hi) : b.poly); return Object.assign({}, b, { poly: q, area: q.length ? area(q) : 0 }); });
     let built = 0; bands.forEach(b => { built += b.area * (b.to - b.from); }); return { N: e.H / S.p.hPiso, bands, built, foot: bands.length ? bands[0].area : 0 }; };
   const eM = envelope(S, Math.max(...pt)); let tw, sep = 0, ok = true;
   if (n === 1) tw = [mk(eM)];
@@ -239,7 +240,7 @@ function compute(S) { const p = S.p, L = limits(S), AT = S.geo.area, avis = L.no
   const ts = towerSet(S, nT, pt), e = ts.e, pct = p.computable / 100; let built = e.built, comp = built * pct, limitado = false;
   if (L.cap && comp > L.cap * AT + 0.5) { comp = L.cap * AT; built = comp / pct; limitado = true; }
   const ic = AT ? comp / AT : 0, io = AT ? e.foot / AT : 0, cl = (p.tipos || []).filter(t => t.a >= 15 && t.pct > 0).map(t => clasif(t.a, p, S.norm.tr)), visAll = cl.length > 0 && cl.every(c => c === 'VIS' || c === 'VIP');
-  const aParq = built * p.parqPct / 100, cupos = Math.floor(aParq / Math.max(10, p.m2Cupo)), ed = edificio(S, ts, e.built ? built / e.built : 1, cupos, visAll), comG = ed.comG; let vend = ed.aptos, mz = ed.mz, und = mz.und;
+  const aParq = built * p.parqPct / 100, cupos = +p.cuposOv > 0 ? Math.round(+p.cuposOv) : Math.floor(aParq / Math.max(10, p.m2Cupo)), ed = edificio(S, ts, e.built ? built / e.built : 1, cupos, visAll), comG = ed.comG; let vend = ed.aptos, mz = ed.mz, und = mz.und;
   const lay = p.planta !== false ? layouts(S, ts, ed) : null; if (lay) { mz = lay.mz; vend = lay.area; und = mz.und; ed.aptos = vend; ed.vac = Math.max(0, ed.tot - ed.podArea - ed.nuc - ed.corr - ed.gnr - vend); if (lay.blind) avis.push(lay.blind + ' apartamentos quedan sin ventana (dan a un vecino sin aislamiento) y se descartaron de la cuenta.'); }
   const fit = [], ut = (p.undTor || []).map(v => +v || 0);
   if (ut.some(v => v > 0)) { const U0 = ut.reduce((a, b) => a + b, 0), Tt = (p.tipos || []).filter(t => t.a >= 15 && t.pct > 0), sp = Tt.reduce((x, t) => x + t.pct, 0) || 1; let rem = U0;
@@ -543,7 +544,7 @@ function pVol() { const S = U.S, R = U.R, t = S.norm.tr, L = R.L;
   <div class="lt-card"><h3>Altura</h3>
    <div class="lt-opt"><button data-la="auto" data-k="1" aria-pressed="${!!S.p.auto}">${t === 'R' || (t === 'D' && L.cap) ? 'Pisos según el índice' : 'Pisos de la norma'}</button><button data-la="auto" data-k="0" aria-pressed="${!S.p.auto}">Elegir pisos</button></div>
    ${S.p.auto ? '' : `<div class="lt-f"><label><span>Pisos</span><b data-val="pisos">${R.N}</b></label><input type="range" data-lp="pisos" min="1" max="${Math.max(L.nMax, R.N, 3)}" step="1" value="${R.N}" data-u="" aria-label="Pisos"></div>`}
-   ${sl('hPiso', 'Altura de cada piso', 2.5, 3.8, 0.1, 'm', 'Entre placas. El máximo libre en vivienda es 3,80 m.')}
+   ${sl('hPiso', 'Altura de cada piso', 2.2, 3.8, 0.1, 'm', 'Entre placas. El máximo libre en vivienda es 3,80 m.')}
    ${t === 'R' ? `<h3 style="margin-top:6px">Índice de construcción que se busca</h3><div class="lt-opt">${[['base', 'Base 1,3'], ['5', 'Hasta 5,0'], ['6', 'Hasta 6,0'], ['7', 'Hasta 7,0']].map(([k, l]) => `<button data-la="mod" data-k="${k}" aria-pressed="${S.p.modalidad === k}">${l}</button>`).join('')}</div><p class="lt-note" style="margin-top:-4px">5,0 con licencia directa; 6,0 con esquina de manzana y cesión en sitio mayor a 400 m²; 7,0 con manzana completa (art. 304).</p>` : ''}</div>
   <div class="lt-card"><h3>Aislamientos</h3>
    ${sl('antejardin', 'Antejardín', 0, 10, 0.5, 'm', t === 'C' ? 'Dimensión del mapa CU-5.5 para este lote.' : 'En este tratamiento no se exige; solo por empate con vecinos.')}
@@ -576,6 +577,8 @@ function pCab() { const S = U.S, p = S.p, R = U.R, n = R.nT, c = p.com || { on: 
    <div class="lt-tp lt-pt"><span>Altura máxima</span><input type="number" inputmode="numeric" min="0" max="80" step="1" value="${+p.nOv > 0 ? p.nOv : ''}" placeholder="norma" data-pf="nOv" aria-label="Pisos máximos"><span class="lt-un">pisos</span></div>
    <div class="lt-tp lt-pt"><span>Cesión de parque</span><input type="number" inputmode="numeric" min="0" step="1" value="${+p.cesPq > 0 ? p.cesPq : ''}" placeholder="0" data-pf="cesPq" aria-label="Cesión de parque en metros cuadrados"><span class="lt-un">m²</span></div>
    <div class="lt-tp lt-pt"><span>Control ambiental</span><input type="number" inputmode="numeric" min="0" step="1" value="${+p.cesCa > 0 ? p.cesCa : ''}" placeholder="0" data-pf="cesCa" aria-label="Control ambiental en metros cuadrados"><span class="lt-un">m²</span></div>
+   <div class="lt-tp lt-pt"><span>Ancho de cada torre</span><input type="number" inputmode="decimal" min="0" step="0.5" value="${+p.barW > 0 ? p.barW : ''}" placeholder="libre" data-pf="barW" aria-label="Ancho de la torre en metros"><span class="lt-un">m</span></div>
+   <div class="lt-tp lt-pt"><span>Cupos de carro</span><input type="number" inputmode="numeric" min="0" step="1" value="${+p.cuposOv > 0 ? p.cuposOv : ''}" placeholder="auto" data-pf="cuposOv" aria-label="Cupos de parqueo del proyecto"><span class="lt-un">cupos</span></div>
    <p class="lt-note">Las cesiones y el control ambiental se descuentan de las áreas libres del lote (zonas verdes y parqueo en superficie). El índice de construcción se sigue calculando sobre el área bruta.</p>
    <p class="lt-note">Vacío = se usa la norma del mapa. Úsalo cuando la curaduría ya validó un índice o una altura distintos. Para sumar lotes vecinos usa "Sumar predio" arriba.</p></div>
   <div class="lt-card"><h3>Torres y pisos</h3>
