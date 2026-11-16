@@ -185,9 +185,10 @@ async function cargar(code, geom) {
     vref: vref[0] ? +vref[0].V_REF || 0 : 0, vrefAno: vref[0] && vref[0].ANO ? new Date(vref[0].ANO).getUTCFullYear() : 0, ae: str(one(18).NOMBRE), sinPot: P[15] === null };
   const neigh = []; vec.forEach(f => { if (f.properties.LOTCODIGO !== code) rings(f.geometry).forEach(r => neigh.push(normRing(r.map(pr.to)))); });
   const cl = classify(ring, neigh, plac.filter(f => f.geometry && f.geometry.type === 'Point').map(f => pr.to(f.geometry.coordinates)));
-  const propios = pred.slice().sort((a, b) => String(a.PREDIRECC).length - String(b.PREDIRECC).length), p0 = propios[0] || {};
+  const vistos = new Set(), unicos = pred.filter(a => !vistos.has(a.PRECHIP) && vistos.add(a.PRECHIP));
+  const propios = unicos.slice().sort((a, b) => String(a.PREDIRECC).length - String(b.PREDIRECC).length), p0 = propios[0] || {};
   const S = { code, pr, lonlat: rl, ip, geo: { ring, area: area(ring), frente: cl.g.frente, fondo: cl.g.fondo }, g: cl.g, roles: cl.roles, norm, alertas: alertas(P, norm),
-    predio: { dir: str(p0.PREDIRECC), chip: pred.length === 1 ? str(p0.PRECHIP) : '', barrio: str(p0.PRENBARRIO), n: pred.length, aTerr: pred.length === 1 ? +p0.PREATERRE || 0 : 0, aCons: pred.reduce((s, a) => s + (+a.PREACONST || 0), 0) },
+    predio: { dir: str(p0.PREDIRECC), chip: unicos.length === 1 ? str(p0.PRECHIP) : '', barrio: str(p0.PRENBARRIO), n: unicos.length, aTerr: unicos.length === 1 ? +p0.PREATERRE || 0 : 0, aCons: unicos.reduce((s, a) => s + (+a.PREACONST || 0), 0) },
     vecinos: vec.filter(f => f.properties.LOTCODIGO !== code), cons: cons.filter(f => f.properties.LOTECODIGO !== code), consPropia: cons.filter(f => f.properties.LOTECODIGO === code), fallos };
   S.p = defaults(norm); return S; }
 /* Restricciones y avisos a partir de las capas del POT. nivel: 2 alto, 1 medio, 0 informativo */
@@ -297,7 +298,8 @@ function initMap() { const mg = G.maplibregl, dark = isDark(); U.base = dark ? '
   const map = U.map = new mg.Map({ container: U.el.querySelector('.mp'), center: [-74.085, 4.65], zoom: 11.2, maxZoom: 20.9, minZoom: 9, maxPitch: 75, attributionControl: false,
     style: { version: 8, sources: { base: { type: 'raster', tiles: tiles(BASES[U.base]), tileSize: 256, maxzoom: 19, attribution: 'Mapa de referencia IDECA · Catastro Distrital · POT: Secretaría Distrital de Planeación' } }, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#0b0c0d' } }, { id: 'base', type: 'raster', source: 'base' }] } });
   map.addControl(new mg.AttributionControl({ compact: true }), 'bottom-right'); map.addControl(new mg.NavigationControl({ visualizePitch: true }), 'top-left');
-  map.on('load', () => { ['ov', 'vec', 'cons', 'lot', 'env', 'edges'].forEach(s => map.addSource(s, { type: 'geojson', data: FC() }));
+  /* Las capas se montan apenas carga el estilo, sin esperar a que lleguen todas las teselas del mapa base */
+  const setup = () => { if (U.mapOk || !map.isStyleLoaded()) return; ['ov', 'vec', 'cons', 'lot', 'env', 'edges'].forEach(s => map.addSource(s, { type: 'geojson', data: FC() }));
     map.addLayer({ id: 'ov-f', type: 'fill', source: 'ov', paint: { 'fill-color': '#90A4AE', 'fill-opacity': 0.3 } });
     map.addLayer({ id: 'ov-l', type: 'line', source: 'ov', paint: { 'line-color': '#fff', 'line-opacity': 0.35, 'line-width': 0.8 } });
     map.addLayer({ id: 'vec-l', type: 'line', source: 'vec', paint: { 'line-color': '#8a8f93', 'line-opacity': 0.6, 'line-width': 0.8 } });
@@ -306,7 +308,8 @@ function initMap() { const mg = G.maplibregl, dark = isDark(); U.base = dark ? '
     map.addLayer({ id: 'env-x', type: 'fill-extrusion', source: 'env', paint: { 'fill-extrusion-color': ['get', 'c'], 'fill-extrusion-height': ['get', 'h'], 'fill-extrusion-base': ['get', 'b'], 'fill-extrusion-opacity': 0.82 } });
     map.addLayer({ id: 'edges-l', type: 'line', source: 'edges', layout: { 'line-cap': 'round' }, paint: { 'line-color': ['get', 'c'], 'line-width': 4.5 } });
     map.addLayer({ id: 'edges-h', type: 'line', source: 'edges', paint: { 'line-color': '#000', 'line-opacity': 0, 'line-width': 22 } });
-    U.mapOk = true; tools(); draw(); if (U.S) fit(); const at = U.el.querySelector('.maplibregl-ctrl-attrib'); if (at) at.classList.remove('maplibregl-compact-show'); });
+    U.mapOk = true; tools(); draw(); if (U.S) fit(); const at = U.el.querySelector('.maplibregl-ctrl-attrib'); if (at) at.classList.remove('maplibregl-compact-show'); };
+  map.on('styledata', setup); map.on('load', setup); const iv = setInterval(() => { setup(); if (U.mapOk) clearInterval(iv); }, 300);
   map.on('click', e => { if (U.busy) return; const hit = U.S ? map.queryRenderedFeatures([[e.point.x - 6, e.point.y - 6], [e.point.x + 6, e.point.y + 6]], { layers: ['edges-h'] }) : [];
     if (hit.length) { const i = hit[0].properties.i, o = ['F', 'L', 'P', 'X']; U.S.roles[i] = o[(o.indexOf(U.S.roles[i]) + 1) % 4]; regeo(); recalc(true); return; }
     if (map.getZoom() < 15.5) { tell('Acércate más para elegir un lote'); return; } pick(e.lngLat.lng, e.lngLat.lat); });
