@@ -88,7 +88,7 @@ function mezcla(vend, tipos) { const T = (tipos || []).filter(t => t.a >= 15 && 
 }
 function defaults(norm) { const pq = PARQ[norm.aaCod];
   return { auto: true, pisos: 0, hPiso: 3, antejardin: norm.tr === 'C' ? (norm.antejardin || 0) : 0, modalidad: norm.ae ? 'base' : '5', anchoVia: 0,
-    computable: 85, eficiencia: 80, areaApto: 55, tipos: TIPOS0.map(t => ({ a: t, pct: 20 })), torres: 1, ptor: [], parqUbic: 'sot', estrato: 4, efApto: 96, nAsc: 0, nEsc: 0, sep: 0, com: { on: false, pct: 30 }, precioM2: 0, smmlv: SMMLV, parqPct: pq ? pq.max : 15, m2Cupo: 25 }; }
+    computable: 85, eficiencia: 80, areaApto: 55, tipos: TIPOS0.map(t => ({ a: t, pct: 20 })), torres: 1, ptor: [], parqUbic: 'sot', planta: true, estrato: 4, efApto: 96, nAsc: 0, nEsc: 0, sep: 0, com: { on: false, pct: 30 }, precioM2: 0, smmlv: SMMLV, parqPct: pq ? pq.max : 15, m2Cupo: 25 }; }
 /* Topes de altura e índice según el tratamiento */
 function limits(S) { const t = S.norm.tr, p = S.p, A = S.geo.area, alt = S.norm.alt, L = { nDef: 3, nMax: 60, cap: 0, notas: [] };
   if (S.norm.aero > 0) L.nMax = Math.max(1, Math.min(L.nMax, Math.floor(S.norm.aero / p.hPiso)));
@@ -193,6 +193,34 @@ function edificio(S, ts, kf, cuposReq, visAll) { const p = S.p, AT = S.geo.area,
   if (libre + 0.001 < verd) avis.push('El equipamiento comunal exige ' + Math.round(verd) + ' m² de zonas verdes y recreativas en áreas libres y solo quedan ' + Math.round(libre) + ' m² sin construir.');
   return { k, pod, niv, capNivel, podCupos, nT, asc: R.asc, esc: R.esc, aptos: R.aptos, mz, und: mz.und, comG, avis, tot, podArea,
     nuc: R.nuc, corr: R.corr, vac: R.vac, gnr: R.gnr, lobby: R.lobby, tecn: R.tecn, bici: R.bici, amenB: R.amenB, prog: R.prog, amen: est, f: R.f, ecp: R.ecp, ecpVerdes: verd, ecpComun: 0.2 * R.ecp, libre, xs, merma: Math.max(0, tot - podArea - R.aptos - R.nuc - R.corr - R.vac - R.gnr) }; }
+/* ---- Planta tipo: núcleo al centro, corredor y apartamentos a lado y lado; se descartan los que quedan sin ventana ---- */
+const TCOL = ['#4FC3F7', '#81C784', '#FFD54F', '#BA68C8', '#FF8A65', '#4DB6AC', '#F06292', '#A1887F'];
+function clipFrame(poly, x0, x1, y0, y1) { let p = poly; if (p.length) p = clip(p, [x0, 0], [x0, -1], 0); if (p.length) p = clip(p, [x1, 0], [x1, 1], 0); if (p.length) p = clip(p, [0, y0], [1, y0], 0); if (p.length) p = clip(p, [0, y1], [-1, y1], 0); return p.length >= 3 ? p : []; }
+function ventana(S, x, y) { const ring = S.geo.ring; if (pip([x, y], ring)) return true; let bi = 0, bd = 1e9; ring.forEach((a, i) => { const d = distSeg([x, y], a, ring[(i + 1) % ring.length]); if (d < bd) { bd = d; bi = i; } }); return S.roles[bi] === 'F'; }
+function layoutTorre(S, band, na, ne, tipos) { const P = band && band.poly; if (!P || P.length < 3) return null;
+  const u = axisOf(P), v = [-u[1], u[0]], ST = p => [p[0] * u[0] + p[1] * u[1], p[0] * v[0] + p[1] * v[1]], BK = (a, b) => [a * u[0] + b * v[0], a * u[1] + b * v[1]], Q = P.map(ST);
+  let s0 = 1e9, s1 = -1e9, t0 = 1e9, t1 = -1e9; Q.forEach(q => { s0 = Math.min(s0, q[0]); s1 = Math.max(s1, q[0]); t0 = Math.min(t0, q[1]); t1 = Math.max(t1, q[1]); });
+  const W = t1 - t0, sc = (s0 + s1) / 2, tc = (t0 + t1) / 2, win = (a, b) => { const g = BK(a, b); return ventana(S, g[0], g[1]); };
+  const nu = na * (ASC + VEST) + ne * ESC, Dn = Math.min(7, W), Lc = Math.max(4, nu / Math.max(3, Dn)), rows = []; let cor;
+  if (W >= 14) { const d = Math.min(9, (W - 1.5) / 2); cor = [tc - 0.75, tc + 0.75]; rows.push({ a: tc + 0.75, b: tc + 0.75 + d, out: 1, d }, { a: tc - 0.75 - d, b: tc - 0.75, out: -1, d }); }
+  else { const nB = !win(sc, t1 + 1), sB = !win(sc, t0 - 1), d = Math.max(0, W - 1.5); if (nB && !sB) { cor = [t1 - 1.5, t1]; rows.push({ a: t0, b: t0 + d, out: -1, d }); } else { cor = [t0, t0 + 1.5]; rows.push({ a: t0 + 1.5, b: t1, out: 1, d }); } }
+  const T = tipos.filter(x => x.a >= 15 && x.pct > 0).slice().sort((x, y) => x.a - y.a), sp = T.reduce((x, y) => x + y.pct, 0) || 1, cnt = T.map(() => 0); let tot = 0;
+  const cells = [], seg = [[s0, sc - Lc / 2], [sc + Lc / 2, s1]], back = poly => poly.map(q => BK(q[0], q[1]));
+  rows.forEach(r => { if (r.d < 5) return; seg.forEach((sg, si) => { let c = sg[0]; while (c + 3 <= sg[1] + 1e-6) {
+    const ord = T.map((x, i) => i).sort((i, j) => (T[j].pct / sp * (tot + 1) - cnt[j]) - (T[i].pct / sp * (tot + 1) - cnt[i])); let placed = false;
+    for (const i of ord) { const w = T[i].a / r.d; if (c + w > sg[1] + 1e-6) continue; const poly = clipFrame(Q, c, c + w, r.a, r.b); if (!poly.length || area(poly) < 0.92 * w * r.d) continue;
+      const sm = c + w / 2, outer = r.out > 0 ? r.b : r.a, tm = (r.a + r.b) / 2;
+      let ok = win(sm, outer + r.out * 1.0); if (!ok && si === 0 && c <= sg[0] + 0.01) ok = win(c - 1, tm); if (!ok && si === 1 && c + w >= sg[1] - 0.01) ok = win(c + w + 1, tm);
+      cells.push({ poly: back(poly), a: T[i].a, ti: i, ok }); if (ok) { cnt[i]++; tot++; } c += w; placed = true; break; }
+    if (!placed) c += 0.5; } }); });
+  const sh = back(clipFrame(Q, s0, s1, cor[0], cor[1])), co = back(clipFrame(Q, sc - Lc / 2, sc + Lc / 2, tc - Dn / 2, tc + Dn / 2));
+  return { cells, corr: sh, core: co, T, cnt, blind: cells.filter(c => !c.ok).length, perFloor: tot, W, L: s1 - s0 }; }
+function layouts(S, ts, ed) { const p = S.p, out = [], tipos = p.tipos || [], has = [];
+  ts.tw.forEach((t, i) => { const lo0 = t.N > 1 ? ed.k + 1 : 0; has[i] = false;
+    t.bands.forEach(b => { const lo = Math.max(b.from, lo0), hi = Math.min(b.to, t.N); if (hi <= lo || !b.poly.length) return; const L = layoutTorre(S, b, ed.asc[i], ed.esc[i], tipos); if (!L) return; out.push(Object.assign(L, { tw: i, lo, hi, fl: hi - lo, N: t.N })); has[i] = true; }); });
+  if (!out.length) return null; const mapT = {}; out.forEach(L => { L.T.forEach((x, i) => { const m = mapT[x.a] = mapT[x.a] || { a: x.a, und: 0 }; m.und += L.cnt[i] * L.fl; }); });
+  const filas = Object.values(mapT).sort((x, y) => x.a - y.a).map(m => ({ a: m.a, pct: 0, und: m.und, m2: m.und * m.a })), und = filas.reduce((x, y) => x + y.und, 0), usada = filas.reduce((x, y) => x + y.m2, 0);
+  filas.forEach(f => { f.pct = und ? f.und * 100 / und : 0; }); return { tw: out, has, mz: { filas, und, usada, prom: und ? usada / und : 0 }, area: usada, blind: out.reduce((x, L) => x + L.blind * L.fl, 0) }; }
 /* VIS / VIP según el precio de venta del apartamento (en salarios mínimos) */
 function clasif(a, p, tr) { if (!(p.precioM2 > 0)) return ''; const v = a * p.precioM2 / (p.smmlv || SMMLV); return v <= 90 ? 'VIP' : v <= (tr === 'R' ? 175 : 150) ? 'VIS' : 'No VIS'; }
 /* Estacionamientos del art. 389 */
@@ -207,7 +235,8 @@ function compute(S) { const p = S.p, L = limits(S), AT = S.geo.area, avis = L.no
   const ts = towerSet(S, nT, pt), e = ts.e, pct = p.computable / 100; let built = e.built, comp = built * pct, limitado = false;
   if (L.cap && comp > L.cap * AT + 0.5) { comp = L.cap * AT; built = comp / pct; limitado = true; }
   const ic = AT ? comp / AT : 0, io = AT ? e.foot / AT : 0, cl = (p.tipos || []).filter(t => t.a >= 15 && t.pct > 0).map(t => clasif(t.a, p, S.norm.tr)), visAll = cl.length > 0 && cl.every(c => c === 'VIS' || c === 'VIP');
-  const aParq = built * p.parqPct / 100, cupos = Math.floor(aParq / Math.max(10, p.m2Cupo)), ed = edificio(S, ts, e.built ? built / e.built : 1, cupos, visAll), comG = ed.comG, vend = ed.aptos, mz = ed.mz, und = mz.und;
+  const aParq = built * p.parqPct / 100, cupos = Math.floor(aParq / Math.max(10, p.m2Cupo)), ed = edificio(S, ts, e.built ? built / e.built : 1, cupos, visAll), comG = ed.comG; let vend = ed.aptos, mz = ed.mz, und = mz.und;
+  const lay = p.planta !== false ? layouts(S, ts, ed) : null; if (lay) { mz = lay.mz; vend = lay.area; und = mz.und; ed.aptos = vend; ed.vac = Math.max(0, ed.tot - ed.podArea - ed.nuc - ed.corr - ed.gnr - vend); if (lay.blind) avis.push(lay.blind + ' apartamentos quedan sin ventana (dan a un vecino sin aislamiento) y se descartaron de la cuenta.'); }
   const vis = mz.filas.filter(t => t.und > 0).map(t => Object.assign({ c: clasif(t.a, p, S.norm.tr) }, t));
   avis.push.apply(avis, ed.avis);
   const top = e.bands[e.bands.length - 1], parq = parqInfo(S, built, cupos, visAll, und);
@@ -225,7 +254,7 @@ function compute(S) { const p = S.p, L = limits(S), AT = S.geo.area, avis = L.no
   if (S.g.esquina) avis.push('Lote esquinero: no se exige aislamiento posterior; la transición se resuelve con patio en la esquina interior.');
   if (S.geo.fondo && S.geo.fondo <= 8) avis.push('Fondo de 8 m o menos: no se exige aislamiento posterior.');
   const tb = ts.tw.reduce((x, t) => x + t.built, 0) || 1, ok = N <= L.nMax && ts.ok && !(S.norm.aero > 0 && e.H > S.norm.aero) && !(parq.ref && cupos < parq.cuposMin) && (nT === 1 || ts.tw.every(t => { const b = t.bands[t.bands.length - 1]; return b && b.area >= MINPLATE; }));
-  return { ed, N, nT, pt, nAuto, ts, tw: ts.tw.map((t, i) => ({ N: pt[i], built: t.built * built / (e.built || 1), share: t.built / tb })), sep: ts.sep, comG, comVend: comG * 0.9, vis, visAll, parq, ok, L, e, sb: e.sb, built, comp, ic, io, vend, und, mz, aParq, cupos, limitado, avis, ob: oblig(S, ic), valorLote: (S.norm.vref || 0) * AT }; }
+  return { lay, ed, N, nT, pt, nAuto, ts, tw: ts.tw.map((t, i) => ({ N: pt[i], built: t.built * built / (e.built || 1), share: t.built / tb })), sep: ts.sep, comG, comVend: comG * 0.9, vis, visAll, parq, ok, L, e, sb: e.sb, built, comp, ic, io, vend, und, mz, aParq, cupos, limitado, avis, ob: oblig(S, ic), valorLote: (S.norm.vref || 0) * AT }; }
 
 /* ---------------- Servicios oficiales ---------------- */
 async function ags(url, params, post) { const q = new URLSearchParams(Object.assign({ f: 'json' }, params));
@@ -409,13 +438,14 @@ function initMap() { const mg = G.maplibregl, dark = isDark(); U.base = dark ? '
     style: { version: 8, sources: { base: { type: 'raster', tiles: tiles(BASES[U.base]), tileSize: 256, maxzoom: 19, attribution: 'Mapa de referencia IDECA · Catastro Distrital · POT: Secretaría Distrital de Planeación' } }, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#0b0c0d' } }, { id: 'base', type: 'raster', source: 'base' }] } });
   map.addControl(new mg.AttributionControl({ compact: true }), 'bottom-right'); map.addControl(new mg.NavigationControl({ visualizePitch: true }), 'top-left');
   /* Las capas se montan apenas carga el estilo, sin esperar a que lleguen todas las teselas del mapa base */
-  const setup = () => { if (U.mapOk || !(map.style && map.style._loaded) || map.getSource('ov')) return; ['ov', 'vec', 'cons', 'lot', 'env', 'edges'].forEach(s => map.addSource(s, { type: 'geojson', data: FC() }));
+  const setup = () => { if (U.mapOk || !(map.style && map.style._loaded) || map.getSource('ov')) return; ['ov', 'vec', 'cons', 'lot', 'env', 'lay', 'edges'].forEach(s => map.addSource(s, { type: 'geojson', data: FC() }));
     map.addLayer({ id: 'ov-f', type: 'fill', source: 'ov', paint: { 'fill-color': '#90A4AE', 'fill-opacity': 0.3 } });
     map.addLayer({ id: 'ov-l', type: 'line', source: 'ov', paint: { 'line-color': '#fff', 'line-opacity': 0.35, 'line-width': 0.8 } });
     map.addLayer({ id: 'vec-l', type: 'line', source: 'vec', paint: { 'line-color': '#8a8f93', 'line-opacity': 0.6, 'line-width': 0.8 } });
     map.addLayer({ id: 'cons-x', type: 'fill-extrusion', source: 'cons', paint: { 'fill-extrusion-color': '#7d868c', 'fill-extrusion-height': ['get', 'h'], 'fill-extrusion-opacity': 0.55 } });
     map.addLayer({ id: 'lot-f', type: 'fill', source: 'lot', paint: { 'fill-color': U.acc, 'fill-opacity': 0.16 } });
     map.addLayer({ id: 'env-x', type: 'fill-extrusion', source: 'env', paint: { 'fill-extrusion-color': ['get', 'c'], 'fill-extrusion-height': ['get', 'h'], 'fill-extrusion-base': ['get', 'b'], 'fill-extrusion-opacity': 0.82 } });
+    map.addLayer({ id: 'lay-x', type: 'fill-extrusion', source: 'lay', paint: { 'fill-extrusion-color': ['get', 'c'], 'fill-extrusion-height': ['get', 'h'], 'fill-extrusion-base': ['get', 'b'], 'fill-extrusion-opacity': 0.95 } });
     map.addLayer({ id: 'edges-l', type: 'line', source: 'edges', layout: { 'line-cap': 'round' }, paint: { 'line-color': ['get', 'c'], 'line-width': 4.5 } });
     map.addLayer({ id: 'edges-h', type: 'line', source: 'edges', paint: { 'line-color': '#000', 'line-opacity': 0, 'line-width': 22 } });
     U.mapOk = true; tools(); draw(); if (U.S) fit(); const at = U.el.querySelector('.maplibregl-ctrl-attrib'); if (at) at.classList.remove('maplibregl-compact-show'); };
@@ -431,7 +461,7 @@ function fit() { const S = U.S, m = U.map; if (!S || !m) return; const xs = S.lo
 function regeo() { const S = U.S, r = S.geo.ring, n = r.length; let fr = 0, main = null; S.roles.forEach((x, i) => { if (x !== 'F') return; const a = r[i], b = r[(i + 1) % n], l = Math.hypot(b[0] - a[0], b[1] - a[1]); fr += l; if (!main || l > main.l) main = { a, b, l }; });
   S.geo.frente = fr; S.g.sinFrente = !main; S.geo.fondo = main ? Math.max(...r.map(p => distSeg2(p, main))) : 0; S.g.esquina = false; }
 function draw() { const m = U.map, S = U.S; if (!m || !U.mapOk) return; const set = (k, f) => m.getSource(k).setData(FC(f));
-  if (!S) { ['vec', 'cons', 'lot', 'env', 'edges'].forEach(k => set(k, [])); return; }
+  if (!S) { ['vec', 'cons', 'lot', 'env', 'lay', 'edges'].forEach(k => set(k, [])); return; }
   const poly = (ringLocal, props) => { const c = ringLocal.map(S.pr.back); c.push(c[0]); return { type: 'Feature', properties: props || {}, geometry: { type: 'Polygon', coordinates: [c] } }; };
   set('vec', S.vecinos); set('cons', S.cons.map(f => ({ type: 'Feature', geometry: f.geometry, properties: { h: Math.max(1, +f.properties.CONNPISOS || 1) * 3 } })));
   set('lot', [poly(S.geo.ring)]);
@@ -439,8 +469,12 @@ function draw() { const m = U.map, S = U.S; if (!m || !U.mapOk) return; const se
   const R = U.R, h = S.p.hPiso, cols = [U.acc || '#4FC3F7'];
   const kp = R && R.ed && R.ed.pod ? R.ed.k : 0, segs = [];
   if (R) (R.e.all || R.e.bands).filter(b => b.poly.length).forEach(b => { const cut = [b.from]; [kp, kp + 1].forEach(c => { if (c > b.from && c < b.to) cut.push(c); }); cut.push(b.to);
-    for (let i = 0; i < cut.length - 1; i++) { const a = cut[i], z = cut[i + 1]; if (!U.d3 && i) break; segs.push(poly(b.poly, { b: U.d3 ? a * h : 0, h: U.d3 ? z * h : 0.2, c: a < kp ? '#FFB74D' : a === kp ? '#26C6DA' : cols[0] })); } });
-  set('env', segs);
+    for (let i = 0; i < cut.length - 1; i++) { const a = cut[i], z = cut[i + 1]; if (!U.d3 && i) break; if (R.lay && R.lay.has[b.tw || 0] && (a > kp || R.pt[b.tw || 0] === 1)) continue; segs.push(poly(b.poly, { b: U.d3 ? a * h : 0, h: U.d3 ? z * h : 0.2, c: a < kp ? '#FFB74D' : a === kp ? '#26C6DA' : cols[0] })); } });
+  const lf = [];
+  if (R && R.lay) R.lay.tw.forEach(L => { const h0 = L.lo * h, h1 = L.hi * h;
+    const add = (pl, c, extra) => { const q = inset(pl, pl.map(() => extra || 0.15)); if (q.length) lf.push(poly(q, { b: U.d3 ? h0 : 0, h: U.d3 ? h1 : 0.2, c })); };
+    add(L.corr, '#CFD8DC', 0.05); add(L.core, '#78909C', 0.05); L.cells.forEach(c => add(c.poly, c.ok ? TCOL[c.ti % TCOL.length] : '#EF5350')); });
+  set('env', segs); set('lay', lf);
   m.setLayoutProperty('cons-x', 'visibility', U.d3 ? 'visible' : 'none'); }
 async function overlay() { const m = U.map, o = OVS[U.ov]; if (!m || !U.mapOk) return; const src = m.getSource('ov');
   if (!o || m.getZoom() < 13.5) { src.setData(FC()); return; }
@@ -541,6 +575,7 @@ function pCab() { const S = U.S, p = S.p, R = U.R, n = R.nT, c = p.com || { on: 
    <div class="lt-tp lt-pt" style="margin-top:10px"><span>Ascensores</span><input type="number" inputmode="numeric" min="0" max="8" step="1" value="${p.nAsc || 0}" data-pn="nAsc" aria-label="Ascensores por torre"><span class="lt-un">por torre · 0 = auto</span></div>
    <div class="lt-tp lt-pt"><span>Escaleras</span><input type="number" inputmode="numeric" min="0" max="4" step="1" value="${p.nEsc || 0}" data-pn="nEsc" aria-label="Escaleras por torre"><span class="lt-un">por torre · 0 = auto</span></div>
    <p class="lt-note" style="margin:8px 0 0">El estrato define las zonas comunes (gimnasio, sauna, salón social...). Las cantidades y dimensiones de ascensores y escaleras son criterios de diseño, no del POT: confírmalas con el diseñador y la NSR-10.</p></div>
+  <div class="lt-card"><h3>Distribución en planta</h3><div class="lt-opt"><button data-la="plt" data-k="1" aria-pressed="${p.planta !== false}">Dibujar planta tipo</button><button data-la="plt" data-k="0" aria-pressed="${p.planta === false}">Solo por áreas</button></div><div data-out="planta" style="margin-top:10px"></div></div>
   <div data-out="edif"></div><div data-out="amen"></div>
   <div class="lt-card"><h3>Escenarios</h3><p class="lt-note" style="margin:0 0 8px">Prueba 1, 2 y 3 torres con la altura máxima de la norma y alturas menores, y las compara.</p>
    <button class="lt-cta" data-la="gen" style="padding:11px;font-size:14px">Generar escenarios</button><div data-out="scn" style="margin-top:10px"></div></div>
@@ -555,6 +590,11 @@ function oCabTop() { const R = U.R, S = U.S;
 function oScn() { const L = U.scn; if (!L) return ''; const cur = U.R;
   return `<div class="lt-scb h"><span>Torres × pisos</span><span>Aptos</span><span>Índice</span><span>Cupos mín.</span><span>Estado</span></div>` + L.map((x, i) => { const R = x.R, on = R.nT === cur.nT && R.pt.join() === cur.pt.join();
     return `<button class="lt-scb" data-la="scnpick" data-k="${i}" aria-pressed="${on}"><b>${x.n} × ${x.N}</b><span>${nf(R.und)}</span><span>${nf(R.ic, 2)}</span><span>${R.parq.ref ? nf(R.parq.cuposMin) : '—'}</span><span style="color:${R.ok ? '#66BB6A' : '#FFB74D'}">${R.ok ? 'Cumple' : 'Revisar'}</span></button>`; }).join('') + '<p class="lt-note">Toca un escenario para verlo en 3D y usarlo en el proyecto.</p>'; }
+function oPlanta() { const R = U.R, Ly = R.lay; if (!Ly) return '<p class="lt-note" style="margin:0">Con "Solo por áreas" las unidades salen del área disponible, sin repartirlas en la planta.</p>';
+  const rows = []; Ly.tw.forEach(L => { rows.push([(R.nT > 1 ? 'Torre ' + (L.tw + 1) + ' · ' : '') + 'piso' + (L.fl === 1 ? ' ' + (L.lo + 1) : 's ' + (L.lo + 1) + ' a ' + L.hi), L.perFloor + ' aptos por piso' + (L.blind ? ' · ' + L.blind + ' sin ventana' : '')]); });
+  const leg = Ly.mz.filas.map((f, i) => `<span style="display:inline-flex;align-items:center;gap:5px;margin:0 10px 4px 0;font-size:12px"><i class="lt-dot" style="background:${TCOL[i % TCOL.length]};margin:0"></i>${nf(f.a)} m² · ${nf(f.und)}</span>`).join('');
+  return kv(rows) + `<div style="margin-top:8px">${leg}<span style="display:inline-flex;align-items:center;gap:5px;margin:0 10px 4px 0;font-size:12px"><i class="lt-dot" style="background:#EF5350;margin:0"></i>Sin ventana</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:12px"><i class="lt-dot" style="background:#78909C;margin:0"></i>Ascensores y escaleras</span></div>
+   <p class="lt-note">Ve a 3D o Planta: el núcleo va al centro, el corredor al medio y los apartamentos a los lados. Se descartan los que solo darían a un vecino sin aislamiento. En el primer piso van el lobby, las zonas comunes y el comercio.</p>`; }
 function oEdif() { const R = U.R, d = R.ed, S = U.S, c = { pq: '#FFB74D', nu: '#9E9E9E', cm: '#26C6DA', vc: '#546E7A', ap: U.acc || '#4FC3F7' };
   const seg = [['Parqueo en pisos', d.podArea, c.pq], ['Ascensores y escaleras', d.nuc, c.nu], ['Corredores', d.corr, '#B0BEC5'], ['Zonas comunes y accesos', d.gnr, c.cm], ['Patios y vacíos', d.vac, c.vc], ['Apartamentos', d.aptos, c.ap]].filter(x => x[1] > 0.5), tot = Math.max(1, d.tot);
   const pct = v => nf(v * 100 / tot) + ' %';
@@ -633,7 +673,7 @@ function panel() { const el = U.el.querySelector('[data-panel]');
     <div class="lt-al"><i class="n0"></i><div><b>Proyecto</b><p>Apartamentos, parqueaderos y valor del lote, listos para la factibilidad.</p></div></div></div>
     <div class="lt-opt"><button data-la="lotes">${ic('save')}Mis lotes guardados</button></div><p class="lt-note">Datos en vivo de Catastro Distrital (IDECA) y de la Secretaría Distrital de Planeación.</p>`; return; }
   el.innerHTML = lotBar() + (U.tab === 'norma' ? pNorma() : U.tab === 'vol' ? pVol() : U.tab === 'cab' ? pCab() : pProy()); outs(); el.scrollTop = 0; }
-function outs() { const O = { volTop: oVolTop, sb: oSb, ob: oOb, proyTop: oProyTop, mezcla: oMezcla, cabTop: oCabTop, parq: oParq, scn: oScn, edif: oEdif, amen: oAmen }; U.el.querySelectorAll('[data-out]').forEach(e => { e.innerHTML = O[e.dataset.out](); }); }
+function outs() { const O = { volTop: oVolTop, sb: oSb, ob: oOb, proyTop: oProyTop, mezcla: oMezcla, cabTop: oCabTop, parq: oParq, scn: oScn, edif: oEdif, amen: oAmen, planta: oPlanta }; U.el.querySelectorAll('[data-out]').forEach(e => { e.innerHTML = O[e.dataset.out](); }); }
 function recalc(full) { if (!U.S) return; U.R = compute(U.S); if (full) panel(); else outs(); draw(); save(); }
 function loading(t) { U.busy = !!t; const l = U.el.querySelector('[data-load]'); l.hidden = !t; l.textContent = t || ''; }
 async function abrir(code, geom, keep) { loading('Consultando Catastro y POT…'); U.cands = null; U.scn = null; U.view = null; U.saving = false; U.lotId = (keep && keep.id) || null; U.lotName = ''; U.lotTags = (keep && keep.tags) || [];
@@ -672,6 +712,7 @@ function onClick(e) { const b = e.target.closest('[data-la]'); if (!b || b.tagNa
   else if (a === 'tdel') { S.p.tipos.splice(+k, 1); tipRender(); }
   else if (a === 'tigual') { S.p.tipos.forEach(t => { t.pct = 20; }); tipRender(); }
   else if (a === 'torres') { S.p.torres = +k; S.p.ptor = []; S.p.auto = true; U.scn = null; recalc(true); }
+  else if (a === 'plt') { S.p.planta = k === '1'; recalc(true); }
   else if (a === 'ubic') { S.p.parqUbic = k; recalc(true); }
   else if (a === 'estr') { S.p.estrato = +k; recalc(true); }
   else if (a === 'cabmax') { S.p.ptor = []; S.p.auto = true; recalc(true); }
