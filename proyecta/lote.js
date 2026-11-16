@@ -453,7 +453,7 @@ function initMap() { const mg = G.maplibregl, dark = isDark(); U.base = dark ? '
     style: { version: 8, sources: { base: { type: 'raster', tiles: tiles(BASES[U.base]), tileSize: 256, maxzoom: 19, attribution: 'Mapa de referencia IDECA · Catastro Distrital · POT: Secretaría Distrital de Planeación' } }, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#0b0c0d' } }, { id: 'base', type: 'raster', source: 'base' }] } });
   map.addControl(new mg.AttributionControl({ compact: true }), 'bottom-right'); map.addControl(new mg.NavigationControl({ visualizePitch: true }), 'top-left');
   /* Las capas se montan apenas carga el estilo, sin esperar a que lleguen todas las teselas del mapa base */
-  const setup = () => { if (U.mapOk || !(map.style && map.style._loaded) || map.getSource('ov')) return; ['ov', 'vec', 'cons', 'lot', 'env', 'lay', 'edges'].forEach(s => map.addSource(s, { type: 'geojson', data: FC() }));
+  const setup = () => { if (U.mapOk || !(map.style && map.style._loaded) || map.getSource('ov')) return; ['ov', 'vec', 'cons', 'lot', 'env', 'lay', 'edges', 'volh'].forEach(s => map.addSource(s, { type: 'geojson', data: FC() }));
     map.addLayer({ id: 'ov-f', type: 'fill', source: 'ov', paint: { 'fill-color': '#90A4AE', 'fill-opacity': 0.3 } });
     map.addLayer({ id: 'ov-l', type: 'line', source: 'ov', paint: { 'line-color': '#fff', 'line-opacity': 0.35, 'line-width': 0.8 } });
     map.addLayer({ id: 'vec-l', type: 'line', source: 'vec', paint: { 'line-color': '#8a8f93', 'line-opacity': 0.6, 'line-width': 0.8 } });
@@ -463,9 +463,23 @@ function initMap() { const mg = G.maplibregl, dark = isDark(); U.base = dark ? '
     map.addLayer({ id: 'lay-x', type: 'fill-extrusion', source: 'lay', paint: { 'fill-extrusion-color': ['get', 'c'], 'fill-extrusion-height': ['get', 'h'], 'fill-extrusion-base': ['get', 'b'], 'fill-extrusion-opacity': 0.95 } });
     map.addLayer({ id: 'edges-l', type: 'line', source: 'edges', layout: { 'line-cap': 'round' }, paint: { 'line-color': ['get', 'c'], 'line-width': 4.5 } });
     map.addLayer({ id: 'edges-h', type: 'line', source: 'edges', paint: { 'line-color': '#000', 'line-opacity': 0, 'line-width': 22 } });
+    map.addLayer({ id: 'volh-f', type: 'fill', source: 'volh', filter: ['==', ['get', 'k'], 'f'], paint: { 'fill-color': '#FFFFFF', 'fill-opacity': 0.12 } });
+    map.addLayer({ id: 'volh-l', type: 'line', source: 'volh', filter: ['in', ['get', 'k'], ['literal', ['f', 's']]], paint: { 'line-color': '#FFFFFF', 'line-width': 2, 'line-dasharray': [2, 1] } });
+    map.addLayer({ id: 'volh-c', type: 'circle', source: 'volh', filter: ['==', ['get', 'k'], 'h'], paint: { 'circle-radius': 11, 'circle-color': '#4FC3F7', 'circle-stroke-color': '#fff', 'circle-stroke-width': 3 } });
     U.mapOk = true; tools(); draw(); if (U.S) fit(); const at = U.el.querySelector('.maplibregl-ctrl-attrib'); if (at) at.classList.remove('maplibregl-compact-show'); };
   map.on('styledata', setup); map.on('load', setup); const iv = setInterval(() => { setup(); if (U.mapOk) clearInterval(iv); }, 300);
-  map.on('click', e => { if (U.busy) return; if (U.sum && U.S) { sumar(e.lngLat.lng, e.lngLat.lat); return; } const hit = U.S ? map.queryRenderedFeatures([[e.point.x - 6, e.point.y - 6], [e.point.x + 6, e.point.y + 6]], { layers: ['edges-h'] }) : [];
+  const hitVol = e => { const S = U.S; if (!U.volEd || !S || !S.vol || U.busy || (e.points && e.points.length > 1)) return null; const p = S.pr.to([e.lngLat.lng, e.lngLat.lat]), C = volC(S), H = volHandle(S), hp = map.project(S.pr.back(H));
+    if (Math.hypot(hp.x - e.point.x, hp.y - e.point.y) < 30) return { m: 'rot', a0: Math.atan2(p[1] - C[1], p[0] - C[0]), r0: +(S.vol.t.rot || 0) };
+    const M = volMap(S), inR = (r, x, y) => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) if ((r[i][1] > y) !== (r[j][1] > y) && x < (r[j][0] - r[i][0]) * (y - r[i][1]) / (r[j][1] - r[i][1]) + r[i][0]) c = !c; return c; };
+    if (S.vol.bl.some(b => inR(unflat(b.p).map(q => M(q[0], q[1])), p[0], p[1]))) return { m: 'mov', p0: p, x0: +(S.vol.t.dx || 0), y0: +(S.vol.t.dy || 0) }; return null; };
+  const dnV = e => { const h = hitVol(e); if (!h) return; if (e.originalEvent && e.originalEvent.preventDefault) e.originalEvent.preventDefault(); map.dragPan.disable(); U.volDrag = h; };
+  const mvV = e => { const S = U.S, d = U.volDrag; if (!d || !S || !S.vol) return; const p = S.pr.to([e.lngLat.lng, e.lngLat.lat]), t = S.vol.t;
+    if (d.m === 'mov') { t.dx = +(d.x0 + p[0] - d.p0[0]).toFixed(1); t.dy = +(d.y0 + p[1] - d.p0[1]).toFixed(1); }
+    else { const C = volC(S); let r = d.r0 + (Math.atan2(p[1] - C[1], p[0] - C[0]) - d.a0) * 180 / Math.PI; while (r > 180) r -= 360; while (r < -180) r += 360; t.rot = +r.toFixed(1); }
+    ['rot', 'dx', 'dy'].forEach(k => { const i = U.el.querySelector('[data-vo=' + k + ']'); if (i) i.value = t[k]; }); draw(); };
+  const upV = () => { if (!U.volDrag) return; U.volDrag = null; map.dragPan.enable(); save(); };
+  map.on('mousedown', dnV); map.on('touchstart', dnV); map.on('mousemove', mvV); map.on('touchmove', mvV); map.on('mouseup', upV); map.on('touchend', upV); map.on('touchcancel', upV);
+  map.on('click', e => { if (U.busy || U.volEd) return; if (U.sum && U.S) { sumar(e.lngLat.lng, e.lngLat.lat); return; } const hit = U.S ? map.queryRenderedFeatures([[e.point.x - 6, e.point.y - 6], [e.point.x + 6, e.point.y + 6]], { layers: ['edges-h'] }) : [];
     if (hit.length) { const i = hit[0].properties.i, o = ['F', 'L', 'P', 'X']; U.S.roles[i] = o[(o.indexOf(U.S.roles[i]) + 1) % 4]; regeo(); recalc(true); return; }
     if (map.getZoom() < 15.5) { tell('Acércate más para elegir un lote'); return; } pick(e.lngLat.lng, e.lngLat.lat); });
   map.on('moveend', () => { clearTimeout(U.ovT); U.ovT = setTimeout(overlay, 350); });
@@ -495,13 +509,19 @@ function volAuto(S) { const V = S.vol, P = volPts(V); if (!P.length) { V.t = { r
   V.t = { rot: +rot.toFixed(1), dx: +best.dx.toFixed(1), dy: +best.dy.toFixed(1), fuera: +Math.sqrt(best.sc).toFixed(1) }; }
 function volMap(S) { const V = S.vol, P = volPts(V), n = P.length || 1, cx = P.reduce((a, q) => a + q[0], 0) / n, cy = P.reduce((a, q) => a + q[1], 0) / n, r = S.geo.ring, lx = r.reduce((a, q) => a + q[0], 0) / r.length, ly = r.reduce((a, q) => a + q[1], 0) / r.length, t = V.t || {}, th = (+t.rot || 0) * Math.PI / 180, c = Math.cos(th), sn = Math.sin(th);
   return (x, y) => [lx + (+t.dx || 0) + c * (x - cx) - sn * (y - cy), ly + (+t.dy || 0) + sn * (x - cx) + c * (y - cy)]; }
+function volC(S) { const V = S.vol, t = V.t || {}, r = S.geo.ring, n = r.length; return [r.reduce((a, q) => a + q[0], 0) / n + (+t.dx || 0), r.reduce((a, q) => a + q[1], 0) / n + (+t.dy || 0)]; }
+function volHandle(S) { const C = volC(S), th = ((+(S.vol.t || {}).rot || 0) + 90) * Math.PI / 180, d = 45; return [C[0] + d * Math.cos(th), C[1] + d * Math.sin(th)]; }
+function volEdit(S, poly) { if (!U.volEd || !S.vol) return []; const M = volMap(S), C = volC(S), H = volHandle(S), out = [];
+  S.vol.bl.forEach(b => { if (b.f0 !== 0 && b.tipo !== 't') return; const ring = unflat(b.p).map(q => M(q[0], q[1])); if (ring.length > 2) out.push(poly(ring, { k: 'f' })); });
+  out.push({ type: 'Feature', properties: { k: 's' }, geometry: { type: 'LineString', coordinates: [S.pr.back(C), S.pr.back(H)] } });
+  out.push({ type: 'Feature', properties: { k: 'h' }, geometry: { type: 'Point', coordinates: S.pr.back(H) } }); return out; }
 function volFeatures(S, poly) { const V = S.vol, M = volMap(S), out = [], niv = V.niv || [];
   V.bl.forEach(b => { const ring = unflat(b.p).map(q => M(q[0], q[1])); if (ring.length < 3) return; const fa = U.d3 ? b.f0 : 0, fz = U.d3 ? b.f1 : 1;
     for (let f = fa; f < fz; f++) { const z0 = U.d3 ? (niv[f] || 0) + 0.12 : 0, z1 = U.d3 ? (niv[f + 1] != null ? niv[f + 1] : (niv[f] || 0) + 2.4) - 0.05 : 0.2;
       out.push(poly(ring, { b: z0, h: z1, c: b.tipo === 'p' ? '#FFB74D' : b.c || TCOL[(b.i || 0) % TCOL.length] })); } });
   return out; }
 function draw() { const m = U.map, S = U.S; if (!m || !U.mapOk) return; const set = (k, f) => m.getSource(k).setData(FC(f));
-  if (!S) { ['vec', 'cons', 'lot', 'env', 'lay', 'edges'].forEach(k => set(k, [])); return; }
+  if (!S) { ['vec', 'cons', 'lot', 'env', 'lay', 'edges', 'volh'].forEach(k => set(k, [])); return; }
   const poly = (ringLocal, props) => { const c = ringLocal.map(S.pr.back); c.push(c[0]); return { type: 'Feature', properties: props || {}, geometry: { type: 'Polygon', coordinates: [c] } }; };
   set('vec', S.vecinos); set('cons', S.cons.map(f => ({ type: 'Feature', geometry: f.geometry, properties: { h: Math.max(1, +f.properties.CONNPISOS || 1) * 3 } })));
   set('lot', [poly(S.geo.ring)]);
@@ -516,6 +536,7 @@ function draw() { const m = U.map, S = U.S; if (!m || !U.mapOk) return; const se
       const add = (pl, c, extra) => { const q = inset(pl, pl.map(() => extra)); if (q.length) lf.push(poly(q, { b, h: t, c })); };
       add(L.corr, '#ECEFF1', 0.05); add(L.core, '#546E7A', 0.1); L.cells.forEach(c => add(c.poly, c.ok ? TCOL[c.ti % TCOL.length] : '#EF5350', 0.35)); } });
   if (S.vol && U.volOn !== false) { set('env', []); set('lay', volFeatures(S, poly)); } else { set('env', segs); set('lay', lf); }
+  set('volh', volEdit(S, poly));
   m.setLayoutProperty('cons-x', 'visibility', U.d3 ? 'visible' : 'none'); }
 async function overlay() { const m = U.map, o = OVS[U.ov]; if (!m || !U.mapOk) return; const src = m.getSource('ov');
   if (!o || m.getZoom() < 13.5) { src.setData(FC()); return; }
@@ -680,7 +701,7 @@ function oVol() { const S = U.S, V = S.vol;
    <div class="lt-tp lt-pt"><span>Giro</span><input type="number" inputmode="decimal" step="1" value="${+t.rot || 0}" data-vo="rot" aria-label="Giro en grados"><span class="lt-un">°</span></div>
    <div class="lt-tp lt-pt"><span>Mover este-oeste</span><input type="number" inputmode="decimal" step="1" value="${+t.dx || 0}" data-vo="dx" aria-label="Desplazamiento este-oeste en metros"><span class="lt-un">m</span></div>
    <div class="lt-tp lt-pt"><span>Mover norte-sur</span><input type="number" inputmode="decimal" step="1" value="${+t.dy || 0}" data-vo="dy" aria-label="Desplazamiento norte-sur en metros"><span class="lt-un">m</span></div>
-   <div class="lt-opt"><button data-la="volc">Alinear con el lote</button><button data-la="volr">Girar 180°</button><button data-la="volv" aria-pressed="${U.volOn !== false}">${U.volOn !== false ? 'Ocultar' : 'Mostrar'}</button><button data-la="volq">Quitar</button></div>
+   <div class="lt-opt"><button data-la="vole" aria-pressed="${!!U.volEd}">${U.volEd ? 'Terminar de mover' : 'Mover en el mapa'}</button><button data-la="volc">Alinear con el lote</button><button data-la="volr">Girar 180°</button><button data-la="volv" aria-pressed="${U.volOn !== false}">${U.volOn !== false ? 'Ocultar' : 'Mostrar'}</button><button data-la="volq">Quitar</button></div>
    <p class="lt-note">Guarda el lote para conservar la volumetría y su posición.</p></div>`; }
 function pryBest() { const S = U.S, key = [S.code, S.roles.join(''), S.geo.area.toFixed(0), S.p.icOv, S.p.nOv, S.p.cesPq, S.p.cesCa, S.p.parqUbic].join('|'); if (!U.pryK || U.pryK !== key) { U.pryK = key; const e = escenarios(S)[0]; U.pryB = e ? { und: e.R.und, N: e.N, n: e.n, vend: e.R.vend } : null; } return U.pryB; }
 function oPry() { const P = H().proyecto && H().proyecto(); if (!P || !P.und) return ''; const R = U.R, S = U.S, B = pryBest(), vin = P.loteInfo && P.loteInfo.code === S.code, mx = Math.max(...P.et.map(e => e.pisos), 0);
@@ -828,11 +849,12 @@ function onClick(e) { const b = e.target.closest('[data-la]'); if (!b || b.tagNa
   else if (a === 'tigual') { S.p.tipos.forEach(t => { t.pct = 20; }); tipRender(); }
   else if (a === 'sum') { U.sum = !U.sum; if (U.sum) tell('Toca en el mapa el predio vecino que quieres sumar'); panel(); }
   else if (a === 'sumx') { U.sum = false; abrir(S.code, null, { code: S.code, p: S.p, id: U.lotId, tags: U.lotTags, apodo: U.lotApodo, extra: [] }); }
+  else if (a === 'vole') { U.volEd = !U.volEd; if (U.volEd) { U.d3 = false; tools(); if (U.map) U.map.easeTo({ pitch: 0, bearing: 0, duration: 400 }); tell('Arrastra el modelo para moverlo; el punto azul lo gira'); } draw(); panel(); }
   else if (a === 'volc') { volAuto(S); draw(); panel(); }
   else if (a === 'volr') { S.vol.t.rot = +(((+S.vol.t.rot || 0) + 180) % 360).toFixed(1); draw(); panel(); }
   else if (a === 'volap') { const st = volStats(S.vol), hp = st.N ? ((S.vol.niv || [])[st.N] - (S.vol.niv || [])[0]) / st.N : S.p.hPiso; S.p.hPiso = Math.max(2.2, +hp.toFixed(2)); S.p.torres = st.torres; S.p.ptor = Array(st.torres).fill(st.N); S.p.auto = false; S.p.nOv = Math.max(+S.p.nOv || 0, st.N); U.scn = null; recalc(true); tell('Cabida ajustada al modelo: ' + st.torres + ' torres de ' + st.N + ' pisos'); }
   else if (a === 'volv') { U.volOn = U.volOn === false; draw(); panel(); }
-  else if (a === 'volq') { S.vol = null; draw(); panel(); }
+  else if (a === 'volq') { S.vol = null; U.volEd = false; draw(); panel(); }
   else if (a === 'disp') { S.p.disp = k; U.scn = null; recalc(true); }
   else if (a === 'pryap') pryAplicar();
   else if (a === 'pryvin') pryVincular();
@@ -868,6 +890,6 @@ const Lote = { open(opt) { opt = opt || {};
     if (!U.S && !U.busy) { let last = null; try { last = JSON.parse(localStorage.getItem('proyecta.lote') || 'null'); } catch (e) { }
       const code = opt.code || (last && last.code); if (code) abrir(code, null, last); } },
   close() { if (U.el) U.el.hidden = true; document.body.classList.remove('loteon'); },
-  isOpen: () => !!(U.el && !U.el.hidden), _: { volAuto, volMap, volStats, projector, normRing, area, inset, classify, setbacks, envelope, compute, limits, oblig, defaults, parseAlt, trCode, normDir, postC, postR, alertas, U } };
+  isOpen: () => !!(U.el && !U.el.hidden), _: { volAuto, volMap, volStats, volC, volHandle, projector, normRing, area, inset, classify, setbacks, envelope, compute, limits, oblig, defaults, parseAlt, trCode, normDir, postC, postR, alertas, U } };
 G.Lote = Lote; if (typeof module !== 'undefined' && module.exports) module.exports = Lote;
 })(typeof window !== 'undefined' ? window : globalThis);
