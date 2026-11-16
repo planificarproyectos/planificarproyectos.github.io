@@ -299,7 +299,7 @@ function initMap() { const mg = G.maplibregl, dark = isDark(); U.base = dark ? '
     style: { version: 8, sources: { base: { type: 'raster', tiles: tiles(BASES[U.base]), tileSize: 256, maxzoom: 19, attribution: 'Mapa de referencia IDECA · Catastro Distrital · POT: Secretaría Distrital de Planeación' } }, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#0b0c0d' } }, { id: 'base', type: 'raster', source: 'base' }] } });
   map.addControl(new mg.AttributionControl({ compact: true }), 'bottom-right'); map.addControl(new mg.NavigationControl({ visualizePitch: true }), 'top-left');
   /* Las capas se montan apenas carga el estilo, sin esperar a que lleguen todas las teselas del mapa base */
-  const setup = () => { if (U.mapOk || !map.isStyleLoaded()) return; ['ov', 'vec', 'cons', 'lot', 'env', 'edges'].forEach(s => map.addSource(s, { type: 'geojson', data: FC() }));
+  const setup = () => { if (U.mapOk || !(map.style && map.style._loaded) || map.getSource('ov')) return; ['ov', 'vec', 'cons', 'lot', 'env', 'edges'].forEach(s => map.addSource(s, { type: 'geojson', data: FC() }));
     map.addLayer({ id: 'ov-f', type: 'fill', source: 'ov', paint: { 'fill-color': '#90A4AE', 'fill-opacity': 0.3 } });
     map.addLayer({ id: 'ov-l', type: 'line', source: 'ov', paint: { 'line-color': '#fff', 'line-opacity': 0.35, 'line-width': 0.8 } });
     map.addLayer({ id: 'vec-l', type: 'line', source: 'vec', paint: { 'line-color': '#8a8f93', 'line-opacity': 0.6, 'line-width': 0.8 } });
