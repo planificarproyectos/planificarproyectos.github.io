@@ -650,10 +650,10 @@ function oProyTop() { const R = U.R, S = U.S;
    <div><span>Valor del lote</span><b>${R.valorLote ? fM(R.valorLote) : '—'}</b><small>${R.valorLote ? 'referencia Catastro' : 'sin valor de referencia'}</small></div></div>`; }
 const LH = () => (H() || {}).lotes, defName = () => (U.S.predio.dir || ('Lote ' + (U.S.predio.chip || ''))).trim();
 function lotBar() { if (!U.S) return ''; if (U.saving) return `<form class="lt-save lt-save2" data-form="save"><input name="n" value="${esc(U.lotName || defName())}" maxlength="60" aria-label="Nombre del lote" autocomplete="off"><input name="t" value="${esc((U.lotTags || []).join(', '))}" maxlength="120" placeholder="Etiquetas separadas por coma (ej. compra, Chapinero)" aria-label="Etiquetas" autocomplete="off"><div><button class="lt-b">Guardar</button><button type="button" class="lt-b g" data-la="savex" aria-label="Cancelar">×</button></div></form>`;
-  return `<div class="lt-opt lt-bar"><button data-la="savo">${ic('save')}${U.lotId ? 'Actualizar guardado' : 'Guardar lote'}</button><button data-la="lotes">Mis lotes</button></div>`; }
+  return (U.lotApodo ? `<p class="lt-h" style="margin:0 0 6px">${esc(U.lotApodo)}</p>` : '') + `<div class="lt-opt lt-bar"><button data-la="savo">${ic('save')}${U.lotId ? 'Actualizar guardado' : 'Guardar lote'}</button><button data-la="lotes">Mis lotes</button></div>`; }
 function parseTags(v) { const o = []; String(v || '').split(',').forEach(t => { t = t.trim().replace(/\s+/g, ' ').slice(0, 24); if (t && !o.some(x => x.toLowerCase() === t.toLowerCase())) o.push(t); }); return o.slice(0, 8); }
 async function guardar(nombre, tags) { const S = U.S, R = U.R, L = LH(); if (!L) { tell('Guardar no está disponible aquí'); return; }
-  const d = { id: U.lotId || undefined, nombre: (nombre || '').trim() || defName(), code: S.code, chip: S.predio.chip || '', dir: S.predio.dir || '', area: Math.round(S.geo.area), tags: parseTags(tags), p: JSON.parse(JSON.stringify(S.p)), roles: S.roles.slice(),
+  const d = { id: U.lotId || undefined, nombre: (nombre || '').trim() || defName(), code: S.code, chip: S.predio.chip || '', dir: S.predio.dir || '', area: Math.round(S.geo.area), tags: parseTags(tags), apodo: U.lotApodo || '', p: JSON.parse(JSON.stringify(S.p)), roles: S.roles.slice(),
     res: { torres: R.nT, pisos: R.pt.join('+'), und: R.und, ic: +R.ic.toFixed(2), built: Math.round(R.built), vend: Math.round(R.vend), cupos: R.cupos } };
   if (!d.id) delete d.id; loading('Guardando…');
   try { const r = await L.save(d); U.lotId = r.id; U.lotName = d.nombre; U.lotTags = d.tags; U.saving = false; tell('Lote guardado en tu cuenta'); panel(); } catch (e) { tell('No se pudo guardar el lote. Revisa tu conexión.'); }
@@ -661,15 +661,18 @@ async function guardar(nombre, tags) { const S = U.S, R = U.R, L = LH(); if (!L)
 async function verLotes() { U.view = 'lotes'; U.cands = null; U.lots = null; U.del = null; panel();
   try { U.lots = ((await LH().list()) || []).sort((a, b) => (b.ts || 0) - (a.ts || 0)); } catch (e) { U.lots = []; tell('No se pudieron leer tus lotes'); } if (U.view === 'lotes') panel(); }
 function lotFiltrados() { let L = (U.lots || []).slice(); const q = (U.lq || '').trim().toLowerCase();
-  if (q) L = L.filter(l => [l.nombre, l.dir, l.chip, (l.tags || []).join(' ')].join(' ').toLowerCase().includes(q));
+  if (q) L = L.filter(l => [l.apodo, l.nombre, l.dir, l.chip, (l.tags || []).join(' ')].join(' ').toLowerCase().includes(q));
   (U.ltags || []).forEach(t => { L = L.filter(l => (l.tags || []).includes(t)); });
-  const o = U.lsort || 'rec'; L.sort(o === 'nom' ? (a, b) => String(a.nombre).localeCompare(String(b.nombre), 'es') : o === 'apt' ? (a, b) => ((b.res || {}).und || 0) - ((a.res || {}).und || 0) : (a, b) => (b.ts || 0) - (a.ts || 0)); return L; }
+  const o = U.lsort || 'rec'; L.sort(o === 'nom' ? (a, b) => String(a.apodo || a.nombre).localeCompare(String(b.apodo || b.nombre), 'es') : o === 'apt' ? (a, b) => ((b.res || {}).und || 0) - ((a.res || {}).und || 0) : (a, b) => (b.ts || 0) - (a.ts || 0)); return L; }
 function lotRow(l) { const r = l.res || {}, tg = l.tags || [];
-  return `<div class="lt-lotw"><div class="lt-lot"><button data-la="lotopen" data-k="${esc(l.id)}"><b>${esc(l.nombre || l.dir)}</b><small>${[esc(l.dir), r.torres ? r.torres + ' torre' + (r.torres > 1 ? 's' : '') + ' · ' + esc(r.pisos) + ' pisos' : '', r.und != null ? nf(r.und) + ' aptos' : '', r.ic ? 'IC ' + nf(r.ic, 2) : '', l.area ? nf(l.area) + ' m²' : ''].filter(Boolean).join(' · ')}</small></button>
+  return `<div class="lt-lotw"><div class="lt-lot"><button data-la="lotopen" data-k="${esc(l.id)}"><b>${esc(l.apodo || l.nombre || l.dir)}</b><small>${[l.apodo && l.nombre && l.nombre !== l.apodo ? esc(l.nombre) : '', esc(l.dir), r.torres ? r.torres + ' torre' + (r.torres > 1 ? 's' : '') + ' · ' + esc(r.pisos) + ' pisos' : '', r.und != null ? nf(r.und) + ' aptos' : '', r.ic ? 'IC ' + nf(r.ic, 2) : '', l.area ? nf(l.area) + ' m²' : ''].filter(Boolean).join(' · ')}</small></button>
    <button class="lt-x${U.del === l.id ? ' on' : ''}" data-la="lotdel" data-k="${esc(l.id)}" aria-label="Borrar lote">${U.del === l.id ? 'Confirmar' : '×'}</button></div>
+   ${U.apEdit === l.id ? `<form class="lt-save" data-form="apodo" data-id="${esc(l.id)}"><input name="a" value="${esc(l.apodo || '')}" maxlength="40" placeholder="Apodo del lote (ej. Lote 20 de Julio)" aria-label="Apodo del lote" autocomplete="off"><button class="lt-b">OK</button></form>` : ''}
    ${U.tagEdit === l.id ? `<form class="lt-save" data-form="tags" data-id="${esc(l.id)}"><input name="t" value="${esc(tg.join(', '))}" maxlength="120" placeholder="Etiquetas separadas por coma" aria-label="Etiquetas del lote" autocomplete="off"><button class="lt-b">OK</button></form>`
-    : `<div class="lt-tags">${tg.map(t => `<button class="lt-tag" data-la="ltag" data-k="${esc(t)}" aria-pressed="${(U.ltags || []).includes(t)}">${esc(t)}</button>`).join('')}<button class="lt-tag add" data-la="lotag" data-k="${esc(l.id)}">${tg.length ? 'Editar' : '+ Etiquetas'}</button></div>`}</div>`; }
+    : `<div class="lt-tags">${tg.map(t => `<button class="lt-tag" data-la="ltag" data-k="${esc(t)}" aria-pressed="${(U.ltags || []).includes(t)}">${esc(t)}</button>`).join('')}<button class="lt-tag add" data-la="lotapo" data-k="${esc(l.id)}">${l.apodo ? 'Cambiar apodo' : '+ Apodo'}</button><button class="lt-tag add" data-la="lotag" data-k="${esc(l.id)}">${tg.length ? 'Editar' : '+ Etiquetas'}</button></div>`}</div>`; }
 function lotRows() { const L = lotFiltrados(); return L.length ? L.map(lotRow).join('') : '<p class="lt-note">Ningún lote coincide con el filtro.</p>'; }
+async function apodar(id, v) { const l = (U.lots || []).find(x => x.id === id); if (!l) return; l.apodo = String(v || '').trim().replace(/\s+/g, ' ').slice(0, 40); U.apEdit = null;
+  try { const r = await LH().save(l); l.ts = r.ts || l.ts; if (U.lotId === id) U.lotApodo = l.apodo; tell('Apodo guardado'); } catch (e) { tell('No se pudo guardar el apodo'); } panel(); }
 async function etiquetar(id, v) { const l = (U.lots || []).find(x => x.id === id); if (!l) return; l.tags = parseTags(v); U.tagEdit = null;
   try { const r = await LH().save(l); l.ts = r.ts || l.ts; if (U.lotId === id) U.lotTags = l.tags; tell('Etiquetas guardadas'); } catch (e) { tell('No se pudieron guardar las etiquetas'); } panel(); }
 function pLotes() { const L = U.lots;
@@ -694,7 +697,7 @@ function panel() { const el = U.el.querySelector('[data-panel]');
 function outs() { const O = { volTop: oVolTop, sb: oSb, ob: oOb, proyTop: oProyTop, mezcla: oMezcla, cabTop: oCabTop, parq: oParq, scn: oScn, edif: oEdif, amen: oAmen, planta: oPlanta }; U.el.querySelectorAll('[data-out]').forEach(e => { e.innerHTML = O[e.dataset.out](); }); }
 function recalc(full) { if (!U.S) return; U.R = compute(U.S); if (full) panel(); else outs(); draw(); save(); }
 function loading(t) { U.busy = !!t; const l = U.el.querySelector('[data-load]'); l.hidden = !t; l.textContent = t || ''; }
-async function abrir(code, geom, keep) { loading('Consultando Catastro y POT…'); U.cands = null; U.scn = null; U.view = null; U.saving = false; U.lotId = (keep && keep.id) || null; U.lotName = ''; U.lotTags = (keep && keep.tags) || [];
+async function abrir(code, geom, keep) { loading('Consultando Catastro y POT…'); U.cands = null; U.scn = null; U.view = null; U.saving = false; U.lotId = (keep && keep.id) || null; U.lotName = ''; U.lotApodo = (keep && keep.apodo) || ''; U.lotTags = (keep && keep.tags) || [];
   try { const S = await cargar(code, geom); if (keep && keep.code === code) { Object.assign(S.p, keep.p || {}); if (keep.roles && keep.roles.length === S.roles.length) { S.roles = keep.roles; U.S = S; regeo(); } }
     U.S = S; U.R = compute(S); U.tab = 'norma'; tools(); panel(); draw(); fit(); save(); if (S.norm.sinPot) tell('No respondió el mapa del POT'); }
   catch (e) { tell(e.message || 'No se pudo consultar el lote'); } loading(''); }
@@ -712,9 +715,10 @@ function onClick(e) { const b = e.target.closest('[data-la]'); if (!b || b.tagNa
   else if (a === 'lsort') { U.lsort = k; panel(); }
   else if (a === 'ltag') { const t = U.ltags || []; U.ltags = t.includes(k) ? t.filter(x => x !== k) : t.concat(k); panel(); }
   else if (a === 'lclear') { U.ltags = []; U.lq = ''; panel(); }
+  else if (a === 'lotapo') { U.apEdit = k; panel(); const i = U.el.querySelector('[data-form=apodo] input'); if (i) { i.focus(); i.select(); } }
   else if (a === 'lotag') { U.tagEdit = k; panel(); const i = U.el.querySelector('[data-form=tags] input'); if (i) { i.focus(); i.select(); } }
   else if (a === 'lotback') { U.view = null; panel(); }
-  else if (a === 'lotopen') { const l = (U.lots || []).find(x => x.id === k); if (l) { U.view = null; abrir(l.code, null, { code: l.code, p: l.p, roles: l.roles, id: l.id, tags: l.tags }); } }
+  else if (a === 'lotopen') { const l = (U.lots || []).find(x => x.id === k); if (l) { U.view = null; abrir(l.code, null, { code: l.code, p: l.p, roles: l.roles, id: l.id, tags: l.tags, apodo: l.apodo }); } }
   else if (a === 'lotdel') { if (U.del !== k) { U.del = k; panel(); } else { U.del = null; LH().del(k).then(() => { U.lots = (U.lots || []).filter(x => x.id !== k); if (U.lotId === k) U.lotId = null; panel(); tell('Lote borrado'); }).catch(() => tell('No se pudo borrar el lote')); } }
   else if (a === 'savo') { U.saving = true; panel(); const i = U.el.querySelector('.lt-save input'); if (i) { i.focus(); i.select(); } }
   else if (a === 'savex') { U.saving = false; panel(); }
@@ -751,6 +755,7 @@ function onInput(e) { const lq = e.target.closest('[data-lq]'); if (lq) { U.lq =
 const Lote = { open(opt) { opt = opt || {};
     if (!U.el) { const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st); const el = U.el = document.createElement('section'); el.id = 'lote'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Analizador de lotes de Bogotá'); el.innerHTML = shell(); document.body.appendChild(el);
       el.addEventListener('click', onClick); el.addEventListener('input', onInput); el.addEventListener('submit', e => { e.preventDefault(); if (e.target.dataset.form === 'save') { guardar(e.target.elements.n.value, e.target.elements.t.value); return; }
+    if (e.target.dataset.form === 'apodo') { apodar(e.target.dataset.id, e.target.elements.a.value); return; }
     if (e.target.dataset.form === 'tags') { etiquetar(e.target.dataset.id, e.target.elements.t.value); return; } const q = e.target.elements.q; q.blur(); onSearch(q.value); });
       document.addEventListener('keydown', e => { if (e.key === 'Escape' && Lote.isOpen() && !/INPUT|TEXTAREA/.test((e.target || {}).tagName || '')) Lote.close(); });
       tools(); panel(); loadLib().then(initMap).catch(e => tell(e.message)); }
