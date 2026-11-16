@@ -102,6 +102,8 @@ function limits(S) { const t = S.norm.tr, p = S.p, A = S.geo.area, alt = S.norm.
     if (!L.cap) L.notas.push('Rango de edificabilidad ' + (S.norm.rango || 'sin dato') + ': revisa el índice en el art. 281.'); }
   else if (t === 'CO') { L.nDef = alt ? alt[0] : 2; L.nMax = alt ? alt[1] : L.nDef; L.notas.push('Conservación: la intervención depende del nivel del inmueble y del concepto del IDPC.'); }
   else L.notas.push('Sin tratamiento urbanístico identificado: ajusta los pisos a mano.');
+  if (+p.icOv > 0) { L.cap = +p.icOv; L.notas.push('Índice de construcción ajustado a mano (' + nf(+p.icOv, 2) + '), por ejemplo según la curaduría.'); }
+  if (+p.nOv > 0) { L.nMax = Math.round(+p.nOv); L.notas.push('Altura máxima ajustada a mano (' + L.nMax + ' pisos).'); }
   L.nDef = Math.min(L.nDef, L.nMax); return L; }
 /* Aislamientos y retrocesos para una edificación de N pisos */
 function setbacks(S, N) { const p = S.p, t = S.norm.tr, h = p.hPiso, H = N * h, ante = +p.antejardin || 0; let post = 0, lat = 0, latFrom = Infinity, retro = 0, retroFrom = Infinity;
@@ -171,7 +173,7 @@ function edificio(S, ts, kf, cuposReq, visAll) { const p = S.p, AT = S.geo.area,
   const pod = p.parqUbic === 'pod', avis = []; let k = 0, niv = 0, podCupos = 0; const capNivel = Math.max(1, Math.floor((AT * 0.85 - 70) / m2));
   if (pod) { let acc = 0; for (let j = 1; j <= Nmin - 1; j++) { acc = fl.reduce((x, a) => x + a.slice(0, j).reduce((y, z) => y + z, 0), 0) * 0.9 - comG; k = j; if (acc / m2 >= cuposReq) break; } podCupos = Math.max(0, Math.floor(acc / m2));
     if (k === 0 || podCupos < cuposReq) avis.push('El podio no alcanza para los ' + cuposReq + ' cupos con ' + Nmin + ' pisos: caben ' + podCupos + '. Usa sótanos o sube los pisos.'); }
-  else niv = Math.ceil(cuposReq / capNivel);
+  else niv = p.parqUbic === 'sup' ? 0 : Math.ceil(cuposReq / capNivel);
   const sumTyp = tw.map((t, i) => { let x = 0; for (let f = k + 1; f < t.N; f++) x += fl[i][f]; return x; }), totTyp = sumTyp.reduce((x, y) => x + y, 0);
   const comp = A => mezcla(A, p.tipos), est = AMEN[Math.max(3, Math.min(6, p.estrato || 4))];
   let U = Math.floor(0.78 * (totTyp + fl.reduce((x, a, i) => x + (a[k] || 0), 0)) / pm), R = null;
@@ -188,10 +190,11 @@ function edificio(S, ts, kf, cuposReq, visAll) { const p = S.p, AT = S.geo.area,
     R.gAvT = gAvT; R.gnr = gnr; R.over = over; R.ecp = ecp; R.amenB = amenB; R.lobby = lobby; R.tecn = tecn; R.bici = bici; R.prog = prog; R.f = f;
     R.aptos = Math.max(0, R.typ + Math.max(0, gAvT - gnr) * ef - over); U = comp(R.aptos).und; R.U = U; }
   const mz = comp(R.aptos), foot = fl.reduce((x, a) => x + a[0], 0), libre = Math.max(0, AT - foot), podArea = fl.reduce((x, a) => x + a.slice(0, k).reduce((y, z) => y + z, 0), 0), tot = fl.reduce((x, a) => x + a.reduce((y, z) => y + z, 0), 0);
-  const verd = 0.4 * R.ecp, xs = est.b && est.x.reduce((x, y) => x + y[1], 0) * R.f;
+  const sup = p.parqUbic === 'sup', verd = 0.4 * R.ecp, xs = est.b && est.x.reduce((x, y) => x + y[1], 0) * R.f;
   if (R.over > 0) avis.push('Las zonas comunes y accesos (' + Math.round(R.gnr) + ' m²) superan el primer piso disponible; ocupan ' + Math.round(R.over) + ' m² de los pisos de apartamentos.');
+  if (sup && libre - verd + 0.001 < cuposReq * m2) avis.push('El parqueo en superficie necesita ' + Math.round(cuposReq * m2) + ' m² y solo quedan ' + Math.round(Math.max(0, libre - verd)) + ' m² libres después de las zonas verdes.');
   if (libre + 0.001 < verd) avis.push('El equipamiento comunal exige ' + Math.round(verd) + ' m² de zonas verdes y recreativas en áreas libres y solo quedan ' + Math.round(libre) + ' m² sin construir.');
-  return { k, pod, niv, capNivel, podCupos, nT, asc: R.asc, esc: R.esc, aptos: R.aptos, mz, und: mz.und, comG, avis, tot, podArea,
+  return { k, pod, sup, niv, capNivel, podCupos, nT, asc: R.asc, esc: R.esc, aptos: R.aptos, mz, und: mz.und, comG, avis, tot, podArea,
     nuc: R.nuc, corr: R.corr, vac: R.vac, gnr: R.gnr, lobby: R.lobby, tecn: R.tecn, bici: R.bici, amenB: R.amenB, prog: R.prog, amen: est, f: R.f, ecp: R.ecp, ecpVerdes: verd, ecpComun: 0.2 * R.ecp, libre, xs, merma: Math.max(0, tot - podArea - R.aptos - R.nuc - R.corr - R.vac - R.gnr) }; }
 /* ---- Planta tipo: núcleo al centro, corredor y apartamentos a lado y lado; se descartan los que quedan sin ventana ---- */
 const TCOL = ['#4FC3F7', '#81C784', '#FFD54F', '#BA68C8', '#FF8A65', '#4DB6AC', '#F06292', '#A1887F'];
@@ -280,7 +283,7 @@ async function lotAt(lng, lat) { const j = await ags(LOTE + '0', { f: 'geojson',
 /* Capas del POT que se consultan. pt: en un punto interior del lote; poly: contra el polígono (encogido 0,4 m) */
 const CAPAS_PT = [15, 14, 22, 21, 25, 35, 43];
 const CAPAS_POLY = [185, 18, 13, 12, 9, 0, 6, 45, 102, 69, 63, 96, 101, 182, 159, 191, 193, 16];
-async function cargar(code, geom) {
+async function cargar(code, geom, extra) { const ex = new Set([code].concat(extra || []));
   if (!geom) { const j = await ags(LOTE + '0', { f: 'geojson', where: "LOTCODIGO='" + sq(code) + "'", outFields: 'LOTCODIGO', outSR: 4326 }); const f = (j.features || [])[0]; if (!f) throw new Error('Catastro no tiene geometría para ese lote'); geom = f.geometry; }
   const rl = rings(geom).sort((a, b) => b.length - a.length)[0]; if (!rl || rl.length < 4) throw new Error('La geometría del lote no es válida');
   let lon0 = 0, lat0 = 0; rl.forEach(p => { lon0 += p[0]; lat0 += p[1]; }); lon0 /= rl.length; lat0 /= rl.length;
@@ -304,13 +307,13 @@ async function cargar(code, geom) {
     aaCod: str(aa.CODIGO_AREA_ACTIVIDAD), aa: str(aa.NOMBRE_AREA_ACTIVIDAD), antejardin: parseFloat(str(one(22).DIMENSION).replace(',', '.')) || 0, antejardinDato: str(one(22).DIMENSION) !== '',
     rango: str(one(21).RANGO), upl: str(one(35).NIOMBRE || one(35).NOMBRE), suelo: str(one(43).CLASE_SUELO), aero: +one(25).ALTURA || 0, aeroCota: +one(25)['ELEVACIÓN_MAXIMA'] || 0, aeroDato: !!(P[25] || []).length,
     vref: vref[0] ? +vref[0].V_REF || 0 : 0, vrefAno: vref[0] && vref[0].ANO ? new Date(vref[0].ANO).getUTCFullYear() : 0, ae: str(one(18).NOMBRE), sinPot: P[15] === null };
-  const neigh = []; vec.forEach(f => { if (f.properties.LOTCODIGO !== code) rings(f.geometry).forEach(r => neigh.push(normRing(r.map(pr.to)))); });
+  const neigh = []; vec.forEach(f => { if (!ex.has(f.properties.LOTCODIGO)) rings(f.geometry).forEach(r => neigh.push(normRing(r.map(pr.to)))); });
   const cl = classify(ring, neigh, plac.filter(f => f.geometry && f.geometry.type === 'Point').map(f => pr.to(f.geometry.coordinates)));
   const vistos = new Set(), unicos = pred.filter(a => !vistos.has(a.PRECHIP) && vistos.add(a.PRECHIP));
   const propios = unicos.slice().sort((a, b) => String(a.PREDIRECC).length - String(b.PREDIRECC).length), p0 = propios[0] || {};
   const S = { code, pr, lonlat: rl, ip, geo: { ring, area: area(ring), frente: cl.g.frente, fondo: cl.g.fondo }, g: cl.g, roles: cl.roles, norm, alertas: alertas(P, norm),
     predio: { dir: str(p0.PREDIRECC), chip: unicos.length === 1 ? str(p0.PRECHIP) : '', barrio: str(p0.PRENBARRIO), n: unicos.length, aTerr: unicos.length === 1 ? +p0.PREATERRE || 0 : 0, aCons: unicos.reduce((s, a) => s + (+a.PREACONST || 0), 0) },
-    vecinos: vec.filter(f => f.properties.LOTCODIGO !== code), cons: cons.filter(f => f.properties.LOTECODIGO !== code), consPropia: cons.filter(f => f.properties.LOTECODIGO === code), fallos };
+    vecinos: vec.filter(f => !ex.has(f.properties.LOTCODIGO)), cons: cons.filter(f => !ex.has(f.properties.LOTECODIGO)), consPropia: cons.filter(f => ex.has(f.properties.LOTECODIGO)), fallos, extra: (extra || []).slice() };
   S.p = defaults(norm); return S; }
 /* Restricciones y avisos a partir de las capas del POT. nivel: 2 alto, 1 medio, 0 informativo */
 function alertas(P, norm) { const A = [], has = i => (P[i] || []).length > 0, one = i => (P[i] || [])[0] || {}, add = (nivel, t, d) => A.push({ nivel, t, d });
@@ -450,7 +453,7 @@ function initMap() { const mg = G.maplibregl, dark = isDark(); U.base = dark ? '
     map.addLayer({ id: 'edges-h', type: 'line', source: 'edges', paint: { 'line-color': '#000', 'line-opacity': 0, 'line-width': 22 } });
     U.mapOk = true; tools(); draw(); if (U.S) fit(); const at = U.el.querySelector('.maplibregl-ctrl-attrib'); if (at) at.classList.remove('maplibregl-compact-show'); };
   map.on('styledata', setup); map.on('load', setup); const iv = setInterval(() => { setup(); if (U.mapOk) clearInterval(iv); }, 300);
-  map.on('click', e => { if (U.busy) return; const hit = U.S ? map.queryRenderedFeatures([[e.point.x - 6, e.point.y - 6], [e.point.x + 6, e.point.y + 6]], { layers: ['edges-h'] }) : [];
+  map.on('click', e => { if (U.busy) return; if (U.sum && U.S) { sumar(e.lngLat.lng, e.lngLat.lat); return; } const hit = U.S ? map.queryRenderedFeatures([[e.point.x - 6, e.point.y - 6], [e.point.x + 6, e.point.y + 6]], { layers: ['edges-h'] }) : [];
     if (hit.length) { const i = hit[0].properties.i, o = ['F', 'L', 'P', 'X']; U.S.roles[i] = o[(o.indexOf(U.S.roles[i]) + 1) % 4]; regeo(); recalc(true); return; }
     if (map.getZoom() < 15.5) { tell('Acércate más para elegir un lote'); return; } pick(e.lngLat.lng, e.lngLat.lat); });
   map.on('moveend', () => { clearTimeout(U.ovT); U.ovT = setTimeout(overlay, 350); });
@@ -560,6 +563,10 @@ function oMezcla() { const R = U.R, M = R.mz; if (!M.filas.length) return '<p cl
   return `<div class="lt-card"><h3>Apartamentos que caben</h3>` + kv(M.filas.map(t => [nf(t.a) + ' m² · ' + nf(t.pct) + ' %', nf(t.und) + ' apto' + (t.und === 1 ? '' : 's') + ' · ' + nf(t.m2) + ' m²' + (R.vis.find(v => v.a === t.a && v.c) ? ' · ' + R.vis.find(v => v.a === t.a).c : '')]).concat([['Total', nf(M.und) + ' aptos · ' + nf(M.usada) + ' de ' + nf(R.vend) + ' m² vendibles'], ['Área promedio', nf(M.prom, 1) + ' m²'], ['Por piso', nf(R.und / R.N, 1) + ' aptos']])) + '</div>'; }
 function pCab() { const S = U.S, p = S.p, R = U.R, n = R.nT, c = p.com || { on: false, pct: 30 };
   return `<div data-out="cabTop"></div><div data-out="pry"></div>
+  <div class="lt-card"><h3>Ajustes por curaduría</h3>
+   <div class="lt-tp lt-pt"><span>Índice de construcción</span><input type="number" inputmode="decimal" min="0" max="12" step="0.01" value="${+p.icOv > 0 ? p.icOv : ''}" placeholder="norma" data-pf="icOv" aria-label="Índice de construcción máximo"><span class="lt-un">máx.</span></div>
+   <div class="lt-tp lt-pt"><span>Altura máxima</span><input type="number" inputmode="numeric" min="0" max="80" step="1" value="${+p.nOv > 0 ? p.nOv : ''}" placeholder="norma" data-pf="nOv" aria-label="Pisos máximos"><span class="lt-un">pisos</span></div>
+   <p class="lt-note">Vacío = se usa la norma del mapa. Úsalo cuando la curaduría ya validó un índice o una altura distintos. Para sumar lotes vecinos usa "Sumar predio" arriba.</p></div>
   <div class="lt-card"><h3>Torres y pisos</h3>
    <div class="lt-opt">${[1, 2, 3].map(k => `<button data-la="torres" data-k="${k}" aria-pressed="${n === k}">${k} torre${k > 1 ? 's' : ''}</button>`).join('')}</div>
    ${R.pt.map((v, i) => `<div class="lt-tp lt-pt"><span>Torre ${i + 1}</span><input type="number" inputmode="numeric" min="1" max="60" step="1" value="${v}" data-pt="${i}" aria-label="Pisos de la torre ${i + 1}"><span class="lt-un">pisos</span></div>`).join('')}
@@ -571,7 +578,7 @@ function pCab() { const S = U.S, p = S.p, R = U.R, n = R.nT, c = p.com || { on: 
    ${c.on ? `<div class="lt-tp lt-pt"><span>Comercio en</span><input type="number" inputmode="decimal" min="0" max="100" step="5" value="${c.pct}" data-pc="1" aria-label="Porcentaje del primer piso en comercio"><span class="lt-un">% del 1.er piso</span></div>` : ''}
    <p class="lt-note" style="margin:8px 0 0">Los usos comerciales dependen del área de actividad y del frente a la malla vial arterial (arts. 243 y 272); en vías arteriales al menos el 50 % de la fachada del primer piso debe ser comercio, servicios o dotacional, y en todos los casos al menos 30 %.</p></div>
   <div class="lt-card"><h3>Parqueo, estrato y núcleo</h3>
-   <div class="lt-opt"><button data-la="ubic" data-k="sot" aria-pressed="${p.parqUbic !== 'pod'}">Parqueo en sótanos</button><button data-la="ubic" data-k="pod" aria-pressed="${p.parqUbic === 'pod'}">Parqueo en pisos (podio)</button></div>
+   <div class="lt-opt"><button data-la="ubic" data-k="sot" aria-pressed="${p.parqUbic !== 'pod' && p.parqUbic !== 'sup'}">Parqueo en sótanos</button><button data-la="ubic" data-k="pod" aria-pressed="${p.parqUbic === 'pod'}">Parqueo en pisos (podio)</button><button data-la="ubic" data-k="sup" aria-pressed="${p.parqUbic === 'sup'}">Parqueo en superficie</button></div>
    <div class="lt-opt" style="margin-top:8px">${[3, 4, 5, 6].map(e => `<button data-la="estr" data-k="${e}" aria-pressed="${(p.estrato || 4) === e}">Estrato ${e}</button>`).join('')}</div>
    <div class="lt-tp lt-pt" style="margin-top:10px"><span>Ascensores</span><input type="number" inputmode="numeric" min="0" max="8" step="1" value="${p.nAsc || 0}" data-pn="nAsc" aria-label="Ascensores por torre"><span class="lt-un">por torre · 0 = auto</span></div>
    <div class="lt-tp lt-pt"><span>Escaleras</span><input type="number" inputmode="numeric" min="0" max="4" step="1" value="${p.nEsc || 0}" data-pn="nEsc" aria-label="Escaleras por torre"><span class="lt-un">por torre · 0 = auto</span></div>
@@ -640,7 +647,7 @@ function oParq() { const R = U.R, P = R.parq, S = U.S;
   if (!P.ref) return `<div class="lt-card"><h3>Parqueaderos</h3><p class="lt-note" style="margin:0">No tengo confirmado el porcentaje del art. 389 para el área ${esc(S.norm.aaCod || '')}. Se usa el valor que fijes en Proyecto (${nf(R.cupos)} cupos, ${nf(R.parq.porApto, 2)} por apartamento).</p></div>`;
   return `<div class="lt-card"><h3>Parqueaderos (art. 389)</h3>` + kv([['Mínimo exigido', P.pctMin ? nf(P.cuposMin) + ' cupos · ' + P.pctMin + ' % del área construida' + (P.visMin ? ' (VIS/VIP)' : '') : 'No se exige mínimo'],
     ['Máximo sin pago', nf(P.cuposMax) + ' cupos · ' + P.pctMax + ' %'], ['Con pago compensatorio', 'hasta ' + nf(P.cuposMaxAdic) + ' cupos · +' + P.pctAdic + ' %'],
-    ['En el proyecto', nf(P.cupos) + ' cupos' + (P.cupos < P.cuposMin ? ' · no cumple el mínimo' : '')], ['Por apartamento', nf(P.porApto, 2)], [R.ed.pod ? 'Parqueo en pisos' : 'Sótanos', R.ed.pod ? R.ed.k + ' piso' + (R.ed.k === 1 ? '' : 's') + ' de podio · caben ' + nf(R.ed.podCupos) + ' cupos' : nf(R.ed.niv) + ' nivel' + (R.ed.niv === 1 ? '' : 'es') + ' · ' + nf(R.ed.capNivel) + ' cupos por nivel']]) +
+    ['En el proyecto', nf(P.cupos) + ' cupos' + (P.cupos < P.cuposMin ? ' · no cumple el mínimo' : '')], ['Por apartamento', nf(P.porApto, 2)], [R.ed.pod ? 'Parqueo en pisos' : R.ed.sup ? 'Parqueo' : 'Sótanos', R.ed.pod ? R.ed.k + ' piso' + (R.ed.k === 1 ? '' : 's') + ' de podio · caben ' + nf(R.ed.podCupos) + ' cupos' : nf(R.ed.niv) + ' nivel' + (R.ed.niv === 1 ? '' : 'es') + ' · ' + nf(R.ed.capNivel) + ' cupos por nivel']]) +
    `<p class="lt-note">Los cupos de visitantes y de comercio van dentro de estos porcentajes. El porcentaje del proyecto se fija en la pestaña Proyecto. ${S.norm.aaCod === 'AAPRSU' ? 'El mínimo de 8 % baja a 6 % si todas las tipologías son VIS o VIP.' : ''}</p></div>`; }
 function pProy() { const S = U.S, pq = PARQ[S.norm.aaCod];
   return `<div data-out="proyTop"></div>
@@ -660,10 +667,11 @@ function oProyTop() { const R = U.R, S = U.S;
    <div><span>Valor del lote</span><b>${R.valorLote ? fM(R.valorLote) : '—'}</b><small>${R.valorLote ? 'referencia Catastro' : 'sin valor de referencia'}</small></div></div>`; }
 const LH = () => (H() || {}).lotes, defName = () => (U.S.predio.dir || ('Lote ' + (U.S.predio.chip || ''))).trim();
 function lotBar() { if (!U.S) return ''; if (U.saving) return `<form class="lt-save lt-save2" data-form="save"><input name="n" value="${esc(U.lotName || defName())}" maxlength="60" aria-label="Nombre del lote" autocomplete="off"><input name="t" value="${esc((U.lotTags || []).join(', '))}" maxlength="120" placeholder="Etiquetas separadas por coma (ej. compra, Chapinero)" aria-label="Etiquetas" autocomplete="off"><div><button class="lt-b">Guardar</button><button type="button" class="lt-b g" data-la="savex" aria-label="Cancelar">×</button></div></form>`;
-  return (U.lotApodo ? `<p class="lt-h" style="margin:0 0 6px">${esc(U.lotApodo)}</p>` : '') + `<div class="lt-opt lt-bar"><button data-la="savo">${ic('save')}${U.lotId ? 'Actualizar guardado' : 'Guardar lote'}</button><button data-la="lotes">Mis lotes</button></div>`; }
+  const sumBtn = `<button data-la="sum" aria-pressed="${!!U.sum}">${U.sum ? 'Toca el predio vecino…' : 'Sumar predio'}</button>` + ((U.S.extra || []).length ? '<button data-la="sumx">Solo el predio original</button>' : '');
+  return (U.lotApodo ? `<p class="lt-h" style="margin:0 0 6px">${esc(U.lotApodo)}</p>` : '') + `<div class="lt-opt lt-bar"><button data-la="savo">${ic('save')}${U.lotId ? 'Actualizar guardado' : 'Guardar lote'}</button><button data-la="lotes">Mis lotes</button>${sumBtn}</div>`; }
 function parseTags(v) { const o = []; String(v || '').split(',').forEach(t => { t = t.trim().replace(/\s+/g, ' ').slice(0, 24); if (t && !o.some(x => x.toLowerCase() === t.toLowerCase())) o.push(t); }); return o.slice(0, 8); }
 async function guardar(nombre, tags) { const S = U.S, R = U.R, L = LH(); if (!L) { tell('Guardar no está disponible aquí'); return; }
-  const d = { id: U.lotId || undefined, nombre: (nombre || '').trim() || defName(), code: S.code, chip: S.predio.chip || '', dir: S.predio.dir || '', area: Math.round(S.geo.area), tags: parseTags(tags), apodo: U.lotApodo || '', p: JSON.parse(JSON.stringify(S.p)), roles: S.roles.slice(),
+  const d = { id: U.lotId || undefined, nombre: (nombre || '').trim() || defName(), code: S.code, chip: S.predio.chip || '', dir: S.predio.dir || '', area: Math.round(S.geo.area), tags: parseTags(tags), apodo: U.lotApodo || '', extra: (S.extra || []).slice(), geom: S.extra && S.extra.length ? S.lonlat.map(q => [+q[0].toFixed(7), +q[1].toFixed(7)]) : null, p: JSON.parse(JSON.stringify(S.p)), roles: S.roles.slice(),
     res: { torres: R.nT, pisos: R.pt.join('+'), und: R.und, ic: +R.ic.toFixed(2), built: Math.round(R.built), vend: Math.round(R.vend), cupos: R.cupos } };
   if (!d.id) delete d.id; loading('Guardando…');
   try { const r = await L.save(d); U.lotId = r.id; U.lotName = d.nombre; U.lotTags = d.tags; U.saving = false; tell('Lote guardado en tu cuenta'); panel(); } catch (e) { tell('No se pudo guardar el lote. Revisa tu conexión.'); }
@@ -708,9 +716,17 @@ function outs() { const O = { volTop: oVolTop, sb: oSb, ob: oOb, proyTop: oProyT
 function recalc(full) { if (!U.S) return; U.R = compute(U.S); if (full) panel(); else outs(); draw(); save(); }
 function loading(t) { U.busy = !!t; const l = U.el.querySelector('[data-load]'); l.hidden = !t; l.textContent = t || ''; }
 async function abrir(code, geom, keep) { loading('Consultando Catastro y POT…'); U.cands = null; U.scn = null; U.view = null; U.saving = false; U.lotId = (keep && keep.id) || null; U.lotName = ''; U.lotApodo = (keep && keep.apodo) || ''; U.lotTags = (keep && keep.tags) || [];
-  try { const S = await cargar(code, geom); if (keep && keep.code === code) { Object.assign(S.p, keep.p || {}); if (keep.roles && keep.roles.length === S.roles.length) { S.roles = keep.roles; U.S = S; regeo(); } }
+  try { const S = await cargar(code, geom, keep && keep.extra); if (keep && keep.code === code) { Object.assign(S.p, keep.p || {}); if (keep.roles && keep.roles.length === S.roles.length) { S.roles = keep.roles; U.S = S; regeo(); } }
     U.S = S; U.R = compute(S); U.tab = 'norma'; tools(); panel(); draw(); fit(); save(); if (S.norm.sinPot) tell('No respondió el mapa del POT'); }
   catch (e) { tell(e.message || 'No se pudo consultar el lote'); } loading(''); }
+function cargarPC() { return new Promise((ok, no) => { if (G.polygonClipping) return ok(G.polygonClipping); const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/polygon-clipping@0.15.7/dist/polygon-clipping.umd.min.js'; sc.onload = () => G.polygonClipping ? ok(G.polygonClipping) : no(new Error('no cargó')); sc.onerror = () => no(new Error('No se pudo cargar la librería para unir predios')); document.head.appendChild(sc); }); }
+async function sumar(lng, lat) { const S = U.S; loading('Sumando el predio…');
+  try { const l = await lotAt(lng, lat); if (!l) { tell('Ahí no hay un lote de Catastro'); loading(''); return; } if (l.code === S.code || (S.extra || []).includes(l.code)) { tell('Ese predio ya está sumado'); loading(''); return; }
+    const pc = await cargarPC(), B = l.geometry.type === 'Polygon' ? [l.geometry.coordinates] : l.geometry.coordinates, un = pc.union([[S.lonlat]], B);
+    if (!un.length || un.length > 1) { tell('Ese predio no colinda con el lote: solo se pueden sumar predios vecinos'); loading(''); return; }
+    const ring = un[0][0]; U.sum = false; const keep = { code: S.code, p: S.p, id: U.lotId, tags: U.lotTags, apodo: U.lotApodo, extra: (S.extra || []).concat(l.code) };
+    await abrir(S.code, { type: 'Polygon', coordinates: [ring] }, keep); U.tab = 'norma'; tell('Predio sumado: ' + nf(U.S.geo.area) + ' m² en total'); }
+  catch (e) { tell(e.message || 'No se pudo sumar el predio'); } loading(''); }
 async function pick(lng, lat) { loading('Buscando el lote…'); try { const l = await lotAt(lng, lat); if (!l) { tell('Ahí no hay un lote de Catastro'); loading(''); return; } await abrir(l.code, l.geometry); } catch (e) { tell(e.message); loading(''); } }
 async function onSearch(q) { if (U.busy) return; loading('Buscando…'); try { const c = await buscar(q); loading('');
     if (!c.length) { tell('No encontré ese CHIP o dirección en Catastro'); return; } if (c.length === 1) return abrir(c[0].code); U.cands = c; panel(); } catch (e) { loading(''); tell(e.message); } }
@@ -728,7 +744,7 @@ function onClick(e) { const b = e.target.closest('[data-la]'); if (!b || b.tagNa
   else if (a === 'lotapo') { U.apEdit = k; panel(); const i = U.el.querySelector('[data-form=apodo] input'); if (i) { i.focus(); i.select(); } }
   else if (a === 'lotag') { U.tagEdit = k; panel(); const i = U.el.querySelector('[data-form=tags] input'); if (i) { i.focus(); i.select(); } }
   else if (a === 'lotback') { U.view = null; panel(); }
-  else if (a === 'lotopen') { const l = (U.lots || []).find(x => x.id === k); if (l) { U.view = null; abrir(l.code, null, { code: l.code, p: l.p, roles: l.roles, id: l.id, tags: l.tags, apodo: l.apodo }); } }
+  else if (a === 'lotopen') { const l = (U.lots || []).find(x => x.id === k); if (l) { U.view = null; abrir(l.code, l.geom ? { type: 'Polygon', coordinates: [l.geom] } : null, { code: l.code, p: l.p, roles: l.roles, id: l.id, tags: l.tags, apodo: l.apodo, extra: l.extra || [] }); } }
   else if (a === 'lotdel') { if (U.del !== k) { U.del = k; panel(); } else { U.del = null; LH().del(k).then(() => { U.lots = (U.lots || []).filter(x => x.id !== k); if (U.lotId === k) U.lotId = null; panel(); tell('Lote borrado'); }).catch(() => tell('No se pudo borrar el lote')); } }
   else if (a === 'savo') { U.saving = true; panel(); const i = U.el.querySelector('.lt-save input'); if (i) { i.focus(); i.select(); } }
   else if (a === 'savex') { U.saving = false; panel(); }
@@ -743,6 +759,8 @@ function onClick(e) { const b = e.target.closest('[data-la]'); if (!b || b.tagNa
   else if (a === 'tadd') { const T = S.p.tipos, u = T.length ? Math.max(...T.map(t => t.a)) + 10 : 55; T.push({ a: Math.min(250, u), pct: 10 }); tipRender(); }
   else if (a === 'tdel') { S.p.tipos.splice(+k, 1); tipRender(); }
   else if (a === 'tigual') { S.p.tipos.forEach(t => { t.pct = 20; }); tipRender(); }
+  else if (a === 'sum') { U.sum = !U.sum; if (U.sum) tell('Toca en el mapa el predio vecino que quieres sumar'); panel(); }
+  else if (a === 'sumx') { U.sum = false; abrir(S.code, null, { code: S.code, p: S.p, id: U.lotId, tags: U.lotTags, apodo: U.lotApodo, extra: [] }); }
   else if (a === 'pryap') pryAplicar();
   else if (a === 'pryvin') pryVincular();
   else if (a === 'torres') { S.p.torres = +k; S.p.ptor = []; S.p.auto = true; U.scn = null; recalc(true); }
@@ -757,6 +775,7 @@ function onClick(e) { const b = e.target.closest('[data-la]'); if (!b || b.tagNa
 function tipRender() { const b = U.el.querySelector('[data-tp-box]'); if (b) b.innerHTML = pTip(); recalc(false); }
 function onInput(e) { const lq = e.target.closest('[data-lq]'); if (lq) { U.lq = lq.value; const b = U.el.querySelector('[data-lotlist]'); if (b) b.innerHTML = lotRows(); return; }
    const pt = e.target.closest('[data-pt]'); if (pt && U.S) { const p = U.S.p; p.ptor = (p.ptor || []).slice(); p.ptor[+pt.dataset.pt] = Math.max(0, Math.round(+pt.value || 0)); p.auto = false; recalc(false); return; }
+  const pf = e.target.closest('[data-pf]'); if (pf && U.S) { const v = parseFloat(String(pf.value).replace(',', '.')); U.S.p[pf.dataset.pf] = v > 0 ? v : 0; U.scn = null; recalc(false); return; }
   const pn = e.target.closest('[data-pn]'); if (pn && U.S) { U.S.p[pn.dataset.pn] = Math.max(0, Math.round(+pn.value || 0)); recalc(false); return; }
   const pc = e.target.closest('[data-pc]'); if (pc && U.S) { U.S.p.com = Object.assign({ on: true }, U.S.p.com, { pct: Math.max(0, Math.min(100, +pc.value || 0)) }); recalc(false); return; }
   const pp = e.target.closest('[data-pp]'); if (pp && U.S) { U.S.p[pp.dataset.pp] = Math.max(0, +pp.value || 0); recalc(false); return; }
