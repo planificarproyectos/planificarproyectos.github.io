@@ -660,11 +660,23 @@ function niveles(R) { const ed = R.ed, k = ed.pod ? ed.k : 0, out = [];
   return out.join(''); }
 function volStats(V) { const A = b => Math.abs(area(unflat(b.p))), T = V.bl.filter(b => b.tipo === 't'), N = Math.max(0, ...V.bl.map(b => b.f1)), H = (V.niv || [])[N] || 0;
   return { torres: T.length, huella: T.reduce((x, b) => x + A(b), 0), bajo: V.bl.filter(b => b.tipo === 'p').reduce((x, b) => x + A(b), 0), N, H, area: V.bl.reduce((x, b) => x + A(b) * (b.f1 - b.f0), 0) }; }
+function volCmp(V, st) { const S = U.S, R = U.R, P = H().proyecto && H().proyecto(), A = S.geo.area, ic = A ? st.area / A : 0, hp = st.N ? ((V.niv || [])[st.N] - (V.niv || [])[0]) / st.N : 0, rows = [];
+  const row = (l, m, n, bad) => rows.push(`<tr><td>${l}</td><td><b>${m}</b></td><td>${n}</td><td style="color:${bad === true ? '#EF5350' : bad === false ? 'var(--ok,#66BB6A)' : 'inherit'}">${bad === true ? 'excede' : bad === false ? 'cumple' : ''}</td></tr>`);
+  row('Pisos', st.N, 'máx. ' + R.L.nMax, st.N > R.L.nMax);
+  row('Altura piso a piso', nf(hp, 2) + ' m', 'actual ' + nf(S.p.hPiso, 2) + ' m', null);
+  row('Torres', st.torres, P ? P.et.length : '—', P ? st.torres !== P.et.length : null);
+  if (P && P.et.length) row('Pisos del proyecto', st.N, P.et.map(e => e.pisos).join(' + '), P.et.some(e => e.pisos !== st.N) ? true : false);
+  row('Área de losas', nf(Math.round(st.area)) + ' m²', 'cabida ' + nf(Math.round(R.built || 0)) + ' m²', null);
+  row('Índice bruto de losas', nf(ic, 2), R.L.cap ? 'tope ' + nf(R.L.cap, 2) : '—', R.L.cap ? ic > R.L.cap + 1e-9 : null);
+  return `<table class="lt-cmp" style="width:100%;border-collapse:collapse;font-size:.82em;margin:8px 0"><thead><tr style="text-align:left;opacity:.7"><th>Concepto</th><th>Modelo</th><th>Norma / proyecto</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table>
+   <p class="lt-note">El área del modelo es bruta (incluye podio, circulaciones y áreas no computables), por eso puede superar el índice de la norma aunque el cuadro de áreas cumpla.</p>
+   <div class="lt-opt"><button data-la="volap">Usar el modelo como cabida</button></div>`; }
 function oVol() { const S = U.S, V = S.vol;
   if (!V) return `<div class="lt-card"><h3>Volumetría de un modelo</h3><p class="lt-note" style="margin:0 0 8px">Si ya tienes un modelo validado, importa sus huellas (archivo .json) y se dibujan sobre el lote con sus pisos reales.</p><div class="lt-opt"><label class="lt-b" style="cursor:pointer">Importar volumetría<input type="file" accept=".json,application/json" data-volfile hidden></label></div></div>`;
   const st = volStats(V), t = V.t || {};
   return `<div class="lt-card"><h3>Volumetría «${esc(V.nombre || 'modelo')}»</h3>
    ${kv([['Bloques', st.torres + ' torre' + (st.torres === 1 ? '' : 's') + (st.bajo ? ' + bloque bajo' : '')], ['Huella de las torres', nf(Math.round(st.huella)) + ' m²'], ['Pisos · altura', st.N + ' · ' + nf(st.H, 1) + ' m'], ['Área de losas', nf(Math.round(st.area)) + ' m²']])}
+   ${volCmp(V, st)}
    <div class="lt-tp lt-pt"><span>Giro</span><input type="number" inputmode="decimal" step="1" value="${+t.rot || 0}" data-vo="rot" aria-label="Giro en grados"><span class="lt-un">°</span></div>
    <div class="lt-tp lt-pt"><span>Mover este-oeste</span><input type="number" inputmode="decimal" step="1" value="${+t.dx || 0}" data-vo="dx" aria-label="Desplazamiento este-oeste en metros"><span class="lt-un">m</span></div>
    <div class="lt-tp lt-pt"><span>Mover norte-sur</span><input type="number" inputmode="decimal" step="1" value="${+t.dy || 0}" data-vo="dy" aria-label="Desplazamiento norte-sur en metros"><span class="lt-un">m</span></div>
@@ -818,6 +830,7 @@ function onClick(e) { const b = e.target.closest('[data-la]'); if (!b || b.tagNa
   else if (a === 'sumx') { U.sum = false; abrir(S.code, null, { code: S.code, p: S.p, id: U.lotId, tags: U.lotTags, apodo: U.lotApodo, extra: [] }); }
   else if (a === 'volc') { volAuto(S); draw(); panel(); }
   else if (a === 'volr') { S.vol.t.rot = +(((+S.vol.t.rot || 0) + 180) % 360).toFixed(1); draw(); panel(); }
+  else if (a === 'volap') { const st = volStats(S.vol), hp = st.N ? ((S.vol.niv || [])[st.N] - (S.vol.niv || [])[0]) / st.N : S.p.hPiso; S.p.hPiso = Math.max(2.2, +hp.toFixed(2)); S.p.torres = st.torres; S.p.ptor = Array(st.torres).fill(st.N); S.p.auto = false; S.p.nOv = Math.max(+S.p.nOv || 0, st.N); U.scn = null; recalc(true); tell('Cabida ajustada al modelo: ' + st.torres + ' torres de ' + st.N + ' pisos'); }
   else if (a === 'volv') { U.volOn = U.volOn === false; draw(); panel(); }
   else if (a === 'volq') { S.vol = null; draw(); panel(); }
   else if (a === 'disp') { S.p.disp = k; U.scn = null; recalc(true); }
