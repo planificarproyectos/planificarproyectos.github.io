@@ -189,8 +189,9 @@ function edificio(S, ts, kf, cuposReq, visAll) { const p = S.p, AT = S.geo.area,
     const lobby = 30 + 0.3 * U, tecn = 20 + 0.2 * U, bici = 0.5 * U, gnr = lobby + tecn + bici + amenB + (pod ? 0 : comG), over = Math.max(0, gnr - gAvT);
     R.gAvT = gAvT; R.gnr = gnr; R.over = over; R.ecp = ecp; R.amenB = amenB; R.lobby = lobby; R.tecn = tecn; R.bici = bici; R.prog = prog; R.f = f;
     R.aptos = Math.max(0, R.typ + Math.max(0, gAvT - gnr) * ef - over); U = comp(R.aptos).und; R.U = U; }
-  const mz = comp(R.aptos), foot = fl.reduce((x, a) => x + a[0], 0), libre = Math.max(0, AT - foot), podArea = fl.reduce((x, a) => x + a.slice(0, k).reduce((y, z) => y + z, 0), 0), tot = fl.reduce((x, a) => x + a.reduce((y, z) => y + z, 0), 0);
+  const mz = comp(R.aptos), foot = fl.reduce((x, a) => x + a[0], 0), ces = Math.max(0, +p.cesPq || 0) + Math.max(0, +p.cesCa || 0), libre = Math.max(0, AT - foot - ces), podArea = fl.reduce((x, a) => x + a.slice(0, k).reduce((y, z) => y + z, 0), 0), tot = fl.reduce((x, a) => x + a.reduce((y, z) => y + z, 0), 0);
   const sup = p.parqUbic === 'sup', verd = 0.4 * R.ecp, xs = est.b && est.x.reduce((x, y) => x + y[1], 0) * R.f;
+  if (ces > 0 && AT - foot - ces < -0.5) avis.push('La huella de las torres (' + Math.round(foot) + ' m²) más las cesiones y el control ambiental (' + Math.round(ces) + ' m²) superan el área del lote (' + Math.round(AT) + ' m²).');
   if (R.over > 0) avis.push('Las zonas comunes y accesos (' + Math.round(R.gnr) + ' m²) superan el primer piso disponible; ocupan ' + Math.round(R.over) + ' m² de los pisos de apartamentos.');
   if (sup && libre - verd + 0.001 < cuposReq * m2) avis.push('El parqueo en superficie necesita ' + Math.round(cuposReq * m2) + ' m² y solo quedan ' + Math.round(Math.max(0, libre - verd)) + ' m² libres después de las zonas verdes.');
   if (libre + 0.001 < verd) avis.push('El equipamiento comunal exige ' + Math.round(verd) + ' m² de zonas verdes y recreativas en áreas libres y solo quedan ' + Math.round(libre) + ' m² sin construir.');
@@ -573,6 +574,9 @@ function pCab() { const S = U.S, p = S.p, R = U.R, n = R.nT, c = p.com || { on: 
   <div class="lt-card"><h3>Ajustes por curaduría</h3>
    <div class="lt-tp lt-pt"><span>Índice de construcción</span><input type="number" inputmode="decimal" min="0" max="12" step="0.01" value="${+p.icOv > 0 ? p.icOv : ''}" placeholder="norma" data-pf="icOv" aria-label="Índice de construcción máximo"><span class="lt-un">máx.</span></div>
    <div class="lt-tp lt-pt"><span>Altura máxima</span><input type="number" inputmode="numeric" min="0" max="80" step="1" value="${+p.nOv > 0 ? p.nOv : ''}" placeholder="norma" data-pf="nOv" aria-label="Pisos máximos"><span class="lt-un">pisos</span></div>
+   <div class="lt-tp lt-pt"><span>Cesión de parque</span><input type="number" inputmode="numeric" min="0" step="1" value="${+p.cesPq > 0 ? p.cesPq : ''}" placeholder="0" data-pf="cesPq" aria-label="Cesión de parque en metros cuadrados"><span class="lt-un">m²</span></div>
+   <div class="lt-tp lt-pt"><span>Control ambiental</span><input type="number" inputmode="numeric" min="0" step="1" value="${+p.cesCa > 0 ? p.cesCa : ''}" placeholder="0" data-pf="cesCa" aria-label="Control ambiental en metros cuadrados"><span class="lt-un">m²</span></div>
+   <p class="lt-note">Las cesiones y el control ambiental se descuentan de las áreas libres del lote (zonas verdes y parqueo en superficie). El índice de construcción se sigue calculando sobre el área bruta.</p>
    <p class="lt-note">Vacío = se usa la norma del mapa. Úsalo cuando la curaduría ya validó un índice o una altura distintos. Para sumar lotes vecinos usa "Sumar predio" arriba.</p></div>
   <div class="lt-card"><h3>Torres y pisos</h3>
    <div class="lt-opt">${[1, 2, 3].map(k => `<button data-la="torres" data-k="${k}" aria-pressed="${n === k}">${k} torre${k > 1 ? 's' : ''}</button>`).join('')}</div>
